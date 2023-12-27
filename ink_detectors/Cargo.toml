@@ -1,6 +1,8 @@
 [workspace]
 members = ["*"]
 exclude = [".cargo", "target"]
+resolver = "2"
+
 
 [workspace.dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "f16bfa478f131b2ec2ad9742f88dc6a9beea52b7" }

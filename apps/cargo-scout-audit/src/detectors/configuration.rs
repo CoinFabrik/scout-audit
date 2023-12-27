@@ -25,8 +25,8 @@ pub fn get_detectors_configuration(dep : BlockChain) -> Result<DetectorsConfigur
 
     let url = "https://github.com/CoinFabrik/scout-audit";
     let path = Some(match dep {
-        BlockChain::Ink => "ink_detectors",
-        BlockChain::Soroban => "soroban_detectors",
+        BlockChain::Ink => String::from("ink_detectors"),
+        BlockChain::Soroban => String::from("soroban_detectors"),
     });
 
     let detectors = vec![DetectorConfiguration {
