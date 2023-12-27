@@ -124,9 +124,6 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         })
         .expect("Blockchain dependency not found");
 
-    println!("Blockchain dependency found: {:?}", dep);
-
-
     let cargo_config = Config::default().context("Failed to get config")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose

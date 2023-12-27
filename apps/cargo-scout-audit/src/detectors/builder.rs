@@ -35,7 +35,6 @@ impl<'a> DetectorBuilder<'a> {
     pub fn build(self, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
         let detector_root = self.download_detector()?;
         let workspace_path = self.parse_library_path(&detector_root)?;
-        println!("workspace_path @ build: {:?}", workspace_path);
         let library = self.get_library(workspace_path)?;
         let library_paths = self.build_detectors(library)?;
         let filtered_paths = self.filter_detectors(library_paths, used_detectors)?;
@@ -47,7 +46,6 @@ impl<'a> DetectorBuilder<'a> {
     pub fn get_detector_names(self) -> Result<Vec<String>> {
         let detector_root = self.download_detector()?;
         let workspace_path = self.parse_library_path(&detector_root)?;
-        println!("workspace_path @ get_detectors_name: {:?}", workspace_path);
         let library = self.get_library(workspace_path)?;
         let detector_names = library
             .metadata
@@ -115,8 +113,6 @@ impl<'a> DetectorBuilder<'a> {
             "Not a directory: {}",
             workspace_path.to_string_lossy()
         );
-
-        println!("workspace_path @ get library: {:?}", workspace_path);
 
         let package_metadata = cargo_package::package_metadata(&workspace_path)?;
         let toolchain = rustup::active_toolchain(&workspace_path)?;
