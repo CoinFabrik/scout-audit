@@ -5,6 +5,7 @@ use cargo::{
     core::{Dependency, GitReference, SourceId},
     util::IntoUrl,
 };
+use crate::startup::BlockChain;
 
 #[derive(Debug, Clone)]
 pub struct DetectorConfiguration {
@@ -15,17 +16,29 @@ pub struct DetectorConfiguration {
 pub type DetectorsConfigurationList = Vec<DetectorConfiguration>;
 
 /// Returns list of detectors.
-pub fn get_detectors_configuration() -> Result<DetectorsConfigurationList> {
+pub fn get_detectors_configuration(dep : BlockChain) -> Result<DetectorsConfigurationList> {
+
+    let url_old = match dep {
+        BlockChain::Ink => "https://github.com/CoinFabrik/scout",
+        BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
+    };
+
+    let url = "https://github.com/CoinFabrik/scout-audit";
+    let path = Some(match dep {
+        BlockChain::Ink => "ink_detectors",
+        BlockChain::Soroban => "soroban_detectors",
+    });
+
     let detectors = vec![DetectorConfiguration {
         dependency: Dependency::parse(
             "library",
             None,
             SourceId::for_git(
-                &"https://github.com/CoinFabrik/scout".into_url()?,
+                &url.into_url()?,
                 GitReference::DefaultBranch,
             )?,
         )?,
-        path: Some("detectors".into()),
+        path//: Some("detectors".into()),
     }];
 
     Ok(detectors)
@@ -33,13 +46,9 @@ pub fn get_detectors_configuration() -> Result<DetectorsConfigurationList> {
 
 /// Returns local detectors configuration from custom path.
 pub fn get_local_detectors_configuration(path: &Path) -> Result<DetectorsConfigurationList> {
-    println!("path: {:?}", path);
     let detectors = vec![DetectorConfiguration {
         dependency: Dependency::parse("library", None, SourceId::for_path(path)?)?,
         path: None,
     }];
-
-    println!("detectors: {:?}", detectors);
-
     Ok(detectors)
 }

@@ -90,6 +90,12 @@ pub struct Scout {
     pub verbose: bool,
 }
 
+#[derive(Debug)]
+pub enum BlockChain {
+    Ink,
+    Soroban,
+}
+
 pub fn run_scout(opts: Scout) -> Result<()> {
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
@@ -107,24 +113,18 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     if let Some(manifest_path) = &opts.manifest_path {
         metadata.manifest_path(manifest_path);
     }
+
     let metadata = metadata.exec().context("Failed to get metadata")?;
 
-    let deps = metadata.packages.iter().map(|p| p.name.clone()).collect::<Vec<String>>();
+    let dep = metadata.packages.iter()
+        .find_map(|p| match p.name.as_str() {
+            "soroban-sdk" => Some(BlockChain::Soroban),
+            "ink" => Some(BlockChain::Ink),
+            _ => None,
+        })
+        .expect("Blockchain dependency not found");
 
-
-    let possible_deps = vec![
-        String::from("soroban-sdk"),
-        String::from("ink"),
-    ];
-
-    match deps.iter().find(|dep| possible_deps.contains(*dep)) {
-        Some(dep) => {
-            println!("Found dependency: {}", dep);
-        },
-        None => {
-            println!("No dependency found");
-        }
-    }
+    println!("Blockchain dependency found: {:?}", dep);
 
 
     let cargo_config = Config::default().context("Failed to get config")?;
@@ -136,7 +136,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
             .context("Failed to get local detectors configuration")?,
-        None => get_detectors_configuration().context("Failed to get detectors configuration")?,
+        None => get_detectors_configuration(dep).context("Failed to get detectors configuration")?,
     };
 
     // Misc configurations
