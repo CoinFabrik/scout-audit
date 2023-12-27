@@ -109,6 +109,24 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     }
     let metadata = metadata.exec().context("Failed to get metadata")?;
 
+    let deps = metadata.packages.iter().map(|p| p.name.clone()).collect::<Vec<String>>();
+
+
+    let possible_deps = vec![
+        String::from("soroban-sdk"),
+        String::from("ink"),
+    ];
+
+    match deps.iter().find(|dep| possible_deps.contains(*dep)) {
+        Some(dep) => {
+            println!("Found dependency: {}", dep);
+        },
+        None => {
+            println!("No dependency found");
+        }
+    }
+
+
     let cargo_config = Config::default().context("Failed to get config")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose

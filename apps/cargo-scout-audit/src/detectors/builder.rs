@@ -59,6 +59,11 @@ impl<'a> DetectorBuilder<'a> {
     /// Downloads and returns detector root from supported sources.
     fn download_detector(&self) -> Result<PathBuf> {
         if self.detectors_config.dependency.source_id().is_git() {
+            println!("Downloading detector from git repository");
+            println!(
+                "Repository: {}",
+                self.detectors_config.dependency.source_id().url()
+            );
             download_git_repo(&self.detectors_config.dependency, self.cargo_config)
         } else if self.detectors_config.dependency.source_id().is_path() {
             if let Some(path) = self.detectors_config.dependency.source_id().local_path() {

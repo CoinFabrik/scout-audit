@@ -33,10 +33,13 @@ pub fn get_detectors_configuration() -> Result<DetectorsConfigurationList> {
 
 /// Returns local detectors configuration from custom path.
 pub fn get_local_detectors_configuration(path: &Path) -> Result<DetectorsConfigurationList> {
+    println!("path: {:?}", path);
     let detectors = vec![DetectorConfiguration {
         dependency: Dependency::parse("library", None, SourceId::for_path(path)?)?,
         path: None,
     }];
+
+    println!("detectors: {:?}", detectors);
 
     Ok(detectors)
 }
