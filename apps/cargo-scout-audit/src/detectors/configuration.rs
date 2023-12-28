@@ -1,11 +1,11 @@
 use std::path::Path;
 
+use crate::startup::BlockChain;
 use anyhow::Result;
 use cargo::{
     core::{Dependency, GitReference, SourceId},
     util::IntoUrl,
 };
-use crate::startup::BlockChain;
 
 #[derive(Debug, Clone)]
 pub struct DetectorConfiguration {
@@ -16,8 +16,7 @@ pub struct DetectorConfiguration {
 pub type DetectorsConfigurationList = Vec<DetectorConfiguration>;
 
 /// Returns list of detectors.
-pub fn get_detectors_configuration(dep : BlockChain) -> Result<DetectorsConfigurationList> {
-
+pub fn get_detectors_configuration(dep: BlockChain) -> Result<DetectorsConfigurationList> {
     let path = Some(match dep {
         BlockChain::Ink => String::from("ink_detectors"),
         BlockChain::Soroban => String::from("soroban_detectors"),
@@ -32,7 +31,7 @@ pub fn get_detectors_configuration(dep : BlockChain) -> Result<DetectorsConfigur
                 GitReference::DefaultBranch,
             )?,
         )?,
-        path
+        path,
     }];
 
     Ok(detectors)

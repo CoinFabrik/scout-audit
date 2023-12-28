@@ -8,6 +8,7 @@ use itertools::Itertools;
 use super::{configuration::DetectorConfiguration, library::Library, source::download_git_repo};
 use crate::utils::{cargo_package, rustup};
 
+#[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a Config,
     detectors_config: DetectorConfiguration,
@@ -59,7 +60,6 @@ impl<'a> DetectorBuilder<'a> {
     /// Downloads and returns detector root from supported sources.
     fn download_detector(&self) -> Result<PathBuf> {
         if self.detectors_config.dependency.source_id().is_git() {
-
             download_git_repo(&self.detectors_config.dependency, self.cargo_config)
         } else if self.detectors_config.dependency.source_id().is_path() {
             if let Some(path) = self.detectors_config.dependency.source_id().local_path() {

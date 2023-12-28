@@ -6,6 +6,10 @@
 mod detector;
 
 #[cfg(feature = "detector")]
-pub use detector::Detector;
+pub use detector::InkDetector;
+#[cfg(feature = "detector")]
+pub use detector::SorobanDetector;
 #[cfg(feature = "detector")]
 pub use strum::IntoEnumIterator;
+#[cfg(feature = "detector")]
+pub use detector::DetectorImpl;

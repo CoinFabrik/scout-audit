@@ -90,7 +90,7 @@ pub struct Scout {
     pub verbose: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum BlockChain {
     Ink,
     Soroban,
@@ -116,7 +116,9 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 
     let metadata = metadata.exec().context("Failed to get metadata")?;
 
-    let dep = metadata.packages.iter()
+    let bc_dependency = metadata
+        .packages
+        .iter()
         .find_map(|p| match p.name.as_str() {
             "soroban-sdk" => Some(BlockChain::Soroban),
             "ink" => Some(BlockChain::Ink),
@@ -133,7 +135,8 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
             .context("Failed to get local detectors configuration")?,
-        None => get_detectors_configuration(dep).context("Failed to get detectors configuration")?,
+        None => get_detectors_configuration(bc_dependency)
+            .context("Failed to get detectors configuration")?,
     };
 
     // Misc configurations
@@ -167,12 +170,16 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         .context("Failed to build detectors")?;
 
     // Run dylint
-    run_dylint(detectors_paths, opts).context("Failed to run dylint")?;
+    run_dylint(detectors_paths, opts, bc_dependency).context("Failed to run dylint")?;
 
     Ok(())
 }
 
-fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout) -> Result<()> {
+fn run_dylint(
+    detectors_paths: Vec<PathBuf>,
+    opts: Scout,
+    bc_dependency: BlockChain,
+) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -220,7 +227,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout) -> Result<()> {
             };
             std::io::Write::write_all(
                 &mut json_file,
-                format_into_json(stderr_file, stdout_file)?.as_bytes(),
+                format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
             )?;
         }
         OutputFormat::Html => {
@@ -230,7 +237,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout) -> Result<()> {
             };
             std::io::Write::write_all(
                 &mut html_file,
-                format_into_html(stderr_file, stdout_file)?.as_bytes(),
+                format_into_html(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
             )?;
         }
         OutputFormat::Text => {
@@ -247,7 +254,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout) -> Result<()> {
             };
             std::io::Write::write_all(
                 &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file)?.as_bytes(),
+                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
             )?;
         }
     }
