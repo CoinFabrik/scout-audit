@@ -41,3 +41,8 @@ node_modules
 .vscode/
 .idea/
 !/.vscode/
+
+# Generated files by Scout-Audit
+report.sarif
+report.html
+report.json
