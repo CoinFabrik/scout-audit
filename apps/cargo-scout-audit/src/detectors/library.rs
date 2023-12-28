@@ -29,12 +29,17 @@ impl Library {
     /// Builds the library and returns its path.
     pub fn build(&self, verbose: bool) -> Result<Vec<PathBuf>> {
         // Build entire workspace
+        println!("cargo build --release");
+
         cargo::build("detectors", !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
             .current_dir(&self.root)
             .args(["--release"])
             .success()?;
+
+        println!("cargo build --release");
+
         // Verify all libraries were built
         let compiled_library_paths = self
             .metadata

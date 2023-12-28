@@ -14,3 +14,6 @@ pub use detector::SorobanDetector;
 pub use strum::IntoEnumIterator;
 #[cfg(feature = "detector")]
 pub use detector::DetectorImpl;
+
+#[cfg(feature = "detector")]
+pub use detector::soroban_lint_message::*;

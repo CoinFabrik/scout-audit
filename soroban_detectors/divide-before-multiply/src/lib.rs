@@ -20,7 +20,7 @@ use rustc_middle::mir::{
 use rustc_middle::ty::TyKind;
 use rustc_span::def_id::DefId;
 use rustc_span::Span;
-use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector};
+use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector, SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
@@ -45,7 +45,7 @@ dylint_linting::declare_late_lint! {
     /// ```
     pub DIVIDE_BEFORE_MULTIPLY,
     Warn,
-    Detector::DivideBeforeMultiply.get_lint_message()
+    SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE
 }
 
 fn get_divisions_inside_expr(expr: &Expr<'_>) -> Vec<Span> {
