@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 #![cfg_attr(feature = "lint_helper", feature(rustc_private))]
 //! # Scout Audit Internal
 //!

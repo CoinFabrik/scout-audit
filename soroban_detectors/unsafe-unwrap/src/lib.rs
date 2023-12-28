@@ -10,7 +10,7 @@ use rustc_hir::{
 };
 use rustc_lint::LateLintPass;
 use rustc_span::{Span, Symbol};
-use scout_audit_internal::Detector;
+use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does

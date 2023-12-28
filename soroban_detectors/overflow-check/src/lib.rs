@@ -7,7 +7,7 @@ extern crate rustc_span;
 use std::fs;
 
 use rustc_lint::EarlyLintPass;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector};
 
 dylint_linting::declare_early_lint! {
     /// ### What it does

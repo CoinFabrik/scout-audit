@@ -35,7 +35,6 @@ impl Library {
             .current_dir(&self.root)
             .args(["--release"])
             .success()?;
-
         // Verify all libraries were built
         let compiled_library_paths = self
             .metadata
@@ -50,6 +49,7 @@ impl Library {
             .into_iter()
             .filter(|p| !p.exists())
             .collect_vec();
+
         if !unexistant_libraries.is_empty() {
             anyhow::bail!("Could not determine if {:?} exist", unexistant_libraries);
         }

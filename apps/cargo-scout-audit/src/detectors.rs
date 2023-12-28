@@ -52,6 +52,7 @@ impl Detectors {
             .flatten_ok()
             .collect::<Result<Vec<_>>>()?;
 
+
         Ok(detectors_paths)
     }
 

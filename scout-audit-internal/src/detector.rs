@@ -75,9 +75,10 @@ pub enum InkDetector {
     ZeroOrTestAddress,
 }
 
-
-
-// This trait should be implemented by every enum of detectors (for each blockchain)
+/*
+This trait should be implemented by every enum of detectors (for each blockchain)
+We cannot use this trait because it's not possible to make CONST functions in traits!
+If in the future this is possible, we can use this trait to enforce the implementation of the functions
 pub trait DetectorImpl : std::fmt::Display {
     fn get_lint_message(&self) -> &'static str;
 
@@ -94,8 +95,10 @@ pub trait DetectorImpl : std::fmt::Display {
     fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span);
 }
 
-impl DetectorImpl for SorobanDetector {
-    fn get_lint_message(&self) -> &'static str {
+*/
+
+impl SorobanDetector {
+    pub const fn get_lint_message(&self) -> &'static str {
         match self {
             SorobanDetector::AvoidCoreMemForget => SOROBAN_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
             SorobanDetector::InsufficientlyRandomValues => SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
@@ -111,7 +114,7 @@ impl DetectorImpl for SorobanDetector {
     }
 
     #[cfg(feature = "lint_helper")]
-    fn span_lint_and_help<T: LintContext>(
+    pub fn span_lint_and_help<T: LintContext>(
         &self,
         cx: &T,
         lint: &'static Lint,
@@ -123,16 +126,16 @@ impl DetectorImpl for SorobanDetector {
     }
 
     #[cfg(feature = "lint_helper")]
-    fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span) {
+    pub fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span) {
         print_scout_output(*lint, span);
         span_lint_clippy(cx, lint, span, self.get_lint_message());
     }
 }
 
 
-impl DetectorImpl for InkDetector {
+impl InkDetector {
     /// Returns the lint message for the detector.
-    fn get_lint_message(&self) -> &'static str {
+    pub const fn get_lint_message(&self) -> &'static str {
         match self {
             InkDetector::AssertViolation => INK_ASSERT_VIOLATION_LINT_MESSAGE,
             InkDetector::AvoidCoreMemForget => INK_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
@@ -164,7 +167,7 @@ impl DetectorImpl for InkDetector {
     }
 
     #[cfg(feature = "lint_helper")]
-    fn span_lint_and_help<T: LintContext>(
+    pub fn span_lint_and_help<T: LintContext>(
         &self,
         cx: &T,
         lint: &'static Lint,
@@ -176,7 +179,7 @@ impl DetectorImpl for InkDetector {
     }
 
     #[cfg(feature = "lint_helper")]
-    fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span) {
+    pub fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span) {
         print_scout_output(*lint, span);
         span_lint_clippy(cx, lint, span, self.get_lint_message());
     }

@@ -167,7 +167,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 
     let detectors_paths = detectors
         .build(used_detectors)
-        .context("Failed to build detectors")?;
+        .context("Failed to build detectors bis")?;
 
     // Run dylint
     run_dylint(detectors_paths, opts, bc_dependency).context("Failed to run dylint")?;
