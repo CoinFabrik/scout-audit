@@ -15,7 +15,10 @@ use rustc_middle::mir::{BasicBlock, BasicBlocks, Const, Operand, TerminatorKind}
 use rustc_middle::ty::TyKind;
 use rustc_span::def_id::DefId;
 use rustc_span::Span;
-use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector, SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE};
+use scout_audit_internal::{
+    DetectorImpl, SorobanDetector as Detector,
+    SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE,
+};
 
 dylint_linting::impl_late_lint! {
     pub UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM,

@@ -4,7 +4,9 @@ use core::ops::ControlFlow;
 use hir::def::Res;
 use rustc_hir::intravisit::{self, Visitor};
 use rustc_hir::{self as hir, Expr, ExprKind, HirId, HirIdSet};
-use rustc_hir_typeck::expr_use_visitor::{Delegate, ExprUseVisitor, Place, PlaceBase, PlaceWithHirId};
+use rustc_hir_typeck::expr_use_visitor::{
+    Delegate, ExprUseVisitor, Place, PlaceBase, PlaceWithHirId,
+};
 use rustc_infer::infer::TyCtxtInferExt;
 use rustc_lint::LateContext;
 use rustc_middle::hir::nested_filter;
@@ -33,7 +35,11 @@ pub fn mutated_variables<'tcx>(expr: &'tcx Expr<'_>, cx: &LateContext<'tcx>) -> 
     Some(delegate.used_mutably)
 }
 
-pub fn is_potentially_mutated<'tcx>(variable: HirId, expr: &'tcx Expr<'_>, cx: &LateContext<'tcx>) -> bool {
+pub fn is_potentially_mutated<'tcx>(
+    variable: HirId,
+    expr: &'tcx Expr<'_>,
+    cx: &LateContext<'tcx>,
+) -> bool {
     mutated_variables(expr, cx).map_or(true, |mutated| mutated.contains(&variable))
 }
 
@@ -43,7 +49,7 @@ pub fn is_potentially_local_place(local_id: HirId, place: &Place<'_>) -> bool {
         PlaceBase::Upvar(_) => {
             // Conservatively assume yes.
             true
-        },
+        }
         _ => false,
     }
 }
@@ -58,14 +64,14 @@ impl<'tcx> MutVarsDelegate {
         match cat.place.base {
             PlaceBase::Local(id) => {
                 self.used_mutably.insert(id);
-            },
+            }
             PlaceBase::Upvar(_) => {
                 //FIXME: This causes false negatives. We can't get the `NodeId` from
                 //`Categorization::Upvar(_)`. So we search for any `Upvar`s in the
                 //`while`-body, not just the ones in the condition.
                 self.skip = true;
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
@@ -83,7 +89,13 @@ impl<'tcx> Delegate<'tcx> for MutVarsDelegate {
         self.update(cmt);
     }
 
-    fn fake_read(&mut self, _: &rustc_hir_typeck::expr_use_visitor::PlaceWithHirId<'tcx>, _: FakeReadCause, _: HirId) {}
+    fn fake_read(
+        &mut self,
+        _: &rustc_hir_typeck::expr_use_visitor::PlaceWithHirId<'tcx>,
+        _: FakeReadCause,
+        _: HirId,
+    ) {
+    }
 }
 
 pub struct ParamBindingIdCollector {
@@ -154,7 +166,9 @@ impl<'a, 'tcx> intravisit::Visitor<'tcx> for BindingUsageFinder<'a, 'tcx> {
 pub fn contains_return_break_continue_macro(expression: &Expr<'_>) -> bool {
     for_each_expr(expression, |e| {
         match e.kind {
-            ExprKind::Ret(..) | ExprKind::Break(..) | ExprKind::Continue(..) => ControlFlow::Break(()),
+            ExprKind::Ret(..) | ExprKind::Break(..) | ExprKind::Continue(..) => {
+                ControlFlow::Break(())
+            }
             // Something special could be done here to handle while or for loop
             // desugaring, as this will detect a break if there's a while loop
             // or a for loop inside the expression.
@@ -165,7 +179,11 @@ pub fn contains_return_break_continue_macro(expression: &Expr<'_>) -> bool {
     .is_some()
 }
 
-pub fn local_used_in<'tcx>(cx: &LateContext<'tcx>, local_id: HirId, v: impl Visitable<'tcx>) -> bool {
+pub fn local_used_in<'tcx>(
+    cx: &LateContext<'tcx>,
+    local_id: HirId,
+    v: impl Visitable<'tcx>,
+) -> bool {
     for_each_expr_with_closures(cx, v, |e| {
         if utils::path_to_local_id(e, local_id) {
             ControlFlow::Break(())

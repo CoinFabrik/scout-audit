@@ -106,7 +106,10 @@ impl<'a> NumericLiteral<'a> {
         self.radix == Radix::Decimal
     }
 
-    pub fn split_digit_parts(digits: &str, float: bool) -> (&str, Option<&str>, Option<(&str, &str)>) {
+    pub fn split_digit_parts(
+        digits: &str,
+        float: bool,
+    ) -> (&str, Option<&str>, Option<(&str, &str)>) {
         let mut integer = digits;
         let mut fraction = None;
         let mut exponent = None;
@@ -117,7 +120,7 @@ impl<'a> NumericLiteral<'a> {
                     '.' => {
                         integer = &digits[..i];
                         fraction = Some(&digits[i + 1..]);
-                    },
+                    }
                     'e' | 'E' => {
                         let exp_start = if digits[..i].ends_with('_') { i - 1 } else { i };
 
@@ -128,8 +131,8 @@ impl<'a> NumericLiteral<'a> {
                         };
                         exponent = Some((&digits[exp_start..=i], &digits[i + 1..]));
                         break;
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             }
         }
@@ -178,7 +181,13 @@ impl<'a> NumericLiteral<'a> {
         output
     }
 
-    pub fn group_digits(output: &mut String, input: &str, group_size: usize, partial_group_first: bool, pad: bool) {
+    pub fn group_digits(
+        output: &mut String,
+        input: &str,
+        group_size: usize,
+        partial_group_first: bool,
+        pad: bool,
+    ) {
         debug_assert!(group_size > 0);
 
         let mut digits = input.chars().filter(|&c| c != '_');

@@ -9,7 +9,6 @@ use regex::RegexBuilder;
 use scout_audit_internal::{DetectorImpl, InkDetector, IntoEnumIterator, SorobanDetector};
 use serde_json::{json, Value};
 
-
 /// This function takes an enum variant of a blockchain (defined in startup.rs) and returns an iterator
 /// of the detectors for that blockchain.
 /// This is used to centralize the generation of outputs, so that we don't have to repeat the same
@@ -33,12 +32,20 @@ pub fn get_chain_enum(bc: BlockChain) -> Box<dyn Iterator<Item = Box<dyn Detecto
     }
 }
 
-pub fn format_into_json(scout_output: File, internals: File, bc: BlockChain) -> anyhow::Result<String> {
+pub fn format_into_json(
+    scout_output: File,
+    internals: File,
+    bc: BlockChain,
+) -> anyhow::Result<String> {
     let json_errors = jsonify(scout_output, internals, bc)?;
     Ok(serde_json::to_string_pretty(&json_errors)?)
 }
 
-fn jsonify(scout_output: File, internals: File, bc: BlockChain) -> anyhow::Result<serde_json::Value> {
+fn jsonify(
+    scout_output: File,
+    internals: File,
+    bc: BlockChain,
+) -> anyhow::Result<serde_json::Value> {
     let json_errors: serde_json::Value = get_errors_from_output(scout_output, internals, bc)?
         .iter()
         .filter(|(_, (spans, _))| !spans.is_empty())
@@ -60,7 +67,7 @@ fn get_errors_from_output(
     mut scout_output: File,
     mut scout_internals: File,
     bc: BlockChain,
-) -> anyhow::Result<HashMap<String, (Vec<String>, String)>> {
+) -> anyhow::Result<HashMap<String, (Vec<Value>, String)>> {
     let regex = RegexBuilder::new(r"warning:.*")
         .multi_line(true)
         .case_insensitive(true)
@@ -81,34 +88,39 @@ fn get_errors_from_output(
         .map(|e| (e.get_lint_message().to_string(), (*e).to_string()))
         .collect();
 
-    let mut errors: HashMap<String, (Vec<String>, String)> = get_chain_enum(bc)
+    let mut errors: HashMap<String, (Vec<Value>, String)> = get_chain_enum(bc)
         .map(|e| ((*e).to_string(), (vec![], "".to_string())))
         .collect();
 
-
-
-    let true_finds = regex.find_iter(&stderr_string).map(|e| e.as_str()).filter(|e| {
-        for err in get_chain_enum(bc).map(|e| e.get_lint_message()) {
-            if e.contains(err) {
-                return true;
+    let true_finds = regex
+        .find_iter(&stderr_string)
+        .map(|e| e.as_str())
+        .filter(|e| {
+            for err in get_chain_enum(bc).map(|e| e.get_lint_message()) {
+                if e.contains(err) {
+                    return true;
+                }
             }
-        }
-        false
-    }).collect::<Vec<&str>>();
+            false
+        })
+        .collect::<Vec<&str>>();
 
     assert!(&true_finds.len() == &scout_internals_spans.len());
 
     for (i, elem) in true_finds.iter().enumerate() {
         let parts = elem.split('\n').collect::<Vec<&str>>();
 
-        for err in get_chain_enum(bc).map(|e| e.get_lint_message()){
+        for err in get_chain_enum(bc).map(|e| e.get_lint_message()) {
             if parts[0].contains(err) {
                 let name = msg_to_name.get(err).with_context(|| {
                     format!("Error making json: {} not found in the error map", err)
                 })?;
 
                 if let Some((spans, error)) = errors.get_mut(name) {
-                    spans.push(scout_internals_spans[i].to_string());
+                    spans.push(
+                        serde_json::from_str(&scout_internals_spans[i])
+                            .expect("Failed parsing span"),
+                    );
                     *error = err.to_string();
                 }
             }
@@ -117,7 +129,11 @@ fn get_errors_from_output(
     Ok(errors)
 }
 
-pub fn format_into_html(scout_output: File, internals: File, bc: BlockChain) -> anyhow::Result<String> {
+pub fn format_into_html(
+    scout_output: File,
+    internals: File,
+    bc: BlockChain,
+) -> anyhow::Result<String> {
     let json = jsonify(scout_output, internals, bc)?;
     let mut html = String::new();
     html.push_str(
@@ -174,8 +190,12 @@ pub fn format_into_html(scout_output: File, internals: File, bc: BlockChain) -> 
     Ok(html)
 }
 
-fn serify(scout_output: File, scout_internals: File, bc: BlockChain) -> anyhow::Result<serde_json::Value> {
-    let errors: HashMap<String, (Vec<String>, String)> =
+fn serify(
+    scout_output: File,
+    scout_internals: File,
+    bc: BlockChain,
+) -> anyhow::Result<serde_json::Value> {
+    let errors: HashMap<String, (Vec<Value>, String)> =
         get_errors_from_output(scout_output, scout_internals, bc)?;
 
     let sarif_output = json!({
@@ -208,30 +228,29 @@ fn serify(scout_output: File, scout_internals: File, bc: BlockChain) -> anyhow::
     Ok(json_errors)
 }
 
-pub fn format_into_sarif(scout_output: File, scout_internals: File, bc : BlockChain) -> anyhow::Result<String> {
+pub fn format_into_sarif(
+    scout_output: File,
+    scout_internals: File,
+    bc: BlockChain,
+) -> anyhow::Result<String> {
     Ok(serify(scout_output, scout_internals, bc)?.to_string())
 }
 
 fn build_sarif_results(
-    errors: &HashMap<String, (Vec<String>, String)>,
+    errors: &HashMap<String, (Vec<Value>, String)>,
 ) -> anyhow::Result<Vec<serde_json::Value>> {
     let runs: Vec<Value> = errors
         .iter()
         .flat_map(|(name, (spans, msg))| {
             spans.iter().filter_map(move |span| {
-                let span: Result<serde_json::Value, _> = serde_json::from_str(span);
-                if let Ok(span_value) = span {
-                    Some(json!({
-                        "ruleId": name,
-                        "level": "error",
-                        "message": {
-                            "text": msg
-                        },
-                        "locations": [span_value],
-                    }))
-                } else {
-                    None
-                }
+                Some(json!({
+                    "ruleId": name,
+                    "level": "error",
+                    "message": {
+                        "text": msg
+                    },
+                    "locations": [span],
+                }))
             })
         })
         .collect();

@@ -14,15 +14,28 @@ pub const APPLICABILITY_VALUES: [[&str; 3]; 4] = [
     ["rustc_lint_defs", "Applicability", "MachineApplicable"],
 ];
 #[cfg(feature = "internal")]
-pub const DIAGNOSTIC_BUILDER: [&str; 3] = ["rustc_errors", "diagnostic_builder", "DiagnosticBuilder"];
-pub const BINARYHEAP_ITER: [&str; 5] = ["alloc", "collections", "binary_heap", "BinaryHeap", "iter"];
-pub const BTREEMAP_CONTAINS_KEY: [&str; 6] = ["alloc", "collections", "btree", "map", "BTreeMap", "contains_key"];
-pub const BTREEMAP_INSERT: [&str; 6] = ["alloc", "collections", "btree", "map", "BTreeMap", "insert"];
+pub const DIAGNOSTIC_BUILDER: [&str; 3] =
+    ["rustc_errors", "diagnostic_builder", "DiagnosticBuilder"];
+pub const BINARYHEAP_ITER: [&str; 5] =
+    ["alloc", "collections", "binary_heap", "BinaryHeap", "iter"];
+pub const BTREEMAP_CONTAINS_KEY: [&str; 6] = [
+    "alloc",
+    "collections",
+    "btree",
+    "map",
+    "BTreeMap",
+    "contains_key",
+];
+pub const BTREEMAP_INSERT: [&str; 6] =
+    ["alloc", "collections", "btree", "map", "BTreeMap", "insert"];
 pub const BTREESET_ITER: [&str; 6] = ["alloc", "collections", "btree", "set", "BTreeSet", "iter"];
 pub const CLONE_TRAIT_METHOD: [&str; 4] = ["core", "clone", "Clone", "clone"];
-pub const CORE_ITER_CLONED: [&str; 6] = ["core", "iter", "traits", "iterator", "Iterator", "cloned"];
-pub const CORE_ITER_COPIED: [&str; 6] = ["core", "iter", "traits", "iterator", "Iterator", "copied"];
-pub const CORE_ITER_FILTER: [&str; 6] = ["core", "iter", "traits", "iterator", "Iterator", "filter"];
+pub const CORE_ITER_CLONED: [&str; 6] =
+    ["core", "iter", "traits", "iterator", "Iterator", "cloned"];
+pub const CORE_ITER_COPIED: [&str; 6] =
+    ["core", "iter", "traits", "iterator", "Iterator", "copied"];
+pub const CORE_ITER_FILTER: [&str; 6] =
+    ["core", "iter", "traits", "iterator", "Iterator", "filter"];
 pub const CORE_RESULT_OK_METHOD: [&str; 4] = ["core", "result", "Result", "ok"];
 pub const CSTRING_AS_C_STR: [&str; 5] = ["alloc", "ffi", "c_str", "CString", "as_c_str"];
 pub const DEFAULT_TRAIT_METHOD: [&str; 4] = ["core", "default", "Default", "default"];
@@ -34,13 +47,27 @@ pub const EARLY_LINT_PASS: [&str; 3] = ["rustc_lint", "passes", "EarlyLintPass"]
 pub const EXIT: [&str; 3] = ["std", "process", "exit"];
 pub const F32_EPSILON: [&str; 4] = ["core", "f32", "<impl f32>", "EPSILON"];
 pub const F64_EPSILON: [&str; 4] = ["core", "f64", "<impl f64>", "EPSILON"];
-pub const FROM_ITERATOR_METHOD: [&str; 6] = ["core", "iter", "traits", "collect", "FromIterator", "from_iter"];
+pub const FROM_ITERATOR_METHOD: [&str; 6] = [
+    "core",
+    "iter",
+    "traits",
+    "collect",
+    "FromIterator",
+    "from_iter",
+];
 pub const FROM_STR_METHOD: [&str; 5] = ["core", "str", "traits", "FromStr", "from_str"];
 #[expect(clippy::invalid_paths)] // internal lints do not know about all external crates
 pub const FUTURES_IO_ASYNCREADEXT: [&str; 3] = ["futures_util", "io", "AsyncReadExt"];
 #[expect(clippy::invalid_paths)] // internal lints do not know about all external crates
 pub const FUTURES_IO_ASYNCWRITEEXT: [&str; 3] = ["futures_util", "io", "AsyncWriteExt"];
-pub const HASHMAP_CONTAINS_KEY: [&str; 6] = ["std", "collections", "hash", "map", "HashMap", "contains_key"];
+pub const HASHMAP_CONTAINS_KEY: [&str; 6] = [
+    "std",
+    "collections",
+    "hash",
+    "map",
+    "HashMap",
+    "contains_key",
+];
 pub const HASHMAP_INSERT: [&str; 6] = ["std", "collections", "hash", "map", "HashMap", "insert"];
 pub const HASHSET_ITER: [&str; 6] = ["std", "collections", "hash", "set", "HashSet", "iter"];
 #[cfg(feature = "internal")]
@@ -74,7 +101,8 @@ pub const PATH_TO_PATH_BUF: [&str; 4] = ["std", "path", "Path", "to_path_buf"];
 pub const PEEKABLE: [&str; 5] = ["core", "iter", "adapters", "peekable", "Peekable"];
 pub const PERMISSIONS: [&str; 3] = ["std", "fs", "Permissions"];
 #[cfg_attr(not(unix), allow(clippy::invalid_paths))]
-pub const PERMISSIONS_FROM_MODE: [&str; 6] = ["std", "os", "unix", "fs", "PermissionsExt", "from_mode"];
+pub const PERMISSIONS_FROM_MODE: [&str; 6] =
+    ["std", "os", "unix", "fs", "PermissionsExt", "from_mode"];
 pub const PTR_COPY: [&str; 3] = ["core", "intrinsics", "copy"];
 pub const PTR_COPY_NONOVERLAPPING: [&str; 3] = ["core", "intrinsics", "copy_nonoverlapping"];
 pub const PTR_EQ: [&str; 3] = ["core", "ptr", "eq"];
@@ -86,8 +114,10 @@ pub const PTR_READ_UNALIGNED: [&str; 3] = ["core", "ptr", "read_unaligned"];
 pub const PTR_READ_VOLATILE: [&str; 3] = ["core", "ptr", "read_volatile"];
 pub const PTR_REPLACE: [&str; 3] = ["core", "ptr", "replace"];
 pub const PTR_SWAP: [&str; 3] = ["core", "ptr", "swap"];
-pub const PTR_UNALIGNED_VOLATILE_LOAD: [&str; 3] = ["core", "intrinsics", "unaligned_volatile_load"];
-pub const PTR_UNALIGNED_VOLATILE_STORE: [&str; 3] = ["core", "intrinsics", "unaligned_volatile_store"];
+pub const PTR_UNALIGNED_VOLATILE_LOAD: [&str; 3] =
+    ["core", "intrinsics", "unaligned_volatile_load"];
+pub const PTR_UNALIGNED_VOLATILE_STORE: [&str; 3] =
+    ["core", "intrinsics", "unaligned_volatile_store"];
 pub const PTR_WRITE_BYTES: [&str; 3] = ["core", "intrinsics", "write_bytes"];
 pub const PUSH_STR: [&str; 4] = ["alloc", "string", "String", "push_str"];
 pub const RANGE_ARGUMENT_TRAIT: [&str; 3] = ["core", "ops", "RangeBounds"];
@@ -139,9 +169,11 @@ pub const SYNTAX_CONTEXT: [&str; 3] = ["rustc_span", "hygiene", "SyntaxContext"]
 pub const TO_OWNED_METHOD: [&str; 4] = ["alloc", "borrow", "ToOwned", "to_owned"];
 pub const TO_STRING_METHOD: [&str; 4] = ["alloc", "string", "ToString", "to_string"];
 #[expect(clippy::invalid_paths)] // internal lints do not know about all external crates
-pub const TOKIO_IO_ASYNCREADEXT: [&str; 5] = ["tokio", "io", "util", "async_read_ext", "AsyncReadExt"];
+pub const TOKIO_IO_ASYNCREADEXT: [&str; 5] =
+    ["tokio", "io", "util", "async_read_ext", "AsyncReadExt"];
 #[expect(clippy::invalid_paths)] // internal lints do not know about all external crates
-pub const TOKIO_IO_ASYNCWRITEEXT: [&str; 5] = ["tokio", "io", "util", "async_write_ext", "AsyncWriteExt"];
+pub const TOKIO_IO_ASYNCWRITEEXT: [&str; 5] =
+    ["tokio", "io", "util", "async_write_ext", "AsyncWriteExt"];
 pub const TRY_FROM: [&str; 4] = ["core", "convert", "TryFrom", "try_from"];
 pub const VEC_AS_MUT_SLICE: [&str; 4] = ["alloc", "vec", "Vec", "as_mut_slice"];
 pub const VEC_AS_SLICE: [&str; 4] = ["alloc", "vec", "Vec", "as_slice"];

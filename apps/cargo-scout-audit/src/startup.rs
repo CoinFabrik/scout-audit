@@ -175,11 +175,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     Ok(())
 }
 
-fn run_dylint(
-    detectors_paths: Vec<PathBuf>,
-    opts: Scout,
-    bc_dependency: BlockChain,
-) -> Result<()> {
+fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockChain) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()

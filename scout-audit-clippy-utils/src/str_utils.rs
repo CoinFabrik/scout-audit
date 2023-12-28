@@ -8,7 +8,10 @@ pub struct StrIndex {
 
 impl StrIndex {
     pub fn new(char_index: usize, byte_index: usize) -> Self {
-        Self { char_index, byte_index }
+        Self {
+            char_index,
+            byte_index,
+        }
     }
 }
 
@@ -175,7 +178,10 @@ pub struct StrCount {
 
 impl StrCount {
     pub fn new(char_count: usize, byte_count: usize) -> Self {
-        Self { char_count, byte_count }
+        Self {
+            char_count,
+            byte_count,
+        }
     }
 }
 
@@ -200,9 +206,12 @@ pub fn count_match_start(str1: &str, str2: &str) -> StrCount {
         .zip(iter2)
         .take_while(|((_, c1), (_, c2))| c1 == c2)
         .last()
-        .map_or_else(StrCount::default, |((char_index, _), (byte_index, character))| {
-            StrCount::new(char_index + 1, byte_index + character.len_utf8())
-        })
+        .map_or_else(
+            StrCount::default,
+            |((char_index, _), (byte_index, character))| {
+                StrCount::new(char_index + 1, byte_index + character.len_utf8())
+            },
+        )
 }
 
 /// Returns the number of chars and bytes that match from the end
@@ -274,7 +283,10 @@ mod test {
     fn camel_case_until_full() {
         assert_eq!(camel_case_until("AbcDef"), StrIndex::new(6, 6));
         assert_eq!(camel_case_until("Abc"), StrIndex::new(3, 3));
-        assert_eq!(camel_case_until("Abc\u{f6}\u{f6}\u{f6}"), StrIndex::new(6, 9));
+        assert_eq!(
+            camel_case_until("Abc\u{f6}\u{f6}\u{f6}"),
+            StrIndex::new(6, 9)
+        );
     }
 
     #[test]
@@ -301,14 +313,23 @@ mod test {
         assert_eq!(camel_case_start_from_idx("AbcDef", 0), StrIndex::new(0, 0));
         assert_eq!(camel_case_start_from_idx("AbcDef", 1), StrIndex::new(3, 3));
         assert_eq!(camel_case_start_from_idx("AbcDef", 4), StrIndex::new(6, 6));
-        assert_eq!(camel_case_start_from_idx("AbcDefGhi", 0), StrIndex::new(0, 0));
-        assert_eq!(camel_case_start_from_idx("AbcDefGhi", 1), StrIndex::new(3, 3));
+        assert_eq!(
+            camel_case_start_from_idx("AbcDefGhi", 0),
+            StrIndex::new(0, 0)
+        );
+        assert_eq!(
+            camel_case_start_from_idx("AbcDefGhi", 1),
+            StrIndex::new(3, 3)
+        );
         assert_eq!(camel_case_start_from_idx("Abcdefg", 1), StrIndex::new(7, 7));
     }
 
     #[test]
     fn camel_case_indices_full() {
-        assert_eq!(camel_case_indices("Abc\u{f6}\u{f6}DD"), vec![StrIndex::new(7, 9)]);
+        assert_eq!(
+            camel_case_indices("Abc\u{f6}\u{f6}DD"),
+            vec![StrIndex::new(7, 9)]
+        );
     }
 
     #[test]

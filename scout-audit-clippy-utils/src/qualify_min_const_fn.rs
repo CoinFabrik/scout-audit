@@ -11,8 +11,8 @@ use rustc_hir::def_id::DefId;
 use rustc_infer::infer::TyCtxtInferExt;
 use rustc_infer::traits::Obligation;
 use rustc_middle::mir::{
-    Body, CastKind, NonDivergingIntrinsic, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-    Terminator, TerminatorKind,
+    Body, CastKind, NonDivergingIntrinsic, NullOp, Operand, Place, ProjectionElem, Rvalue,
+    Statement, StatementKind, Terminator, TerminatorKind,
 };
 use rustc_middle::traits::{BuiltinImplSource, ImplSource, ObligationCause};
 use rustc_middle::ty::adjustment::PointerCoercion;
@@ -34,7 +34,10 @@ pub fn is_min_const_fn<'tcx>(tcx: TyCtxt<'tcx>, body: &Body<'tcx>, msrv: &Msrv) 
     // impl trait is gone in MIR, so check the return type manually
     check_ty(
         tcx,
-        tcx.fn_sig(def_id).instantiate_identity().output().skip_binder(),
+        tcx.fn_sig(def_id)
+            .instantiate_identity()
+            .output()
+            .skip_binder(),
         body.local_decls.iter().next().unwrap().source_info.span,
     )?;
 
@@ -60,22 +63,25 @@ fn check_ty<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>, span: Span) -> McfResult {
         match ty.kind() {
             ty::Ref(_, _, hir::Mutability::Mut) => {
                 return Err((span, "mutable references in const fn are unstable".into()));
-            },
-            ty::Alias(ty::Opaque, ..) => return Err((span, "`impl Trait` in const fn is unstable".into())),
+            }
+            ty::Alias(ty::Opaque, ..) => {
+                return Err((span, "`impl Trait` in const fn is unstable".into()))
+            }
             ty::FnPtr(..) => {
                 return Err((span, "function pointers in const fn are unstable".into()));
-            },
+            }
             ty::Dynamic(preds, _, _) => {
                 for pred in *preds {
                     match pred.skip_binder() {
-                        ty::ExistentialPredicate::AutoTrait(_) | ty::ExistentialPredicate::Projection(_) => {
+                        ty::ExistentialPredicate::AutoTrait(_)
+                        | ty::ExistentialPredicate::Projection(_) => {
                             return Err((
                                 span,
                                 "trait bounds other than `Sized` \
                                  on const fn parameters are unstable"
                                     .into(),
                             ));
-                        },
+                        }
                         ty::ExistentialPredicate::Trait(trait_ref) => {
                             if Some(trait_ref.def_id) != tcx.lang_items().sized_trait() {
                                 return Err((
@@ -85,11 +91,11 @@ fn check_ty<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>, span: Span) -> McfResult {
                                         .into(),
                                 ));
                             }
-                        },
+                        }
                     }
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
     Ok(())
@@ -103,10 +109,14 @@ fn check_rvalue<'tcx>(
     span: Span,
 ) -> McfResult {
     match rvalue {
-        Rvalue::ThreadLocalRef(_) => Err((span, "cannot access thread local storage in const fn".into())),
-        Rvalue::Len(place) | Rvalue::Discriminant(place) | Rvalue::Ref(_, _, place) | Rvalue::AddressOf(_, place) => {
-            check_place(tcx, *place, span, body)
-        },
+        Rvalue::ThreadLocalRef(_) => Err((
+            span,
+            "cannot access thread local storage in const fn".into(),
+        )),
+        Rvalue::Len(place)
+        | Rvalue::Discriminant(place)
+        | Rvalue::Ref(_, _, place)
+        | Rvalue::AddressOf(_, place) => check_place(tcx, *place, span, body),
         Rvalue::CopyForDeref(place) => check_place(tcx, *place, span, body),
         Rvalue::Repeat(operand, _)
         | Rvalue::Use(operand)
@@ -118,7 +128,9 @@ fn check_rvalue<'tcx>(
             | CastKind::FloatToFloat
             | CastKind::FnPtrToPtr
             | CastKind::PtrToPtr
-            | CastKind::PointerCoercion(PointerCoercion::MutToConstPointer | PointerCoercion::ArrayToPointer),
+            | CastKind::PointerCoercion(
+                PointerCoercion::MutToConstPointer | PointerCoercion::ArrayToPointer,
+            ),
             operand,
             _,
         ) => check_operand(tcx, operand, span, body),
@@ -130,13 +142,19 @@ fn check_rvalue<'tcx>(
             ),
             _,
             _,
-        ) => Err((span, "function pointer casts are not allowed in const fn".into())),
+        ) => Err((
+            span,
+            "function pointer casts are not allowed in const fn".into(),
+        )),
         Rvalue::Cast(CastKind::PointerCoercion(PointerCoercion::Unsize), op, cast_ty) => {
             let pointee_ty = if let Some(deref_ty) = cast_ty.builtin_deref(true) {
                 deref_ty.ty
             } else {
                 // We cannot allow this for now.
-                return Err((span, "unsizing casts are only allowed for references right now".into()));
+                return Err((
+                    span,
+                    "unsizing casts are only allowed for references right now".into(),
+                ));
             };
             let unsized_ty = tcx.struct_tail_erasing_lifetimes(pointee_ty, tcx.param_env(def_id));
             if let ty::Slice(_) | ty::Str = unsized_ty.kind() {
@@ -147,17 +165,19 @@ fn check_rvalue<'tcx>(
                 // We just can't allow trait objects until we have figured out trait method calls.
                 Err((span, "unsizing casts are not allowed in const fn".into()))
             }
-        },
-        Rvalue::Cast(CastKind::PointerExposeAddress, _, _) => {
-            Err((span, "casting pointers to ints is unstable in const fn".into()))
-        },
+        }
+        Rvalue::Cast(CastKind::PointerExposeAddress, _, _) => Err((
+            span,
+            "casting pointers to ints is unstable in const fn".into(),
+        )),
         Rvalue::Cast(CastKind::DynStar, _, _) => {
             // FIXME(dyn-star)
             unimplemented!()
-        },
+        }
         Rvalue::Cast(CastKind::Transmute, _, _) => Err((
             span,
-            "transmute can attempt to turn pointers into integers, so is unstable in const fn".into(),
+            "transmute can attempt to turn pointers into integers, so is unstable in const fn"
+                .into(),
         )),
         // binops are fine on integers
         Rvalue::BinaryOp(_, box (lhs, rhs)) | Rvalue::CheckedBinaryOp(_, box (lhs, rhs)) => {
@@ -172,24 +192,26 @@ fn check_rvalue<'tcx>(
                     "only int, `bool` and `char` operations are stable in const fn".into(),
                 ))
             }
-        },
-        Rvalue::NullaryOp(NullOp::SizeOf | NullOp::AlignOf | NullOp::OffsetOf(_), _) | Rvalue::ShallowInitBox(_, _) => {
-            Ok(())
-        },
+        }
+        Rvalue::NullaryOp(NullOp::SizeOf | NullOp::AlignOf | NullOp::OffsetOf(_), _)
+        | Rvalue::ShallowInitBox(_, _) => Ok(()),
         Rvalue::UnaryOp(_, operand) => {
             let ty = operand.ty(body, tcx);
             if ty.is_integral() || ty.is_bool() {
                 check_operand(tcx, operand, span, body)
             } else {
-                Err((span, "only int and `bool` operations are stable in const fn".into()))
+                Err((
+                    span,
+                    "only int and `bool` operations are stable in const fn".into(),
+                ))
             }
-        },
+        }
         Rvalue::Aggregate(_, operands) => {
             for operand in operands {
                 check_operand(tcx, operand, span, body)?;
             }
             Ok(())
-        },
+        }
     }
 }
 
@@ -204,15 +226,17 @@ fn check_statement<'tcx>(
         StatementKind::Assign(box (place, rval)) => {
             check_place(tcx, *place, span, body)?;
             check_rvalue(tcx, body, def_id, rval, span)
-        },
+        }
 
         StatementKind::FakeRead(box (_, place)) => check_place(tcx, *place, span, body),
         // just an assignment
         StatementKind::SetDiscriminant { place, .. } | StatementKind::Deinit(place) => {
             check_place(tcx, **place, span, body)
-        },
+        }
 
-        StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(op)) => check_operand(tcx, op, span, body),
+        StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(op)) => {
+            check_operand(tcx, op, span, body)
+        }
 
         StatementKind::Intrinsic(box NonDivergingIntrinsic::CopyNonOverlapping(
             rustc_middle::mir::CopyNonOverlapping { dst, src, count },
@@ -220,7 +244,7 @@ fn check_statement<'tcx>(
             check_operand(tcx, dst, span, body)?;
             check_operand(tcx, src, span, body)?;
             check_operand(tcx, count, span, body)
-        },
+        }
         // These are all NOPs
         StatementKind::StorageLive(_)
         | StatementKind::StorageDead(_)
@@ -233,7 +257,12 @@ fn check_statement<'tcx>(
     }
 }
 
-fn check_operand<'tcx>(tcx: TyCtxt<'tcx>, operand: &Operand<'tcx>, span: Span, body: &Body<'tcx>) -> McfResult {
+fn check_operand<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    operand: &Operand<'tcx>,
+    span: Span,
+    body: &Body<'tcx>,
+) -> McfResult {
     match operand {
         Operand::Move(place) => {
             if !place.projection.as_ref().is_empty()
@@ -246,7 +275,7 @@ fn check_operand<'tcx>(tcx: TyCtxt<'tcx>, operand: &Operand<'tcx>, span: Span, b
             }
 
             check_place(tcx, *place, span, body)
-        },
+        }
         Operand::Copy(place) => check_place(tcx, *place, span, body),
         Operand::Constant(c) => match c.check_static_ptr(tcx) {
             Some(_) => Err((span, "cannot access `static` items in const fn".into())),
@@ -255,7 +284,12 @@ fn check_operand<'tcx>(tcx: TyCtxt<'tcx>, operand: &Operand<'tcx>, span: Span, b
     }
 }
 
-fn check_place<'tcx>(tcx: TyCtxt<'tcx>, place: Place<'tcx>, span: Span, body: &Body<'tcx>) -> McfResult {
+fn check_place<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    place: Place<'tcx>,
+    span: Span,
+    body: &Body<'tcx>,
+) -> McfResult {
     for (base, elem) in place.as_ref().iter_projections() {
         match elem {
             ProjectionElem::Field(..) => {
@@ -266,13 +300,13 @@ fn check_place<'tcx>(tcx: TyCtxt<'tcx>, place: Place<'tcx>, span: Span, body: &B
                         return Err((span, "accessing union fields is unstable".into()));
                     }
                 }
-            },
+            }
             ProjectionElem::ConstantIndex { .. }
             | ProjectionElem::OpaqueCast(..)
             | ProjectionElem::Downcast(..)
             | ProjectionElem::Subslice { .. }
             | ProjectionElem::Deref
-            | ProjectionElem::Index(_) => {},
+            | ProjectionElem::Index(_) => {}
         }
     }
 
@@ -302,11 +336,11 @@ fn check_terminator<'tcx>(
                 ));
             }
             Ok(())
-        },
+        }
         TerminatorKind::SwitchInt { discr, targets: _ } => check_operand(tcx, discr, span, body),
         TerminatorKind::GeneratorDrop | TerminatorKind::Yield { .. } => {
             Err((span, "const fn generators are unstable".into()))
-        },
+        }
         TerminatorKind::Call {
             func,
             args,
@@ -349,7 +383,7 @@ fn check_terminator<'tcx>(
             } else {
                 Err((span, "can only call other const fns within const fn".into()))
             }
-        },
+        }
         TerminatorKind::Assert {
             cond,
             expected: _,
@@ -357,7 +391,9 @@ fn check_terminator<'tcx>(
             target: _,
             unwind: _,
         } => check_operand(tcx, cond, span, body),
-        TerminatorKind::InlineAsm { .. } => Err((span, "cannot use inline assembly in const fn".into())),
+        TerminatorKind::InlineAsm { .. } => {
+            Err((span, "cannot use inline assembly in const fn".into()))
+        }
     }
 }
 
@@ -393,7 +429,11 @@ fn is_const_fn(tcx: TyCtxt<'_>, def_id: DefId, msrv: &Msrv) -> bool {
 fn is_ty_const_destruct<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>, body: &Body<'tcx>) -> bool {
     // FIXME(effects, fee1-dead) revert to const destruct once it works again
     #[expect(unused)]
-    fn is_ty_const_destruct_unused<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>, body: &Body<'tcx>) -> bool {
+    fn is_ty_const_destruct_unused<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        ty: Ty<'tcx>,
+        body: &Body<'tcx>,
+    ) -> bool {
         // Avoid selecting for simple cases, such as builtin types.
         if ty::util::is_trivially_const_drop(ty) {
             return true;

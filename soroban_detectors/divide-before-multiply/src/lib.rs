@@ -20,7 +20,9 @@ use rustc_middle::mir::{
 use rustc_middle::ty::TyKind;
 use rustc_span::def_id::DefId;
 use rustc_span::Span;
-use scout_audit_internal::{DetectorImpl, SorobanDetector as Detector, SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE};
+use scout_audit_internal::{
+    DetectorImpl, SorobanDetector as Detector, SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
+};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does

@@ -22,14 +22,19 @@ impl<'a, 'tcx> PossibleOriginVisitor<'a, 'tcx> {
         }
     }
 
-    pub fn into_map(self, cx: &LateContext<'tcx>) -> FxHashMap<mir::Local, HybridBitSet<mir::Local>> {
+    pub fn into_map(
+        self,
+        cx: &LateContext<'tcx>,
+    ) -> FxHashMap<mir::Local, HybridBitSet<mir::Local>> {
         let mut map = FxHashMap::default();
         for row in (1..self.body.local_decls.len()).map(mir::Local::from_usize) {
             if is_copy(cx, self.body.local_decls[row].ty) {
                 continue;
             }
 
-            let mut borrowers = self.possible_origin.reachable_from(row, self.body.local_decls.len());
+            let mut borrowers = self
+                .possible_origin
+                .reachable_from(row, self.body.local_decls.len());
             borrowers.remove(mir::Local::from_usize(0));
             if !borrowers.is_empty() {
                 map.insert(row, borrowers);
@@ -40,7 +45,12 @@ impl<'a, 'tcx> PossibleOriginVisitor<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> mir::visit::Visitor<'tcx> for PossibleOriginVisitor<'a, 'tcx> {
-    fn visit_assign(&mut self, place: &mir::Place<'tcx>, rvalue: &mir::Rvalue<'_>, _location: mir::Location) {
+    fn visit_assign(
+        &mut self,
+        place: &mir::Place<'tcx>,
+        rvalue: &mir::Rvalue<'_>,
+        _location: mir::Location,
+    ) {
         let lhs = place.local;
         match rvalue {
             // Only consider `&mut`, which can modify origin place

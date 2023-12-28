@@ -47,7 +47,9 @@ impl Meet for Certainty {
         match (self, other) {
             (Certainty::Uncertain, _) | (_, Certainty::Uncertain) => Certainty::Uncertain,
             (Certainty::Certain(lhs), Certainty::Certain(rhs)) => Certainty::Certain(lhs.meet(rhs)),
-            (Certainty::Certain(inner), _) | (_, Certainty::Certain(inner)) => Certainty::Certain(inner),
+            (Certainty::Certain(inner), _) | (_, Certainty::Certain(inner)) => {
+                Certainty::Certain(inner)
+            }
             (Certainty::Contradiction, Certainty::Contradiction) => Certainty::Contradiction,
         }
     }
@@ -59,7 +61,9 @@ impl Certainty {
     /// `join_clearing_def_ids` should be used.
     pub fn join(self, other: Self) -> Self {
         match (self, other) {
-            (Certainty::Contradiction, _) | (_, Certainty::Contradiction) => Certainty::Contradiction,
+            (Certainty::Contradiction, _) | (_, Certainty::Contradiction) => {
+                Certainty::Contradiction
+            }
 
             (Certainty::Certain(lhs), Certainty::Certain(rhs)) => {
                 if let Some(inner) = lhs.try_join(rhs) {
@@ -68,9 +72,11 @@ impl Certainty {
                     debug_assert!(false, "Contradiction with {lhs:?} and {rhs:?}");
                     Certainty::Contradiction
                 }
-            },
+            }
 
-            (Certainty::Certain(inner), _) | (_, Certainty::Certain(inner)) => Certainty::Certain(inner),
+            (Certainty::Certain(inner), _) | (_, Certainty::Certain(inner)) => {
+                Certainty::Certain(inner)
+            }
 
             (Certainty::Uncertain, Certainty::Uncertain) => Certainty::Uncertain,
         }

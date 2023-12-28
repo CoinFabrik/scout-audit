@@ -152,11 +152,18 @@ where
     });
 }
 
-pub fn span_lint_hir(cx: &LateContext<'_>, lint: &'static Lint, hir_id: HirId, sp: Span, msg: &str) {
-    cx.tcx.struct_span_lint_hir(lint, hir_id, sp, msg.to_string(), |diag| {
-        docs_link(diag, lint);
-        diag
-    });
+pub fn span_lint_hir(
+    cx: &LateContext<'_>,
+    lint: &'static Lint,
+    hir_id: HirId,
+    sp: Span,
+    msg: &str,
+) {
+    cx.tcx
+        .struct_span_lint_hir(lint, hir_id, sp, msg.to_string(), |diag| {
+            docs_link(diag, lint);
+            diag
+        });
 }
 
 pub fn span_lint_hir_and_then(
@@ -167,11 +174,12 @@ pub fn span_lint_hir_and_then(
     msg: &str,
     f: impl FnOnce(&mut Diagnostic),
 ) {
-    cx.tcx.struct_span_lint_hir(lint, hir_id, sp, msg.to_string(), |diag| {
-        f(diag);
-        docs_link(diag, lint);
-        diag
-    });
+    cx.tcx
+        .struct_span_lint_hir(lint, hir_id, sp, msg.to_string(), |diag| {
+            f(diag);
+            docs_link(diag, lint);
+            diag
+        });
 }
 
 /// Add a span lint with a suggestion on how to fix it.
@@ -234,5 +242,9 @@ pub fn multispan_sugg_with_applicability<I>(
 ) where
     I: IntoIterator<Item = (Span, String)>,
 {
-    diag.multipart_suggestion(help_msg.to_string(), sugg.into_iter().collect(), applicability);
+    diag.multipart_suggestion(
+        help_msg.to_string(),
+        sugg.into_iter().collect(),
+        applicability,
+    );
 }

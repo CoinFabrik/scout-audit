@@ -49,7 +49,9 @@ impl<'a, 'b, 'tcx> PossibleBorrowerVisitor<'a, 'b, 'tcx> {
                 continue;
             }
 
-            let mut borrowers = self.possible_borrower.reachable_from(row, self.body.local_decls.len());
+            let mut borrowers = self
+                .possible_borrower
+                .reachable_from(row, self.body.local_decls.len());
             borrowers.remove(mir::Local::from_usize(0));
             if !borrowers.is_empty() {
                 map.insert(row, borrowers);
@@ -66,12 +68,17 @@ impl<'a, 'b, 'tcx> PossibleBorrowerVisitor<'a, 'b, 'tcx> {
 }
 
 impl<'a, 'b, 'tcx> mir::visit::Visitor<'tcx> for PossibleBorrowerVisitor<'a, 'b, 'tcx> {
-    fn visit_assign(&mut self, place: &mir::Place<'tcx>, rvalue: &mir::Rvalue<'_>, _location: mir::Location) {
+    fn visit_assign(
+        &mut self,
+        place: &mir::Place<'tcx>,
+        rvalue: &mir::Rvalue<'_>,
+        _location: mir::Location,
+    ) {
         let lhs = place.local;
         match rvalue {
             mir::Rvalue::Ref(_, _, borrowed) => {
                 self.possible_borrower.add(borrowed.local, lhs);
-            },
+            }
             other => {
                 if ContainsRegion
                     .visit_ty(place.ty(&self.body.local_decls, self.cx.tcx).ty)
@@ -84,7 +91,7 @@ impl<'a, 'b, 'tcx> mir::visit::Visitor<'tcx> for PossibleBorrowerVisitor<'a, 'b,
                         self.possible_borrower.add(rhs, lhs);
                     }
                 });
-            },
+            }
         }
     }
 
@@ -106,12 +113,14 @@ impl<'a, 'b, 'tcx> mir::visit::Visitor<'tcx> for PossibleBorrowerVisitor<'a, 'b,
             for op in args {
                 match op {
                     mir::Operand::Copy(p) | mir::Operand::Move(p) => {
-                        if let ty::Ref(_, _, Mutability::Mut) = self.body.local_decls[p.local].ty.kind() {
+                        if let ty::Ref(_, _, Mutability::Mut) =
+                            self.body.local_decls[p.local].ty.kind()
+                        {
                             mutable_borrowers.push(p.local);
                         } else {
                             immutable_borrowers.push(p.local);
                         }
-                    },
+                    }
                     mir::Operand::Constant(..) => (),
                 }
             }
@@ -122,7 +131,10 @@ impl<'a, 'b, 'tcx> mir::visit::Visitor<'tcx> for PossibleBorrowerVisitor<'a, 'b,
                 .flat_map(HybridBitSet::iter)
                 .collect();
 
-            if ContainsRegion.visit_ty(self.body.local_decls[*dest].ty).is_break() {
+            if ContainsRegion
+                .visit_ty(self.body.local_decls[*dest].ty)
+                .is_break()
+            {
                 mutable_variables.push(*dest);
             }
 
@@ -149,7 +161,9 @@ impl TypeVisitor<TyCtxt<'_>> for ContainsRegion {
 }
 
 fn rvalue_locals(rvalue: &mir::Rvalue<'_>, mut visit: impl FnMut(mir::Local)) {
-    use rustc_middle::mir::Rvalue::{Aggregate, BinaryOp, Cast, CheckedBinaryOp, Repeat, UnaryOp, Use};
+    use rustc_middle::mir::Rvalue::{
+        Aggregate, BinaryOp, Cast, CheckedBinaryOp, Repeat, UnaryOp, Use,
+    };
 
     let mut visit_op = |op: &mir::Operand<'_>| match op {
         mir::Operand::Copy(p) | mir::Operand::Move(p) => visit(p.local),
@@ -162,7 +176,7 @@ fn rvalue_locals(rvalue: &mir::Rvalue<'_>, mut visit: impl FnMut(mir::Local)) {
         BinaryOp(_, box (lhs, rhs)) | CheckedBinaryOp(_, box (lhs, rhs)) => {
             visit_op(lhs);
             visit_op(rhs);
-        },
+        }
         _ => (),
     }
 }
@@ -184,18 +198,24 @@ impl<'a, 'b, 'tcx> PossibleBorrowerMap<'b, 'tcx> {
             vis.visit_body(mir);
             vis.into_map(cx)
         };
-        let maybe_storage_live_result = MaybeStorageLive::new(Cow::Owned(BitSet::new_empty(mir.local_decls.len())))
-            .into_engine(cx.tcx, mir)
-            .pass_name("redundant_clone")
-            .iterate_to_fixpoint()
-            .into_results_cursor(mir);
+        let maybe_storage_live_result =
+            MaybeStorageLive::new(Cow::Owned(BitSet::new_empty(mir.local_decls.len())))
+                .into_engine(cx.tcx, mir)
+                .pass_name("redundant_clone")
+                .iterate_to_fixpoint()
+                .into_results_cursor(mir);
         let mut vis = PossibleBorrowerVisitor::new(cx, mir, possible_origin);
         vis.visit_body(mir);
         vis.into_map(cx, maybe_storage_live_result)
     }
 
     /// Returns true if the set of borrowers of `borrowed` living at `at` matches with `borrowers`.
-    pub fn only_borrowers(&mut self, borrowers: &[mir::Local], borrowed: mir::Local, at: mir::Location) -> bool {
+    pub fn only_borrowers(
+        &mut self,
+        borrowers: &[mir::Local],
+        borrowed: mir::Local,
+        at: mir::Location,
+    ) -> bool {
         self.bounded_borrowers(borrowers, borrowers, borrowed, at)
     }
 

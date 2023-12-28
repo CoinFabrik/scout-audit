@@ -7,13 +7,11 @@ extern crate rustc_lint;
 #[cfg(feature = "lint_helper")]
 extern crate rustc_span;
 
-
-pub mod soroban_lint_message;
 pub mod ink_lint_message;
+pub mod soroban_lint_message;
 
-use soroban_lint_message::*;
 use ink_lint_message::*;
-
+use soroban_lint_message::*;
 
 #[cfg(feature = "lint_helper")]
 use rustc_lint::{Lint, LintContext};
@@ -26,8 +24,6 @@ use scout_audit_clippy_utils::diagnostics::{
 #[cfg(feature = "lint_helper")]
 use serde_json::json;
 use strum::{Display, EnumIter};
-
-
 
 /// Available detectors for Soroban
 #[derive(Debug, Display, Clone, EnumIter, PartialEq, Eq, Hash)]
@@ -80,7 +76,7 @@ This trait should be implemented by every enum of detectors (for each blockchain
 We cannot use this trait because it's not possible to make CONST functions in traits!
 If in the future this is possible, we can use this trait to enforce the implementation of the functions
 */
-pub trait DetectorImpl : std::fmt::Display {
+pub trait DetectorImpl: std::fmt::Display {
     fn get_lint_message(&self) -> &'static str;
 
     #[cfg(feature = "lint_helper")]
@@ -96,12 +92,13 @@ pub trait DetectorImpl : std::fmt::Display {
     fn span_lint<T: LintContext>(&self, cx: &T, lint: &'static Lint, span: Span);
 }
 
-
 impl DetectorImpl for SorobanDetector {
     fn get_lint_message(&self) -> &'static str {
         match self {
             SorobanDetector::AvoidCoreMemForget => SOROBAN_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
-            SorobanDetector::InsufficientlyRandomValues => SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
+            SorobanDetector::InsufficientlyRandomValues => {
+                SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE
+            }
             SorobanDetector::DivideBeforeMultiply => SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
             SorobanDetector::OverflowCheck => SOROBAN_OVERFLOW_CHECK_LINT_MESSAGE,
             SorobanDetector::SetContractStorage => SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE,
@@ -132,7 +129,6 @@ impl DetectorImpl for SorobanDetector {
     }
 }
 
-
 impl DetectorImpl for InkDetector {
     /// Returns the lint message for the detector.
     fn get_lint_message(&self) -> &'static str {
@@ -147,8 +143,12 @@ impl DetectorImpl for InkDetector {
                 INK_DOS_UNEXPECTED_REVERT_WITH_VECTOR_LINT_MESSAGE
             }
             InkDetector::InkVersion => INK_INK_VERSION_LINT_MESSAGE,
-            InkDetector::InsufficientlyRandomValues => INK_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
-            InkDetector::IntegerOverflowOrUnderflow => INK_INTEGER_OVERFLOW_OR_UNDERFLOW_LINT_MESSAGE,
+            InkDetector::InsufficientlyRandomValues => {
+                INK_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE
+            }
+            InkDetector::IntegerOverflowOrUnderflow => {
+                INK_INTEGER_OVERFLOW_OR_UNDERFLOW_LINT_MESSAGE
+            }
             InkDetector::IteratorsOverIndexing => INK_ITERATORS_OVER_INDEXING_LINT_MESSAGE,
             InkDetector::LazyDelegate => INK_LAZY_DELEGATE_LINT_MESSAGE,
             InkDetector::PanicError => INK_PANIC_ERROR_LINT_MESSAGE,
@@ -156,7 +156,9 @@ impl DetectorImpl for InkDetector {
             InkDetector::Reentrancy2 => INK_REENTRANCY_LINT_MESSAGE,
             InkDetector::SetCodeHash => INK_SET_CODE_HASH_LINT_MESSAGE,
             InkDetector::SetContractStorage => INK_SET_CONTRACT_STORAGE_LINT_MESSAGE,
-            InkDetector::UnprotectedMappingOperation => INK_UNPROTECTED_MAPPING_OPERATION_LINT_MESSAGE,
+            InkDetector::UnprotectedMappingOperation => {
+                INK_UNPROTECTED_MAPPING_OPERATION_LINT_MESSAGE
+            }
             InkDetector::UnprotectedSelfDestruct => INK_UNPROTECTED_SELF_DESTRUCT_LINT_MESSAGE,
             InkDetector::UnrestrictedTransferFrom => INK_UNRESTRICTED_TRANSFER_FROM_LINT_MESSAGE,
             InkDetector::UnsafeExpect => INK_UNSAFE_EXPECT_LINT_MESSAGE,
@@ -184,7 +186,6 @@ impl DetectorImpl for InkDetector {
         span_lint_clippy(cx, lint, span, self.get_lint_message());
     }
 }
-
 
 #[cfg(feature = "lint_helper")]
 fn print_scout_output(lint: Lint, span: Span) {
