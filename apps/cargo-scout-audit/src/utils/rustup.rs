@@ -16,6 +16,7 @@ pub fn active_toolchain(path: &Path) -> Result<String> {
         .args(["show", "active-toolchain"])
         .output()?;
     let stdout = std::str::from_utf8(&output.stdout)?;
+    println!("active toolchain: {:?}", stdout);
     stdout
         .split_once(' ')
         .map(|(s, _)| s.to_owned())

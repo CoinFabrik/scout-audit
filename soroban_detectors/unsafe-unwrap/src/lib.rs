@@ -10,9 +10,7 @@ use rustc_hir::{
 };
 use rustc_lint::LateLintPass;
 use rustc_span::{Span, Symbol};
-use scout_audit_internal::{
-    DetectorImpl, SorobanDetector as Detector, SOROBAN_UNSAFE_UNWRAP_LINT_MESSAGE,
-};
+use scout_audit_internal::Detector;
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
@@ -47,7 +45,7 @@ dylint_linting::declare_late_lint! {
     /// ```
     pub UNSAFE_UNWRAP,
     Warn,
-    SOROBAN_UNSAFE_UNWRAP_LINT_MESSAGE
+    Detector::UnsafeUnwrap.get_lint_message()
 }
 
 impl<'tcx> LateLintPass<'tcx> for UnsafeUnwrap {

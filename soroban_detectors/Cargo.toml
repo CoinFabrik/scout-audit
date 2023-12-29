@@ -4,9 +4,9 @@ exclude = [".cargo", "target"]
 resolver = "2"
 
 [workspace.dependencies]
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "7671c283a50b5d1168841f3014b14000f01dd204" }
 dylint_linting = "2.1.5"
 dylint_testing = "2.1.5"
 if_chain = "1.0.2"
 
+scout-audit-clippy-utils = { version = "=0.2.1", path = "../scout-audit-clippy-utils" }
 scout-audit-internal = { path = "../scout-audit-internal", features = ["detector", "lint_helper"] }

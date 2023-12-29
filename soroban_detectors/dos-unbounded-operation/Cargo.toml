@@ -1,5 +1,5 @@
 [package]
-name = "unprotected-update-current-contract-wasm"
+name = "dos-unbounded-operation"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,7 +14,6 @@ scout-audit-internal = { workspace = true }
 
 [dev-dependencies]
 dylint_testing = { workspace = true }
-
 
 [package.metadata.rust-analyzer]
 rustc_private = true

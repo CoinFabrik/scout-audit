@@ -5,9 +5,7 @@ extern crate rustc_hir;
 use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
-use scout_audit_internal::{
-    DetectorImpl, SorobanDetector as Detector, SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
-};
+use scout_audit_internal::Detector;
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
@@ -23,7 +21,7 @@ dylint_linting::declare_late_lint! {
     ///
     pub INSUFFICIENTLY_RANDOM_VALUES,
     Warn,
-    SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE
+    Detector::InsufficientlyRandomValues.get_lint_message()
 }
 
 impl<'tcx> LateLintPass<'tcx> for InsufficientlyRandomValues {

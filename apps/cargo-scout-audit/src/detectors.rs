@@ -8,7 +8,7 @@ use self::{
     builder::DetectorBuilder,
     configuration::{DetectorConfiguration, DetectorsConfigurationList},
 };
-
+use crate::startup::BlockChain;
 mod builder;
 mod configuration;
 mod library;
@@ -42,12 +42,12 @@ impl Detectors {
     }
 
     /// Builds detectors and returns the paths to the built libraries
-    pub fn build(self, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
+    pub fn build(self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
         let detectors_paths = self
             .detectors_configs
             .iter()
             .map(|detectors_config| {
-                self.build_detectors(detectors_config.clone(), used_detectors.clone())
+                self.build_detectors(detectors_config.clone(), bc, used_detectors.clone())
             })
             .flatten_ok()
             .collect::<Result<Vec<_>>>()?;
@@ -76,6 +76,7 @@ impl Detectors {
     fn build_detectors(
         &self,
         detectors_config: DetectorConfiguration,
+        bc: BlockChain,
         used_detectors: Vec<String>,
     ) -> Result<Vec<PathBuf>> {
         let builder = DetectorBuilder::new(
@@ -85,6 +86,6 @@ impl Detectors {
             self.verbose,
         );
 
-        builder.build(used_detectors)
+        builder.build(bc, used_detectors)
     }
 }

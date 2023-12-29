@@ -4,8 +4,8 @@ use anyhow::Result;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
+use crate::startup::BlockChain;
 use crate::utils::{cargo, env};
-
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
 pub struct Library {
@@ -27,18 +27,14 @@ impl Library {
     }
 
     /// Builds the library and returns its path.
-    pub fn build(&self, verbose: bool) -> Result<Vec<PathBuf>> {
+    pub fn build(&self, bc: BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
         // Build entire workspace
-        println!("cargo build --release");
-
-        cargo::build("detectors", !verbose)
+        cargo::build("detectors", bc, !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
             .current_dir(&self.root)
             .args(["--release"])
             .success()?;
-
-        println!("cargo build --release");
 
         // Verify all libraries were built
         let compiled_library_paths = self

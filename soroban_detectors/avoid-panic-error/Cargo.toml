@@ -1,5 +1,5 @@
 [package]
-name = "unprotected-update-current-contract-wasm"
+name = "avoid-panic-error"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,11 +10,11 @@ crate-type = ["cdylib"]
 dylint_linting = { workspace = true }
 if_chain = { workspace = true }
 
+scout-audit-clippy-utils = { workspace = true }
 scout-audit-internal = { workspace = true }
 
 [dev-dependencies]
 dylint_testing = { workspace = true }
-
 
 [package.metadata.rust-analyzer]
 rustc_private = true

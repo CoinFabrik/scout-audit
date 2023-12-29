@@ -1,3 +1,5 @@
+use crate::startup::BlockChain;
+use ansi_term::Style;
 #[cfg(windows)]
 use std::path::Path;
 use std::{
@@ -5,15 +7,14 @@ use std::{
     process::Stdio,
 };
 
-use ansi_term::Style;
-
 use super::command::Command;
-
 #[must_use]
-pub fn build(description: &str, quiet: bool) -> Command {
-    cargo("build", "Building", description, quiet)
+pub fn build(description: &str, bc: BlockChain, quiet: bool) -> Command {
+    cargo("build", "Building", description, quiet, bc)
 }
-fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool) -> Command {
+fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: BlockChain) -> Command {
+    let toolchain = get_toolchain(bc);
+
     if !quiet {
         // smoelius: Writing directly to `stderr` avoids capture by `libtest`.
         let message = format!("{verb} {description}");
@@ -43,9 +44,16 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool) -> Comman
         .unwrap();
         command.envs(vec![("PATH", new_path)]);
     }
-    command.args([subcommand]);
+    command.args([toolchain, subcommand]);
     if quiet {
         command.stderr(Stdio::null());
     }
     command
+}
+
+fn get_toolchain(bc: BlockChain) -> &'static str {
+    match bc {
+        BlockChain::Ink => "+nightly-2023-04-23",
+        BlockChain::Soroban => "+nightly-2023-09-29",
+    }
 }

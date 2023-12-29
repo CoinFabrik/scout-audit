@@ -6,8 +6,8 @@ use cargo_metadata::Metadata;
 use itertools::Itertools;
 
 use super::{configuration::DetectorConfiguration, library::Library, source::download_git_repo};
+use crate::startup::BlockChain;
 use crate::utils::{cargo_package, rustup};
-
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a Config,
@@ -33,11 +33,11 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     /// Compiles detector library and returns its path.
-    pub fn build(self, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
+    pub fn build(self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
         let detector_root = self.download_detector()?;
         let workspace_path = self.parse_library_path(&detector_root)?;
         let library = self.get_library(workspace_path)?;
-        let library_paths = self.build_detectors(library)?;
+        let library_paths = self.build_detectors(bc, library)?;
         let filtered_paths = self.filter_detectors(library_paths, used_detectors)?;
 
         Ok(filtered_paths)
@@ -116,6 +116,7 @@ impl<'a> DetectorBuilder<'a> {
 
         let package_metadata = cargo_package::package_metadata(&workspace_path)?;
         let toolchain = rustup::active_toolchain(&workspace_path)?;
+        println!("toolchain: {:?}", toolchain);
         let library = Library::new(
             workspace_path,
             toolchain,
@@ -129,8 +130,8 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     /// Builds detectors returning their compiled paths.
-    fn build_detectors(&self, library: Library) -> Result<Vec<PathBuf>> {
-        let library_paths = library.build(self.verbose)?;
+    fn build_detectors(&self, bc: BlockChain, library: Library) -> Result<Vec<PathBuf>> {
+        let library_paths = library.build(bc, self.verbose)?;
         Ok(library_paths)
     }
 
