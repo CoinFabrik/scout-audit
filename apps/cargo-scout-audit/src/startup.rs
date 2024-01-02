@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs, io::Write, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -97,7 +97,6 @@ pub enum BlockChain {
 }
 
 pub fn run_scout(opts: Scout) -> Result<()> {
-    println!("opts.args: {:?}", opts.args);
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");

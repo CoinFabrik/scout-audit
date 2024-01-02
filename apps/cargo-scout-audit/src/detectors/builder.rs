@@ -116,7 +116,6 @@ impl<'a> DetectorBuilder<'a> {
 
         let package_metadata = cargo_package::package_metadata(&workspace_path)?;
         let toolchain = rustup::active_toolchain(&workspace_path)?;
-        println!("toolchain: {:?}", toolchain);
         let library = Library::new(
             workspace_path,
             toolchain,
