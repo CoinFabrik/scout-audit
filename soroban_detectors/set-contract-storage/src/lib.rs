@@ -11,7 +11,9 @@ use rustc_hir::{Body, FnDecl};
 use rustc_hir::{Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
-use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE};
+use scout_audit_internal::{
+    DetectorImpl, SorobanDetector, SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE,
+};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does

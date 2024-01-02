@@ -14,7 +14,9 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span};
-use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE};
+use scout_audit_internal::{
+    DetectorImpl, SorobanDetector, SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
+};
 
 dylint_linting::declare_late_lint!(
     pub DOS_UNBOUNDED_OPERATION,
