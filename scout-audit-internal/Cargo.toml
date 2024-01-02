@@ -15,7 +15,7 @@ description = "Scout is an extensible open-source tool intended to assist soroba
 homepage = "https://github.com/CoinFabrik/scout-soroban"
 repository = "https://github.com/CoinFabrik/scout-soroban"
 readme = "../README.md"
-keywords = ["auditor", "rust", "security", "soroban", "stellar", "smart-contracts"]
+keywords = ["auditor", "security", "soroban", "stellar", "smart-contracts"]
 categories = ["development-tools", "command-line-utilities"]
 
 [features]
