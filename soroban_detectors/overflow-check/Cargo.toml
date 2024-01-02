@@ -11,7 +11,7 @@ dylint_linting = { workspace = true }
 if_chain = { workspace = true }
 toml = "0.8.8"
 
-scout-audit-internal = { workspace = true }
+scout-audit-internal-soroban = { workspace = true }
 
 [dev-dependencies]
 dylint_testing = { workspace = true }
