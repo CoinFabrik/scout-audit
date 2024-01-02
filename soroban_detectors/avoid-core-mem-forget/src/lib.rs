@@ -8,7 +8,7 @@ use if_chain::if_chain;
 use rustc_ast::{Expr, ExprKind, Item, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::sym;
-use scout_audit_internal::{
+use scout_audit_internal_soroban::{
     DetectorImpl, SorobanDetector, SOROBAN_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
 };
 

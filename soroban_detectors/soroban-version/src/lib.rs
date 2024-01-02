@@ -8,7 +8,7 @@ use std::{env, fs, io::Error, path::Path};
 
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
-use scout_audit_internal::{DetectorImpl, SorobanDetector, SOROBAN_SOROBAN_VERSION_LINT_MESSAGE};
+use scout_audit_internal_soroban::{DetectorImpl, SorobanDetector, SOROBAN_SOROBAN_VERSION_LINT_MESSAGE};
 use semver::*;
 
 dylint_linting::declare_early_lint! {

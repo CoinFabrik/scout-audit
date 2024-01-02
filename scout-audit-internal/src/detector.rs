@@ -18,7 +18,7 @@ use rustc_lint::{Lint, LintContext};
 #[cfg(feature = "lint_helper")]
 use rustc_span::Span;
 #[cfg(feature = "lint_helper")]
-use scout_audit_clippy_utils::diagnostics::{
+use scout_audit_clippy_utils_soroban::diagnostics::{
     span_lint as span_lint_clippy, span_lint_and_help as span_lint_and_help_clippy,
 };
 #[cfg(feature = "lint_helper")]

@@ -14,7 +14,7 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span};
-use scout_audit_internal::{
+use scout_audit_internal_soroban::{
     DetectorImpl, SorobanDetector, SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
 };
 

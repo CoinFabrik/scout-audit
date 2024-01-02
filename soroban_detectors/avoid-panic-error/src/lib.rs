@@ -13,8 +13,8 @@ use rustc_ast::{
 };
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::{sym, Span};
-use scout_audit_clippy_utils::sym;
-use scout_audit_internal::{DetectorImpl, SorobanDetector, SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE};
+use scout_audit_clippy_utils_soroban::sym;
+use scout_audit_internal_soroban::{DetectorImpl, SorobanDetector, SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE};
 
 dylint_linting::impl_pre_expansion_lint! {
     /// ### What it does

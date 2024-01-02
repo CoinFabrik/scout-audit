@@ -45,7 +45,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -55,8 +55,8 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-clippy-utils",
- "scout-audit-internal",
+ "scout-audit-clippy-utils-soroban",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -66,7 +66,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -269,7 +269,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -279,7 +279,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -557,7 +557,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -741,7 +741,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
  "toml",
 ]
 
@@ -963,8 +963,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "scout-audit-clippy-utils"
-version = "0.2.1"
+name = "scout-audit-clippy-utils-soroban"
+version = "0.2.2"
 dependencies = [
  "arrayvec",
  "if_chain",
@@ -973,10 +973,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "scout-audit-internal"
-version = "0.2.1"
+name = "scout-audit-internal-soroban"
+version = "0.2.2"
 dependencies = [
- "scout-audit-clippy-utils",
+ "scout-audit-clippy-utils-soroban",
  "serde_json",
  "strum",
 ]
@@ -1056,7 +1056,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -1077,7 +1077,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
  "semver",
  "serde_json",
  "toml",
@@ -1278,7 +1278,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -1288,7 +1288,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
@@ -1298,7 +1298,7 @@ dependencies = [
  "dylint_linting",
  "dylint_testing",
  "if_chain",
- "scout-audit-internal",
+ "scout-audit-internal-soroban",
 ]
 
 [[package]]
