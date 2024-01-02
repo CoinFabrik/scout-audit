@@ -72,9 +72,9 @@ function isProjectSoroban(): boolean {
   // Check if soroban-sdk is a direct dependency
   if (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    !cargoTomlParsed.dependencies ||
+      !cargoTomlParsed?.dependencies?.ink &&
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    !cargoTomlParsed.dependencies["soroban-sdk"]
+      !cargoTomlParsed?.dependencies?.["soroban-sdk"]
   ) {
     console.log("soroban-sdk crate is not a direct dependency in Cargo.toml.");
     return false;
