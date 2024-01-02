@@ -1,5 +1,5 @@
 [package]
-name = "scout-audit-clippy-utils"
+name = "scout-audit-clippy-utils-soroban"
 version = "0.2.1"
 edition = "2021"
 license = "MIT"

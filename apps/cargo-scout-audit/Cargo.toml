@@ -1,5 +1,5 @@
 [package]
-name = "cargo-scout-audit"
+name = "cargo-scout-audit-soroban"
 version = "0.2.1"
 edition = "2021"
 authors = [

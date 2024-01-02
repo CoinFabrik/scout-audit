@@ -1,5 +1,5 @@
 [package]
-name = "scout-audit-internal"
+name = "scout-audit-internal-soroban"
 version = "0.2.1"
 edition = "2021"
 authors = [
