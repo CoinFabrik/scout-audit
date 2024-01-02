@@ -1,9 +1,10 @@
 {
   "name": "scout-audit",
   "displayName": "Scout Audit",
-  "description": "Soroban smart contract linter",
+  "description": "Smart contract linter",
   "version": "0.1.1",
-  "repository": "https://github.com/CoinFabrik/scout",
+  "repository": "https://github.com/CoinFabrik/scout-audit",
+  "homepage": "https://www.coinfabrik.com/products/scout/"
   "engines": {
     "vscode": "^1.78.0"
   },
