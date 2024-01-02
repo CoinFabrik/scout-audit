@@ -8,7 +8,7 @@ use std::{env, fs, io::Error, path::Path};
 
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_SOROBAN_VERSION_LINT_MESSAGE};
 use semver::*;
 
 dylint_linting::declare_early_lint! {
@@ -19,7 +19,7 @@ dylint_linting::declare_early_lint! {
     /// Using an outdated version of soroban could lead to security vulnerabilities, bugs, and other issues.
     pub CHECK_SOROBAN_VERSION,
     Warn,
-    Detector::SorobanVersion.get_lint_message()
+    SOROBAN_SOROBAN_VERSION_LINT_MESSAGE
 }
 
 impl EarlyLintPass for CheckSorobanVersion {
@@ -102,7 +102,7 @@ impl EarlyLintPass for CheckSorobanVersion {
         };
 
         if !soroban_version.matches(&req) {
-            Detector::SorobanVersion.span_lint_and_help(
+            SorobanDetector::SorobanVersion.span_lint_and_help(
                 cx,
                 CHECK_SOROBAN_VERSION,
                 rustc_span::DUMMY_SP,

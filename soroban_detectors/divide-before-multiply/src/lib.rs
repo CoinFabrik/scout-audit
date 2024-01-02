@@ -20,7 +20,7 @@ use rustc_middle::mir::{
 use rustc_middle::ty::TyKind;
 use rustc_span::def_id::DefId;
 use rustc_span::Span;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
@@ -45,7 +45,7 @@ dylint_linting::declare_late_lint! {
     /// ```
     pub DIVIDE_BEFORE_MULTIPLY,
     Warn,
-    Detector::DivideBeforeMultiply.get_lint_message()
+    SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE
 }
 
 fn get_divisions_inside_expr(expr: &Expr<'_>) -> Vec<Span> {
@@ -355,7 +355,7 @@ impl<'tcx> LateLintPass<'tcx> for DivideBeforeMultiply {
             );
 
             for span in spans {
-                Detector::DivideBeforeMultiply.span_lint_and_help(
+                SorobanDetector::DivideBeforeMultiply.span_lint_and_help(
                     cx,
                     DIVIDE_BEFORE_MULTIPLY,
                     span,
@@ -370,7 +370,7 @@ impl<'tcx> LateLintPass<'tcx> for DivideBeforeMultiply {
             if BinOpKind::Mul == op.node;
             then{
                 for division in get_divisions_inside_expr(expr) {
-                    Detector::DivideBeforeMultiply.span_lint_and_help(
+                    SorobanDetector::DivideBeforeMultiply.span_lint_and_help(
                         cx,
                         DIVIDE_BEFORE_MULTIPLY,
                         division,

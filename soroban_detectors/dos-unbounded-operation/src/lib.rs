@@ -14,12 +14,12 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span};
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE};
 
 dylint_linting::declare_late_lint!(
     pub DOS_UNBOUNDED_OPERATION,
     Warn,
-    "This loop seems to do not have a fixed number of iterations"
+    SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE
 );
 
 struct ForLoopVisitor {
@@ -131,7 +131,7 @@ impl<'tcx> LateLintPass<'tcx> for DosUnboundedOperation {
         walk_body(&mut visitor, body);
 
         for span in visitor.span_constant {
-            Detector::DosUnboundedOperation.span_lint_and_help(
+            SorobanDetector::DosUnboundedOperation.span_lint_and_help(
                 cx,
                 DOS_UNBOUNDED_OPERATION,
                 span,

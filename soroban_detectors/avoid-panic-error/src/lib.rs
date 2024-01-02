@@ -14,7 +14,7 @@ use rustc_ast::{
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::{sym, Span};
 use scout_audit_clippy_utils::sym;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE};
 
 dylint_linting::impl_pre_expansion_lint! {
     /// ### What it does
@@ -57,7 +57,7 @@ dylint_linting::impl_pre_expansion_lint! {
     /// ```
     pub AVOID_PANIC_ERROR,
     Warn,
-    Detector::AvoidPanicError.get_lint_message(),
+    SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE,
     AvoidPanicError::default()
 }
 
@@ -118,7 +118,7 @@ fn check_macro_call(cx: &EarlyContext, span: Span, mac: &P<MacCall>) {
         if let TokenKind::Literal(lit) = token.kind;
         if lit.kind == LitKind::Str;
         then {
-            Detector::AvoidPanicError.span_lint_and_help(
+            SorobanDetector::AvoidPanicError.span_lint_and_help(
                 cx,
                 AVOID_PANIC_ERROR,
                 span,

@@ -15,12 +15,12 @@ use rustc_middle::mir::{BasicBlock, BasicBlocks, Const, Operand, TerminatorKind}
 use rustc_middle::ty::TyKind;
 use rustc_span::def_id::DefId;
 use rustc_span::Span;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE};
 
 dylint_linting::impl_late_lint! {
     pub UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM,
     Warn,
-    Detector::UnprotectedUpdateCurrentContractWasm.get_lint_message(),
+    SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE,
     UnprotectedUpdateCurrentContractWasm::default()
 }
 
@@ -85,7 +85,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedUpdateCurrentContractWasm {
         );
 
         for span in spans {
-            Detector::UnprotectedUpdateCurrentContractWasm.span_lint(
+            SorobanDetector::UnprotectedUpdateCurrentContractWasm.span_lint(
                 cx,
                 UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM,
                 span,

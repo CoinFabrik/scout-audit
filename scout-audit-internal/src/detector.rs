@@ -30,10 +30,14 @@ use strum::{Display, EnumIter};
 #[strum(serialize_all = "kebab-case")]
 pub enum SorobanDetector {
     AvoidCoreMemForget,
+    AvoidPanicError,
+    AvoidUnsafeBlock,
     DivideBeforeMultiply,
+    DosUnboundedOperation,
     InsufficientlyRandomValues,
     OverflowCheck,
     SetContractStorage,
+    SorobanVersion,
     UnprotectedUpdateCurrentContractWasm,
     UnsafeExpect,
     UnsafeUnwrap,
@@ -107,6 +111,10 @@ impl DetectorImpl for SorobanDetector {
             }
             SorobanDetector::UnsafeExpect => SOROBAN_UNSAFE_EXPECT_LINT_MESSAGE,
             SorobanDetector::UnsafeUnwrap => SOROBAN_UNSAFE_UNWRAP_LINT_MESSAGE,
+            SorobanDetector::AvoidPanicError => SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE,
+            SorobanDetector::AvoidUnsafeBlock => SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
+            SorobanDetector::DosUnboundedOperation => SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
+            SorobanDetector::SorobanVersion => SOROBAN_SOROBAN_VERSION_LINT_MESSAGE,
         }
     }
 

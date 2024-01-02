@@ -7,7 +7,7 @@ extern crate rustc_span;
 use std::fs;
 
 use rustc_lint::EarlyLintPass;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_OVERFLOW_CHECK_LINT_MESSAGE};
 
 dylint_linting::declare_early_lint! {
     /// ### What it does
@@ -19,7 +19,7 @@ dylint_linting::declare_early_lint! {
     /// wants explicitly checked, wrapping or saturating arithmetic.
     pub OVERFLOW_CHECK,
     Warn,
-    Detector::OverflowCheck.get_lint_message()
+    SOROBAN_OVERFLOW_CHECK_LINT_MESSAGE
 }
 
 impl EarlyLintPass for OverflowCheck {
@@ -52,7 +52,7 @@ impl EarlyLintPass for OverflowCheck {
                         .get("overflow-checks")
                         .is_some_and(|f| f.as_bool().unwrap_or(false));
                     if !has_overflow_check {
-                        Detector::OverflowCheck.span_lint_and_help(
+                        SorobanDetector::OverflowCheck.span_lint_and_help(
                             cx,
                             OVERFLOW_CHECK,
                             rustc_span::DUMMY_SP,
@@ -60,7 +60,7 @@ impl EarlyLintPass for OverflowCheck {
                         );
                     }
                 } else {
-                    Detector::OverflowCheck.span_lint_and_help(
+                    SorobanDetector::OverflowCheck.span_lint_and_help(
                         cx,
                         OVERFLOW_CHECK,
                         rustc_span::DUMMY_SP,

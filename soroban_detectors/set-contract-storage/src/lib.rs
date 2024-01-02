@@ -11,7 +11,7 @@ use rustc_hir::{Body, FnDecl};
 use rustc_hir::{Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
-use scout_audit_internal::Detector;
+use scout_audit_internal::{SorobanDetector, DetectorImpl, SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE};
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
@@ -38,7 +38,7 @@ dylint_linting::declare_late_lint! {
     /// ```
     pub SET_STORAGE_WARN,
     Warn,
-    Detector::SetContractStorage.get_lint_message()
+    SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for SetStorageWarn {
@@ -78,7 +78,7 @@ impl<'tcx> LateLintPass<'tcx> for SetStorageWarn {
         walk_expr(&mut visitor, body.value);
 
         for span in visitor.storage_without_auth {
-            Detector::SetContractStorage.span_lint_and_help(
+            SorobanDetector::SetContractStorage.span_lint_and_help(
                 cx,
                 SET_STORAGE_WARN,
                 span,
