@@ -1,4 +1,4 @@
-use cargo_scout_audit::startup::{run_scout, CargoSubCommand, Cli};
+use cargo_scout_audit_soroban::startup::{run_scout, CargoSubCommand, Cli};
 use clap::Parser;
 
 fn main() {

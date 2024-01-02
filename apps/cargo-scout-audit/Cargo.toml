@@ -22,7 +22,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "cargo-scout-audit"
+name = "cargo-scout-audit-soroban"
 
 [dependencies]
 ansi_term = "0.12.1"
