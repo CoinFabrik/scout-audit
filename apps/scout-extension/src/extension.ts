@@ -8,7 +8,8 @@ const RUST_ANALYZER_CONFIG = "rust-analyzer.check.overrideCommand";
 
 export async function activate(_context: vscode.ExtensionContext) {
   // Check workspace is an soroban project
-  if (!isProjectSoroban()) return;
+  const sdk = isProjectSupported();
+  if (sdk == false) return;
 
   const config = vscode.workspace.getConfiguration();
 
@@ -21,30 +22,52 @@ export async function activate(_context: vscode.ExtensionContext) {
   }
 
   // Check scout is installed
-  try {
-    await commandExists("cargo-scout-audit");
-  } catch (err) {
-    console.error("cargo-scout-audit is not installed");
-    await vscode.window.showErrorMessage(
-      "cargo-scout-audit must be installed in order for scout to work"
-    );
-    return;
-  }
 
-  // Update settings to change rust-analyzer config
-  await config.update(RUST_ANALYZER_CONFIG, [
-    "cargo",
-    "scout-audit",
-    "--",
-    "--message-format=json",
-  ]);
+  if(sdk == "ink") {
+    console.log("scout-audit")
+    try {
+      await commandExists("cargo-scout-audit");
+    } catch (err) {
+      console.error("cargo-scout-audit is not installed");
+      await vscode.window.showErrorMessage(
+        "cargo-scout-audit must be installed in order for scout to work"
+      );
+      return false;
+    }
+    
+    // Update settings to change rust-analyzer config
+    await config.update(RUST_ANALYZER_CONFIG, [
+      "cargo",
+      "scout-audit",
+      "--",
+      "--message-format=json",
+    ]);
+  } else if(sdk == "soroban-sdk") {
+    try {
+      await commandExists("cargo-scout-audit-soroban");
+    } catch (err) {
+      console.error("cargo-scout-audit-soroban is not installed");
+      await vscode.window.showErrorMessage(
+        "cargo-scout-audit-soroban must be installed in order for scout to work"
+      );
+      return false;
+    }
+    
+    // Update settings to change rust-analyzer config
+    await config.update(RUST_ANALYZER_CONFIG, [
+      "cargo",
+      "scout-audit-soroban",
+      "--",
+      "--message-format=json",
+    ]);
+  }
 }
 
 export function deactivate() {
   // unused
 }
 
-function isProjectSoroban(): boolean {
+function isProjectSupported(): false|string {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders) {
     console.log("No workspace is opened.");
@@ -69,17 +92,19 @@ function isProjectSoroban(): boolean {
     return false;
   }
 
-  // Check if soroban-sdk is a direct dependency
-  if (
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      !cargoTomlParsed?.dependencies?.ink &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      !cargoTomlParsed?.dependencies?.["soroban-sdk"]
-  ) {
-    console.log("soroban-sdk crate is not a direct dependency in Cargo.toml.");
-    return false;
+  // Check if soroban-sdk or ink are a direct dependency
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if(cargoTomlParsed?.dependencies?.ink) {
+    console.log("ink crate is a direct dependency in Cargo.toml.")
+    return "ink";
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if(cargoTomlParsed?.dependencies?.["soroban-sdk"]) {
+    console.log("soroban-sdk crate is a direct dependency in Cargo.toml.")
+    return "soroban-sdk";
   }
 
-  console.log("soroban-sdk crate is a direct dependency in Cargo.toml.")
-  return true;
+  console.log("soroban-sdk or ink crates are not a direct dependency in Cargo.toml.");
+  return false;
 }
