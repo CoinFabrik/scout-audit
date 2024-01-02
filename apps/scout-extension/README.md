@@ -24,6 +24,10 @@ Before installing the extension, make sure you have the following requirements:
 
 ## Release Notes
 
+### 0.1.3
+
+Fix description and resources.
+
 ### 0.1.2
 
 Building upon our commitment to enhancing smart contract security, we are thrilled to announce version 0.1.2 of our Scout vscode extension. This latest update introduces support for [Soroban](https://soroban.stellar.org/) smart contracts on the [Stellar](https://stellar.org/) blockchain, showcasing Scout's expanding versatility and capability to adapt to different Rust-based blockchain environments.
