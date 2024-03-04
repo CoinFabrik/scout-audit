@@ -2,7 +2,7 @@ use crate::startup::OutputFormat;
 
 use anyhow::Result;
 
-use super::{html::lib::generate_html, report::Report};
+use super::{html::generate_html, report::Report};
 
 pub fn get_output(report: Report, output_format: OutputFormat) -> Result<&'static str> {
     match output_format {
