@@ -232,13 +232,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
         }
         OutputFormat::Html => {
             // Generate HTML
-            // let html_path = match generate_html(report) {
-            //     Ok(output) => output,
-            //     Err(e) => {
-            //         eprintln!("Error generating HTML: {}", e);
-            //         return Err(e);
-            //     }
-            // };
+            // let html_path = report.generate_html()?;
 
             // Open the HTML report in the default web browser
             // webbrowser::open(&html_path).context("Failed to open HTML report")?;

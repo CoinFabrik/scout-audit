@@ -1,6 +1,9 @@
+use anyhow::Result;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use super::html;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -67,5 +70,9 @@ impl Report {
             categories,
             findings,
         }
+    }
+
+    pub fn generate_html(&self) -> Result<&'static str> {
+        html::generate_html(self)
     }
 }
