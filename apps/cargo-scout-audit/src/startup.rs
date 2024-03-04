@@ -11,7 +11,7 @@ use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
     utils::{
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        output::{format_into_html, format_into_json, format_into_sarif},
+        output::{format_into_json, format_into_sarif},
     },
 };
 
@@ -33,6 +33,7 @@ pub enum OutputFormat {
     Json,
     Html,
     Sarif,
+    Markdown,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -216,6 +217,8 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
+    // Generate report with Report::new(...)
+    // let report = Report::new(name, description, date, source_url, summary, categories, findings);
     match opts.output_format {
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {
@@ -228,14 +231,17 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
             )?;
         }
         OutputFormat::Html => {
-            let mut html_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.html")?,
-            };
-            std::io::Write::write_all(
-                &mut html_file,
-                format_into_html(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
+            // Generate HTML
+            // let html_path = match generate_html(report) {
+            //     Ok(output) => output,
+            //     Err(e) => {
+            //         eprintln!("Error generating HTML: {}", e);
+            //         return Err(e);
+            //     }
+            // };
+
+            // Open the HTML report in the default web browser
+            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
         }
         OutputFormat::Text => {
             // If the output path is not set, dylint prints the report to stdout
@@ -259,6 +265,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
                 format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
             )?;
         }
+        OutputFormat::Markdown => unimplemented!(),
     }
 
     stderr_temp_file.close()?;
