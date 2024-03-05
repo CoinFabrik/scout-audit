@@ -1,3 +1,5 @@
+use crate::output::report::Report;
+
 use super::tera::{create_context, render_template};
 use anyhow::{Context, Result};
 use std::{
@@ -12,7 +14,7 @@ const OUTPUT_CSS_PATH: &str = "build/output.css";
 const STYLES_CSS: &[u8] = include_bytes!("templates/styles.css");
 
 // Generates an HTML report from a given `Report` object.
-pub fn generate_html(report: impl serde::Serialize) -> Result<&'static str> {
+pub fn generate_html(report: &Report) -> Result<&'static str> {
     let context = create_context(report);
     let html = render_template(BASE_TEMPLATE, &context)
         .with_context(|| format!("Failed to render template '{}'", BASE_TEMPLATE))?;

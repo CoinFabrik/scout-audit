@@ -1,3 +1,3 @@
 pub mod lib;
-pub mod tera;
+mod tera;
 pub use lib::generate_html;
