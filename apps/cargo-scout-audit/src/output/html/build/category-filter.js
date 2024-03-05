@@ -1,4 +1,3 @@
-// category_filter.js
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll(".category");
   buttons.forEach((button) => {
