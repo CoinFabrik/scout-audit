@@ -129,67 +129,6 @@ fn get_errors_from_output(
     Ok(errors)
 }
 
-pub fn format_into_html(
-    scout_output: File,
-    internals: File,
-    bc: BlockChain,
-) -> anyhow::Result<String> {
-    let json = jsonify(scout_output, internals, bc)?;
-    let mut html = String::new();
-    html.push_str(
-        r#"
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <style>
-    body {
-      font-family: monospace;
-      font-size: 1rem;
-    }
-    table {
-      border-collapse: collapse;
-    }
-    td, th {
-      border: 1px solid #999;
-      padding: 0.5rem;
-    }
-    th {
-      background-color: #eee;
-    }
-    </style>
-    </head>
-    <body>
-    <table>
-    <tr>
-    <th>Error</th>
-    <th>Spans</th>
-    <th>Message</th>
-    </tr>
-    "#,
-    );
-
-    for (key, value) in json.as_object().unwrap() {
-        let error_msg = value["error_msg"].as_str().unwrap();
-        let spans = value["spans"].as_array().unwrap();
-        let mut spans_html = String::new();
-        for span in spans {
-            spans_html.push_str(&format!("<li>{}</li>", span.as_str().unwrap()));
-        }
-        html.push_str(&format!(
-            r#"
-        <tr>
-        <td>{}</td>
-        <td><ul>{}</ul></td>
-        <td>{}</td>
-        </tr>
-        "#,
-            key, spans_html, error_msg
-        ));
-    }
-
-    Ok(html)
-}
-
 fn serify(
     scout_output: File,
     scout_internals: File,

@@ -28,21 +28,26 @@ name = "cargo-scout-audit-soroban"
 ansi_term = "0.12.1"
 anyhow = "1"
 cargo = "0.72.2"
-cargo_metadata = "0.17"
+cargo_metadata = "0.18.1"
+chrono = { version = "0.4.34", features = ["serde"] }
 clap = { version = "4.3.0", features = ["derive"] }
 dunce = "1.0.4"
 dylint = { version = "2.3.0"}
-env_logger = "0.10"
+env_logger = "0.11.2"
 home = { version = "0.5.5" }
-itertools = "0.11"
+itertools = "0.12.1"
+lazy_static = "=1.4.0"
 log = "0.4"
-tempfile = "3.8"
 regex = { version = "1.5", features = ["unicode"] }
+serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0"
+tempfile = "3.8"
+tera =  {version = "=1.19.1", features=["builtins"]}
+webbrowser = "=0.8.12"
 
 scout-audit-internal-soroban = { version = "=0.2.2", path = "../../scout-audit-internal", features = ["detector"] }
 
 [dev-dependencies]
 colored = "2.0.0"
-config = "0.13.3"
-serde = { version = "1.0.163", features = ["derive"] }
+config = "0.14.0"
+
