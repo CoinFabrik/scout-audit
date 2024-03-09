@@ -1,12 +1,8 @@
-use crate::output::report::Report;
+use crate::output::{report::Report, utils::write_to_file};
 
 use super::tera::{create_context, render_template};
 use anyhow::{Context, Result};
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 const BASE_TEMPLATE: &str = "base.html";
 const REPORT_HTML_PATH: &str = "build/report.html";
@@ -26,17 +22,4 @@ pub fn generate_html(report: &Report) -> Result<&'static str> {
         .with_context(|| format!("Failed to write CSS to '{}'", OUTPUT_CSS_PATH))?;
 
     Ok(REPORT_HTML_PATH)
-}
-
-// Writes data to a file at the specified path.
-fn write_to_file(path: &PathBuf, data: &[u8]) -> Result<(), std::io::Error> {
-    // Write to a temporary file first
-    let temp_path = path.with_extension("tmp");
-    let mut temp_file = File::create(&temp_path)?;
-    temp_file.write_all(data)?;
-
-    // Rename temporary file to the target path
-    fs::rename(temp_path, path)?;
-
-    Ok(())
 }

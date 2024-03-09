@@ -29,11 +29,11 @@ pub enum CargoSubCommand {
 #[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
 pub enum OutputFormat {
     #[default]
-    Text,
-    Json,
     Html,
-    Sarif,
+    Json,
     Markdown,
+    Sarif,
+    Text,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -220,6 +220,13 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     // Generate report with Report::new(...)
     // let report = Report::new(name, description, date, source_url, summary, categories, findings);
     match opts.output_format {
+        OutputFormat::Html => {
+            // Generate HTML
+            // let html_path = report.generate_html()?;
+
+            // Open the HTML report in the default web browser
+            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
+        }
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
@@ -230,12 +237,22 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
                 format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
             )?;
         }
-        OutputFormat::Html => {
-            // Generate HTML
-            // let html_path = report.generate_html()?;
+        OutputFormat::Markdown => {
+            // Generate Markdown
+            // let markdown_path = report.generate_markdown()?;
 
-            // Open the HTML report in the default web browser
-            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
+            // Open the Markdown report in the default text editor
+            // open::that(markdown_path).context("Failed to open Markdown report")?;
+        }
+        OutputFormat::Sarif => {
+            let mut sarif_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.sarif")?,
+            };
+            std::io::Write::write_all(
+                &mut sarif_file,
+                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
+            )?;
         }
         OutputFormat::Text => {
             // If the output path is not set, dylint prints the report to stdout
@@ -249,17 +266,6 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
                     .expect("Error writing dylint result to stdout");
             }
         }
-        OutputFormat::Sarif => {
-            let mut sarif_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.sarif")?,
-            };
-            std::io::Write::write_all(
-                &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
-        }
-        OutputFormat::Markdown => unimplemented!(),
     }
 
     stderr_temp_file.close()?;
