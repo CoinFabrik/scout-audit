@@ -8,16 +8,13 @@ pub struct StrIndex {
 
 impl StrIndex {
     pub fn new(char_index: usize, byte_index: usize) -> Self {
-        Self {
-            char_index,
-            byte_index,
-        }
+        Self { char_index, byte_index }
     }
 }
 
 /// Returns the index of the character after the first camel-case component of `s`.
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{camel_case_until, StrIndex};
 /// assert_eq!(camel_case_until("AbcDef"), StrIndex::new(6, 6));
 /// assert_eq!(camel_case_until("ABCD"), StrIndex::new(0, 0));
@@ -61,7 +58,7 @@ pub fn camel_case_until(s: &str) -> StrIndex {
 
 /// Returns index of the first camel-case component of `s`.
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{camel_case_start, StrIndex};
 /// assert_eq!(camel_case_start("AbcDef"), StrIndex::new(0, 0));
 /// assert_eq!(camel_case_start("abcDef"), StrIndex::new(3, 3));
@@ -76,7 +73,7 @@ pub fn camel_case_start(s: &str) -> StrIndex {
 
 /// Returns `StrIndex` of the last camel-case component of `s[idx..]`.
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{camel_case_start_from_idx, StrIndex};
 /// assert_eq!(camel_case_start_from_idx("AbcDef", 0), StrIndex::new(0, 0));
 /// assert_eq!(camel_case_start_from_idx("AbcDef", 1), StrIndex::new(3, 3));
@@ -125,7 +122,7 @@ pub fn camel_case_start_from_idx(s: &str, start_idx: usize) -> StrIndex {
 
 /// Get the indexes of camel case components of a string `s`
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{camel_case_indices, StrIndex};
 /// assert_eq!(
 ///     camel_case_indices("AbcDef"),
@@ -152,7 +149,7 @@ pub fn camel_case_indices(s: &str) -> Vec<StrIndex> {
 
 /// Split camel case string into a vector of its components
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{camel_case_split, StrIndex};
 /// assert_eq!(camel_case_split("AbcDef"), vec!["Abc", "Def"]);
 /// ```
@@ -178,16 +175,13 @@ pub struct StrCount {
 
 impl StrCount {
     pub fn new(char_count: usize, byte_count: usize) -> Self {
-        Self {
-            char_count,
-            byte_count,
-        }
+        Self { char_count, byte_count }
     }
 }
 
 /// Returns the number of chars that match from the start
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{count_match_start, StrCount};
 /// assert_eq!(count_match_start("hello_mouse", "hello_penguin"), StrCount::new(6, 6));
 /// assert_eq!(count_match_start("hello_clippy", "bye_bugs"), StrCount::new(0, 0));
@@ -206,17 +200,14 @@ pub fn count_match_start(str1: &str, str2: &str) -> StrCount {
         .zip(iter2)
         .take_while(|((_, c1), (_, c2))| c1 == c2)
         .last()
-        .map_or_else(
-            StrCount::default,
-            |((char_index, _), (byte_index, character))| {
-                StrCount::new(char_index + 1, byte_index + character.len_utf8())
-            },
-        )
+        .map_or_else(StrCount::default, |((char_index, _), (byte_index, character))| {
+            StrCount::new(char_index + 1, byte_index + character.len_utf8())
+        })
 }
 
 /// Returns the number of chars and bytes that match from the end
 ///
-/// ```
+/// ```no_run
 /// # use clippy_utils::str_utils::{count_match_end, StrCount};
 /// assert_eq!(count_match_end("hello_cat", "bye_cat"), StrCount::new(4, 4));
 /// assert_eq!(count_match_end("if_item_thing", "enum_value"), StrCount::new(0, 0));
@@ -243,6 +234,59 @@ pub fn count_match_end(str1: &str, str2: &str) -> StrCount {
         .map_or_else(StrCount::default, |((char_index, _), (byte_index, _))| {
             StrCount::new(char_count - char_index, byte_count - byte_index)
         })
+}
+
+/// Returns a `snake_case` version of the input
+/// ```no_run
+/// use clippy_utils::str_utils::to_snake_case;
+/// assert_eq!(to_snake_case("AbcDef"), "abc_def");
+/// assert_eq!(to_snake_case("ABCD"), "a_b_c_d");
+/// assert_eq!(to_snake_case("AbcDD"), "abc_d_d");
+/// assert_eq!(to_snake_case("Abc1DD"), "abc1_d_d");
+/// ```
+pub fn to_snake_case(name: &str) -> String {
+    let mut s = String::new();
+    for (i, c) in name.chars().enumerate() {
+        if c.is_uppercase() {
+            // characters without capitalization are considered lowercase
+            if i != 0 {
+                s.push('_');
+            }
+            s.extend(c.to_lowercase());
+        } else {
+            s.push(c);
+        }
+    }
+    s
+}
+/// Returns a `CamelCase` version of the input
+/// ```no_run
+/// use clippy_utils::str_utils::to_camel_case;
+/// assert_eq!(to_camel_case("abc_def"), "AbcDef");
+/// assert_eq!(to_camel_case("a_b_c_d"), "ABCD");
+/// assert_eq!(to_camel_case("abc_d_d"), "AbcDD");
+/// assert_eq!(to_camel_case("abc1_d_d"), "Abc1DD");
+/// ```
+pub fn to_camel_case(item_name: &str) -> String {
+    let mut s = String::new();
+    let mut up = true;
+    for c in item_name.chars() {
+        if c.is_uppercase() {
+            // we only turn snake case text into CamelCase
+            return item_name.to_string();
+        }
+        if c == '_' {
+            up = true;
+            continue;
+        }
+        if up {
+            up = false;
+            s.extend(c.to_uppercase());
+        } else {
+            s.push(c);
+        }
+    }
+    s
 }
 
 #[cfg(test)]
@@ -283,10 +327,7 @@ mod test {
     fn camel_case_until_full() {
         assert_eq!(camel_case_until("AbcDef"), StrIndex::new(6, 6));
         assert_eq!(camel_case_until("Abc"), StrIndex::new(3, 3));
-        assert_eq!(
-            camel_case_until("Abc\u{f6}\u{f6}\u{f6}"),
-            StrIndex::new(6, 9)
-        );
+        assert_eq!(camel_case_until("Abc\u{f6}\u{f6}\u{f6}"), StrIndex::new(6, 9));
     }
 
     #[test]
@@ -313,23 +354,14 @@ mod test {
         assert_eq!(camel_case_start_from_idx("AbcDef", 0), StrIndex::new(0, 0));
         assert_eq!(camel_case_start_from_idx("AbcDef", 1), StrIndex::new(3, 3));
         assert_eq!(camel_case_start_from_idx("AbcDef", 4), StrIndex::new(6, 6));
-        assert_eq!(
-            camel_case_start_from_idx("AbcDefGhi", 0),
-            StrIndex::new(0, 0)
-        );
-        assert_eq!(
-            camel_case_start_from_idx("AbcDefGhi", 1),
-            StrIndex::new(3, 3)
-        );
+        assert_eq!(camel_case_start_from_idx("AbcDefGhi", 0), StrIndex::new(0, 0));
+        assert_eq!(camel_case_start_from_idx("AbcDefGhi", 1), StrIndex::new(3, 3));
         assert_eq!(camel_case_start_from_idx("Abcdefg", 1), StrIndex::new(7, 7));
     }
 
     #[test]
     fn camel_case_indices_full() {
-        assert_eq!(
-            camel_case_indices("Abc\u{f6}\u{f6}DD"),
-            vec![StrIndex::new(7, 9)]
-        );
+        assert_eq!(camel_case_indices("Abc\u{f6}\u{f6}DD"), vec![StrIndex::new(7, 9)]);
     }
 
     #[test]

@@ -5,6 +5,8 @@
 //! This library is for internal usage only by [`cargo_scout_audit`](https://crates.io/crates/cargo-scout-audit)
 #[cfg(feature = "detector")]
 mod detector;
+#[cfg(feature = "detector")]
+mod socket;
 
 #[cfg(feature = "detector")]
 pub use detector::DetectorImpl;
@@ -14,6 +16,8 @@ pub use detector::InkDetector;
 pub use detector::SorobanDetector;
 #[cfg(feature = "detector")]
 pub use strum::IntoEnumIterator;
-
 #[cfg(feature = "detector")]
-pub use detector::soroban_lint_message::*;
+pub use socket::*;
+#[cfg(feature = "detector")]
+pub use detector::*;
+

@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use crate::startup::BlockChain;
 use anyhow::Result;
 use cargo::{
     core::{Dependency, GitReference, SourceId},
     util::IntoUrl,
 };
+use scout_audit_internal::BlockChain;
 
 #[derive(Debug, Clone)]
 pub struct DetectorConfiguration {

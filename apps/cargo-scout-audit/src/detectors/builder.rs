@@ -6,8 +6,8 @@ use cargo_metadata::Metadata;
 use itertools::Itertools;
 
 use super::{configuration::DetectorConfiguration, library::Library, source::download_git_repo};
-use crate::startup::BlockChain;
 use crate::utils::{cargo_package, rustup};
+use scout_audit_internal::BlockChain;
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a Config,

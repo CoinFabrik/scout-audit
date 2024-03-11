@@ -8,7 +8,7 @@ use self::{
     builder::DetectorBuilder,
     configuration::{DetectorConfiguration, DetectorsConfigurationList},
 };
-use crate::startup::BlockChain;
+use scout_audit_internal::BlockChain;
 mod builder;
 mod configuration;
 mod library;

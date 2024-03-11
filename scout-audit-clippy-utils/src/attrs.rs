@@ -40,10 +40,7 @@ impl LimitStack {
         Self { stack: vec![limit] }
     }
     pub fn limit(&self) -> u64 {
-        *self
-            .stack
-            .last()
-            .expect("there should always be a value in the stack")
+        *self.stack.last().expect("there should always be a value in the stack")
     }
     pub fn push_attrs(&mut self, sess: &Session, attrs: &[ast::Attribute], name: &'static str) {
         let stack = &mut self.stack;
@@ -83,15 +80,13 @@ pub fn get_attr<'a>(
                         false
                     },
                     |deprecation_status| {
-                        let mut diag = sess.struct_span_err(
-                            attr_segments[1].ident.span,
-                            "usage of deprecated attribute",
-                        );
+                        let mut diag =
+                            sess.struct_span_err(attr_segments[1].ident.span, "usage of deprecated attribute");
                         match *deprecation_status {
                             DeprecationStatus::Deprecated => {
                                 diag.emit();
                                 false
-                            }
+                            },
                             DeprecationStatus::Replaced(new_name) => {
                                 diag.span_suggestion(
                                     attr_segments[1].ident.span,
@@ -101,11 +96,11 @@ pub fn get_attr<'a>(
                                 );
                                 diag.emit();
                                 false
-                            }
+                            },
                             DeprecationStatus::None => {
                                 diag.cancel();
                                 attr_segments[1].ident.name.as_str() == name
-                            }
+                            },
                         }
                     },
                 )
@@ -115,12 +110,7 @@ pub fn get_attr<'a>(
     })
 }
 
-fn parse_attrs<F: FnMut(u64)>(
-    sess: &Session,
-    attrs: &[ast::Attribute],
-    name: &'static str,
-    mut f: F,
-) {
+fn parse_attrs<F: FnMut(u64)>(sess: &Session, attrs: &[ast::Attribute], name: &'static str, mut f: F) {
     for attr in get_attr(sess, attrs, name) {
         if let Some(ref value) = attr.value_str() {
             if let Ok(value) = FromStr::from_str(value.as_str()) {

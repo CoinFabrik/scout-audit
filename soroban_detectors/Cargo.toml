@@ -9,4 +9,4 @@ dylint_testing = "2.1.5"
 if_chain = "1.0.2"
 
 scout-audit-clippy-utils-soroban = { version = "=0.2.2", path = "../scout-audit-clippy-utils" }
-scout-audit-internal-soroban = { path = "../scout-audit-internal", features = ["detector", "lint_helper"] }
+scout-audit-internal = { path = "../scout-audit-internal", features = ["detector", "lint_helper"] }

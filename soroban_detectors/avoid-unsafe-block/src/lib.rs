@@ -10,7 +10,7 @@ use rustc_hir::{
 };
 use rustc_lint::LateLintPass;
 use rustc_span::Span;
-use scout_audit_internal_soroban::{
+use scout_audit_internal::{
     DetectorImpl, SorobanDetector, SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
 };
 

@@ -4,8 +4,8 @@ use anyhow::Result;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
-use crate::startup::BlockChain;
 use crate::utils::{cargo, env};
+use scout_audit_internal::BlockChain;
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
 pub struct Library {

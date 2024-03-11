@@ -24,9 +24,22 @@ use scout_audit_clippy_utils_soroban::diagnostics::{
 #[cfg(feature = "lint_helper")]
 use serde_json::json;
 use strum::{Display, EnumIter};
+#[cfg(feature = "lint_helper")]
+use std::net::{IpAddr, Ipv4Addr};
+#[cfg(feature = "lint_helper")]
+use tarpc::{client, context, tokio_serde::formats::Json};
+#[cfg(feature = "lint_helper")]
+use crate::DetectorSocketClient;
+
+#[derive(Debug, Copy, Clone)]
+pub enum BlockChain {
+    Ink,
+    Soroban,
+}
+use serde::{Deserialize, Serialize};
 
 /// Available detectors for Soroban
-#[derive(Debug, Display, Clone, EnumIter, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[strum(serialize_all = "kebab-case")]
 pub enum SorobanDetector {
     AvoidCoreMemForget,
@@ -44,7 +57,7 @@ pub enum SorobanDetector {
 }
 
 // Available detectors for Ink
-#[derive(Debug, Display, Clone, EnumIter, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[strum(serialize_all = "kebab-case")]
 pub enum InkDetector {
     AssertViolation,

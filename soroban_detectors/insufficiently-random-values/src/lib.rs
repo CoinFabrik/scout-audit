@@ -5,7 +5,7 @@ extern crate rustc_hir;
 use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
-use scout_audit_internal_soroban::{
+use scout_audit_internal::{
     DetectorImpl, SorobanDetector, SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
 };
 

@@ -3,10 +3,10 @@ use std::fs::File;
 use std::io::BufRead;
 use std::vec;
 
-use crate::startup::BlockChain;
 use anyhow::Context;
 use regex::RegexBuilder;
-use scout_audit_internal_soroban::{DetectorImpl, InkDetector, IntoEnumIterator, SorobanDetector};
+use scout_audit_internal::BlockChain;
+use scout_audit_internal::{DetectorImpl, InkDetector, IntoEnumIterator, SorobanDetector};
 use serde_json::{json, Value};
 
 /// This function takes an enum variant of a blockchain (defined in startup.rs) and returns an iterator

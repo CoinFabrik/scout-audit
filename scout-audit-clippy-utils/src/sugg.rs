@@ -16,7 +16,7 @@ use rustc_lint::{EarlyContext, LateContext, LintContext};
 use rustc_middle::hir::place::ProjectionKind;
 use rustc_middle::mir::{FakeReadCause, Mutability};
 use rustc_middle::ty;
-use rustc_span::source_map::{BytePos, CharPos, Pos, Span, SyntaxContext};
+use rustc_span::{BytePos, CharPos, Pos, Span, SyntaxContext};
 use std::borrow::Cow;
 use std::fmt::{self, Display, Write as _};
 use std::ops::{Add, Neg, Not, Sub};
@@ -159,7 +159,7 @@ impl<'a> Sugg<'a> {
                 Sugg::BinOp(hirbinop2assignop(op), get_snippet(lhs.span), get_snippet(rhs.span))
             },
             hir::ExprKind::Binary(op, lhs, rhs) => Sugg::BinOp(
-                AssocOp::from_ast_binop(op.node.into()),
+                AssocOp::from_ast_binop(op.node),
                 get_snippet(lhs.span),
                 get_snippet(rhs.span),
             ),
@@ -190,7 +190,7 @@ impl<'a> Sugg<'a> {
                 (snip, false) => Sugg::MaybeParen(snip),
                 (snip, true) => Sugg::NonParen(snip),
             },
-            ast::ExprKind::Async(..)
+            ast::ExprKind::Gen(..)
             | ast::ExprKind::Block(..)
             | ast::ExprKind::Break(..)
             | ast::ExprKind::Call(..)
@@ -350,11 +350,11 @@ impl<'a> Sugg<'a> {
                 } else {
                     Sugg::NonParen(format!("({sugg})").into())
                 }
-            }
+            },
             Sugg::BinOp(op, lhs, rhs) => {
                 let sugg = binop_to_string(op, &lhs, &rhs);
                 Sugg::NonParen(format!("({sugg})").into())
-            }
+            },
         }
     }
 }
@@ -380,15 +380,12 @@ fn binop_to_string(op: AssocOp, lhs: &str, rhs: &str) -> String {
         | AssocOp::NotEqual
         | AssocOp::Greater
         | AssocOp::GreaterEqual => {
-            format!(
-                "{lhs} {} {rhs}",
-                op.to_ast_binop().expect("Those are AST ops").to_string()
-            )
-        }
+            format!("{lhs} {} {rhs}", op.to_ast_binop().expect("Those are AST ops").as_str())
+        },
         AssocOp::Assign => format!("{lhs} = {rhs}"),
         AssocOp::AssignOp(op) => {
             format!("{lhs} {}= {rhs}", token_kind_to_string(&token::BinOp(op)))
-        }
+        },
         AssocOp::As => format!("{lhs} as {rhs}"),
         AssocOp::DotDot => format!("{lhs}..{rhs}"),
         AssocOp::DotDotEq => format!("{lhs}..={rhs}"),
@@ -465,7 +462,10 @@ forward_binop_impls_to_ref!(impl Sub, sub for Sugg<'_>, type Output = Sugg<'stat
 impl Neg for Sugg<'_> {
     type Output = Sugg<'static>;
     fn neg(self) -> Sugg<'static> {
-        make_unop("-", self)
+        match &self {
+            Self::BinOp(AssocOp::As, ..) => Sugg::MaybeParen(format!("-({self})").into()),
+            _ => make_unop("-", self),
+        }
     }
 }
 
@@ -541,11 +541,7 @@ pub fn make_assoc(op: AssocOp, lhs: &Sugg<'_>, rhs: &Sugg<'_>) -> Sugg<'static> 
     fn is_arith(op: AssocOp) -> bool {
         matches!(
             op,
-            AssocOp::Add
-                | AssocOp::Subtract
-                | AssocOp::Multiply
-                | AssocOp::Divide
-                | AssocOp::Modulus
+            AssocOp::Add | AssocOp::Subtract | AssocOp::Multiply | AssocOp::Divide | AssocOp::Modulus
         )
     }
 
@@ -605,25 +601,22 @@ enum Associativity {
 #[must_use]
 fn associativity(op: AssocOp) -> Associativity {
     use rustc_ast::util::parser::AssocOp::{
-        Add, As, Assign, AssignOp, BitAnd, BitOr, BitXor, Divide, DotDot, DotDotEq, Equal, Greater,
-        GreaterEqual, LAnd, LOr, Less, LessEqual, Modulus, Multiply, NotEqual, ShiftLeft,
-        ShiftRight, Subtract,
+        Add, As, Assign, AssignOp, BitAnd, BitOr, BitXor, Divide, DotDot, DotDotEq, Equal, Greater, GreaterEqual, LAnd,
+        LOr, Less, LessEqual, Modulus, Multiply, NotEqual, ShiftLeft, ShiftRight, Subtract,
     };
 
     match op {
         Assign | AssignOp(_) => Associativity::Right,
         Add | BitAnd | BitOr | BitXor | LAnd | LOr | Multiply | As => Associativity::Both,
-        Divide | Equal | Greater | GreaterEqual | Less | LessEqual | Modulus | NotEqual
-        | ShiftLeft | ShiftRight | Subtract => Associativity::Left,
+        Divide | Equal | Greater | GreaterEqual | Less | LessEqual | Modulus | NotEqual | ShiftLeft | ShiftRight
+        | Subtract => Associativity::Left,
         DotDot | DotDotEq => Associativity::None,
     }
 }
 
 /// Converts a `hir::BinOp` to the corresponding assigning binary operator.
 fn hirbinop2assignop(op: hir::BinOp) -> AssocOp {
-    use rustc_ast::token::BinOpToken::{
-        And, Caret, Minus, Or, Percent, Plus, Shl, Shr, Slash, Star,
-    };
+    use rustc_ast::token::BinOpToken::{And, Caret, Minus, Or, Percent, Plus, Shl, Shr, Slash, Star};
 
     AssocOp::AssignOp(match op.node {
         hir::BinOpKind::Add => Plus,
@@ -722,14 +715,7 @@ pub trait DiagnosticExt<T: LintContext> {
     ///     bar();
     /// }");
     /// ```
-    fn suggest_prepend_item(
-        &mut self,
-        cx: &T,
-        item: Span,
-        msg: &str,
-        new_item: &str,
-        applicability: Applicability,
-    );
+    fn suggest_prepend_item(&mut self, cx: &T, item: Span, msg: &str, new_item: &str, applicability: Applicability);
 
     /// Suggest to completely remove an item.
     ///
@@ -757,23 +743,11 @@ impl<T: LintContext> DiagnosticExt<T> for rustc_errors::Diagnostic {
         if let Some(indent) = indentation(cx, item) {
             let span = item.with_hi(item.lo());
 
-            self.span_suggestion(
-                span,
-                msg.to_string(),
-                format!("{attr}\n{indent}"),
-                applicability,
-            );
+            self.span_suggestion(span, msg.to_string(), format!("{attr}\n{indent}"), applicability);
         }
     }
 
-    fn suggest_prepend_item(
-        &mut self,
-        cx: &T,
-        item: Span,
-        msg: &str,
-        new_item: &str,
-        applicability: Applicability,
-    ) {
+    fn suggest_prepend_item(&mut self, cx: &T, item: Span, msg: &str, new_item: &str, applicability: Applicability) {
         if let Some(indent) = indentation(cx, item) {
             let span = item.with_hi(item.lo());
 
@@ -790,12 +764,7 @@ impl<T: LintContext> DiagnosticExt<T> for rustc_errors::Diagnostic {
                 })
                 .collect::<String>();
 
-            self.span_suggestion(
-                span,
-                msg.to_string(),
-                format!("{new_item}\n{indent}"),
-                applicability,
-            );
+            self.span_suggestion(span, msg.to_string(), format!("{new_item}\n{indent}"), applicability);
         }
     }
 
@@ -804,14 +773,11 @@ impl<T: LintContext> DiagnosticExt<T> for rustc_errors::Diagnostic {
         let fmpos = cx.sess().source_map().lookup_byte_offset(remove_span.hi());
 
         if let Some(ref src) = fmpos.sf.src {
-            let non_whitespace_offset =
-                src[fmpos.pos.to_usize()..].find(|c| c != ' ' && c != '\t' && c != '\n');
+            let non_whitespace_offset = src[fmpos.pos.to_usize()..].find(|c| c != ' ' && c != '\t' && c != '\n');
 
             if let Some(non_whitespace_offset) = non_whitespace_offset {
-                remove_span = remove_span.with_hi(
-                    remove_span.hi()
-                        + BytePos(non_whitespace_offset.try_into().expect("offset too large")),
-                );
+                remove_span = remove_span
+                    .with_hi(remove_span.hi() + BytePos(non_whitespace_offset.try_into().expect("offset too large")));
             }
         }
 
@@ -835,21 +801,18 @@ pub struct DerefClosure {
 /// note: this only works on single line immutable closures with exactly one input parameter.
 pub fn deref_closure_args(cx: &LateContext<'_>, closure: &hir::Expr<'_>) -> Option<DerefClosure> {
     if let hir::ExprKind::Closure(&Closure {
-        fn_decl,
-        def_id,
-        body,
-        ..
+        fn_decl, def_id, body, ..
     }) = closure.kind
     {
         let closure_body = cx.tcx.hir().body(body);
         // is closure arg a type annotated double reference (i.e.: `|x: &&i32| ...`)
         // a type annotation is present if param `kind` is different from `TyKind::Infer`
-        let closure_arg_is_type_annotated_double_ref =
-            if let TyKind::Ref(_, MutTy { ty, .. }) = fn_decl.inputs[0].kind {
-                matches!(ty.kind, TyKind::Ref(_, MutTy { .. }))
-            } else {
-                false
-            };
+        let closure_arg_is_type_annotated_double_ref = if let TyKind::Ref(_, MutTy { ty, .. }) = fn_decl.inputs[0].kind
+        {
+            matches!(ty.kind, TyKind::Ref(_, MutTy { .. }))
+        } else {
+            false
+        };
 
         let mut visitor = DerefDelegate {
             cx,
@@ -861,14 +824,7 @@ pub fn deref_closure_args(cx: &LateContext<'_>, closure: &hir::Expr<'_>) -> Opti
         };
 
         let infcx = cx.tcx.infer_ctxt().build();
-        ExprUseVisitor::new(
-            &mut visitor,
-            &infcx,
-            def_id,
-            cx.param_env,
-            cx.typeck_results(),
-        )
-        .consume_body(closure_body);
+        ExprUseVisitor::new(&mut visitor, &infcx, def_id, cx.param_env, cx.typeck_results()).consume_body(closure_body);
 
         if !visitor.suggestion_start.is_empty() {
             return Some(DerefClosure {
@@ -903,12 +859,7 @@ impl<'tcx> DerefDelegate<'_, 'tcx> {
     /// - concatenate starting and ending parts
     /// - potentially remove needless borrowing
     pub fn finish(&mut self) -> String {
-        let end_span = Span::new(
-            self.next_pos,
-            self.closure_span.hi(),
-            self.closure_span.ctxt(),
-            None,
-        );
+        let end_span = Span::new(self.next_pos, self.closure_span.hi(), self.closure_span.ctxt(), None);
         let end_snip = snippet_with_applicability(self.cx, end_span, "..", &mut self.applicability);
         let sugg = format!("{}{end_snip}", self.suggestion_start);
         if self.closure_arg_is_type_annotated_double_ref {
@@ -919,11 +870,7 @@ impl<'tcx> DerefDelegate<'_, 'tcx> {
     }
 
     /// indicates whether the function from `parent_expr` takes its args by double reference
-    fn func_takes_arg_by_double_ref(
-        &self,
-        parent_expr: &'tcx hir::Expr<'_>,
-        cmt_hir_id: HirId,
-    ) -> bool {
+    fn func_takes_arg_by_double_ref(&self, parent_expr: &'tcx hir::Expr<'_>, cmt_hir_id: HirId) -> bool {
         let ty = match parent_expr.kind {
             ExprKind::MethodCall(_, receiver, call_args, _) => {
                 if let Some(sig) = self
@@ -939,7 +886,7 @@ impl<'tcx> DerefDelegate<'_, 'tcx> {
                 } else {
                     return false;
                 }
-            }
+            },
             ExprKind::Call(func, call_args) => {
                 if let Some(sig) = expr_sig(self.cx, func) {
                     call_args
@@ -950,14 +897,11 @@ impl<'tcx> DerefDelegate<'_, 'tcx> {
                 } else {
                     return false;
                 }
-            }
+            },
             _ => return false,
         };
 
-        ty.map_or(
-            false,
-            |ty| matches!(ty.kind(), ty::Ref(_, inner, _) if inner.is_ref()),
-        )
+        ty.map_or(false, |ty| matches!(ty.kind(), ty::Ref(_, inner, _) if inner.is_ref()))
     }
 }
 
@@ -969,8 +913,7 @@ impl<'tcx> Delegate<'tcx> for DerefDelegate<'_, 'tcx> {
             let map = self.cx.tcx.hir();
             let span = map.span(cmt.hir_id);
             let start_span = Span::new(self.next_pos, span.lo(), span.ctxt(), None);
-            let mut start_snip =
-                snippet_with_applicability(self.cx, start_span, "..", &mut self.applicability);
+            let mut start_snip = snippet_with_applicability(self.cx, start_span, "..", &mut self.applicability);
 
             // identifier referring to the variable currently triggered (i.e.: `fp`)
             let ident_str = map.name(id).to_string();
@@ -994,14 +937,11 @@ impl<'tcx> Delegate<'tcx> for DerefDelegate<'_, 'tcx> {
                     match &parent_expr.kind {
                         // given expression is the self argument and will be handled completely by the compiler
                         // i.e.: `|x| x.is_something()`
-                        ExprKind::MethodCall(_, self_expr, ..)
-                            if self_expr.hir_id == cmt.hir_id =>
-                        {
-                            let _: fmt::Result =
-                                write!(self.suggestion_start, "{start_snip}{ident_str_with_proj}");
+                        ExprKind::MethodCall(_, self_expr, ..) if self_expr.hir_id == cmt.hir_id => {
+                            let _: fmt::Result = write!(self.suggestion_start, "{start_snip}{ident_str_with_proj}");
                             self.next_pos = span.hi();
                             return;
-                        }
+                        },
                         // item is used in a call
                         // i.e.: `Call`: `|x| please(x)` or `MethodCall`: `|x| [1, 2, 3].contains(x)`
                         ExprKind::Call(_, call_args) | ExprKind::MethodCall(_, _, call_args, _) => {
@@ -1017,18 +957,14 @@ impl<'tcx> Delegate<'tcx> for DerefDelegate<'_, 'tcx> {
                                 // to suggest ampersand, but full identifier that includes projection is required
                                 let has_field_or_index_projection =
                                     cmt.place.projections.iter().any(|proj| {
-                                        matches!(
-                                            proj.kind,
-                                            ProjectionKind::Field(..) | ProjectionKind::Index
-                                        )
+                                        matches!(proj.kind, ProjectionKind::Field(..) | ProjectionKind::Index)
                                     });
 
                                 // no need to bind again if the function doesn't take arg by double ref
                                 // and if the item is already a double ref
                                 let ident_sugg = if !call_args.is_empty()
                                     && !takes_arg_by_double_ref
-                                    && (self.closure_arg_is_type_annotated_double_ref
-                                        || has_field_or_index_projection)
+                                    && (self.closure_arg_is_type_annotated_double_ref || has_field_or_index_projection)
                                 {
                                     let ident = if has_field_or_index_projection {
                                         ident_str_with_proj
@@ -1045,7 +981,7 @@ impl<'tcx> Delegate<'tcx> for DerefDelegate<'_, 'tcx> {
                             }
 
                             self.applicability = Applicability::Unspecified;
-                        }
+                        },
                         _ => (),
                     }
                 }
@@ -1134,10 +1070,7 @@ mod test {
 
     #[test]
     fn make_return_transform_sugg_into_a_return_call() {
-        assert_eq!(
-            "return function_call()",
-            SUGGESTION.make_return().to_string()
-        );
+        assert_eq!("return function_call()", SUGGESTION.make_return().to_string());
     }
 
     #[test]
