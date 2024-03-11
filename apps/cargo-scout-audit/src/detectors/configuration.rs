@@ -18,20 +18,21 @@ pub type DetectorsConfigurationList = Vec<DetectorConfiguration>;
 /// Returns list of detectors.
 pub fn get_detectors_configuration(dep: BlockChain) -> Result<DetectorsConfigurationList> {
     let path = Some(match dep {
-        BlockChain::Ink => String::from("ink_detectors"),
-        BlockChain::Soroban => String::from("soroban_detectors"),
+        BlockChain::Ink => String::from("https://github.com/CoinFabrik/scout"),
+        BlockChain::Soroban => String::from("https://github.com/CoinFabrik/scout-soroban"),
     });
+
 
     let detectors = vec![DetectorConfiguration {
         dependency: Dependency::parse(
             "library",
             None,
             SourceId::for_git(
-                &"https://github.com/CoinFabrik/scout-audit".into_url()?,
+                &path.unwrap().into_url()?,
                 GitReference::DefaultBranch,
             )?,
         )?,
-        path,
+        path: Some("detectors".to_string()) ,
     }];
 
     Ok(detectors)
