@@ -2,19 +2,30 @@
 <div class="sm:w-2/6 w-full p-4 overflow-y-auto sm:border-r border-gray-700 text-gray-100" id="vulnerabilitiesList">
     {% for category in report.categories %}
     <div class="category-section mb-5" data-category="{{ category.name }}">
-        <h3 class="text-lg font-bold p-3 bg-gray-700 mt-4 rounded-t-md ">
+        <h3 class="text-lg font-bold p-3 bg-gray-700 mt-4 rounded-t-md">
             {{ category.name }}
         </h3>
         {% for vulnerability in category.vulnerabilities %}
         <div
             class="vulnerability p-3 hover:bg-gray-600 border bg-gray-500 border-t-0 border-gray-600 rounded-md rounded-t-none flex flex-col cursor-pointer">
-            <div class="flex items-center expand-div">
+            <div class="flex items-center expand-div relative">
                 <button class="expand-btn bg-blue-500 hover:bg-blue-700 text-white font-bold w-8 h-8 rounded-md">
                     &#x25B6;
                 </button>
                 <div class="ml-4 w-fit">
                     <div class="font-bold">
                         {{ vulnerability.name | replace(from="_", to=" ") | capitalize }}
+                        <span class="absolute right-2">
+                            {% if vulnerability.severity == "high" %}
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                            {% elif vulnerability.severity == "medium" %}
+                            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            {% elif vulnerability.severity == "low" %}
+                            <i class="fas fa-info-circle text-green-500"></i>
+                            {% else %}
+                            <i class="fas fa-info-circle text-blue-500"></i>
+                            {% endif %}
+                        </span>
                     </div>
                     <div>{{ vulnerability.short_message }}</div>
                 </div>
