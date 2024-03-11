@@ -1,0 +1,64 @@
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        background-color: #1A202C;
+        margin: 10% auto;
+        border: 1px solid #2D3748;
+        width: fit-content;
+    }
+
+    .close {
+        color: #cbd5e0;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: #e2e8f0;
+    }
+</style>
+
+<div id="analyticsModal" class="modal">
+    <div class="modal-content flex flex-col rounded-md">
+        <div class="flex justify-center items-center w-full relative mt-2">
+            <h2 class="text-lg font-bold">Analytics</h2>
+            <span class="close absolute right-4 -top-2">&times;</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <div class="w-fit mt-2 m-4">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                File
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Occurrences
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-800 divide-y divide-gray-700">
+                        {% for file, occurrences in analytics %}
+                        <tr class="hover:bg-gray-600">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-left">{{ file }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">{{ occurrences }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
