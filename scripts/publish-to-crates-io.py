@@ -42,8 +42,9 @@ if __name__ == "__main__":
     CARGO_SCOUT_AUDIT_PATH = ROOT_PATH / "apps" / "cargo-scout-audit"
     SCOUT_AUDIT_CLIPPY_UTILS = ROOT_PATH / "scout-audit-clippy-utils"
     SCOUT_AUDIT_INTERNAL_PATH = ROOT_PATH / "scout-audit-internal"
+    SCOUT_AUDIT_DYLINT_LINTING = ROOT_PATH / "scout-audit-dylint-linting"
 
-    packages_paths = [SCOUT_AUDIT_CLIPPY_UTILS, SCOUT_AUDIT_INTERNAL_PATH, CARGO_SCOUT_AUDIT_PATH]
+    packages_paths = [SCOUT_AUDIT_CLIPPY_UTILS, SCOUT_AUDIT_INTERNAL_PATH, CARGO_SCOUT_AUDIT_PATH, SCOUT_AUDIT_DYLINT_LINTING]
 
     for path in packages_paths:
         package_name = get_package_name(path / "Cargo.toml")

@@ -134,16 +134,11 @@ pub fn root_macro_call_first_node(cx: &LateContext<'_>, node: &impl HirNode) -> 
 
 /// Like [`macro_backtrace`], but only returns macro calls where `node` is the "first node" of the
 /// macro call, as in [`first_node_in_macro`].
-pub fn first_node_macro_backtrace(
-    cx: &LateContext<'_>,
-    node: &impl HirNode,
-) -> impl Iterator<Item = MacroCall> {
+pub fn first_node_macro_backtrace(cx: &LateContext<'_>, node: &impl HirNode) -> impl Iterator<Item = MacroCall> {
     let span = node.span();
     first_node_in_macro(cx, node)
         .into_iter()
-        .flat_map(move |expn| {
-            macro_backtrace(span).take_while(move |macro_call| macro_call.expn != expn)
-        })
+        .flat_map(move |expn| macro_backtrace(span).take_while(move |macro_call| macro_call.expn != expn))
 }
 
 /// If `node` is the "first node" in a macro expansion, returns `Some` with the `ExpnId` of the
@@ -233,21 +228,31 @@ pub enum PanicExpn<'a> {
 
 impl<'a> PanicExpn<'a> {
     pub fn parse(expr: &'a Expr<'a>) -> Option<Self> {
-        let ExprKind::Call(callee, [arg, rest @ ..]) = &expr.kind else {
+        let ExprKind::Call(callee, args) = &expr.kind else {
             return None;
         };
         let ExprKind::Path(QPath::Resolved(_, path)) = &callee.kind else {
             return None;
         };
-        let result = match path.segments.last().unwrap().ident.as_str() {
-            "panic" if arg.span.ctxt() == expr.span.ctxt() => Self::Empty,
+        let name = path.segments.last().unwrap().ident.as_str();
+
+        // This has no argument
+        if name == "panic_cold_explicit" {
+            return Some(Self::Empty);
+        };
+
+        let [arg, rest @ ..] = args else {
+            return None;
+        };
+        let result = match name {
+            "panic" if arg.span.eq_ctxt(expr.span) => Self::Empty,
             "panic" | "panic_str" => Self::Str(arg),
-            "panic_display" => {
+            "panic_display" | "panic_cold_display" => {
                 let ExprKind::AddrOf(_, _, e) = &arg.kind else {
                     return None;
                 };
                 Self::Display(e)
-            }
+            },
             "panic_fmt" => Self::Format(arg),
             // Since Rust 1.52, `assert_{eq,ne}` macros expand to use:
             // `core::panicking::assert_failed(.., left_val, right_val, None | Some(format_args!(..)));`
@@ -263,7 +268,7 @@ impl<'a> PanicExpn<'a> {
                     ExprKind::Call(_, [fmt_arg]) => Self::Format(fmt_arg),
                     _ => Self::Empty,
                 }
-            }
+            },
             _ => return None,
         };
         Some(result)
@@ -307,9 +312,7 @@ fn find_assert_args_inner<'a, const N: usize>(
     let macro_id = expn.expn_data().macro_def_id?;
     let (expr, expn) = match cx.tcx.item_name(macro_id).as_str().strip_prefix("debug_") {
         None => (expr, expn),
-        Some(inner_name) => {
-            find_assert_within_debug_assert(cx, expr, expn, Symbol::intern(inner_name))?
-        }
+        Some(inner_name) => find_assert_within_debug_assert(cx, expr, expn, Symbol::intern(inner_name))?,
     };
     let mut args = ArrayVec::new();
     let panic_expn = for_each_expr(expr, |e| {
@@ -345,12 +348,7 @@ fn find_assert_within_debug_assert<'a>(
         let e_expn = e.span.ctxt().outer_expn();
         if e_expn == expn {
             ControlFlow::Continue(Descend::Yes)
-        } else if e_expn
-            .expn_data()
-            .macro_def_id
-            .map(|id| cx.tcx.item_name(id))
-            == Some(assert_name)
-        {
+        } else if e_expn.expn_data().macro_def_id.map(|id| cx.tcx.item_name(id)) == Some(assert_name) {
             ControlFlow::Break((e, e_expn))
         } else {
             ControlFlow::Continue(Descend::No)
@@ -401,22 +399,13 @@ thread_local! {
 
 /// Returns an AST [`FormatArgs`] node if a `format_args` expansion is found as a descendant of
 /// `expn_id`
-pub fn find_format_args(
-    cx: &LateContext<'_>,
-    start: &Expr<'_>,
-    expn_id: ExpnId,
-) -> Option<Rc<FormatArgs>> {
+pub fn find_format_args(cx: &LateContext<'_>, start: &Expr<'_>, expn_id: ExpnId) -> Option<Rc<FormatArgs>> {
     let format_args_expr = for_each_expr(start, |expr| {
         let ctxt = expr.span.ctxt();
         if ctxt.outer_expn().is_descendant_of(expn_id) {
             if macro_backtrace(expr.span)
                 .map(|macro_call| cx.tcx.item_name(macro_call.def_id))
-                .any(|name| {
-                    matches!(
-                        name,
-                        sym::const_format_args | sym::format_args | sym::format_args_nl
-                    )
-                })
+                .any(|name| matches!(name, sym::const_format_args | sym::format_args | sym::format_args_nl))
             {
                 ControlFlow::Break(expr)
             } else {

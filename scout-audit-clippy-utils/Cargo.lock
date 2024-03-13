@@ -36,8 +36,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5be1bdc7edf596692617627bbfeaba522131b18e06ca4df2b6b689e3c5d5ce84"
 
 [[package]]
-name = "scout-audit-clippy-utils"
-version = "0.2.1"
+name = "scout-audit-clippy-utils-soroban"
+version = "0.2.2"
 dependencies = [
  "arrayvec",
  "if_chain",
