@@ -1,6 +1,6 @@
 [package]
-name = "clippy_utils"
-version = "0.1.76"
+name = "scout-audit-clippy-utils"
+version = "0.2.2"
 edition = "2021"
 publish = false
 

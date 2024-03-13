@@ -1,5 +1,5 @@
 [package]
-name = "dylint_linting"
+name = "scout-audit-dylint-linting"
 version = "2.6.1"
 authors = ["Samuel E. Moelius III <sam@moeli.us>"]
 description = "Utilities for writing Dylint libraries"

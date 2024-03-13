@@ -163,13 +163,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "clippy_config"
+version = "0.1.76"
+dependencies = [
+ "rustc-semver",
+ "serde",
+ "toml",
+]
+
+[[package]]
 name = "clippy_utils"
 version = "0.1.74"
 source = "git+https://github.com/rust-lang/rust-clippy?rev=7671c283a50b5d1168841f3014b14000f01dd204#7671c283a50b5d1168841f3014b14000f01dd204"
 dependencies = [
  "arrayvec",
  "if_chain",
- "itertools",
+ "itertools 0.10.5",
  "rustc-semver",
 ]
 
@@ -670,6 +679,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1095,17 +1113,17 @@ dependencies = [
 
 [[package]]
 name = "scout-audit-clippy-utils"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "arrayvec",
- "if_chain",
- "itertools",
+ "clippy_config",
+ "itertools 0.11.0",
  "rustc-semver",
 ]
 
 [[package]]
 name = "scout-audit-internal"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "scout-audit-clippy-utils",
  "serde_json",

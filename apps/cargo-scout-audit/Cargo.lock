@@ -380,7 +380,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-scout-audit-soroban"
+name = "cargo-scout-audit"
 version = "0.2.2"
 dependencies = [
  "ansi_term",
@@ -399,7 +399,7 @@ dependencies = [
  "lazy_static",
  "log",
  "regex",
- "scout-audit-internal-soroban",
+ "scout-audit-internal",
  "serde",
  "serde_json",
  "tempfile",
@@ -3327,7 +3327,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "scout-audit-internal-soroban"
+name = "scout-audit-internal"
 version = "0.2.2"
 dependencies = [
  "strum",

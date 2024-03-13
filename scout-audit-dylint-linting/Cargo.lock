@@ -87,22 +87,10 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 [[package]]
 name = "dylint_internal"
 version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9400420c9ffa71c6b1b75d84225a150e3428eb12159e5bf4f56285bd9eb1c095"
 dependencies = [
  "anyhow",
-]
-
-[[package]]
-name = "dylint_linting"
-version = "2.6.1"
-dependencies = [
- "assert_cmd",
- "cargo_metadata",
- "dylint_internal",
- "paste",
- "rustversion",
- "serde",
- "thiserror",
- "toml",
 ]
 
 [[package]]
@@ -213,6 +201,20 @@ name = "ryu"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
+
+[[package]]
+name = "scout-audit-dylint-linting"
+version = "2.6.1"
+dependencies = [
+ "assert_cmd",
+ "cargo_metadata",
+ "dylint_internal",
+ "paste",
+ "rustversion",
+ "serde",
+ "thiserror",
+ "toml",
+]
 
 [[package]]
 name = "semver"

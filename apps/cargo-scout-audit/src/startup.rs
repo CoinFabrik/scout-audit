@@ -24,7 +24,7 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum CargoSubCommand {
-    ScoutAuditSoroban(Scout),
+    ScoutAudit(Scout),
 }
 #[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
 pub enum OutputFormat {
