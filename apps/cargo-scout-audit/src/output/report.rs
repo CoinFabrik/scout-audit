@@ -1,9 +1,21 @@
 use anyhow::Result;
-use chrono::NaiveDate;
+use chrono::{naive, NaiveDate};
+use core::panic;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::{html, markdown};
+use super::{
+    html, markdown,
+    vulnerabilities::{
+        ASSERT_VIOLATION, AVOID_FORMAT_STRING, AVOID_STD_CORE_MEM_FORGET, CHECK_INK_VERSION,
+        DELEGATE_CALL, DIVIDE_BEFORE_MULTIPLY, DOS_UNBOUNDED_OPERATION,
+        INSUFFICIENTLY_RANDOM_VALUES, INTEGER_OVERFLOW_UNDERFLOW, ITERATOR_OVER_INDEXING,
+        LAZY_DELEGATE, PANIC_ERROR, REENTRANCY, SET_STORAGE_WARN, UNEXPECTED_REVERT_WARN,
+        UNPROTECTED_MAPPING_OPERATION, UNPROTECTED_SELF_DESTRUCT, UNPROTECTED_SET_CODE_HASH,
+        UNRESTRICTED_TRANSFER_FROM, UNSAFE_EXPECT, UNSAFE_UNWRAP, UNUSED_RETURN_ENUM,
+        ZERO_OR_TEST_ADDRESS,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -78,5 +90,198 @@ impl Report {
 
     pub fn generate_markdown(&self) -> Result<&'static str> {
         markdown::generate_markdown(self)
+    }
+}
+
+pub struct RawVulnerability {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub short_message: &'static str,
+    pub long_message: &'static str,
+    pub severity: &'static str,
+    pub help: &'static str,
+    pub vulnerability_class: &'static str,
+}
+
+impl From<RawVulnerability> for Vulnerability {
+    fn from(finding: RawVulnerability) -> Self {
+        Vulnerability {
+            id: finding.id.to_string(),
+            name: finding.name.to_string(),
+            short_message: finding.short_message.to_string(),
+            long_message: finding.long_message.to_string(),
+            severity: finding.severity.to_string(),
+            help: finding.help.to_string(),
+        }
+    }
+}
+
+pub fn generate_report(scout_output: String) -> Report {
+    use crate::output::vulnerabilities::DETECTORS;
+    use serde_json::Value;
+
+    let scout_findings = scout_output
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .filter(|finding: &Value| {
+            finding
+                .get("message")
+                .and_then(|message| message.get("code"))
+                .and_then(|code| code.get("code"))
+                .and_then(|code| code.as_str())
+                .filter(|code| DETECTORS.contains(code))
+                .is_some()
+        })
+        .collect::<Vec<Value>>();
+
+    let mut id = 0;
+    let mut det_map = HashMap::new();
+    for detector in DETECTORS {
+        det_map.insert(detector.to_string(), 0);
+    }
+
+    let mut findings: Vec<Finding> = Vec::new();
+
+    for finding in scout_findings {
+        let category = finding
+            .get("message")
+            .and_then(|message| message.get("code"))
+            .and_then(|code| code.get("code"))
+            .unwrap()
+            .to_string()
+            .trim_matches('"')
+            .to_string();
+
+        let file = finding
+            .get("target")
+            .and_then(|target| target.get("src_path"))
+            .unwrap()
+            .to_string();
+
+        let sp = finding
+            .get("message")
+            .and_then(|message| message.get("spans"))
+            .unwrap();
+
+        let span = format!(
+            "{}:{}:{} - {}:{}",
+            sp.get("file_name")
+                .unwrap_or(&serde_json::Value::default())
+                .to_string(),
+            sp.get("line_start")
+                .unwrap_or(&serde_json::Value::default())
+                .to_string(),
+            sp.get("column_start")
+                .unwrap_or(&serde_json::Value::default())
+                .to_string(),
+            sp.get("line_end")
+                .unwrap_or(&serde_json::Value::default())
+                .to_string(),
+            sp.get("column_end")
+                .unwrap_or(&serde_json::Value::default())
+                .to_string()
+        );
+
+        let code_snippet = finding
+            .get("message")
+            .and_then(|message| message.get("rendered"))
+            .unwrap()
+            .to_string();
+
+        let error_message = finding
+            .get("message")
+            .and_then(|message| message.get("message"))
+            .unwrap()
+            .to_string();
+
+        let v = det_map.get_mut(&category).unwrap();
+
+        *v += 1;
+
+        let fndg = Finding {
+            id,
+            occurrence_index: *v,
+            category_id: "".to_string(),
+            vulnerability_id: category,
+            error_message,
+            span,
+            code_snippet,
+            file,
+        };
+        id += 1;
+        findings.push(fndg);
+    }
+
+    let mut summary_map = det_map
+        .into_iter()
+        .filter(|(_, v)| *v != 0)
+        .collect::<HashMap<String, u32>>();
+
+    let mut categories: Vec<Category> = Vec::new();
+
+    for (vuln, _) in &summary_map {
+        let raw_vuln = get_raw_vuln_from_name(&vuln);
+        let id = raw_vuln.vulnerability_class.to_string();
+
+        if categories.iter().any(|cat| cat.id == id) {
+            let cat = categories.iter_mut().find(|cat| cat.id == id).unwrap();
+            let vuln = Vulnerability::from(raw_vuln);
+            cat.vulnerabilities.push(vuln);
+            continue;
+        }
+
+        let vuln = Vulnerability::from(raw_vuln);
+
+        let cat = Category {
+            id,
+            name: vuln.name.clone(),
+            vulnerabilities: vec![vuln],
+        };
+        categories.push(cat);
+    }
+
+    let summary = Summary {
+        total_vulnerabilities: findings.len() as u32,
+        by_severity: summary_map,
+    };
+
+    Report::new(
+        "name".into(),
+        "description".into(),
+        naive::NaiveDate::from_ymd_opt(2023, 01, 01).unwrap(),
+        "source".into(),
+        summary,
+        categories,
+        findings,
+    )
+}
+
+fn get_raw_vuln_from_name(name: &str) -> RawVulnerability {
+    match name {
+        "assert_violation" => ASSERT_VIOLATION,
+        "avoid_std_core_mem_forget" => AVOID_STD_CORE_MEM_FORGET,
+        "avoid_format_string" => AVOID_FORMAT_STRING,
+        "delegate_call" => DELEGATE_CALL,
+        "divide_before_multiply" => DIVIDE_BEFORE_MULTIPLY,
+        "dos_unbounded_operation" => DOS_UNBOUNDED_OPERATION,
+        "unexpected_revert_warn" => UNEXPECTED_REVERT_WARN,
+        "check_ink_version" => CHECK_INK_VERSION,
+        "insufficiently_random_values" => INSUFFICIENTLY_RANDOM_VALUES,
+        "integer_overflow_underflow" => INTEGER_OVERFLOW_UNDERFLOW,
+        "iterator_over_indexing" => ITERATOR_OVER_INDEXING,
+        "lazy_delegate" => LAZY_DELEGATE,
+        "panic_error" => PANIC_ERROR,
+        "reentrancy_1" => REENTRANCY,
+        "reentrancy_2" => REENTRANCY,
+        "unprotected_set_code_hash" => UNPROTECTED_SET_CODE_HASH,
+        "set_storage_warn" => SET_STORAGE_WARN,
+        "unprotected_mapping_operation" => UNPROTECTED_MAPPING_OPERATION,
+        "unprotected_self_destruct" => UNPROTECTED_SELF_DESTRUCT,
+        "unrestricted_transfer_from" => UNRESTRICTED_TRANSFER_FROM,
+        "unsafe_expect" => UNSAFE_EXPECT,
+        "unsafe_unwrap" => UNSAFE_UNWRAP,
+        "unused_return_enum" => UNUSED_RETURN_ENUM,
+        "zero_or_test_address" => ZERO_OR_TEST_ADDRESS,
+        _ => panic!("Unknown vulnerability name: {}", name),
     }
 }

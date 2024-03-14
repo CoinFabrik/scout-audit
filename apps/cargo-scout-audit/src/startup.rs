@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, process::Output};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -9,6 +9,7 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
+    output::report::generate_report,
     utils::{
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         output::{format_into_json, format_into_sarif},
@@ -97,7 +98,7 @@ pub enum BlockChain {
     Soroban,
 }
 
-pub fn run_scout(opts: Scout) -> Result<()> {
+pub fn run_scout(mut opts: Scout) -> Result<()> {
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
@@ -176,7 +177,11 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     Ok(())
 }
 
-fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockChain) -> Result<()> {
+fn run_dylint(
+    detectors_paths: Vec<PathBuf>,
+    mut opts: Scout,
+    bc_dependency: BlockChain,
+) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -196,6 +201,10 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     } else {
         Some(stderr_temp_file.path().to_string_lossy().to_string())
     };
+
+    if opts.output_format == OutputFormat::Html {
+        opts.args.push("--message-format=json".to_string());
+    }
 
     let options = Dylint {
         paths: detectors_paths,
@@ -221,11 +230,22 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     // let report = Report::new(name, description, date, source_url, summary, categories, findings);
     match opts.output_format {
         OutputFormat::Html => {
+            let mut json_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.json")?,
+            };
+
+            //read json_file to a string
+            let mut bu = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut bu)?;
+
+            let report = generate_report(bu);
+
             // Generate HTML
-            // let html_path = report.generate_html()?;
+            let html_path = report.generate_html()?;
 
             // Open the HTML report in the default web browser
-            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
+            webbrowser::open(&html_path).context("Failed to open HTML report")?;
         }
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {

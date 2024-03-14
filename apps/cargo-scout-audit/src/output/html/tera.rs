@@ -3,11 +3,12 @@ extern crate tera;
 use tera::{Context, Result, Tera};
 
 lazy_static! {
-    pub static ref TEMPLATES: Option<Tera> = Tera::new("src/templates/**/*").ok();
+    pub static ref TEMPLATES: Option<Tera> = Tera::new("src/output/html/templates/**/*").ok();
 }
 
 pub fn render_template(template_name: &str, contexts: Vec<Context>) -> Result<String> {
     if let Some(tera) = &*TEMPLATES {
+        println!("{:?}", tera);
         let context = merge_contexts(contexts);
         tera.render(template_name, &context)
     } else {
