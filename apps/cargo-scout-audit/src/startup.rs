@@ -241,6 +241,7 @@ fn run_dylint(
 
             let report = generate_report(bu);
 
+            println!("{:#?}", report);
             // Generate HTML
             let html_path = report.generate_html()?;
 

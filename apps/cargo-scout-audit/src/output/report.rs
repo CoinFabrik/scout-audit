@@ -226,7 +226,9 @@ pub fn generate_report(scout_output: String) -> Report {
         if categories.iter().any(|cat| cat.id == id) {
             let cat = categories.iter_mut().find(|cat| cat.id == id).unwrap();
             let vuln = Vulnerability::from(raw_vuln);
-            cat.vulnerabilities.push(vuln);
+            if findings.iter().any(|f| f.vulnerability_id == vuln.id) {
+                cat.vulnerabilities.push(vuln);
+            }
             continue;
         }
 
@@ -240,9 +242,28 @@ pub fn generate_report(scout_output: String) -> Report {
         categories.push(cat);
     }
 
+    let mut vulns_by_severity = vec![
+        ("minor".to_string(), 0),
+        ("low".to_string(), 0),
+        ("medium".to_string(), 0),
+        ("high".to_string(), 0),
+        ("critical".to_string(), 0),
+        ("enhancement".to_string(), 0),
+        ("info".to_string(), 0),
+    ];
+
+    for (vuln, count) in &summary_map {
+        let severity = get_raw_vuln_from_name(vuln).severity.to_string();
+        let severity_count = vulns_by_severity
+            .iter_mut()
+            .find(|(s, _)| s.to_lowercase() == severity.to_lowercase())
+            .unwrap();
+        severity_count.1 += count;
+    }
+
     let summary = Summary {
         total_vulnerabilities: findings.len() as u32,
-        by_severity: summary_map,
+        by_severity: vulns_by_severity.into_iter().collect(),
     };
 
     Report::new(
