@@ -2,20 +2,10 @@ use anyhow::Result;
 use chrono::{naive, NaiveDate};
 use core::panic;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 
-use super::{
-    html, markdown,
-    vulnerabilities::{
-        ASSERT_VIOLATION, AVOID_FORMAT_STRING, AVOID_STD_CORE_MEM_FORGET, CHECK_INK_VERSION,
-        DELEGATE_CALL, DIVIDE_BEFORE_MULTIPLY, DOS_UNBOUNDED_OPERATION,
-        INSUFFICIENTLY_RANDOM_VALUES, INTEGER_OVERFLOW_UNDERFLOW, ITERATOR_OVER_INDEXING,
-        LAZY_DELEGATE, PANIC_ERROR, REENTRANCY, SET_STORAGE_WARN, UNEXPECTED_REVERT_WARN,
-        UNPROTECTED_MAPPING_OPERATION, UNPROTECTED_SELF_DESTRUCT, UNPROTECTED_SET_CODE_HASH,
-        UNRESTRICTED_TRANSFER_FROM, UNSAFE_EXPECT, UNSAFE_UNWRAP, UNUSED_RETURN_ENUM,
-        ZERO_OR_TEST_ADDRESS,
-    },
-};
+use super::{html, markdown, vulnerabilities::*};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -117,9 +107,6 @@ impl From<RawVulnerability> for Vulnerability {
 }
 
 pub fn generate_report(scout_output: String) -> Report {
-    use crate::output::vulnerabilities::DETECTORS;
-    use serde_json::Value;
-
     let scout_findings = scout_output
         .lines()
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
@@ -134,15 +121,15 @@ pub fn generate_report(scout_output: String) -> Report {
         })
         .collect::<Vec<Value>>();
 
-    let mut id = 0;
-    let mut det_map = HashMap::new();
-    for detector in DETECTORS {
-        det_map.insert(detector.to_string(), 0);
-    }
+    let mut id: u32 = 0;
+    let mut det_map: HashMap<_, _> = DETECTORS
+        .iter()
+        .map(|&detector| (detector.to_string(), 0))
+        .collect();
 
     let mut findings: Vec<Finding> = Vec::new();
 
-    for finding in scout_findings {
+    for finding in &scout_findings {
         let category = finding
             .get("message")
             .and_then(|message| message.get("code"))
@@ -163,17 +150,18 @@ pub fn generate_report(scout_output: String) -> Report {
             .and_then(|message| message.get("spans"))
             .unwrap();
 
-        let span = format!(
-            "{}:{}:{} - {}:{}",
-            sp.get("file_name").unwrap_or(&serde_json::Value::default()),
-            sp.get("line_start")
-                .unwrap_or(&serde_json::Value::default()),
-            sp.get("column_start")
-                .unwrap_or(&serde_json::Value::default()),
-            sp.get("line_end").unwrap_or(&serde_json::Value::default()),
-            sp.get("column_end")
-                .unwrap_or(&serde_json::Value::default())
-        );
+        let span = if ["check_ink_version"].contains(&category.as_str()) {
+            "Cargo.toml".to_string()
+        } else {
+            format!(
+                "{}:{}:{} - {}:{}",
+                sp[0].get("file_name").unwrap_or(&Value::default()),
+                sp[0].get("line_start").unwrap_or(&Value::default()),
+                sp[0].get("column_start").unwrap_or(&Value::default()),
+                sp[0].get("line_end").unwrap_or(&Value::default()),
+                sp[0].get("column_end").unwrap_or(&Value::default())
+            )
+        };
 
         let code_snippet = finding
             .get("message")
@@ -187,17 +175,16 @@ pub fn generate_report(scout_output: String) -> Report {
             .unwrap()
             .to_string();
 
-        let v = det_map.get_mut(&category).unwrap();
-
+        let v = det_map.entry(category.clone()).or_insert(0);
         *v += 1;
-
-        let raw_vuln = get_raw_vuln_from_name(&category).vulnerability_class;
 
         let fndg = Finding {
             id,
             occurrence_index: *v,
-            category_id: raw_vuln.to_string(),
-            vulnerability_id: category, // category is vulnerability_id
+            category_id: get_raw_vuln_from_name(&category)
+                .vulnerability_class
+                .to_string(),
+            vulnerability_id: category,
             error_message,
             span,
             code_snippet,
@@ -217,34 +204,29 @@ pub fn generate_report(scout_output: String) -> Report {
     for (vuln, _) in &summary_map {
         let raw_vuln = get_raw_vuln_from_name(vuln);
         let id = raw_vuln.vulnerability_class.to_string();
+        let vuln = Vulnerability::from(raw_vuln);
 
         if categories.iter().any(|cat| cat.id == id) {
             let cat = categories.iter_mut().find(|cat| cat.id == id).unwrap();
-            let vuln = Vulnerability::from(raw_vuln);
             if findings.iter().any(|f| f.vulnerability_id == vuln.id) {
                 cat.vulnerabilities.push(vuln);
             }
             continue;
+        } else {
+            let cat = Category {
+                id,
+                name: vuln.name.clone(),
+                vulnerabilities: vec![vuln],
+            };
+            categories.push(cat);
         }
-
-        let vuln = Vulnerability::from(raw_vuln);
-
-        let cat = Category {
-            id,
-            name: vuln.name.clone(),
-            vulnerabilities: vec![vuln],
-        };
-        categories.push(cat);
     }
 
     let mut vulns_by_severity = vec![
-        ("minor".to_string(), 0),
-        ("low".to_string(), 0),
-        ("medium".to_string(), 0),
-        ("high".to_string(), 0),
         ("critical".to_string(), 0),
+        ("medium".to_string(), 0),
+        ("minor".to_string(), 0),
         ("enhancement".to_string(), 0),
-        ("info".to_string(), 0),
     ];
 
     for (vuln, count) in &summary_map {

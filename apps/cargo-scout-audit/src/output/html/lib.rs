@@ -8,8 +8,8 @@ use anyhow::{Context, Result};
 use std::{path::PathBuf, vec};
 
 const BASE_TEMPLATE: &str = "base.html";
-const REPORT_HTML_PATH: &str = "build/report.html";
-const OUTPUT_CSS_PATH: &str = "build/styles.css";
+const REPORT_HTML_PATH: &str = "src/output/html/build/report.html";
+const OUTPUT_CSS_PATH: &str = "src/output/html/build/styles.css";
 const STYLES_CSS: &[u8] = include_bytes!("templates/styles.css");
 
 // Generates an HTML report from a given `Report` object.

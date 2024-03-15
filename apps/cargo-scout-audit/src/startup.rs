@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs, path::PathBuf, process::Output};
+use std::{fs, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -98,7 +98,7 @@ pub enum BlockChain {
     Soroban,
 }
 
-pub fn run_scout(mut opts: Scout) -> Result<()> {
+pub fn run_scout(opts: Scout) -> Result<()> {
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
@@ -202,7 +202,7 @@ fn run_dylint(
         Some(stderr_temp_file.path().to_string_lossy().to_string())
     };
 
-    if opts.output_format == OutputFormat::Html {
+    if opts.output_format != OutputFormat::Text {
         opts.args.push("--message-format=json".to_string());
     }
 
@@ -231,16 +231,24 @@ fn run_dylint(
     match opts.output_format {
         OutputFormat::Html => {
             //read json_file to a string
-            let mut bu = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut bu)?;
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(bu);
+            let report = generate_report(content);
 
             // Generate HTML
             let html_path = report.generate_html()?;
 
+            let combined = combine_html(html_path)?;
+
+            let mut html_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.html")?,
+            };
+            std::io::Write::write_all(&mut html_file, combined.as_bytes())?;
+
             // Open the HTML report in the default web browser
-            webbrowser::open(html_path).context("Failed to open HTML report")?;
+            webbrowser::open("report.html").context("Failed to open HTML report")?;
         }
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {
@@ -253,11 +261,20 @@ fn run_dylint(
             )?;
         }
         OutputFormat::Markdown => {
-            // Generate Markdown
-            // let markdown_path = report.generate_markdown()?;
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            // Open the Markdown report in the default text editor
-            // open::that(markdown_path).context("Failed to open Markdown report")?;
+            let report = generate_report(content);
+
+            // Generate Markdown
+            let markdown_path = report.generate_markdown()?;
+
+            let mut md_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.html")?,
+            };
+
+            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
         }
         OutputFormat::Sarif => {
             let mut sarif_file = match &opts.output_path {
@@ -303,4 +320,40 @@ fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
         fs::remove_dir_all(target_dylint_path)?;
     }
     Ok(())
+}
+
+fn combine_html(path: &str) -> Result<String> {
+    let js_files_content: Vec<String> = fs::read_dir("src/output/html/build")?
+        .filter_map(|entry| {
+            entry.ok().and_then(|e| {
+                if e.path().extension().map(|ext| ext == "js").unwrap_or(false) {
+                    Some(e.path())
+                } else {
+                    None
+                }
+            })
+        })
+        .map(|file| {
+            let mut content = String::new();
+            let mut file = fs::File::open(file)?;
+            std::io::Read::read_to_string(&mut file, &mut content)?;
+            Ok(content)
+        })
+        .collect::<Result<Vec<String>, std::io::Error>>()?;
+
+    Ok(format!(
+        "{}\n
+        <style>{}</style>\n
+        <script>{}</script>\n
+        <script>{}</script>\n
+        <script>{}</script>\n
+        <script>{}</script>\n
+        ",
+        fs::read_to_string(path)?,
+        fs::read_to_string("src/output/html/build/styles.css")?,
+        js_files_content[0],
+        js_files_content[1],
+        js_files_content[2],
+        js_files_content[3]
+    ))
 }
