@@ -1,5 +1,8 @@
 use core::panic;
-use std::{fs, path::PathBuf};
+use std::{
+    fs::{self, read_to_string},
+    path::{Path, PathBuf},
+};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -32,9 +35,11 @@ pub enum OutputFormat {
     #[default]
     Html,
     Json,
+    #[clap(name = "md")]
     Markdown,
     Sarif,
     Text,
+    Pdf,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -297,6 +302,17 @@ fn run_dylint(
                 std::io::copy(&mut stdout_file, &mut handle)
                     .expect("Error writing dylint result to stdout");
             }
+        }
+        OutputFormat::Pdf => {
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content);
+
+            // Generate Markdown 
+            let path = PathBuf::from("testeo.pdf");
+            report.generate_pdf(&path)?;
+            
         }
     }
 

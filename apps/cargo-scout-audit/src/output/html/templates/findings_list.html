@@ -3,7 +3,7 @@
     {% for category in report.categories %}
     <div class="category-section mb-5" data-category="{{ category.name }}">
         <h3 class="text-lg font-bold p-3 bg-gray-700 mt-4 rounded-t-md">
-            {{ category.name }}
+            {{ category.id }}
         </h3>
         {% for vulnerability in category.vulnerabilities %}
         <div

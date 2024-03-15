@@ -1,17 +1,17 @@
 use anyhow::Result;
-use chrono::{naive, NaiveDate};
+use chrono::offset::Local;
 use core::panic;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
 
-use super::{html, markdown, vulnerabilities::*};
+use super::{html, markdown, pdf, vulnerabilities::*};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
     pub name: String,
     pub description: String,
-    pub date: NaiveDate,
+    pub date: String,
     pub source_url: String,
     pub summary: Summary,
     pub categories: Vec<Category>,
@@ -57,7 +57,7 @@ impl Report {
     pub fn new(
         name: String,
         description: String,
-        date: NaiveDate,
+        date: String,
         source_url: String,
         summary: Summary,
         categories: Vec<Category>,
@@ -80,6 +80,19 @@ impl Report {
 
     pub fn generate_markdown(&self) -> Result<&'static str> {
         markdown::generate_markdown(self)
+    }
+
+    pub fn generate_pdf(&self, path: &PathBuf) -> Result<()> {
+        let temp_html = pdf::generate_pdf(self)?;
+
+        std::process::Command::new("wkhtmltopdf")
+            .arg(temp_html)
+            .arg(path.to_str().unwrap())
+            .exec();
+
+        std::fs::remove_file(temp_html)?;
+
+        Ok(())
     }
 }
 
@@ -130,7 +143,7 @@ pub fn generate_report(scout_output: String) -> Report {
     let mut findings: Vec<Finding> = Vec::new();
 
     for finding in &scout_findings {
-        let category = finding
+        let category: String = finding
             .get("message")
             .and_then(|message| message.get("code"))
             .and_then(|code| code.get("code"))
@@ -155,7 +168,12 @@ pub fn generate_report(scout_output: String) -> Report {
         } else {
             format!(
                 "{}:{}:{} - {}:{}",
-                sp[0].get("file_name").unwrap_or(&Value::default()),
+                sp[0]
+                    .get("file_name")
+                    .unwrap_or(&Value::default())
+                    .to_string()
+                    .trim_matches('"')
+                    .to_string(),
                 sp[0].get("line_start").unwrap_or(&Value::default()),
                 sp[0].get("column_start").unwrap_or(&Value::default()),
                 sp[0].get("line_end").unwrap_or(&Value::default()),
@@ -163,10 +181,12 @@ pub fn generate_report(scout_output: String) -> Report {
             )
         };
 
-        let code_snippet = finding
-            .get("message")
-            .and_then(|message| message.get("rendered"))
-            .unwrap()
+        //given a byte_start and byte_end, we can extract the code snippet from the file
+        let byte_start = sp[0].get("byte_start").unwrap().as_u64().unwrap() as usize;
+        let byte_end = sp[0].get("byte_end").unwrap().as_u64().unwrap() as usize;
+
+        let code_snippet: String = std::fs::read_to_string(&(file.trim_matches('"'))).unwrap()
+            [byte_start..byte_end]
             .to_string();
 
         let error_message = finding
@@ -243,10 +263,16 @@ pub fn generate_report(scout_output: String) -> Report {
         by_severity: vulns_by_severity.into_iter().collect(),
     };
 
+    let date = format!(
+        "{} {}",
+        Local::now().naive_local().date(),
+        Local::now().naive_local().time().format("%H:%M:%S")
+    );
+
     Report::new(
         "name".into(),
         "description".into(),
-        naive::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
+        date,
         "source".into(),
         summary,
         categories,
