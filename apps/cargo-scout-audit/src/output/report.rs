@@ -165,21 +165,14 @@ pub fn generate_report(scout_output: String) -> Report {
 
         let span = format!(
             "{}:{}:{} - {}:{}",
-            sp.get("file_name")
-                .unwrap_or(&serde_json::Value::default())
-                .to_string(),
+            sp.get("file_name").unwrap_or(&serde_json::Value::default()),
             sp.get("line_start")
-                .unwrap_or(&serde_json::Value::default())
-                .to_string(),
+                .unwrap_or(&serde_json::Value::default()),
             sp.get("column_start")
-                .unwrap_or(&serde_json::Value::default())
-                .to_string(),
-            sp.get("line_end")
-                .unwrap_or(&serde_json::Value::default())
-                .to_string(),
+                .unwrap_or(&serde_json::Value::default()),
+            sp.get("line_end").unwrap_or(&serde_json::Value::default()),
             sp.get("column_end")
                 .unwrap_or(&serde_json::Value::default())
-                .to_string()
         );
 
         let code_snippet = finding
@@ -198,11 +191,13 @@ pub fn generate_report(scout_output: String) -> Report {
 
         *v += 1;
 
+        let raw_vuln = get_raw_vuln_from_name(&category).vulnerability_class;
+
         let fndg = Finding {
             id,
             occurrence_index: *v,
-            category_id: "".to_string(),
-            vulnerability_id: category,
+            category_id: raw_vuln.to_string(),
+            vulnerability_id: category, // category is vulnerability_id
             error_message,
             span,
             code_snippet,
@@ -212,7 +207,7 @@ pub fn generate_report(scout_output: String) -> Report {
         findings.push(fndg);
     }
 
-    let mut summary_map = det_map
+    let summary_map = det_map
         .into_iter()
         .filter(|(_, v)| *v != 0)
         .collect::<HashMap<String, u32>>();
@@ -220,7 +215,7 @@ pub fn generate_report(scout_output: String) -> Report {
     let mut categories: Vec<Category> = Vec::new();
 
     for (vuln, _) in &summary_map {
-        let raw_vuln = get_raw_vuln_from_name(&vuln);
+        let raw_vuln = get_raw_vuln_from_name(vuln);
         let id = raw_vuln.vulnerability_class.to_string();
 
         if categories.iter().any(|cat| cat.id == id) {
@@ -269,7 +264,7 @@ pub fn generate_report(scout_output: String) -> Report {
     Report::new(
         "name".into(),
         "description".into(),
-        naive::NaiveDate::from_ymd_opt(2023, 01, 01).unwrap(),
+        naive::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
         "source".into(),
         summary,
         categories,

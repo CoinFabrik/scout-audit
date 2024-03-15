@@ -8,7 +8,6 @@ lazy_static! {
 
 pub fn render_template(template_name: &str, contexts: Vec<Context>) -> Result<String> {
     if let Some(tera) = &*TEMPLATES {
-        println!("{:?}", tera);
         let context = merge_contexts(contexts);
         tera.render(template_name, &context)
     } else {
