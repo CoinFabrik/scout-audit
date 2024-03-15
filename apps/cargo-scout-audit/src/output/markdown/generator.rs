@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use chrono::NaiveDate;
 
@@ -6,34 +6,43 @@ use crate::output::report::{Category, Finding};
 
 use super::utils;
 
-const BANNER_URL: &str = "https://www.example.com/banner.png";
+fn banner_url() -> String {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("assets/banner.png")
+        .to_str()
+        .expect("Failed to create path string")
+        .to_owned(); // Convert &str to String
+
+    path
+}
 
 // Generate the header for the report
 pub fn generate_header(date: NaiveDate) -> String {
     format!(
-        "![Banner Scout report]({})\n# Scout Report - {}\n\n",
-        BANNER_URL, date
+        "<img src=\"{}\" alt=\"Banner Scout report\"><br><br><h1>Scout Report - {}</h1><br><br>",
+        banner_url(),
+        date
     )
 }
 
 // Generate the summary for the report
 pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String {
-    let mut summary_markdown = String::from("## Summary\n");
+    let mut summary_markdown = String::from("<h2>Summary</h2>");
     let findings_summary = summarize_findings(categories, findings);
 
     for category in categories {
         if let Some((count, severity)) = findings_summary.get(&category.id) {
             summary_markdown.push_str(&format!(
-                " - [{}]({}) ({} results) ({})\n",
-                category.name,
+                " - <a href=\"{}\">{}</a> ({} results) ({})<br>",
                 utils::sanitize_category_name(&category.name),
+                category.name,
                 count,
                 severity
             ));
         }
     }
 
-    summary_markdown.push('\n');
+    summary_markdown.push_str("<br>");
     summary_markdown
 }
 
@@ -69,24 +78,24 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
             format!("{}{}", category_markdown, table)
         })
         .collect::<Vec<_>>()
-        .join("\n")
+        .join("<br>")
 }
 
-// Function to generate Markdown for a category
+// Function to generate HTML for a category
 fn generate_category(category: &Category) -> String {
-    let mut category_markdown = format!("## {}\n\n", category.name);
+    let mut category_markdown = format!("<h2>{}</h2><br>", category.name);
     for vulnerability in &category.vulnerabilities {
-        category_markdown.push_str(&format!("### {}\n\n", vulnerability.name));
+        category_markdown.push_str(&format!("<h3>{}</h3><br>", vulnerability.name));
         category_markdown.push_str(&format!(
-            "**Impact:** {}\n\n",
+            "<strong>Impact:</strong> <span style=\"font-weight: bold\">{}</span><br><br>",
             utils::capitalize(&vulnerability.severity)
         ));
         category_markdown.push_str(&format!(
-            "**Description:** {}\n\n",
+            "<strong>Description:</strong> {}<br><br>",
             vulnerability.short_message
         ));
         category_markdown.push_str(&format!(
-            "**More about:** [here]({})\n\n",
+            "<strong>More about:</strong> <a href=\"{}\">here</a><br><br>",
             vulnerability.help
         ));
     }
@@ -106,8 +115,8 @@ fn generate_table_for_category(category: &Category, findings: &[Finding]) -> Str
         .map(generate_finding)
         .collect();
     format!(
-        "{}{}{}</tbody></table>\n\n",
-        table_header, table_body, "</tbody></table>\n\n"
+        "{}{}{}</tbody></table><br><br>",
+        table_header, table_body, "</tbody></table><br><br>"
     )
 }
 
