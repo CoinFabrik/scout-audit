@@ -11,6 +11,7 @@ checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 [[package]]
 name = "clippy_config"
 version = "0.1.76"
+source = "git+https://github.com/rust-lang/rust-clippy?rev=a859e5cc1ce100df22346a1005da30532d04de59#a859e5cc1ce100df22346a1005da30532d04de59"
 dependencies = [
  "rustc-semver",
  "serde",
