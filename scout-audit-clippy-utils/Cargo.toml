@@ -2,7 +2,7 @@
 name = "scout-audit-clippy-utils"
 version = "0.2.3"
 edition = "2021"
-publish = false
+publish = true
 
 [dependencies]
 clippy_config = { path = "../clippy_config" }
