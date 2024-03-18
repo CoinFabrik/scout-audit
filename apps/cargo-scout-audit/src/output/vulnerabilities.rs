@@ -24,7 +24,7 @@ pub struct RawVulnerability {
 
 impl Config {
     pub fn load() -> Result<Config> {
-        let data = fs::read_to_string("/Users/josegarcia/Desktop/coinfabrik/scout-audit/apps/cargo-scout-audit/src/output/vulnerabilities.json")
+        let data = fs::read_to_string("src/output/vulnerabilities.rs")
             .context("Failed to read vulnerabilities.json")?;
         let config: Config =
             serde_json::from_str(&data).context("Failed to parse vulnerabilities.json")?;
