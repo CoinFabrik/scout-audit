@@ -2,6 +2,8 @@
 name = "scout-audit-clippy-config"
 version = "0.1.76"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rust-lang/rust-clippy"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
