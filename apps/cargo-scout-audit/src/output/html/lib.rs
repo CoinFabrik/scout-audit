@@ -5,12 +5,11 @@ use super::{
     utils,
 };
 use anyhow::{Context, Result};
-use std::{path::PathBuf, vec};
+use std::{fs, io::Read, path::PathBuf, vec};
 
 const BASE_TEMPLATE: &str = "base.html";
+const BUILD_DIR: &str = "src/output/html/build";
 const REPORT_HTML_PATH: &str = "src/output/html/build/report.html";
-const OUTPUT_CSS_PATH: &str = "src/output/html/build/styles.css";
-const STYLES_CSS: &[u8] = include_bytes!("templates/styles.css");
 
 // Generates an HTML report from a given `Report` object.
 pub fn generate_html(report: &Report) -> Result<&'static str> {
@@ -24,11 +23,39 @@ pub fn generate_html(report: &Report) -> Result<&'static str> {
     let html = render_template(BASE_TEMPLATE, vec![report_context, analytics_context])
         .with_context(|| format!("Failed to render template '{}'", BASE_TEMPLATE))?;
 
-    write_to_file(&PathBuf::from(REPORT_HTML_PATH), html.as_bytes())
+    let combined_html = combine_html(html, BUILD_DIR)?;
+
+    write_to_file(&PathBuf::from(REPORT_HTML_PATH), combined_html.as_bytes())
         .with_context(|| format!("Failed to write HTML to '{}'", REPORT_HTML_PATH))?;
 
-    write_to_file(&PathBuf::from(OUTPUT_CSS_PATH), STYLES_CSS)
-        .with_context(|| format!("Failed to write CSS to '{}'", OUTPUT_CSS_PATH))?;
-
     Ok(REPORT_HTML_PATH)
+}
+
+fn combine_html(html: String, build_dir: &str) -> Result<String> {
+    let mut combined_html = html;
+
+    let build_files = fs::read_dir(build_dir)
+        .with_context(|| format!("Failed to read build directory {}", build_dir))?;
+
+    for entry in build_files {
+        let path = entry?.path();
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some("js") => {
+                let mut content = String::new();
+                let mut file = fs::File::open(&path)
+                    .with_context(|| format!("Failed to open JS file {:?}", path))?;
+                file.read_to_string(&mut content)
+                    .with_context(|| format!("Failed to read JS file {:?}", path))?;
+                combined_html.push_str(&format!("<script>{}</script>\n", content));
+            }
+            Some("css") => {
+                let css_content = fs::read_to_string(&path)
+                    .with_context(|| format!("Failed to read CSS file {:?}", path))?;
+                combined_html.push_str(&format!("<style>{}</style>\n", css_content));
+            }
+            _ => {}
+        }
+    }
+
+    Ok(combined_html)
 }
