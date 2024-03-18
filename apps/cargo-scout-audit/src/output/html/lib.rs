@@ -12,7 +12,7 @@ const BUILD_DIR: &str = "src/output/html/build";
 const REPORT_HTML_PATH: &str = "src/output/html/build/report.html";
 
 // Generates an HTML report from a given `Report` object.
-pub fn generate_html(report: &Report) -> Result<&'static str> {
+pub fn generate_html(report: &Report, path: Option<PathBuf>) -> Result<String> {
     // Report context
     let report_context = create_context("report", report);
 
@@ -25,10 +25,19 @@ pub fn generate_html(report: &Report) -> Result<&'static str> {
 
     let combined_html = combine_html(html, BUILD_DIR)?;
 
-    write_to_file(&PathBuf::from(REPORT_HTML_PATH), combined_html.as_bytes())
-        .with_context(|| format!("Failed to write HTML to '{}'", REPORT_HTML_PATH))?;
+    let output_path = get_output_path(path);
 
-    Ok(REPORT_HTML_PATH)
+    write_to_file(&output_path, combined_html.as_bytes())
+        .with_context(|| format!("Failed to write HTML to '{}'", output_path.display()))?;
+
+    Ok(output_path.to_string_lossy().into_owned())
+}
+
+fn get_output_path(path: Option<PathBuf>) -> PathBuf {
+    path.map_or_else(
+        || PathBuf::from(REPORT_HTML_PATH),
+        |p| p.join("report.html"),
+    )
 }
 
 fn combine_html(html: String, build_dir: &str) -> Result<String> {
