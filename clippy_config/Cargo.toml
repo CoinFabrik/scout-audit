@@ -1,5 +1,5 @@
 [package]
-name = "clippy_config"
+name = "scout-audit-clippy-config"
 version = "0.1.76"
 edition = "2021"
 
