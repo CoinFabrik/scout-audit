@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::output::report::{Category, Finding};
-
-use super::utils;
+use crate::output::{
+    report::{Category, Finding},
+    utils,
+};
 
 const BANNER_URL: &str = "https://www.example.com/banner.png";
 
@@ -47,7 +48,7 @@ fn summarize_findings(
             let severity = category
                 .vulnerabilities
                 .first()
-                .map(|v| utils::capitalize(&v.severity))
+                .map(|v| utils::capitalize(&v.severity.to_string()))
                 .unwrap_or_default();
             let entry = summary.entry(category.id.clone()).or_insert((0, severity));
             entry.0 += 1;
@@ -77,7 +78,7 @@ fn generate_category(category: &Category) -> String {
         category_markdown.push_str(&format!("### {}\n\n", vulnerability.name));
         category_markdown.push_str(&format!(
             "**Impact:** {}\n\n",
-            utils::capitalize(&vulnerability.severity)
+            utils::capitalize(&vulnerability.severity.to_string())
         ));
         category_markdown.push_str(&format!(
             "**Description:** {}\n\n",

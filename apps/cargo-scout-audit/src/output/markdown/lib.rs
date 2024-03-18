@@ -9,7 +9,7 @@ use super::generator::{generate_body, generate_header, generate_summary};
 const REPORT_MD_PATH: &str = "build/report.md";
 
 // Generates a markdown report from a given `Report` object.
-pub fn generate_markdown(report: &Report) -> Result<&'static str> {
+pub fn generate_markdown(report: &Report, path: Option<PathBuf>) -> Result<String> {
     let mut report_markdown = String::new();
 
     // Header
@@ -21,8 +21,14 @@ pub fn generate_markdown(report: &Report) -> Result<&'static str> {
     // Body
     report_markdown.push_str(&generate_body(&report.categories, &report.findings));
 
-    write_to_file(&PathBuf::from(REPORT_MD_PATH), report_markdown.as_bytes())
-        .with_context(|| format!("Failed to write markdown to '{}'", REPORT_MD_PATH))?;
+    let output_path = get_output_path(path);
 
-    Ok(REPORT_MD_PATH)
+    write_to_file(&output_path, report_markdown.as_bytes())
+        .with_context(|| format!("Failed to write markdown to '{}'", output_path.display()))?;
+
+    Ok(output_path.to_string_lossy().into_owned())
+}
+
+fn get_output_path(path: Option<PathBuf>) -> PathBuf {
+    path.map_or_else(|| PathBuf::from(REPORT_MD_PATH), |p| p.join("report.md"))
 }

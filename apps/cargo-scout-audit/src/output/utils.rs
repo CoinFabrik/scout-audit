@@ -11,9 +11,9 @@ pub fn write_to_file(path: &PathBuf, data: &[u8]) -> io::Result<()> {
 
     // Write to a temporary file first
     let temp_path = path.with_extension("tmp");
-    let mut temp_file = File::create(&temp_path)?;
 
     {
+        let mut temp_file = File::create(&temp_path)?;
         temp_file.write_all(data)?;
         temp_file.sync_all()?;
     }
