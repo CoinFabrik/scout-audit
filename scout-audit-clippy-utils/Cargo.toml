@@ -5,7 +5,7 @@ edition = "2021"
 publish = true
 
 [patch.crates-io]
-clippy_config = { path = "../clippy_config" }
+clippy_config = { version = "0.1.76", path = "../clippy_config" }
 
 [dependencies]
 clippy_config = { version = "0.1.76", path = "../clippy_config" }
