@@ -1,5 +1,6 @@
 [package]
 name = "scout-audit-clippy-config"
+description = "Clippy config republish to be used by scout-audit-clippy-utils"
 version = "0.1.76"
 edition = "2021"
 license = "MIT OR Apache-2.0"
