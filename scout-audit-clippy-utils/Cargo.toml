@@ -3,6 +3,8 @@ name = "scout-audit-clippy-utils"
 version = "0.2.3"
 edition = "2021"
 publish = true
+description = "Clippy utils republish to be used by scout-audit-internal"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 clippy_config = { package = "scout-audit-clippy-config", version = "0.1.76" }
