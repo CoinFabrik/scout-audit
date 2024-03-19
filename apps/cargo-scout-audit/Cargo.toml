@@ -46,7 +46,6 @@ strum = "0.26.2"
 strum_macros = "0.26.2"
 tempfile = "3.8"
 tera =  {version = "=1.19.1", features=["builtins"]}
-webbrowser = "0.8.12"
 
 scout-audit-internal = { version = "=0.2.2", path = "../../scout-audit-internal", features = ["detector"] }
 pulldown-cmark = "0.10.0"
