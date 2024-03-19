@@ -13,7 +13,7 @@ pub fn generate_markdown(report: &Report) -> Result<&'static str> {
     let mut report_markdown = String::new();
 
     // Header
-    report_markdown.push_str(&generate_header(report.date));
+    report_markdown.push_str(&generate_header(report.date.clone()));
 
     // Summary
     report_markdown.push_str(&generate_summary(&report.categories, &report.findings));

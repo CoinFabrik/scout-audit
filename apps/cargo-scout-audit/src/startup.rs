@@ -9,6 +9,7 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
+    output::report::generate_report,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -32,9 +33,11 @@ pub enum OutputFormat {
     #[default]
     Html,
     Json,
+    #[clap(name = "md")]
     Markdown,
     Sarif,
     Text,
+    Pdf,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -199,7 +202,11 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     Ok(())
 }
 
-fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockChain) -> Result<()> {
+fn run_dylint(
+    detectors_paths: Vec<PathBuf>,
+    mut opts: Scout,
+    bc_dependency: BlockChain,
+) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -219,6 +226,10 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     } else {
         Some(stderr_temp_file.path().to_string_lossy().to_string())
     };
+
+    if opts.output_format != OutputFormat::Text {
+        opts.args.push("--message-format=json".to_string());
+    }
 
     let options = Dylint {
         paths: detectors_paths,
@@ -244,11 +255,24 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     // let report = Report::new(name, description, date, source_url, summary, categories, findings);
     match opts.output_format {
         OutputFormat::Html => {
+            //read json_file to a string
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content);
+
             // Generate HTML
-            // let html_path = report.generate_html()?;
+            let html = report.generate_html()?;
+
+            let html_path = match opts.output_path {
+                Some(path) => path,
+                None => PathBuf::from("report.html"),
+            };
+            let mut html_file = fs::File::create(&html_path)?;
+            std::io::Write::write_all(&mut html_file, html.as_bytes())?;
 
             // Open the HTML report in the default web browser
-            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
+            webbrowser::open(html_path.to_str().unwrap()).context("Failed to open HTML report")?;
         }
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {
@@ -261,11 +285,20 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
             )?;
         }
         OutputFormat::Markdown => {
-            // Generate Markdown
-            // let markdown_path = report.generate_markdown()?;
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            // Open the Markdown report in the default text editor
-            // open::that(markdown_path).context("Failed to open Markdown report")?;
+            let report = generate_report(content);
+
+            // Generate Markdown
+            let markdown_path = report.generate_markdown()?;
+
+            let mut md_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.html")?,
+            };
+
+            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
         }
         OutputFormat::Sarif => {
             let mut sarif_file = match &opts.output_path {
@@ -288,6 +321,19 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
                 std::io::copy(&mut stdout_file, &mut handle)
                     .expect("Error writing dylint result to stdout");
             }
+        }
+        OutputFormat::Pdf => {
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content);
+
+            let path = if let Some(path) = opts.output_path {
+                path
+            } else {
+                PathBuf::from("report.pdf")
+            };
+            report.generate_pdf(&path)?;
         }
     }
 

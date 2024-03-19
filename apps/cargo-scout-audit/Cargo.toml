@@ -1,6 +1,6 @@
 [package]
 name = "cargo-scout-audit"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -47,6 +47,7 @@ tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
 
 scout-audit-internal = { version = "=0.2.3", path = "../../scout-audit-internal", features = ["detector"] }
+pulldown-cmark = "0.10.0"
 
 [dev-dependencies]
 colored = "2.0.0"

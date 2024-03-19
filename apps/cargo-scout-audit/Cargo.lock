@@ -345,7 +345,7 @@ dependencies = [
  "os_info",
  "pasetors",
  "pathdiff",
- "pulldown-cmark",
+ "pulldown-cmark 0.9.6",
  "rand",
  "rustfix",
  "semver",
@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -398,6 +398,7 @@ dependencies = [
  "itertools 0.12.1",
  "lazy_static",
  "log",
+ "pulldown-cmark 0.10.0",
  "regex",
  "scout-audit-internal",
  "serde",
@@ -1081,6 +1082,15 @@ dependencies = [
  "typenum",
  "version_check",
  "zeroize",
+]
+
+[[package]]
+name = "getopts"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]
@@ -3080,6 +3090,25 @@ dependencies = [
  "memchr",
  "unicase",
 ]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dce76ce678ffc8e5675b22aa1405de0b7037e2fdf8913fea40d1926c6fe1e6e7"
+dependencies = [
+ "bitflags 2.4.0",
+ "getopts",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5d8f9aa0e3cbcfaf8bf00300004ee3b72f74770f9cbac93f6928771f613276b"
 
 [[package]]
 name = "quote"

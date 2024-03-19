@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
 use colored::Colorize;
 use configuration::Configuration;
+use scout_audit_internal::DetectorImpl;
 use serde::{Deserialize, Serialize};
 
 mod configuration;

@@ -23,7 +23,7 @@ pub fn get_detectors_configuration(dep: BlockChain) -> Result<DetectorsConfigura
         match dep {
             BlockChain::Ink => SourceId::for_git(
                 &"https://github.com/CoinFabrik/scout".into_url()?,
-                GitReference::Branch("cli-improvements".to_string()),
+                GitReference::DefaultBranch,
             )?,
             BlockChain::Soroban => SourceId::for_git(
                 &"https://github.com/CoinFabrik/scout-soroban".into_url()?,
