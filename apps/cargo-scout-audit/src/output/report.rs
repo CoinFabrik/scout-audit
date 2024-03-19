@@ -95,7 +95,7 @@ impl Report {
             OutputFormat::Pdf => pdf::generate_pdf(&self, path),
             OutputFormat::Json => json::generate_json(&self, path),
             OutputFormat::Sarif => sarif::generate_sarif(&self, path),
-            OutputFormat::Text => Ok("Text report".to_string()),
+            OutputFormat::Text => Err(anyhow::anyhow!("Text report is not yet supported")),
         }
     }
 }

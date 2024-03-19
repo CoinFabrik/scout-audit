@@ -229,28 +229,14 @@ fn run_dylint(
     let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate report from dylint output
+    // Read dylint output
     let mut content = String::new();
     std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+    // Generate report
     let report = Report::from_raw(content)?;
     let report_path = report.generate(opts.output_format, opts.output_path)?;
-    // TODO: decide if we open the report or not
+    // Open report
     open::that(report_path).context("Failed to open report")?;
-
-    // match opts.output_format {
-    //     OutputFormat::Text => {
-    //         // If the output path is not set, dylint prints the report to stdout
-    //         if let Some(output_file) = opts.output_path {
-    //             let mut txt_file = fs::File::create(output_file)?;
-    //             std::io::copy(&mut stderr_file, &mut txt_file)?;
-    //         } else {
-    //             let stdout = std::io::stdout();
-    //             let mut handle = stdout.lock();
-    //             std::io::copy(&mut stdout_file, &mut handle)
-    //                 .expect("Error writing dylint result to stdout");
-    //         }
-    //     }
-    // }
 
     stderr_temp_file.close()?;
     stdout_temp_file.close()?;
