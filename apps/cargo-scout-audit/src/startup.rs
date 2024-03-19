@@ -13,10 +13,7 @@ use dylint::Dylint;
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
     output::report::Report,
-    utils::{
-        detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        output::{format_into_json, format_into_sarif},
-    },
+    utils::detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
 };
 
 #[derive(Debug, Parser)]
@@ -232,66 +229,28 @@ fn run_dylint(
     let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate report with Report::new(...)
+    // Generate report from dylint output
     let mut content = String::new();
     std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
     let report = Report::from_raw(content)?;
+    let report_path = report.generate(opts.output_format, opts.output_path)?;
+    // TODO: decide if we open the report or not
+    open::that(report_path).context("Failed to open report")?;
 
-    match opts.output_format {
-        OutputFormat::Html => {
-            // Generate HTML
-            let html_path = report.generate_html(opts.output_path)?;
-
-            // Open the HTML report in the default web browser
-            webbrowser::open(&html_path).context("Failed to open HTML report")?;
-        }
-        OutputFormat::Json => {
-            let mut json_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.json")?,
-            };
-            std::io::Write::write_all(
-                &mut json_file,
-                format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
-        }
-        OutputFormat::Markdown => {
-            // Generate Markdown
-            let markdown_path = report.generate_markdown(opts.output_path)?;
-
-            // Open the Markdown report in the default text editor
-            open::that(markdown_path).context("Failed to open Markdown report")?;
-        }
-        OutputFormat::Sarif => {
-            let mut sarif_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.sarif")?,
-            };
-            std::io::Write::write_all(
-                &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
-        }
-        OutputFormat::Text => {
-            // If the output path is not set, dylint prints the report to stdout
-            if let Some(output_file) = opts.output_path {
-                let mut txt_file = fs::File::create(output_file)?;
-                std::io::copy(&mut stderr_file, &mut txt_file)?;
-            } else {
-                let stdout = std::io::stdout();
-                let mut handle = stdout.lock();
-                std::io::copy(&mut stdout_file, &mut handle)
-                    .expect("Error writing dylint result to stdout");
-            }
-        }
-        OutputFormat::Pdf => {
-            // Generate PDF
-            let pdf_path = report.generate_pdf(opts.output_path)?;
-
-            // Open the PDF report in the default PDF viewer
-            open::that(pdf_path).context("Failed to open PDF report")?;
-        }
-    }
+    // match opts.output_format {
+    //     OutputFormat::Text => {
+    //         // If the output path is not set, dylint prints the report to stdout
+    //         if let Some(output_file) = opts.output_path {
+    //             let mut txt_file = fs::File::create(output_file)?;
+    //             std::io::copy(&mut stderr_file, &mut txt_file)?;
+    //         } else {
+    //             let stdout = std::io::stdout();
+    //             let mut handle = stdout.lock();
+    //             std::io::copy(&mut stdout_file, &mut handle)
+    //                 .expect("Error writing dylint result to stdout");
+    //         }
+    //     }
+    // }
 
     stderr_temp_file.close()?;
     stdout_temp_file.close()?;
