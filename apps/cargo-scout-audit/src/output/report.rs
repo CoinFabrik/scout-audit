@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 use strum_macros::{Display, EnumString};
 
-use super::{html, markdown, pdf, raw_report};
+use crate::startup::OutputFormat;
+
+use super::{html, json, markdown, pdf, raw_report, sarif};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -52,8 +54,8 @@ pub struct Finding {
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, EnumString, Display, Hash)]
-#[strum(serialize_all = "snake_case")]
-#[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum Severity {
     Critical,
     Medium,
@@ -86,15 +88,14 @@ impl Report {
         raw_report::generate_report(data)
     }
 
-    pub fn generate_html(&self, path: Option<PathBuf>) -> Result<String> {
-        html::generate_html(self, path)
-    }
-
-    pub fn generate_markdown(&self, path: Option<PathBuf>) -> Result<String> {
-        markdown::generate_markdown(self, path)
-    }
-
-    pub fn generate_pdf(&self, path: Option<PathBuf>) -> Result<String> {
-        pdf::generate_pdf(self, path)
+    pub fn generate(self, report_type: OutputFormat, path: Option<PathBuf>) -> Result<String> {
+        match report_type {
+            OutputFormat::Html => html::generate_html(&self, path),
+            OutputFormat::Markdown => markdown::generate_markdown(&self, path),
+            OutputFormat::Pdf => pdf::generate_pdf(&self, path),
+            OutputFormat::Json => json::generate_json(&self, path),
+            OutputFormat::Sarif => sarif::generate_sarif(&self, path),
+            OutputFormat::Text => Ok("Text report".to_string()),
+        }
     }
 }
