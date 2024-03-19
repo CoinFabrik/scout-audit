@@ -1,7 +1,7 @@
 use core::panic;
 use std::{
-    fs::{self, read_to_string},
-    path::{Path, PathBuf},
+    fs::{self},
+    path::PathBuf,
 };
 
 use anyhow::{bail, Context, Result};
@@ -12,11 +12,8 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::report::generate_report,
-    utils::{
-        detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        output::{format_into_json, format_into_sarif},
-    },
+    output::report::Report,
+    utils::detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
 };
 
 #[derive(Debug, Parser)]
@@ -109,6 +106,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
     }
 
+    // TODO: is this okay?
     if let Some(path) = &opts.output_path {
         if path.is_dir() {
             bail!("The output path can't be a directory.");
@@ -231,90 +229,14 @@ fn run_dylint(
     let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate report with Report::new(...)
-    // let report = Report::new(name, description, date, source_url, summary, categories, findings);
-    match opts.output_format {
-        OutputFormat::Html => {
-            //read json_file to a string
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content);
-
-            // Generate HTML
-            let html_path = report.generate_html()?;
-
-            let combined = combine_html(html_path)?;
-
-            let mut html_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.html")?,
-            };
-            std::io::Write::write_all(&mut html_file, combined.as_bytes())?;
-
-            // Open the HTML report in the default web browser
-            webbrowser::open("report.html").context("Failed to open HTML report")?;
-        }
-        OutputFormat::Json => {
-            let mut json_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.json")?,
-            };
-            std::io::Write::write_all(
-                &mut json_file,
-                format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
-        }
-        OutputFormat::Markdown => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content);
-
-            // Generate Markdown
-            let markdown_path = report.generate_markdown()?;
-
-            let mut md_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.html")?,
-            };
-
-            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
-        }
-        OutputFormat::Sarif => {
-            let mut sarif_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.sarif")?,
-            };
-            std::io::Write::write_all(
-                &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
-        }
-        OutputFormat::Text => {
-            // If the output path is not set, dylint prints the report to stdout
-            if let Some(output_file) = opts.output_path {
-                let mut txt_file = fs::File::create(output_file)?;
-                std::io::copy(&mut stderr_file, &mut txt_file)?;
-            } else {
-                let stdout = std::io::stdout();
-                let mut handle = stdout.lock();
-                std::io::copy(&mut stdout_file, &mut handle)
-                    .expect("Error writing dylint result to stdout");
-            }
-        }
-        OutputFormat::Pdf => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content);
-
-            // Generate Markdown 
-            let path = PathBuf::from("testeo.pdf");
-            report.generate_pdf(&path)?;
-            
-        }
-    }
+    // Read dylint output
+    let mut content = String::new();
+    std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+    // Generate report
+    let report = Report::from_raw(content)?;
+    let report_path = report.generate(opts.output_format, opts.output_path)?;
+    // Open report
+    open::that(report_path).context("Failed to open report")?;
 
     stderr_temp_file.close()?;
     stdout_temp_file.close()?;
@@ -336,40 +258,4 @@ fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
         fs::remove_dir_all(target_dylint_path)?;
     }
     Ok(())
-}
-
-fn combine_html(path: &str) -> Result<String> {
-    let js_files_content: Vec<String> = fs::read_dir("src/output/html/build")?
-        .filter_map(|entry| {
-            entry.ok().and_then(|e| {
-                if e.path().extension().map(|ext| ext == "js").unwrap_or(false) {
-                    Some(e.path())
-                } else {
-                    None
-                }
-            })
-        })
-        .map(|file| {
-            let mut content = String::new();
-            let mut file = fs::File::open(file)?;
-            std::io::Read::read_to_string(&mut file, &mut content)?;
-            Ok(content)
-        })
-        .collect::<Result<Vec<String>, std::io::Error>>()?;
-
-    Ok(format!(
-        "{}\n
-        <style>{}</style>\n
-        <script>{}</script>\n
-        <script>{}</script>\n
-        <script>{}</script>\n
-        <script>{}</script>\n
-        ",
-        fs::read_to_string(path)?,
-        fs::read_to_string("src/output/html/build/styles.css")?,
-        js_files_content[0],
-        js_files_content[1],
-        js_files_content[2],
-        js_files_content[3]
-    ))
 }

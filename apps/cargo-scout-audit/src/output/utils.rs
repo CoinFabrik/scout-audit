@@ -11,9 +11,9 @@ pub fn write_to_file(path: &PathBuf, data: &[u8]) -> io::Result<()> {
 
     // Write to a temporary file first
     let temp_path = path.with_extension("tmp");
-    let mut temp_file = File::create(&temp_path)?;
 
     {
+        let mut temp_file = File::create(&temp_path)?;
         temp_file.write_all(data)?;
         temp_file.sync_all()?;
     }
@@ -27,4 +27,16 @@ pub fn write_to_file(path: &PathBuf, data: &[u8]) -> io::Result<()> {
             Err(e)
         }
     }
+}
+
+// Capitalizes the first letter of a string.
+pub fn capitalize(s: &str) -> String {
+    s.chars()
+        .enumerate()
+        .map(|(i, c)| if i == 0 { c.to_ascii_uppercase() } else { c })
+        .collect()
+}
+
+pub fn sanitize_category_name(name: &str) -> String {
+    name.to_lowercase().replace(' ', "-")
 }
