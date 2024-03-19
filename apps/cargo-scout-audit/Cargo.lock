@@ -404,6 +404,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tera",
+ "toml 0.8.10",
  "webbrowser",
 ]
 
@@ -3328,7 +3329,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scout-audit-internal"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "strum",
 ]

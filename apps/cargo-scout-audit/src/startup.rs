@@ -10,6 +10,7 @@ use dylint::Dylint;
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
     utils::{
+        config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         output::{format_into_json, format_into_sarif},
     },
@@ -60,6 +61,15 @@ pub struct Scout {
     )]
     pub filter: Option<String>,
 
+    // Select profiles in configuration
+    #[clap(
+        short,
+        long,
+        value_name = "profile",
+        help = "Filter detectors using profiles."
+    )]
+    pub profile: Option<String>,
+
     // List all the available detectors
     #[clap(short, long, help = "List all the available detectors")]
     pub list_detectors: bool,
@@ -103,6 +113,10 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
     }
 
+    if opts.filter.is_some() && opts.profile.is_some() {
+        panic!("You can't use `--exclude` and `--profile` at the same time.");
+    }
+
     if let Some(path) = &opts.output_path {
         if path.is_dir() {
             bail!("The output path can't be a directory.");
@@ -143,13 +157,13 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     // Misc configurations
     // If there is a need to exclude or filter by detector, the dylint tool needs to be recompiled.
     // TODO: improve detector system so that doing this isn't necessary.
-    if opts.exclude.is_some() || opts.filter.is_some() {
+    /*if opts.exclude.is_some() || opts.filter.is_some() {
         remove_target_dylint(&opts.manifest_path)?;
-    }
+    }*/
 
     // Instantiate detectors
     let detectors = Detectors::new(cargo_config, detectors_config, metadata, opts.verbose);
-    let detectors_names = detectors
+    let mut detectors_names = detectors
         .get_detector_names()
         .context("Failed to build detectors")?;
 
@@ -157,6 +171,15 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         list_detectors(detectors_names);
         return Ok(());
     }
+
+    detectors_names = if let Some(profile) = &opts.profile {
+        let config = open_config_or_default(bc_dependency, detectors_names.clone())
+            .context("Failed to load or generate config")?;
+
+        profile_enabled_detectors(config, profile.clone())?
+    } else {
+        detectors_names
+    };
 
     let used_detectors = if let Some(filter) = &opts.filter {
         get_filtered_detectors(filter.to_string(), detectors_names)?
@@ -274,7 +297,7 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     Ok(())
 }
 
-fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
+/*fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
     let target_dylint_path = match manifest_path {
         Some(manifest_path) => {
             let manifest_path_parent = manifest_path
@@ -288,4 +311,4 @@ fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
         fs::remove_dir_all(target_dylint_path)?;
     }
     Ok(())
-}
+}*/

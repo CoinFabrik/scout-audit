@@ -85,7 +85,6 @@ impl Detectors {
             self.metadata.clone(),
             self.verbose,
         );
-
         builder.build(bc, used_detectors)
     }
 }
