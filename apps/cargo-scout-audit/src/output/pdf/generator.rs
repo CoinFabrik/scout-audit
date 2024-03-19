@@ -5,7 +5,6 @@ use crate::output::{
     utils,
 };
 
-// Generate the header for the report
 pub fn generate_header(date: String) -> String {
     format!(
         "<!DOCTYPE html>\n<html>\n<head>\n\
@@ -27,14 +26,13 @@ pub fn generate_header(date: String) -> String {
     )
 }
 
-// Generate the summary for the report
 pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String {
-    let mut summary_markdown = String::from("<h2>Summary</h2>");
+    let mut summary_pdf = String::from("<h2>Summary</h2>");
     let findings_summary = summarize_findings(categories, findings);
 
     for category in categories {
         if let Some((count, severity)) = findings_summary.get(&category.id) {
-            summary_markdown.push_str(&format!(
+            summary_pdf.push_str(&format!(
                 " - <a href=\"{}\">{}</a> ({} results) ({})<br>",
                 utils::sanitize_category_name(&category.name),
                 category.name,
@@ -44,11 +42,10 @@ pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String
         }
     }
 
-    summary_markdown.push_str("<br>");
-    summary_markdown
+    summary_pdf.push_str("<br>");
+    summary_pdf
 }
 
-// This function summarizes the findings by category
 fn summarize_findings(
     categories: &[Category],
     findings: &[Finding],
@@ -70,7 +67,6 @@ fn summarize_findings(
     summary
 }
 
-// Generate the body for the report
 pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
     categories
         .iter()
@@ -83,28 +79,26 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
         .join("<br>")
 }
 
-// Function to generate HTML for a category
 fn generate_category(category: &Category) -> String {
-    let mut category_markdown = format!("<h2>{}</h2><br>", category.name);
+    let mut category_pdf = format!("<h2>{}</h2><br>", category.name);
     for vulnerability in &category.vulnerabilities {
-        category_markdown.push_str(&format!("<h3>{}</h3><br>", vulnerability.name));
-        category_markdown.push_str(&format!(
+        category_pdf.push_str(&format!("<h3>{}</h3><br>", vulnerability.name));
+        category_pdf.push_str(&format!(
             "<strong>Impact:</strong> <span style=\"font-weight: bold\">{}</span><br><br>",
             utils::capitalize(&vulnerability.severity.to_string())
         ));
-        category_markdown.push_str(&format!(
+        category_pdf.push_str(&format!(
             "<strong>Description:</strong> {}<br><br>",
             vulnerability.short_message
         ));
-        category_markdown.push_str(&format!(
+        category_pdf.push_str(&format!(
             "<strong>More about:</strong> <a href=\"{}\">here</a><br><br>",
             vulnerability.help
         ));
     }
-    category_markdown
+    category_pdf
 }
 
-// Function to generate a table for a category
 fn generate_table_for_category(category: &Category, findings: &[Finding]) -> String {
     let table_header = "<table style=\"width: 100%; table-layout: fixed;\"><thead><tr>\
                         <th style=\"width: 20%;\">ID</th>\
@@ -122,7 +116,6 @@ fn generate_table_for_category(category: &Category, findings: &[Finding]) -> Str
     )
 }
 
-// Function to generate Markdown for a finding
 fn generate_finding(finding: &Finding) -> String {
     let status_options = "<ul><li>- [ ] False Positive </li>\
                           <li>- [ ] Acknowledged</li>\

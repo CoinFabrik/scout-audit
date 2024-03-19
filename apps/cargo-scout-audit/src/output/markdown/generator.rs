@@ -5,9 +5,8 @@ use crate::output::{
     utils,
 };
 
-const BANNER_URL: &str = "https://www.example.com/banner.png";
+const BANNER_URL: &str = "assets/banner.png";
 
-// Generate the header for the report
 pub fn generate_header(date: String) -> String {
     format!(
         "![Banner Scout report]({})\n# Scout Report - {}\n\n",
@@ -15,7 +14,6 @@ pub fn generate_header(date: String) -> String {
     )
 }
 
-// Generate the summary for the report
 pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String {
     let mut summary_markdown = String::from("## Summary\n");
     let findings_summary = summarize_findings(categories, findings);
@@ -36,7 +34,6 @@ pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String
     summary_markdown
 }
 
-// This function summarizes the findings by category
 fn summarize_findings(
     categories: &[Category],
     findings: &[Finding],
@@ -58,7 +55,6 @@ fn summarize_findings(
     summary
 }
 
-// Generate the body for the report
 pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
     categories
         .iter()
@@ -71,7 +67,6 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
         .join("\n")
 }
 
-// Function to generate Markdown for a category
 fn generate_category(category: &Category) -> String {
     let mut category_markdown = format!("## {}\n\n", category.id);
     for vulnerability in &category.vulnerabilities {
@@ -92,7 +87,6 @@ fn generate_category(category: &Category) -> String {
     category_markdown
 }
 
-// Function to generate a table for a category
 fn generate_table_for_category(category: &Category, findings: &[Finding]) -> String {
     let table_header = "<table style=\"width: 100%; table-layout: fixed;\"><thead><tr>\
                         <th style=\"width: 20%;\">ID</th>\
@@ -110,7 +104,6 @@ fn generate_table_for_category(category: &Category, findings: &[Finding]) -> Str
     )
 }
 
-// Function to generate Markdown for a finding
 fn generate_finding(finding: &Finding) -> String {
     let status_options = "<ul><li>- [ ] False Positive </li>\
                           <li>- [ ] Acknowledged</li>\
