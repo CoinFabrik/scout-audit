@@ -9,16 +9,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 
 [[package]]
-name = "clippy_config"
-version = "0.1.76"
-source = "git+https://github.com/rust-lang/rust-clippy?rev=a859e5cc1ce100df22346a1005da30532d04de59#a859e5cc1ce100df22346a1005da30532d04de59"
-dependencies = [
- "rustc-semver",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -86,13 +76,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5be1bdc7edf596692617627bbfeaba522131b18e06ca4df2b6b689e3c5d5ce84"
 
 [[package]]
+name = "scout-audit-clippy-config"
+version = "0.1.76"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a680410280766108982837ca53090326e6bd5aa5d71c850e8e1699e108f74406"
+dependencies = [
+ "rustc-semver",
+ "serde",
+ "toml",
+]
+
+[[package]]
 name = "scout-audit-clippy-utils"
 version = "0.2.3"
 dependencies = [
  "arrayvec",
- "clippy_config",
  "itertools",
  "rustc-semver",
+ "scout-audit-clippy-config",
 ]
 
 [[package]]

@@ -5,13 +5,10 @@ edition = "2021"
 publish = true
 
 [dependencies]
-clippy_config = { git = "https://github.com/rust-lang/rust-clippy", rev = "a859e5cc1ce100df22346a1005da30532d04de59" }
+clippy_config = { package = "scout-audit-clippy-config", version = "0.1.76" }
 arrayvec = { version = "0.7", default-features = false }
 itertools = "0.11"
 rustc-semver = "1.1"
-
-[features]
-deny-warnings = ["clippy_config/deny-warnings"]
 
 [package.metadata.rust-analyzer]
 # This crate uses #[feature(rustc_private)]
