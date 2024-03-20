@@ -5,27 +5,38 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::{env, fs};
 
-fn create_default_config(file_path: PathBuf, detectors: Vec<String>) -> Result<File> {
+const INK_DEFAULT_CONFIG: &str = include_str!("./ink_default_config.toml");
+
+fn create_default_config(
+    file_path: PathBuf,
+    detectors: Vec<String>,
+    bc: BlockChain,
+) -> Result<File> {
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
         .open(file_path)?;
-    let mut default_config = toml::Table::new();
-    let mut dev_table = toml::Table::new();
-    let mut auditor_table = toml::Table::new();
-    for detector in detectors {
-        let mut detector_config = toml::Table::new();
-        detector_config.insert("enabled".to_string(), toml::Value::Boolean(true));
-        dev_table.insert(
-            detector.clone(),
-            toml::Value::Table(detector_config.clone()),
-        );
-        auditor_table.insert(detector, toml::Value::Table(detector_config));
-    }
-    default_config.insert("auditor".to_string(), toml::Value::Table(auditor_table));
-    default_config.insert("dev".to_string(), toml::Value::Table(dev_table));
-    let str = toml::to_string_pretty::<toml::Table>(&default_config)?;
+    let str = match bc {
+        BlockChain::Ink => INK_DEFAULT_CONFIG.to_string(),
+        BlockChain::Soroban => {
+            let mut default_config = toml::Table::new();
+            let mut dev_table = toml::Table::new();
+            let mut auditor_table = toml::Table::new();
+            for detector in detectors {
+                let mut detector_config = toml::Table::new();
+                detector_config.insert("enabled".to_string(), toml::Value::Boolean(true));
+                dev_table.insert(
+                    detector.clone(),
+                    toml::Value::Table(detector_config.clone()),
+                );
+                auditor_table.insert(detector, toml::Value::Table(detector_config));
+            }
+            default_config.insert("auditor".to_string(), toml::Value::Table(auditor_table));
+            default_config.insert("dev".to_string(), toml::Value::Table(dev_table));
+            toml::to_string_pretty::<toml::Table>(&default_config)?
+        }
+    };
     file.write_all(str.as_bytes())?;
     Ok(file)
 }
@@ -44,7 +55,7 @@ pub fn open_config_or_default(bc: BlockChain, detectors: Vec<String>) -> Result<
         BlockChain::Soroban => "soroban-config.toml",
     });
     if !file_path.as_path().exists() {
-        create_default_config(file_path.clone(), detectors)?;
+        create_default_config(file_path.clone(), detectors, bc)?;
     }
     let mut file = File::open(&file_path)?;
     let mut toml_str = String::new();
