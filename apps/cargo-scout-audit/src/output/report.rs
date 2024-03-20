@@ -2,7 +2,6 @@ use anyhow::Result;
 use chrono::offset::Local;
 use core::panic;
 use serde::{Deserialize, Serialize};
-use serde_json::to_string;
 use serde_json::Value;
 use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
 
