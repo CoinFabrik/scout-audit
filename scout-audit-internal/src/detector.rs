@@ -41,6 +41,7 @@ pub enum SorobanDetector {
     UnprotectedUpdateCurrentContractWasm,
     UnsafeExpect,
     UnsafeUnwrap,
+    UnusedReturnEnum,
 }
 
 // Available detectors for Ink
@@ -115,6 +116,7 @@ impl DetectorImpl for SorobanDetector {
             SorobanDetector::AvoidUnsafeBlock => SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
             SorobanDetector::DosUnboundedOperation => SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
             SorobanDetector::SorobanVersion => SOROBAN_VERSION_LINT_MESSAGE,
+            SorobanDetector::UnusedReturnEnum => SOROBAN_UNUSED_RETURN_ENUM_LINT_MESSAGE,
         }
     }
 
