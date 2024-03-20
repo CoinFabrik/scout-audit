@@ -1,5 +1,9 @@
 use core::panic;
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    hash::{Hash, Hasher},
+    path::PathBuf,
+};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -109,6 +113,13 @@ pub enum BlockChain {
     Soroban,
 }
 
+pub struct ProjectInfo {
+    pub name: String,
+    pub description: String,
+    pub hash: String,
+    pub worspace_root: PathBuf,
+}
+
 pub fn run_scout(opts: Scout) -> Result<()> {
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
@@ -164,7 +175,12 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     }*/
 
     // Instantiate detectors
-    let detectors = Detectors::new(cargo_config, detectors_config, metadata, opts.verbose);
+    let detectors = Detectors::new(
+        cargo_config,
+        detectors_config,
+        metadata.clone(),
+        opts.verbose,
+    );
     let mut detectors_names = detectors
         .get_detector_names()
         .context("Failed to build detectors")?;
@@ -195,8 +211,21 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         .build(bc_dependency, used_detectors)
         .context("Failed to build detectors bis")?;
 
+    let root = metadata.root_package().unwrap();
+
+    let mut hasher = std::hash::DefaultHasher::new();
+
+    root.id.hash(&mut hasher);
+
+    let info = ProjectInfo {
+        name: root.name.clone(),
+        description: root.description.clone().unwrap_or_default(),
+        hash: hasher.finish().to_string(),
+        worspace_root: metadata.workspace_root.clone().into(),
+    };
+
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency).context("Failed to run dylint")?;
+    run_dylint(detectors_paths, opts, bc_dependency, info).context("Failed to run dylint")?;
 
     Ok(())
 }
@@ -205,6 +234,7 @@ fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
     _bc_dependency: BlockChain,
+    info: ProjectInfo,
 ) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -258,7 +288,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content);
+            let report = generate_report(content, info);
 
             // Generate HTML
             let html = report.generate_html()?;
@@ -289,7 +319,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content);
+            let report = generate_report(content, info);
 
             // Generate Markdown
             let markdown_path = report.generate_markdown()?;
@@ -338,7 +368,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content);
+            let report = generate_report(content, info);
 
             let path = if let Some(path) = opts.output_path {
                 path
@@ -354,4 +384,3 @@ fn run_dylint(
 
     Ok(())
 }
-

@@ -2,6 +2,7 @@ use anyhow::Result;
 use chrono::offset::Local;
 use core::panic;
 use serde::{Deserialize, Serialize};
+use serde_json::to_string;
 use serde_json::Value;
 use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
 
@@ -119,7 +120,9 @@ impl From<RawVulnerability> for Vulnerability {
     }
 }
 
-pub fn generate_report(scout_output: String) -> Report {
+use crate::startup::ProjectInfo;
+
+pub fn generate_report(scout_output: String, info: ProjectInfo) -> Report {
     let scout_findings = scout_output
         .lines()
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
@@ -212,7 +215,10 @@ pub fn generate_report(scout_output: String) -> Report {
             error_message,
             span,
             code_snippet,
-            file,
+            file: file
+                .trim_start_matches(info.worspace_root.as_os_str().to_str().unwrap())
+                .trim_start_matches('/')
+                .to_string(),
         };
         id += 1;
         findings.push(fndg);
@@ -274,10 +280,10 @@ pub fn generate_report(scout_output: String) -> Report {
     );
 
     Report::new(
-        "name".into(),
-        "description".into(),
+        info.name,
+        info.description,
         date,
-        "source".into(),
+        info.hash,
         summary,
         categories,
         findings,
