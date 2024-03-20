@@ -13,7 +13,6 @@ use crate::{
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        output::{format_into_json, format_into_sarif},
     },
 };
 
@@ -205,7 +204,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
-    bc_dependency: BlockChain,
+    _bc_dependency: BlockChain,
 ) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -309,30 +308,19 @@ fn run_dylint(
                 PathBuf::from("report.sarif")
             };
 
-            let mut _sarif_file = fs::File::create(&path)?;
-
-            let mut tmp_file = fs::File::create(".tmp.json")?;
+            let mut sarif_file = fs::File::create(&path)?;
 
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            std::io::Write::write_all(&mut tmp_file, &content.as_bytes())?;
+            let child = std::process::Command::new("clippy-sarif")
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .spawn()?;
 
-            let output = std::process::Command::new(
-                "clippy-sarif
-            ",
-            )
-            .arg("--input")
-            .arg(".tmp.json")
-            .arg("--output")
-            .arg(path)
-            .stdout(std::process::Stdio::piped())
-            .spawn()
-            .expect("Failed to execute clippy-sarif, check if it's installed")
-            .wait_with_output()
-            .expect("Failed to execute clippy-sarif, check if it's installed");
+            std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), content.as_bytes())?;
 
-            fs::remove_file(".tmp.json")?;
+            std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
         }
         OutputFormat::Text => {
             // If the output path is not set, dylint prints the report to stdout
@@ -367,18 +355,3 @@ fn run_dylint(
     Ok(())
 }
 
-/*fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
-    let target_dylint_path = match manifest_path {
-        Some(manifest_path) => {
-            let manifest_path_parent = manifest_path
-                .parent()
-                .context("Error getting manifest path parent")?;
-            manifest_path_parent.join("target").join("dylint")
-        }
-        None => std::env::current_dir()?.join("target").join("dylint"),
-    };
-    if target_dylint_path.exists() {
-        fs::remove_dir_all(target_dylint_path)?;
-    }
-    Ok(())
-}*/
