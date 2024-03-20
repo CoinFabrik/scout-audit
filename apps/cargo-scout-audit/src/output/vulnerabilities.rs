@@ -1,4 +1,20 @@
-pub const DETECTORS: [&str; 24] = [
+pub const SOROBAN_DETECTORS: [&str; 13] = [
+    "avoid_core_mem_forget",
+    "avoid_panic_error",
+    "avoid_unsafe_block",
+    "divide_before_multiply",
+    "dos_unbounded_operation",
+    "insufficiently_random_values",
+    "overflow_check",
+    "set_contract_storage",
+    "soroban_version",
+    "unprotected_update_current_contract_wasm",
+    "unsafe_expect",
+    "unsafe_unwrap",
+    "unused_return_enum",
+];
+
+pub const INK_DETECTORS: [&str; 24] = [
     "assert_violation",
     "avoid_std_core_mem_forget",
     "avoid_format_string",
@@ -25,9 +41,139 @@ pub const DETECTORS: [&str; 24] = [
     "zero_or_test_address",
 ];
 use crate::output::report::RawVulnerability;
-use scout_audit_internal::ink_lint_message::*;
+use scout_audit_internal::{ink_lint_message::*, soroban_lint_message::*};
 
-pub const ASSERT_VIOLATION: RawVulnerability = RawVulnerability {
+pub const SOROBAN_AVOID_CORE_MEM_FORGET: RawVulnerability = RawVulnerability {
+    id: "avoid_core_mem_forget",
+    name: "Avoid core::mem::forget usage",
+    short_message: SOROBAN_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
+    long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
+    severity: "Enhancement",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/avoid-core-mem-forget",
+    vulnerability_class: "Best practices",
+};
+
+pub const SOROBAN_AVOID_PANIC_ERROR: RawVulnerability = RawVulnerability {
+    id: "avoid_panic_error",
+    name: "Avoid panic! macro",
+    short_message: SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE,
+    long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
+    severity: "Enhancement",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/avoid-panic-error",
+    vulnerability_class: "Validations and error handling",
+};
+
+pub const SOROBAN_AVOID_UNSAFE_BLOCK: RawVulnerability = RawVulnerability {
+    id: "avoid_unsafe_block",
+    name: "Avoid unsafe block",
+    short_message: SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
+    long_message: "The unsafe block is used to bypass Rust's safety checks. It is recommended to avoid using unsafe blocks as much as possible, and to use them only when necessary.    ",
+    severity: "Enhancement",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/avoid-unsafe-block",
+    vulnerability_class: "Best practices",
+};
+
+pub const SOROBAN_DIVIDE_BEFORE_MULTIPLY: RawVulnerability = RawVulnerability {
+    id: "divide_before_multiply",
+    name: "Divide Before Multiply",
+    short_message: SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
+    long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
+    severity: "Medium",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/divide-before-multiply",
+    vulnerability_class: "Arithmetic",
+};
+
+pub const SOROBAN_DOS_UNBOUNDED_OPERATION: RawVulnerability = RawVulnerability {
+    id: "dos_unbounded_operation",
+    name: "Denial of Service: Unbounded Operation",
+    short_message: SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
+    long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
+    severity: "Medium",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dos-unbounded-operation",
+    vulnerability_class: "Denial of Service",
+};
+
+pub const SOROBAN_INSUFFICIENTLY_RANDOM_VALUES: RawVulnerability = RawVulnerability {
+    id: "insufficiently_random_values",
+    name: "Insufficiently Random Values",
+    short_message: SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
+    long_message: "Use env.prng() to generate random numbers, and remember that all random numbers are under the control of validators.",
+    severity: "Critical",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/insufficiently-random-values",
+    vulnerability_class: "Block attributes",
+};
+
+pub const SOROBAN_OVERFLOW_CHECK: RawVulnerability = RawVulnerability {
+    id: "overflow_check",
+    name: "Overflow Check",
+    short_message: SOROBAN_OVERFLOW_CHECK_LINT_MESSAGE,
+    long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
+    severity: "Critical",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/overflow-check",
+    vulnerability_class: "Arithmetic",
+};
+
+pub const SOROBAN_SET_CONTRACT_STORAGE: RawVulnerability = RawVulnerability {
+    id: "set_contract_storage",
+    name: "Set Contract Storage",
+    short_message: SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE,
+    long_message: "In soroban, the storage of a contract can be modified by an arbitrary caller. When a smart contract uses this function, the contract needs to check if the caller should be able to alter this storage. If this does not happen, an arbitary caller may modify balances and other relevant contract storage.",
+    severity: "Critical",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/set-contract-storage",
+    vulnerability_class: "Authorization",
+};
+
+pub const SOROBAN_SOROBAN_VERSION: RawVulnerability = RawVulnerability {
+    id: "soroban_version",
+    name: "Check Soroban version",
+    short_message: SOROBAN_VERSION_LINT_MESSAGE,
+    long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
+    severity: "Enhancement",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/soroban-version",
+    vulnerability_class: "Best practices",
+};
+
+pub const SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM: RawVulnerability = RawVulnerability {
+    id: "unprotected_update_current_contract_wasm",
+    name: "Unprotected Update Current Contract Wasm",
+    short_message: SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE,
+    long_message: "If users are allowed to call update_current_contract_wasm, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
+    severity: "Critical",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/unprotected-update-current-contract-wasm",
+    vulnerability_class: "Authorization",
+};
+
+pub const SOROBAN_UNSAFE_EXPECT: RawVulnerability = RawVulnerability {
+    id: "unsafe_expect",
+    name: "Unsafe Expect",
+    short_message: SOROBAN_UNSAFE_EXPECT_LINT_MESSAGE,
+    long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
+    severity: "Medium",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/unsafe-expect",
+    vulnerability_class: "Validations and error handling",
+};
+
+pub const SOROBAN_UNSAFE_UNWRAP: RawVulnerability = RawVulnerability {
+    id: "unsafe_unwrap",
+    name: "Unsafe Unwrap",
+    short_message: SOROBAN_UNSAFE_UNWRAP_LINT_MESSAGE,
+    long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
+    severity: "Medium",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/unsafe-unwrap",
+    vulnerability_class: "Validations and error handling",
+};
+
+pub const SOROBAN_UNUSED_RETURN_ENUM: RawVulnerability = RawVulnerability {
+    id: "unused_return_enum",
+    name: "Unused Return Enum",
+    short_message: SOROBAN_UNUSED_RETURN_ENUM_LINT_MESSAGE,
+    long_message: "Soroban functions can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
+    severity: "Minor",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/unused-return-enum",
+    vulnerability_class: "Validations and error handling",
+};
+
+pub const INK_ASSERT_VIOLATION: RawVulnerability = RawVulnerability {
     id: "assert_violation",
     name: "Assert Violation",
     short_message: INK_ASSERT_VIOLATION_LINT_MESSAGE,
@@ -37,7 +183,7 @@ pub const ASSERT_VIOLATION: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const AVOID_STD_CORE_MEM_FORGET: RawVulnerability = RawVulnerability {
+pub const INK_AVOID_STD_CORE_MEM_FORGET: RawVulnerability = RawVulnerability {
     id: "avoid_std_core_mem_forget",
     name: "Avoid std::mem::forget usage",
     short_message: INK_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
@@ -47,7 +193,7 @@ pub const AVOID_STD_CORE_MEM_FORGET: RawVulnerability = RawVulnerability {
     vulnerability_class: "Best practices",
 };
 
-pub const AVOID_FORMAT_STRING: RawVulnerability = RawVulnerability {
+pub const INK_AVOID_FORMAT_STRING: RawVulnerability = RawVulnerability {
     id: "avoid_format_string",
     name: "Avoid format! macro",
     short_message: INK_AVOID_FORMAT_STRING_LINT_MESSAGE,
@@ -57,7 +203,7 @@ pub const AVOID_FORMAT_STRING: RawVulnerability = RawVulnerability {
     vulnerability_class: " Validations and error handling",
 };
 
-pub const DELEGATE_CALL: RawVulnerability = RawVulnerability {
+pub const INK_DELEGATE_CALL: RawVulnerability = RawVulnerability {
     id: "delegate_call",
     name: "Unsafe Delegate Call",
     short_message: INK_DELEGATE_CALL_LINT_MESSAGE,
@@ -67,7 +213,7 @@ pub const DELEGATE_CALL: RawVulnerability = RawVulnerability {
     vulnerability_class: "Authorization ",
 };
 
-pub const DIVIDE_BEFORE_MULTIPLY: RawVulnerability = RawVulnerability {
+pub const INK_DIVIDE_BEFORE_MULTIPLY: RawVulnerability = RawVulnerability {
     id: "divide_before_multiply",
     name: "Divide Before Multiply",
     short_message: INK_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
@@ -77,7 +223,7 @@ pub const DIVIDE_BEFORE_MULTIPLY: RawVulnerability = RawVulnerability {
     vulnerability_class: "Arithmetic",
 };
 
-pub const DOS_UNBOUNDED_OPERATION: RawVulnerability = RawVulnerability {
+pub const INK_DOS_UNBOUNDED_OPERATION: RawVulnerability = RawVulnerability {
     id: "dos_unbounded_operation",
     name: "Denial of Service: Unbounded Operation",
     short_message: INK_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
@@ -87,7 +233,7 @@ pub const DOS_UNBOUNDED_OPERATION: RawVulnerability = RawVulnerability {
     vulnerability_class: "Denial of Service",
 };
 
-pub const UNEXPECTED_REVERT_WARN: RawVulnerability = RawVulnerability {
+pub const INK_UNEXPECTED_REVERT_WARN: RawVulnerability = RawVulnerability {
     id: "unexpected_revert_warn",
     name: "Unexpected Revert Inserting to Storage",
     short_message: INK_DOS_UNEXPECTED_REVERT_WITH_VECTOR_LINT_MESSAGE,
@@ -97,7 +243,7 @@ pub const UNEXPECTED_REVERT_WARN: RawVulnerability = RawVulnerability {
     vulnerability_class: "Denial of Service",
 };
 
-pub const CHECK_INK_VERSION: RawVulnerability = RawVulnerability {
+pub const INK_CHECK_INK_VERSION: RawVulnerability = RawVulnerability {
     id: "check_ink_version",
     name: "Check Ink! version",
     short_message: INK_INK_VERSION_LINT_MESSAGE,
@@ -107,7 +253,7 @@ pub const CHECK_INK_VERSION: RawVulnerability = RawVulnerability {
     vulnerability_class: "Best practices",
 };
 
-pub const INSUFFICIENTLY_RANDOM_VALUES: RawVulnerability = RawVulnerability {
+pub const INK_INSUFFICIENTLY_RANDOM_VALUES: RawVulnerability = RawVulnerability {
     id: "insufficiently_random_values",
     name: "Insufficiently Random Values",
     short_message: INK_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE,
@@ -117,7 +263,7 @@ pub const INSUFFICIENTLY_RANDOM_VALUES: RawVulnerability = RawVulnerability {
     vulnerability_class: "Block attributes",
 };
 
-pub const INTEGER_OVERFLOW_UNDERFLOW: RawVulnerability = RawVulnerability {
+pub const INK_INTEGER_OVERFLOW_UNDERFLOW: RawVulnerability = RawVulnerability {
     id: "integer_overflow_underflow",
     name: "Integer Overflow/Underflow",
     short_message: INK_INTEGER_OVERFLOW_OR_UNDERFLOW_LINT_MESSAGE,
@@ -127,7 +273,7 @@ pub const INTEGER_OVERFLOW_UNDERFLOW: RawVulnerability = RawVulnerability {
     vulnerability_class: "Arithmetic",
 };
 
-pub const ITERATOR_OVER_INDEXING: RawVulnerability = RawVulnerability {
+pub const INK_ITERATOR_OVER_INDEXING: RawVulnerability = RawVulnerability {
     id: "iterator_over_indexing",
     name: "Iterator Over Indexing",
     short_message: INK_ITERATORS_OVER_INDEXING_LINT_MESSAGE,
@@ -137,7 +283,7 @@ pub const ITERATOR_OVER_INDEXING: RawVulnerability = RawVulnerability {
     vulnerability_class: "Best practices",
 };
 
-pub const LAZY_DELEGATE: RawVulnerability = RawVulnerability {
+pub const INK_LAZY_DELEGATE: RawVulnerability = RawVulnerability {
     id: "lazy_delegate",
     name: "Lazy Delegate",
     short_message: INK_LAZY_DELEGATE_LINT_MESSAGE,
@@ -147,7 +293,7 @@ pub const LAZY_DELEGATE: RawVulnerability = RawVulnerability {
     vulnerability_class: "Known Bugs",
 };
 
-pub const PANIC_ERROR: RawVulnerability = RawVulnerability {
+pub const INK_PANIC_ERROR: RawVulnerability = RawVulnerability {
     id: "panic_error",
     name: "Panic Error",
     short_message: INK_PANIC_ERROR_LINT_MESSAGE,
@@ -157,7 +303,7 @@ pub const PANIC_ERROR: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const REENTRANCY: RawVulnerability = RawVulnerability {
+pub const INK_REENTRANCY: RawVulnerability = RawVulnerability {
     id: "reentrancy",
     name: "Reentrancy",
     short_message: INK_REENTRANCY_LINT_MESSAGE,
@@ -167,7 +313,7 @@ pub const REENTRANCY: RawVulnerability = RawVulnerability {
     vulnerability_class: "Reentrancy",
 };
 
-pub const UNPROTECTED_SET_CODE_HASH: RawVulnerability = RawVulnerability {
+pub const INK_UNPROTECTED_SET_CODE_HASH: RawVulnerability = RawVulnerability {
     id: "unprotected_set_code_hash",
     name: "Unprotected Set Code Hash",
     short_message: INK_SET_CODE_HASH_LINT_MESSAGE,
@@ -177,7 +323,7 @@ pub const UNPROTECTED_SET_CODE_HASH: RawVulnerability = RawVulnerability {
     vulnerability_class: "Authorization",
 };
 
-pub const SET_STORAGE_WARN: RawVulnerability = RawVulnerability {
+pub const INK_SET_STORAGE_WARN: RawVulnerability = RawVulnerability {
     id: "set_storage_warn",
     name: "Set Contract Storage",
     short_message: INK_SET_CONTRACT_STORAGE_LINT_MESSAGE,
@@ -187,7 +333,7 @@ pub const SET_STORAGE_WARN: RawVulnerability = RawVulnerability {
     vulnerability_class: "Authorization",
 };
 
-pub const UNPROTECTED_MAPPING_OPERATION: RawVulnerability = RawVulnerability {
+pub const INK_UNPROTECTED_MAPPING_OPERATION: RawVulnerability = RawVulnerability {
     id: "unprotected_mapping_operation",
     name: "Unprotected Mapping Operation",
     short_message: INK_UNPROTECTED_MAPPING_OPERATION_LINT_MESSAGE,
@@ -197,7 +343,7 @@ pub const UNPROTECTED_MAPPING_OPERATION: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const UNPROTECTED_SELF_DESTRUCT: RawVulnerability = RawVulnerability {
+pub const INK_UNPROTECTED_SELF_DESTRUCT: RawVulnerability = RawVulnerability {
     id: "unprotected_self_destruct",
     name: "Unprotected Self Destruct",
     short_message: INK_UNPROTECTED_SELF_DESTRUCT_LINT_MESSAGE,
@@ -207,7 +353,7 @@ pub const UNPROTECTED_SELF_DESTRUCT: RawVulnerability = RawVulnerability {
     vulnerability_class: "Authorization",
 };
 
-pub const UNRESTRICTED_TRANSFER_FROM: RawVulnerability = RawVulnerability {
+pub const INK_UNRESTRICTED_TRANSFER_FROM: RawVulnerability = RawVulnerability {
     id: "unrestricted_transfer_from",
     name: "Unrestricted Transfer From",
     short_message: INK_UNRESTRICTED_TRANSFER_FROM_LINT_MESSAGE,
@@ -217,7 +363,7 @@ pub const UNRESTRICTED_TRANSFER_FROM: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const UNSAFE_EXPECT: RawVulnerability = RawVulnerability {
+pub const INK_UNSAFE_EXPECT: RawVulnerability = RawVulnerability {
     id: "unsafe_expect",
     name: "Unsafe Expect",
     short_message: INK_UNSAFE_EXPECT_LINT_MESSAGE,
@@ -227,7 +373,7 @@ pub const UNSAFE_EXPECT: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const UNSAFE_UNWRAP: RawVulnerability = RawVulnerability {
+pub const INK_UNSAFE_UNWRAP: RawVulnerability = RawVulnerability {
     id: "unsafe_unwrap",
     name: "Unsafe Unwrap",
     short_message: INK_UNSAFE_UNWRAP_LINT_MESSAGE,
@@ -237,7 +383,7 @@ pub const UNSAFE_UNWRAP: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const UNUSED_RETURN_ENUM: RawVulnerability = RawVulnerability {
+pub const INK_UNUSED_RETURN_ENUM: RawVulnerability = RawVulnerability {
     id: "unused_return_enum",
     name: "Unused Return Enum",
     short_message: INK_UNUSED_RETURN_ENUM_LINT_MESSAGE,
@@ -247,7 +393,7 @@ pub const UNUSED_RETURN_ENUM: RawVulnerability = RawVulnerability {
     vulnerability_class: "Validations and error handling",
 };
 
-pub const ZERO_OR_TEST_ADDRESS: RawVulnerability = RawVulnerability {
+pub const INK_ZERO_OR_TEST_ADDRESS: RawVulnerability = RawVulnerability {
     id: "zero_or_test_address",
     name: "Zero or Test Address",
     short_message: INK_ZERO_OR_TEST_ADDRESS_LINT_MESSAGE,
@@ -256,37 +402,3 @@ pub const ZERO_OR_TEST_ADDRESS: RawVulnerability = RawVulnerability {
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/zero-or-test-address",
     vulnerability_class: "Validations and error handling",
 };
-
-pub const ENHANCEMENT: [RawVulnerability; 6] = [
-    PANIC_ERROR,
-    ASSERT_VIOLATION,
-    AVOID_STD_CORE_MEM_FORGET,
-    AVOID_FORMAT_STRING,
-    CHECK_INK_VERSION,
-    ITERATOR_OVER_INDEXING,
-];
-
-pub const MINOR: [RawVulnerability; 1] = [UNUSED_RETURN_ENUM];
-
-pub const MEDIUM: [RawVulnerability; 6] = [
-    DIVIDE_BEFORE_MULTIPLY,
-    DOS_UNBOUNDED_OPERATION,
-    UNEXPECTED_REVERT_WARN,
-    UNSAFE_EXPECT,
-    UNSAFE_UNWRAP,
-    ZERO_OR_TEST_ADDRESS,
-];
-
-pub const CRITICAL: [RawVulnerability; 11] = [
-    DELEGATE_CALL,
-    INSUFFICIENTLY_RANDOM_VALUES,
-    INTEGER_OVERFLOW_UNDERFLOW,
-    REENTRANCY,
-    UNPROTECTED_SET_CODE_HASH,
-    SET_STORAGE_WARN,
-    UNPROTECTED_MAPPING_OPERATION,
-    UNPROTECTED_SELF_DESTRUCT,
-    UNRESTRICTED_TRANSFER_FROM,
-    ZERO_OR_TEST_ADDRESS,
-    LAZY_DELEGATE,
-];

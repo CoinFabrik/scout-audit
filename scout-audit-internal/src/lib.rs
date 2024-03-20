@@ -18,4 +18,4 @@ pub use strum::IntoEnumIterator;
 #[cfg(feature = "detector")]
 pub use detector::ink_lint_message;
 #[cfg(feature = "detector")]
-pub use detector::soroban_lint_message::*;
+pub use detector::soroban_lint_message;

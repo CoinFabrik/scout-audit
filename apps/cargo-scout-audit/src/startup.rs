@@ -233,7 +233,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
-    _bc_dependency: BlockChain,
+    bc_dependency: BlockChain,
     info: ProjectInfo,
 ) -> Result<()> {
     // Convert detectors paths to string
@@ -288,7 +288,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info);
+            let report = generate_report(content, info, bc_dependency);
 
             // Generate HTML
             let html = report.generate_html()?;
@@ -319,7 +319,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info);
+            let report = generate_report(content, info, bc_dependency);
 
             // Generate Markdown
             let markdown_path = report.generate_markdown()?;
@@ -368,7 +368,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info);
+            let report = generate_report(content, info, bc_dependency);
 
             let path = if let Some(path) = opts.output_path {
                 path
