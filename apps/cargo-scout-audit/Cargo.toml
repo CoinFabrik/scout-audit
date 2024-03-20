@@ -14,7 +14,7 @@ authors = [
 license = "MIT"
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 readme = "../../README.md"
-keywords = ["auditor", "rust", "security", "ink", "soroban", "smart-contracts"]
+keywords = ["auditor", "security", "ink", "soroban", "smart-contracts"]
 categories = ["development-tools", "command-line-utilities"]
 
 [lib]
