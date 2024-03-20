@@ -61,7 +61,7 @@ impl Library {
             std::fs::create_dir_all(&target_dir)?;
         }
 
-        let target_compiled_library_paths = compiled_library_paths
+        /*let target_compiled_library_paths = compiled_library_paths
             .into_iter()
             .map(|p| {
                 let target_path = target_dir.join(p.file_name().unwrap());
@@ -69,8 +69,9 @@ impl Library {
                 Ok(target_path)
             })
             .collect::<Result<Vec<PathBuf>>>()?;
-
         Ok(target_compiled_library_paths)
+        */
+        Ok(compiled_library_paths)
     }
 
     pub fn target_directory(&self) -> PathBuf {

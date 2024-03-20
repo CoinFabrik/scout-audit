@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail};
 use itertools::Itertools;
-use scout_audit_internal::{Detector, IntoEnumIterator};
+use scout_audit_internal::{InkDetector as Detector, IntoEnumIterator};
 
 use super::utils;
 

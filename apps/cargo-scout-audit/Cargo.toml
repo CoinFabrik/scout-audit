@@ -1,6 +1,6 @@
 [package]
-name = "cargo-scout-audit-soroban"
-version = "0.2.2"
+name = "cargo-scout-audit"
+version = "0.2.3"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -12,9 +12,9 @@ authors = [
     "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
 ]
 license = "MIT"
-description = "Scout is an extensible open-source tool intended to assist Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
+description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 readme = "../../README.md"
-keywords = ["auditor", "rust", "security", "soroban", "smart-contracts"]
+keywords = ["auditor", "rust", "security", "ink", "soroban", "smart-contracts"]
 categories = ["development-tools", "command-line-utilities"]
 
 [lib]
@@ -22,7 +22,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "cargo-scout-audit-soroban"
+name = "cargo-scout-audit"
 
 [dependencies]
 ansi_term = "0.12.1"
@@ -42,10 +42,12 @@ regex = { version = "1.5", features = ["unicode"] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.8"
+toml = { version = "0.8.0" }
 tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
 
-scout-audit-internal-soroban = { version = "=0.2.2", path = "../../scout-audit-internal", features = ["detector"] }
+scout-audit-internal = { version = "=0.2.3", path = "../../scout-audit-internal", features = ["detector"] }
+pulldown-cmark = "0.10.0"
 
 [dev-dependencies]
 colored = "2.0.0"

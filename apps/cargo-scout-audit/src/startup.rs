@@ -1,5 +1,9 @@
 use core::panic;
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    hash::{Hash, Hasher},
+    path::PathBuf,
+};
 
 use anyhow::{bail, Context, Result};
 use cargo::Config;
@@ -9,9 +13,10 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
+    output::report::generate_report,
     utils::{
+        config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        output::{format_into_json, format_into_sarif},
     },
 };
 
@@ -24,16 +29,18 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum CargoSubCommand {
-    ScoutAuditSoroban(Scout),
+    ScoutAudit(Scout),
 }
 #[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
 pub enum OutputFormat {
     #[default]
     Html,
     Json,
+    #[clap(name = "md")]
     Markdown,
     Sarif,
     Text,
+    Pdf,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -59,6 +66,15 @@ pub struct Scout {
         help = "Filter by the given detectors, separated by commas."
     )]
     pub filter: Option<String>,
+
+    // Select profiles in configuration
+    #[clap(
+        short,
+        long,
+        value_name = "profile",
+        help = "Filter detectors using profiles."
+    )]
+    pub profile: Option<String>,
 
     // List all the available detectors
     #[clap(short, long, help = "List all the available detectors")]
@@ -97,10 +113,21 @@ pub enum BlockChain {
     Soroban,
 }
 
+pub struct ProjectInfo {
+    pub name: String,
+    pub description: String,
+    pub hash: String,
+    pub worspace_root: PathBuf,
+}
+
 pub fn run_scout(opts: Scout) -> Result<()> {
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
+    }
+
+    if opts.filter.is_some() && opts.profile.is_some() {
+        panic!("You can't use `--exclude` and `--profile` at the same time.");
     }
 
     if let Some(path) = &opts.output_path {
@@ -143,13 +170,18 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     // Misc configurations
     // If there is a need to exclude or filter by detector, the dylint tool needs to be recompiled.
     // TODO: improve detector system so that doing this isn't necessary.
-    if opts.exclude.is_some() || opts.filter.is_some() {
+    /*if opts.exclude.is_some() || opts.filter.is_some() {
         remove_target_dylint(&opts.manifest_path)?;
-    }
+    }*/
 
     // Instantiate detectors
-    let detectors = Detectors::new(cargo_config, detectors_config, metadata, opts.verbose);
-    let detectors_names = detectors
+    let detectors = Detectors::new(
+        cargo_config,
+        detectors_config,
+        metadata.clone(),
+        opts.verbose,
+    );
+    let mut detectors_names = detectors
         .get_detector_names()
         .context("Failed to build detectors")?;
 
@@ -157,6 +189,15 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         list_detectors(detectors_names);
         return Ok(());
     }
+
+    detectors_names = if let Some(profile) = &opts.profile {
+        let config = open_config_or_default(bc_dependency, detectors_names.clone())
+            .context("Failed to load or generate config")?;
+
+        profile_enabled_detectors(config, profile.clone())?
+    } else {
+        detectors_names
+    };
 
     let used_detectors = if let Some(filter) = &opts.filter {
         get_filtered_detectors(filter.to_string(), detectors_names)?
@@ -170,13 +211,31 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         .build(bc_dependency, used_detectors)
         .context("Failed to build detectors bis")?;
 
+    let root = metadata.root_package().unwrap();
+
+    let mut hasher = std::hash::DefaultHasher::new();
+
+    root.id.hash(&mut hasher);
+
+    let info = ProjectInfo {
+        name: root.name.clone(),
+        description: root.description.clone().unwrap_or_default(),
+        hash: hasher.finish().to_string(),
+        worspace_root: metadata.workspace_root.clone().into(),
+    };
+
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency).context("Failed to run dylint")?;
+    run_dylint(detectors_paths, opts, bc_dependency, info).context("Failed to run dylint")?;
 
     Ok(())
 }
 
-fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockChain) -> Result<()> {
+fn run_dylint(
+    detectors_paths: Vec<PathBuf>,
+    mut opts: Scout,
+    bc_dependency: BlockChain,
+    info: ProjectInfo,
+) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -196,6 +255,10 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     } else {
         Some(stderr_temp_file.path().to_string_lossy().to_string())
     };
+
+    if opts.output_format != OutputFormat::Text {
+        opts.args.push("--message-format=json".to_string());
+    }
 
     let options = Dylint {
         paths: detectors_paths,
@@ -221,38 +284,73 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
     // let report = Report::new(name, description, date, source_url, summary, categories, findings);
     match opts.output_format {
         OutputFormat::Html => {
+            //read json_file to a string
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content, info, bc_dependency);
+
             // Generate HTML
-            // let html_path = report.generate_html()?;
+            let html = report.generate_html()?;
+
+            let html_path = match opts.output_path {
+                Some(path) => path,
+                None => PathBuf::from("report.html"),
+            };
+            let mut html_file = fs::File::create(&html_path)?;
+            std::io::Write::write_all(&mut html_file, html.as_bytes())?;
 
             // Open the HTML report in the default web browser
-            // webbrowser::open(&html_path).context("Failed to open HTML report")?;
+            webbrowser::open(html_path.to_str().unwrap()).context("Failed to open HTML report")?;
         }
         OutputFormat::Json => {
             let mut json_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
                 None => fs::File::create("report.json")?,
             };
-            std::io::Write::write_all(
-                &mut json_file,
-                format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
+
+            let mut cts = String::new();
+
+            std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
+
+            std::io::Write::write(&mut json_file, &cts.as_bytes())?;
         }
         OutputFormat::Markdown => {
-            // Generate Markdown
-            // let markdown_path = report.generate_markdown()?;
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            // Open the Markdown report in the default text editor
-            // open::that(markdown_path).context("Failed to open Markdown report")?;
+            let report = generate_report(content, info, bc_dependency);
+
+            // Generate Markdown
+            let markdown_path = report.generate_markdown()?;
+
+            let mut md_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.html")?,
+            };
+
+            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
         }
         OutputFormat::Sarif => {
-            let mut sarif_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.sarif")?,
+            let path = if let Some(path) = opts.output_path {
+                path
+            } else {
+                PathBuf::from("report.sarif")
             };
-            std::io::Write::write_all(
-                &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
+
+            let mut sarif_file = fs::File::create(&path)?;
+
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let child = std::process::Command::new("clippy-sarif")
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .spawn()?;
+
+            std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), content.as_bytes())?;
+
+            std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
         }
         OutputFormat::Text => {
             // If the output path is not set, dylint prints the report to stdout
@@ -266,26 +364,23 @@ fn run_dylint(detectors_paths: Vec<PathBuf>, opts: Scout, bc_dependency: BlockCh
                     .expect("Error writing dylint result to stdout");
             }
         }
+        OutputFormat::Pdf => {
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content, info, bc_dependency);
+
+            let path = if let Some(path) = opts.output_path {
+                path
+            } else {
+                PathBuf::from("report.pdf")
+            };
+            report.generate_pdf(&path)?;
+        }
     }
 
     stderr_temp_file.close()?;
     stdout_temp_file.close()?;
 
-    Ok(())
-}
-
-fn remove_target_dylint(manifest_path: &Option<PathBuf>) -> Result<()> {
-    let target_dylint_path = match manifest_path {
-        Some(manifest_path) => {
-            let manifest_path_parent = manifest_path
-                .parent()
-                .context("Error getting manifest path parent")?;
-            manifest_path_parent.join("target").join("dylint")
-        }
-        None => std::env::current_dir()?.join("target").join("dylint"),
-    };
-    if target_dylint_path.exists() {
-        fs::remove_dir_all(target_dylint_path)?;
-    }
     Ok(())
 }

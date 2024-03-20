@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Scout Audit Report</title>
-    <link href="./styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
@@ -31,17 +30,17 @@
                 <span class="bg-gray-700 summary-tag">Total: {{
                     report.summary.total_vulnerabilities
                     }}</span>
-                <span class="bg-red-500 summary-tag">High: {{
-                    report.summary.by_severity.high
+                <span class="bg-red-500 summary-tag">Critical: {{
+                    report.summary.by_severity.critical
                     }}</span>
                 <span class="bg-yellow-500 summary-tag">Medium: {{
                     report.summary.by_severity.medium
                     }}</span>
-                <span class="bg-green-500 summary-tag">Low: {{
-                    report.summary.by_severity.low
+                <span class="bg-green-500 summary-tag">Minor: {{
+                    report.summary.by_severity.minor
                     }}</span>
-                <span class="bg-blue-500 summary-tag">Info: {{
-                    report.summary.by_severity.info
+                <span class="bg-blue-500 summary-tag">Enhancements: {{
+                    report.summary.by_severity.enhancement
                     }}</span>
                 <button class="analytics-btn border border-gray-200 rounded px-2 py-1 bg-gray-800 mt-2 sm:mt-0">
                     Analytics
@@ -76,12 +75,14 @@
 
 </body>
 
-<script src="modal-handler.js"></script>
-<script src="category-filter.js"></script>
-<script src="vulnerability-expansion.js"></script>
-<script src="vulnerability-details-display.js"></script>
+<script> {% include "modal.js" %} </script>
+<script> {% include "category-filter.js" %} </script>
+<script> {% include "vulnerability-expansion.js" %} </script>
+<script> {% include "vulnerability-details-display.js" %} </script>
 
 <style>
+    {% include "styles.css" %}
+
     .summary-tag {
         padding: 0.25rem 0.5rem;
         margin-right: 0.5rem;
@@ -95,7 +96,7 @@
         }
     }
 
-    .severity-high {
+    .severity-critical {
         background-color: #E53E3E;
     }
 
@@ -103,11 +104,11 @@
         background-color: #ED8936;
     }
 
-    .severity-low {
+    .severity-minor {
         background-color: #ECC94B;
     }
 
-    .severity-info {
+    .severity-enhancement {
         background-color: #38B2AC;
     }
 </style>

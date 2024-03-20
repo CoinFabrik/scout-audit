@@ -8,9 +8,7 @@ use rustc_hir::{BlockCheckMode, Expr, ExprKind, UnsafeSource};
 use rustc_lint::{LateContext, LintContext};
 use rustc_session::Session;
 use rustc_span::source_map::{original_sp, SourceMap};
-use rustc_span::{
-    hygiene, BytePos, Pos, SourceFile, SourceFileAndLine, Span, SpanData, SyntaxContext, DUMMY_SP,
-};
+use rustc_span::{hygiene, BytePos, Pos, SourceFile, SourceFileAndLine, Span, SpanData, SyntaxContext, DUMMY_SP};
 use std::borrow::Cow;
 use std::ops::Range;
 
@@ -57,10 +55,7 @@ pub fn get_source_text(cx: &impl LintContext, sp: impl SpanRange) -> Option<Sour
             return None;
         }
         let range = start.pos.to_usize()..end.pos.to_usize();
-        Some(SourceFileRange {
-            sf: start.sf,
-            range,
-        })
+        Some(SourceFileRange { sf: start.sf, range })
     }
     f(cx.sess().source_map(), sp.into_range())
 }
@@ -74,8 +69,7 @@ pub fn expr_block<T: LintContext>(
     indent_relative_to: Option<Span>,
     app: &mut Applicability,
 ) -> String {
-    let (code, from_macro) =
-        snippet_block_with_context(cx, expr.span, outer, default, indent_relative_to, app);
+    let (code, from_macro) = snippet_block_with_context(cx, expr.span, outer, default, indent_relative_to, app);
     if !from_macro
         && let ExprKind::Block(block, _) = expr.kind
         && block.rules != BlockCheckMode::UnsafeBlock(UnsafeSource::UserProvided)
@@ -114,7 +108,7 @@ fn first_char_in_first_line<T: LintContext>(cx: &T, span: Span) -> Option<BytePo
 
 /// Extends the span to the beginning of the spans line, incl. whitespaces.
 ///
-/// ```rust
+/// ```no_run
 ///        let x = ();
 /// //             ^^
 /// // will be converted to
@@ -194,22 +188,13 @@ pub fn position_before_rarrow(s: &str) -> Option<usize> {
 
 /// Reindent a multiline string with possibility of ignoring the first line.
 #[expect(clippy::needless_pass_by_value)]
-pub fn reindent_multiline(
-    s: Cow<'_, str>,
-    ignore_first: bool,
-    indent: Option<usize>,
-) -> Cow<'_, str> {
+pub fn reindent_multiline(s: Cow<'_, str>, ignore_first: bool, indent: Option<usize>) -> Cow<'_, str> {
     let s_space = reindent_multiline_inner(&s, ignore_first, indent, ' ');
     let s_tab = reindent_multiline_inner(&s_space, ignore_first, indent, '\t');
     reindent_multiline_inner(&s_tab, ignore_first, indent, ' ').into()
 }
 
-fn reindent_multiline_inner(
-    s: &str,
-    ignore_first: bool,
-    indent: Option<usize>,
-    ch: char,
-) -> String {
+fn reindent_multiline_inner(s: &str, ignore_first: bool, indent: Option<usize>, ch: char) -> String {
     let x = s
         .lines()
         .skip(usize::from(ignore_first))
@@ -218,12 +203,7 @@ fn reindent_multiline_inner(
                 None
             } else {
                 // ignore empty lines
-                Some(
-                    l.char_indices()
-                        .find(|&(_, x)| x != ch)
-                        .unwrap_or((l.len(), ch))
-                        .0,
-                )
+                Some(l.char_indices().find(|&(_, x)| x != ch).unwrap_or((l.len(), ch)).0)
             }
         })
         .min()
@@ -496,9 +476,7 @@ pub fn trim_span(sm: &SourceMap, span: Span) -> Span {
     let Some(src) = sf.src.as_deref() else {
         return span;
     };
-    let Some(snip) =
-        &src.get((data.lo - sf.start_pos).to_usize()..(data.hi - sf.start_pos).to_usize())
-    else {
+    let Some(snip) = &src.get((data.lo - sf.start_pos).to_usize()..(data.hi - sf.start_pos).to_usize()) else {
         return span;
     };
     let trim_start = snip.len() - snip.trim_start().len();
@@ -518,10 +496,7 @@ pub fn trim_span(sm: &SourceMap, span: Span) -> Span {
 ///             ^^                   ^^^^
 /// ```
 pub fn expand_past_previous_comma(cx: &LateContext<'_>, span: Span) -> Span {
-    let extended = cx
-        .sess()
-        .source_map()
-        .span_extend_to_prev_char(span, ',', true);
+    let extended = cx.sess().source_map().span_extend_to_prev_char(span, ',', true);
     extended.with_lo(extended.lo() - BytePos(1))
 }
 
@@ -602,17 +577,7 @@ mod test {
         println!("result: {result:?}");
         assert!(result.is_empty());
 
-        let result = without_block_comments(vec![
-            "",
-            "/*",
-            "",
-            "*/",
-            "#[crate_type = \"lib\"]",
-            "/*",
-            "",
-            "*/",
-            "",
-        ]);
+        let result = without_block_comments(vec!["", "/*", "", "*/", "#[crate_type = \"lib\"]", "/*", "", "*/", ""]);
         assert_eq!(result, vec!["", "#[crate_type = \"lib\"]", ""]);
 
         let result = without_block_comments(vec!["/* rust", "", "*/"]);
@@ -621,14 +586,7 @@ mod test {
         let result = without_block_comments(vec!["/* one-line comment */"]);
         assert!(result.is_empty());
 
-        let result = without_block_comments(vec![
-            "/* nested",
-            "/* multi-line",
-            "comment",
-            "*/",
-            "test",
-            "*/",
-        ]);
+        let result = without_block_comments(vec!["/* nested", "/* multi-line", "comment", "*/", "test", "*/"]);
         assert!(result.is_empty());
 
         let result = without_block_comments(vec!["/* nested /* inline /* comment */ test */ */"]);

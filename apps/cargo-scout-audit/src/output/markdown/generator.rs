@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use chrono::NaiveDate;
-
 use crate::output::report::{Category, Finding};
 
 use super::utils;
@@ -9,7 +7,7 @@ use super::utils;
 const BANNER_URL: &str = "https://www.example.com/banner.png";
 
 // Generate the header for the report
-pub fn generate_header(date: NaiveDate) -> String {
+pub fn generate_header(date: String) -> String {
     format!(
         "![Banner Scout report]({})\n# Scout Report - {}\n\n",
         BANNER_URL, date
@@ -74,7 +72,7 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
 
 // Function to generate Markdown for a category
 fn generate_category(category: &Category) -> String {
-    let mut category_markdown = format!("## {}\n\n", category.name);
+    let mut category_markdown = format!("## {}\n\n", category.id);
     for vulnerability in &category.vulnerabilities {
         category_markdown.push_str(&format!("### {}\n\n", vulnerability.name));
         category_markdown.push_str(&format!(

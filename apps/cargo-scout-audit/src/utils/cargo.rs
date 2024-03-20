@@ -53,7 +53,7 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: Block
 
 fn get_toolchain(bc: BlockChain) -> &'static str {
     match bc {
-        BlockChain::Ink => "+nightly-2023-04-23",
-        BlockChain::Soroban => "+nightly-2023-09-29",
+        BlockChain::Ink => "+nightly-2023-12-16",
+        BlockChain::Soroban => "+nightly-2023-12-16",
     }
 }

@@ -152,8 +152,6 @@ impl<'a> DetectorBuilder<'a> {
                 .replace('_', "-");
             if used_detectors.contains(&detector_name) {
                 filtered_paths.push(path)
-            } else {
-                std::fs::remove_file(path)?;
             }
         }
 
