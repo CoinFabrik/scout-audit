@@ -156,6 +156,8 @@ pub fn generate_report(scout_output: String) -> Report {
             .get("target")
             .and_then(|target| target.get("src_path"))
             .unwrap()
+            .to_string()
+            .trim_matches('"')
             .to_string();
 
         let sp = finding
@@ -193,6 +195,8 @@ pub fn generate_report(scout_output: String) -> Report {
             .get("message")
             .and_then(|message| message.get("message"))
             .unwrap()
+            .to_string()
+            .trim_matches('"')
             .to_string();
 
         let v = det_map.entry(category.clone()).or_insert(0);
@@ -278,6 +282,51 @@ pub fn generate_report(scout_output: String) -> Report {
         categories,
         findings,
     )
+}
+
+use crate::startup::BlockChain;
+
+trait GetRawVulnerabilities {
+    fn get_raw_vuln_from_name(&self, name: &str) -> RawVulnerability;
+    fn get_array_of_vulnerability_names(&self) -> Vec<&'static str>;
+}
+
+impl GetRawVulnerabilities for BlockChain {
+    fn get_raw_vuln_from_name(&self, name: &str) -> RawVulnerability {
+        match &self {
+            BlockChain::Ink => match name {
+                "assert_violation" => ASSERT_VIOLATION,
+                "avoid_std_core_mem_forget" => AVOID_STD_CORE_MEM_FORGET,
+                "avoid_format_string" => AVOID_FORMAT_STRING,
+                "delegate_call" => DELEGATE_CALL,
+                "divide_before_multiply" => DIVIDE_BEFORE_MULTIPLY,
+                "dos_unbounded_operation" => DOS_UNBOUNDED_OPERATION,
+                "unexpected_revert_warn" => UNEXPECTED_REVERT_WARN,
+                "check_ink_version" => CHECK_INK_VERSION,
+                "insufficiently_random_values" => INSUFFICIENTLY_RANDOM_VALUES,
+                "integer_overflow_underflow" => INTEGER_OVERFLOW_UNDERFLOW,
+                "iterator_over_indexing" => ITERATOR_OVER_INDEXING,
+                "lazy_delegate" => LAZY_DELEGATE,
+                "panic_error" => PANIC_ERROR,
+                "reentrancy_1" => REENTRANCY,
+                "reentrancy_2" => REENTRANCY,
+                "unprotected_set_code_hash" => UNPROTECTED_SET_CODE_HASH,
+                "set_storage_warn" => SET_STORAGE_WARN,
+                "unprotected_mapping_operation" => UNPROTECTED_MAPPING_OPERATION,
+                "unprotected_self_destruct" => UNPROTECTED_SELF_DESTRUCT,
+                "unrestricted_transfer_from" => UNRESTRICTED_TRANSFER_FROM,
+                "unsafe_expect" => UNSAFE_EXPECT,
+                "unsafe_unwrap" => UNSAFE_UNWRAP,
+                "unused_return_enum" => UNUSED_RETURN_ENUM,
+                "zero_or_test_address" => ZERO_OR_TEST_ADDRESS,
+                _ => panic!("Unknown vulnerability name: {}", name),
+            },
+            BlockChain::Soroban => todo!(),
+        }
+    }
+    fn get_array_of_vulnerability_names(&self) -> Vec<&'static str> {
+        todo!()
+    }
 }
 
 fn get_raw_vuln_from_name(name: &str) -> RawVulnerability {

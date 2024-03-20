@@ -279,10 +279,12 @@ fn run_dylint(
                 Some(path) => fs::File::create(path)?,
                 None => fs::File::create("report.json")?,
             };
-            std::io::Write::write_all(
-                &mut json_file,
-                format_into_json(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
+
+            let mut cts = String::new();
+
+            std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
+
+            std::io::Write::write(&mut json_file, &cts.as_bytes())?;
         }
         OutputFormat::Markdown => {
             let mut content = String::new();
@@ -301,14 +303,36 @@ fn run_dylint(
             std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
         }
         OutputFormat::Sarif => {
-            let mut sarif_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.sarif")?,
+            let path = if let Some(path) = opts.output_path {
+                path
+            } else {
+                PathBuf::from("report.sarif")
             };
-            std::io::Write::write_all(
-                &mut sarif_file,
-                format_into_sarif(stderr_file, stdout_file, bc_dependency)?.as_bytes(),
-            )?;
+
+            let mut _sarif_file = fs::File::create(&path)?;
+
+            let mut tmp_file = fs::File::create(".tmp.json")?;
+
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            std::io::Write::write_all(&mut tmp_file, &content.as_bytes())?;
+
+            let output = std::process::Command::new(
+                "clippy-sarif
+            ",
+            )
+            .arg("--input")
+            .arg(".tmp.json")
+            .arg("--output")
+            .arg(path)
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .expect("Failed to execute clippy-sarif, check if it's installed")
+            .wait_with_output()
+            .expect("Failed to execute clippy-sarif, check if it's installed");
+
+            fs::remove_file(".tmp.json")?;
         }
         OutputFormat::Text => {
             // If the output path is not set, dylint prints the report to stdout
