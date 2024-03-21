@@ -39,6 +39,7 @@ export async function activate(_context: vscode.ExtensionContext) {
     await config.update(RUST_ANALYZER_CONFIG, [
       "cargo",
       "scout-audit",
+      "-p vscode",
       "--",
       "--message-format=json",
     ]);
