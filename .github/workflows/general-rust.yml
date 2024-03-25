@@ -1,0 +1,82 @@
+name: General Rust CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/cargo-scout-audit/**"
+  pull_request:
+    paths:
+      - "apps/cargo-scout-audit/**"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  format:
+    name: Check Rust Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust Nightly & rustfmt
+        run: |
+          rustup install nightly --profile minimal
+          rustup component add rustfmt --toolchain nightly
+
+      - name: Check Formatting
+        run: cd apps/cargo-scout-audit && cargo +nightly fmt -- --check
+
+  clippy:
+    name: Lint with Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Rust Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./apps/cargo-scout-audit/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust Nightly & Clippy
+        run: |
+          rustup install nightly --profile minimal
+          rustup component add clippy --toolchain nightly
+
+      - name: Lint Code
+        run: cd apps/cargo-scout-audit && cargo +nightly clippy --all-targets --all-features -- -D warnings
+
+  udeps:
+    name: Check Unused Dependencies with cargo-udeps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust Nightly & cargo-udeps
+        run: |
+          rustup install nightly --profile minimal
+          cargo install cargo-udeps
+
+      - name: Check Unused Dependencies
+        run: cargo +nightly udeps --all-targets
