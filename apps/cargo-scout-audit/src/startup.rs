@@ -261,7 +261,7 @@ fn run_dylint(
     }
 
     let options = Dylint {
-        paths: detectors_paths,
+        paths: detectors_pathss,
         args: opts.args,
         manifest_path: opts.manifest_path.map(|p| p.to_string_lossy().to_string()),
         pipe_stdout,
