@@ -82,4 +82,4 @@ jobs:
         run: cargo install cargo-udeps
 
       - name: Check Unused Dependencies
-        run: cargo udeps --all-targets
+        run: cd apps/cargo-scout-audit && cargo udeps --all-targets

@@ -3,7 +3,8 @@ use chrono::offset::Local;
 use core::panic;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
+use std::path::Path;
+use std::{collections::HashMap, os::unix::process::CommandExt};
 
 use super::{html, markdown, pdf, vulnerabilities::*};
 
@@ -82,7 +83,7 @@ impl Report {
         markdown::generate_markdown(self)
     }
 
-    pub fn generate_pdf(&self, path: &PathBuf) -> Result<()> {
+    pub fn generate_pdf(&self, path: &Path) -> Result<()> {
         let temp_html = pdf::generate_pdf(self)?;
 
         std::process::Command::new("wkhtmltopdf")
@@ -136,7 +137,6 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
         })
         .collect::<Vec<Value>>();
 
-    let mut id: u32 = 0;
     let mut det_map: HashMap<_, _> = blockchain
         .get_array_of_vulnerability_names()
         .iter()
@@ -145,7 +145,7 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
 
     let mut findings: Vec<Finding> = Vec::new();
 
-    for finding in &scout_findings {
+    for (id, finding) in scout_findings.iter().enumerate() {
         let category: String = finding
             .get("message")
             .and_then(|message| message.get("code"))
@@ -177,8 +177,7 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
                     .get("file_name")
                     .unwrap_or(&Value::default())
                     .to_string()
-                    .trim_matches('"')
-                    .to_string(),
+                    .trim_matches('"'),
                 sp[0].get("line_start").unwrap_or(&Value::default()),
                 sp[0].get("column_start").unwrap_or(&Value::default()),
                 sp[0].get("line_end").unwrap_or(&Value::default()),
@@ -190,7 +189,7 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
         let byte_start = sp[0].get("byte_start").unwrap().as_u64().unwrap() as usize;
         let byte_end = sp[0].get("byte_end").unwrap().as_u64().unwrap() as usize;
 
-        let code_snippet: String = std::fs::read_to_string(&(file.trim_matches('"'))).unwrap()
+        let code_snippet: String = std::fs::read_to_string(file.trim_matches('"')).unwrap()
             [byte_start..byte_end]
             .to_string();
 
@@ -206,7 +205,7 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
         *v += 1;
 
         let fndg = Finding {
-            id,
+            id: id as u32,
             occurrence_index: *v,
             category_id: blockchain
                 .get_raw_vuln_from_name(&category)
@@ -221,7 +220,6 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
                 .trim_start_matches('/')
                 .to_string(),
         };
-        id += 1;
         findings.push(fndg);
     }
 
@@ -232,7 +230,7 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
 
     let mut categories: Vec<Category> = Vec::new();
 
-    for (vuln, _) in &summary_map {
+    for vuln in summary_map.keys() {
         let raw_vuln = blockchain.get_raw_vuln_from_name(vuln);
         let id = raw_vuln.vulnerability_class.to_string();
         let vuln = Vulnerability::from(raw_vuln);
