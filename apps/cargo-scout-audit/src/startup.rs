@@ -313,7 +313,7 @@ fn run_dylint(
 
             std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
 
-            std::io::Write::write(&mut json_file, &cts.as_bytes())?;
+            std::io::Write::write(&mut json_file, cts.as_bytes())?;
         }
         OutputFormat::Markdown => {
             let mut content = String::new();
@@ -338,7 +338,7 @@ fn run_dylint(
                 PathBuf::from("report.sarif")
             };
 
-            let mut sarif_file = fs::File::create(&path)?;
+            let mut sarif_file = fs::File::create(path)?;
 
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;

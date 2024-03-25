@@ -22,7 +22,7 @@ impl Default for HtmlEngine {
             tera: Tera::default(),
         };
         let _ = engine.load_templates();
-        return engine;
+        engine
     }
 }
 impl HtmlEngine {

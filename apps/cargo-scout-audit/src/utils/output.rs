@@ -105,7 +105,7 @@ fn get_errors_from_output(
         })
         .collect::<Vec<&str>>();
 
-    assert!(&true_finds.len() == &scout_internals_spans.len());
+    assert!(true_finds.len() == scout_internals_spans.len());
 
     for (i, elem) in true_finds.iter().enumerate() {
         let parts = elem.split('\n').collect::<Vec<&str>>();
@@ -127,72 +127,4 @@ fn get_errors_from_output(
         }
     }
     Ok(errors)
-}
-
-fn serify(
-    scout_output: File,
-    scout_internals: File,
-    bc: BlockChain,
-) -> anyhow::Result<serde_json::Value> {
-    let errors: HashMap<String, (Vec<Value>, String)> =
-        get_errors_from_output(scout_output, scout_internals, bc)?;
-
-    let sarif_output = json!({
-        "$schema": "https://json.schemastore.org/sarif-2.1.0",
-        "version": "2.1.0",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": env!("CARGO_PKG_NAME"),
-                        "version": env!("CARGO_PKG_VERSION"),
-                        "rules": get_chain_enum(bc).filter(|e| {
-                            errors.contains_key(&e.to_string()) && !errors.get(&e.to_string()).unwrap().0.is_empty()
-                        }).map(|e| {
-                            json!({
-                                "id": e.to_string(),
-                                "shortDescription": {
-                                    "text": e.get_lint_message()
-                                }})
-
-                        }).collect::<Vec<serde_json::Value>>(),
-                        "informationUri": "https://coinfabrik.github.io/scout/",
-                    }
-                },
-                "results": build_sarif_results(&errors)?,
-            }
-        ]
-    });
-    let json_errors = serde_json::to_value(sarif_output)?;
-    Ok(json_errors)
-}
-
-pub fn format_into_sarif(
-    scout_output: File,
-    scout_internals: File,
-    bc: BlockChain,
-) -> anyhow::Result<String> {
-    Ok(serify(scout_output, scout_internals, bc)?.to_string())
-}
-
-fn build_sarif_results(
-    errors: &HashMap<String, (Vec<Value>, String)>,
-) -> anyhow::Result<Vec<serde_json::Value>> {
-    let runs: Vec<Value> = errors
-        .iter()
-        .flat_map(|(name, (spans, msg))| {
-            spans.iter().filter_map(move |span| {
-                Some(json!({
-                    "ruleId": name,
-                    "level": "error",
-                    "message": {
-                        "text": msg
-                    },
-                    "locations": [span],
-                }))
-            })
-        })
-        .collect();
-
-    Ok(runs)
 }

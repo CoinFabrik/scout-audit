@@ -81,5 +81,5 @@ pub fn profile_enabled_detectors(config: toml::Table, profile: String) -> Result
             }
         }
     }
-    return Ok(ret_vec);
+    Ok(ret_vec)
 }

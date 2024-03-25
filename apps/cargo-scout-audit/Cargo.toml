@@ -47,9 +47,7 @@ tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
 
 scout-audit-internal = { version = "0.2.3", path = "../../scout-audit-internal", features = ["detector"] }
-pulldown-cmark = "0.10.0"
 
 [dev-dependencies]
 colored = "2.0.0"
-config = "0.14.0"
 
