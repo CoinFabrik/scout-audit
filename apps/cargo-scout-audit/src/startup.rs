@@ -260,6 +260,7 @@ fn run_dylint(
         opts.args.push("--message-format=json".to_string());
     }
 
+    
     let options = Dylint {
         paths: detectors_paths,
         args: opts.args,
