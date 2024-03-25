@@ -26,13 +26,11 @@ jobs:
       - name: Update Rust Toolchain
         run: rustup update
 
-      - name: Install Rust Nightly & rustfmt
-        run: |
-          rustup install nightly --profile minimal
-          rustup component add rustfmt --toolchain nightly
+      - name: Install rustfmt
+        run: rustup component add rustfmt
 
       - name: Check Formatting
-        run: cd apps/cargo-scout-audit && cargo +nightly fmt -- --check
+        run: cd apps/cargo-scout-audit && cargo fmt -- --check
 
   clippy:
     name: Lint with Clippy
@@ -54,13 +52,11 @@ jobs:
       - name: Update Rust Toolchain
         run: rustup update
 
-      - name: Install Rust Nightly & Clippy
-        run: |
-          rustup install nightly --profile minimal
-          rustup component add clippy --toolchain nightly
+      - name: Install clippy
+        run: rustup component add clippy
 
       - name: Lint Code
-        run: cd apps/cargo-scout-audit && cargo +nightly clippy --all-targets --all-features -- -D warnings
+        run: cd apps/cargo-scout-audit && cargo clippy --all-targets --all-features -- -D warnings
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
@@ -82,10 +78,8 @@ jobs:
       - name: Update Rust Toolchain
         run: rustup update
 
-      - name: Install Rust Nightly & cargo-udeps
-        run: |
-          rustup install nightly --profile minimal
-          cargo install cargo-udeps
+      - name: Install cargo-udeps
+        run: cargo install cargo-udeps
 
       - name: Check Unused Dependencies
-        run: cargo +nightly udeps --all-targets
+        run: cargo udeps --all-targets
