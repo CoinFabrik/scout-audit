@@ -38,6 +38,7 @@ pub enum SorobanDetector {
     OverflowCheck,
     SetContractStorage,
     SorobanVersion,
+    UnprotectedMappingOperation,
     UnprotectedUpdateCurrentContractWasm,
     UnsafeExpect,
     UnsafeUnwrap,
@@ -101,21 +102,24 @@ impl DetectorImpl for SorobanDetector {
     fn get_lint_message(&self) -> &'static str {
         match self {
             SorobanDetector::AvoidCoreMemForget => SOROBAN_AVOID_CORE_MEM_FORGET_LINT_MESSAGE,
+            SorobanDetector::AvoidPanicError => SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE,
+            SorobanDetector::AvoidUnsafeBlock => SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
+            SorobanDetector::DivideBeforeMultiply => SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
+            SorobanDetector::DosUnboundedOperation => SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
             SorobanDetector::InsufficientlyRandomValues => {
                 SOROBAN_INSUFFICIENTLY_RANDOM_VALUES_LINT_MESSAGE
             }
-            SorobanDetector::DivideBeforeMultiply => SOROBAN_DIVIDE_BEFORE_MULTIPLY_LINT_MESSAGE,
             SorobanDetector::OverflowCheck => SOROBAN_OVERFLOW_CHECK_LINT_MESSAGE,
             SorobanDetector::SetContractStorage => SOROBAN_SET_CONTRACT_STORAGE_LINT_MESSAGE,
+            SorobanDetector::SorobanVersion => SOROBAN_VERSION_LINT_MESSAGE,
+            SorobanDetector::UnprotectedMappingOperation => {
+                SOROBAN_UNPROTECTED_MAPPING_OPERATION_LINT_MESSAGE
+            }
             SorobanDetector::UnprotectedUpdateCurrentContractWasm => {
                 SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_LINT_MESSAGE
             }
             SorobanDetector::UnsafeExpect => SOROBAN_UNSAFE_EXPECT_LINT_MESSAGE,
             SorobanDetector::UnsafeUnwrap => SOROBAN_UNSAFE_UNWRAP_LINT_MESSAGE,
-            SorobanDetector::AvoidPanicError => SOROBAN_AVOID_PANIC_ERROR_LINT_MESSAGE,
-            SorobanDetector::AvoidUnsafeBlock => SOROBAN_AVOID_UNSAFE_BLOCK_LINT_MESSAGE,
-            SorobanDetector::DosUnboundedOperation => SOROBAN_DOS_UNBOUNDED_OPERATION_LINT_MESSAGE,
-            SorobanDetector::SorobanVersion => SOROBAN_VERSION_LINT_MESSAGE,
             SorobanDetector::UnusedReturnEnum => SOROBAN_UNUSED_RETURN_ENUM_LINT_MESSAGE,
         }
     }
