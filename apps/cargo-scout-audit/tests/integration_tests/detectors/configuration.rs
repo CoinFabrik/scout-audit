@@ -34,7 +34,6 @@ impl Configuration {
             .ok_or(anyhow!("Failed to find testcases path"))?
             .join("test-cases");
         let testcases_paths: Vec<PathBuf> = std::fs::read_dir(&testcases_root_path)?
-            .into_iter()
             .filter_map(|r| r.ok().map(|f| f.path()))
             .filter(|r| r.is_dir())
             .collect();
@@ -47,7 +46,6 @@ impl Configuration {
             let detector_name = detector.to_string();
             let testcases_root_path = testcases_root_path.join(detector_name);
             let testcases_paths: Vec<PathBuf> = std::fs::read_dir(testcases_root_path)?
-                .into_iter()
                 .filter_map(|r| r.ok().map(|f| f.path()))
                 .filter(|r| r.is_dir())
                 .collect();
@@ -101,7 +99,7 @@ impl Configuration {
             .into_iter()
             .sorted()
             .zip(Detector::iter().map(|d| d.to_string()).sorted())
-            .filter(|(p, d)| p.file_name().unwrap().to_string_lossy() != d.to_string())
+            .filter(|(p, d)| p.file_name().unwrap().to_string_lossy() != *d)
             .count();
 
         if count > 0 {

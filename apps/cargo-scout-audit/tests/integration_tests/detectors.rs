@@ -45,7 +45,8 @@ fn test() {
         vec![false; integration_tests_to_run.as_ref().map_or(0, |v| v.len())];
 
     // Get the configuration
-    let detectors_config = Configuration::build().expect(&"Failed to get the configuration".red());
+    let detectors_config = Configuration::build()
+        .unwrap_or_else(|_| panic!("{}", "Failed to get the configuration".red().to_string()));
 
     // Run all integration tests
     for detector_config in detectors_config.detectors.iter() {
@@ -65,15 +66,10 @@ fn test() {
         println!("\n{} {}", "Testing detector:".bright_cyan(), detector_name);
         for example in detector_config.testcases.iter() {
             if let Some(vulnerable_path) = &example.vulnerable_path {
-                execute_and_validate_testcase(&detector_name, lint_message, &vulnerable_path, true);
+                execute_and_validate_testcase(&detector_name, lint_message, vulnerable_path, true);
             }
             if let Some(remediated_path) = &example.remediated_path {
-                execute_and_validate_testcase(
-                    &detector_name,
-                    lint_message,
-                    &remediated_path,
-                    false,
-                );
+                execute_and_validate_testcase(&detector_name, lint_message, remediated_path, false);
             }
         }
     }
