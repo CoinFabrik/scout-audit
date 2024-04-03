@@ -218,6 +218,16 @@ pub const DYLINT_VERSION: &str = "0.1.0";
 
 pub use paste;
 
+pub struct LintInfo {
+    pub id: String,
+    pub name: String,
+    pub short_message: String,
+    pub long_message: String,
+    pub severity: String,
+    pub help: String,
+    pub vulnerability_class: String,
+}
+
 // smoelius: Including `extern crate rustc_driver` causes the library to link against
 // `librustc_driver.so`, which dylint-driver also links against. So, essentially, the library uses
 // dylint-driver's copy of the Rust compiler crates.
@@ -272,16 +282,42 @@ macro_rules! __maybe_mangle {
     };
 }
 
+#[macro_export]
+macro_rules! __raw_lint_info {
+    ($VAR: ident, $NAME:ident, $desc: expr, {
+        name: $name:expr,
+        long_message: $long_message:expr,
+        severity: $severity:expr,
+        help: $help:expr,
+        vulnerability_class: $vulnerability_class:expr $(,)*
+    }) => {
+        $VAR.id = stringify!($NAME).to_lowercase().to_owned();
+        $VAR.name = $name.to_owned();
+        $VAR.short_message = $desc.to_owned();
+        $VAR.long_message = $long_message.to_owned();
+        $VAR.severity = $severity.to_owned();
+        $VAR.help = $help.to_owned();
+        $VAR.vulnerability_class = $vulnerability_class.to_owned();
+    };
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __declare_and_register_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $register_pass_method:ident, $pass:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $register_pass_method:ident, $pass:expr, $info: tt) => {
         $crate::__maybe_exclude! {
             $crate::dylint_library!();
         }
 
         extern crate rustc_lint;
         extern crate rustc_session;
+
+        $crate::__maybe_mangle! {
+            #[allow(clippy::no_mangle_with_rust_abi)]
+            pub fn lint_info(info: &mut $crate::LintInfo) {
+                $crate::__raw_lint_info!(info, $NAME, $desc, $info);
+            }
+        }
 
         $crate::__maybe_mangle! {
             #[allow(clippy::no_mangle_with_rust_abi)]
@@ -322,13 +358,14 @@ macro_rules! __make_late_closure {
 
 #[macro_export]
 macro_rules! impl_pre_expansion_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr, $info: tt) => {
         $crate::__declare_and_register_lint!(
             $(#[$attr])* $vis $NAME,
             $Level,
             $desc,
             register_pre_expansion_pass,
-            || Box::new($pass)
+            || Box::new($pass),
+            $info
         );
         $crate::paste::paste! {
             rustc_session::impl_lint_pass!([< $NAME:camel >] => [$NAME]);
@@ -338,13 +375,14 @@ macro_rules! impl_pre_expansion_lint {
 
 #[macro_export]
 macro_rules! impl_early_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr, $info: tt) => {
         $crate::__declare_and_register_lint!(
             $(#[$attr])* $vis $NAME,
             $Level,
             $desc,
             register_early_pass,
-            || Box::new($pass)
+            || Box::new($pass),
+            $info
         );
         $crate::paste::paste! {
             rustc_session::impl_lint_pass!([< $NAME:camel >] => [$NAME]);
@@ -354,13 +392,14 @@ macro_rules! impl_early_lint {
 
 #[macro_export]
 macro_rules! impl_late_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $pass:expr, $info: tt) => {
         $crate::__declare_and_register_lint!(
             $(#[$attr])* $vis $NAME,
             $Level,
             $desc,
             register_late_pass,
-            $crate::__make_late_closure!($pass)
+            $crate::__make_late_closure!($pass),
+            $info
         );
         $crate::paste::paste! {
             rustc_session::impl_lint_pass!([< $NAME:camel >] => [$NAME]);
@@ -370,14 +409,15 @@ macro_rules! impl_late_lint {
 
 #[macro_export]
 macro_rules! declare_pre_expansion_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $info: tt) => {
         $crate::paste::paste! {
             $crate::__declare_and_register_lint!(
                 $(#[$attr])* $vis $NAME,
                 $Level,
                 $desc,
                 register_pre_expansion_pass,
-                || Box::new([< $NAME:camel >])
+                || Box::new([< $NAME:camel >]),
+                $info
             );
             rustc_session::declare_lint_pass!([< $NAME:camel >] => [$NAME]);
         }
@@ -386,14 +426,15 @@ macro_rules! declare_pre_expansion_lint {
 
 #[macro_export]
 macro_rules! declare_early_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $info: tt) => {
         $crate::paste::paste! {
             $crate::__declare_and_register_lint!(
                 $(#[$attr])* $vis $NAME,
                 $Level,
                 $desc,
                 register_early_pass,
-                || Box::new([< $NAME:camel >])
+                || Box::new([< $NAME:camel >]),
+                $info
             );
             rustc_session::declare_lint_pass!([< $NAME:camel >] => [$NAME]);
         }
@@ -402,14 +443,15 @@ macro_rules! declare_early_lint {
 
 #[macro_export]
 macro_rules! declare_late_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $info: tt) => {
         $crate::paste::paste! {
             $crate::__declare_and_register_lint!(
                 $(#[$attr])* $vis $NAME,
                 $Level,
                 $desc,
                 register_late_pass,
-                $crate::__make_late_closure!([< $NAME:camel >])
+                $crate::__make_late_closure!([< $NAME:camel >]),
+                $info
             );
             rustc_session::declare_lint_pass!([< $NAME:camel >] => [$NAME]);
         }

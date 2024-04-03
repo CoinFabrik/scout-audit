@@ -200,7 +200,7 @@ pub const INK_AVOID_FORMAT_STRING: RawVulnerability = RawVulnerability {
     long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
     severity: "Enhancement",
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-format-string",
-    vulnerability_class: " Validations and error handling",
+    vulnerability_class: "Validations and error handling",
 };
 
 pub const INK_DELEGATE_CALL: RawVulnerability = RawVulnerability {

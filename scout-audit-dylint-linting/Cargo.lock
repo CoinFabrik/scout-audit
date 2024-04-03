@@ -204,7 +204,7 @@ checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
 
 [[package]]
 name = "scout-audit-dylint-linting"
-version = "2.6.1"
+version = "3.0.0"
 dependencies = [
  "assert_cmd",
  "cargo_metadata",

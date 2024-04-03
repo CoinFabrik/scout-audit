@@ -1,6 +1,6 @@
 [package]
 name = "cargo-scout-audit"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -31,12 +31,14 @@ cargo = "0.72.2"
 cargo_metadata = "0.18.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 clap = { version = "4.3.0", features = ["derive"] }
+current_platform = "0.2.0"
 dunce = "1.0.4"
 dylint = { version = "2.3.0"}
 env_logger = "0.11.2"
 home = { version = "0.5.5" }
 itertools = "0.12.1"
 lazy_static = "=1.4.0"
+libloading = "0.8"
 log = "0.4"
 regex = { version = "1.5", features = ["unicode"] }
 serde = { version = "1.0.163", features = ["derive"] }

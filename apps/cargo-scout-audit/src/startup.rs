@@ -1,12 +1,17 @@
 use core::panic;
+use current_platform::CURRENT_PLATFORM;
 use std::{
-    fs,
+    collections::HashMap,
+    env, fs,
     hash::{Hash, Hasher},
+    iter::Map,
+    os::unix::process::CommandExt,
     path::PathBuf,
+    process::{Child, Command},
 };
 
-use anyhow::{bail, Context, Result};
-use cargo::Config;
+use anyhow::{bail, Context, Error, Result};
+use cargo::{ops::new, Config};
 use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
@@ -42,6 +47,8 @@ pub enum OutputFormat {
     Text,
     Pdf,
 }
+
+type LintInfoFunc = unsafe fn(info: &mut LintInfo);
 
 #[derive(Clone, Debug, Default, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -120,7 +127,25 @@ pub struct ProjectInfo {
     pub worspace_root: PathBuf,
 }
 
+#[derive(Default, Debug, Clone)]
+pub struct LintInfo {
+    pub id: String,
+    pub name: String,
+    pub short_message: String,
+    pub long_message: String,
+    pub severity: String,
+    pub help: String,
+    pub vulnerability_class: String,
+}
+
 pub fn run_scout(opts: Scout) -> Result<()> {
+    let args: Vec<String> = env::args().collect();
+    let opt_child = run_scout_in_nightly()?;
+    if let Some(mut child) = opt_child {
+        child.wait()?;
+        return Ok(());
+    }
+
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
@@ -211,6 +236,8 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         .build(bc_dependency, used_detectors)
         .context("Failed to build detectors bis")?;
 
+    let detectors_info = get_detectors_info(&detectors_paths)?;
+
     let root = metadata.root_package().unwrap();
 
     let mut hasher = std::hash::DefaultHasher::new();
@@ -225,9 +252,60 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     };
 
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency, info).context("Failed to run dylint")?;
+    run_dylint(detectors_paths, opts, bc_dependency, info, detectors_info)
+        .context("Failed to run dylint")?;
 
     Ok(())
+}
+
+fn run_scout_in_nightly() -> Result<Option<Child>> {
+    let toolchain = std::env::var("LD_LIBRARY_PATH")?;
+    if !toolchain.contains("nightly-2023-12-16") {
+        let current_platform = CURRENT_PLATFORM;
+        let rustup_home = env::var("RUSTUP_HOME")?;
+
+        let lib_path =
+            rustup_home.clone() + "/toolchains/nightly-2023-12-16-" + current_platform + "/lib";
+
+        let args: Vec<String> = env::args().collect();
+        let program = args[0].clone();
+
+        let mut command = Command::new(&program);
+        for arg in args.iter().skip(1) {
+            command.arg(arg);
+        }
+
+        command.env("LD_LIBRARY_PATH", lib_path);
+        let child = command.spawn()?;
+        Ok(Some(child))
+    } else {
+        Ok(None)
+    }
+}
+
+fn get_detectors_info(detectors_paths: &Vec<PathBuf>) -> Result<HashMap<String, LintInfo>> {
+    let mut lint_store = HashMap::<String, LintInfo>::default();
+
+    for detector_path in detectors_paths {
+        unsafe {
+            let lib_res = libloading::os::unix::Library::open(
+                Some(detector_path),
+                libloading::os::unix::RTLD_LAZY | libloading::os::unix::RTLD_LOCAL,
+            );
+            //dbg!(&lib_res);
+            let lib = lib_res.unwrap();
+            let lint_info_func_res = lib.get::<LintInfoFunc>(b"lint_info");
+            if lint_info_func_res.is_ok() {
+                let lint_info_func = lint_info_func_res.unwrap();
+                let mut info = LintInfo::default();
+                lint_info_func(&mut info);
+                lint_store.insert(info.id.clone(), info);
+            }
+            //dbg!(&name, &desc);
+        }
+    }
+    dbg!(&lint_store);
+    return Ok(lint_store);
 }
 
 fn run_dylint(
@@ -235,6 +313,7 @@ fn run_dylint(
     mut opts: Scout,
     bc_dependency: BlockChain,
     info: ProjectInfo,
+    detectors_info: HashMap<String, LintInfo>,
 ) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -288,7 +367,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             // Generate HTML
             let html = report.generate_html()?;
@@ -319,7 +398,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             // Generate Markdown
             let markdown_path = report.generate_markdown()?;
@@ -368,7 +447,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             let path = if let Some(path) = opts.output_path {
                 path

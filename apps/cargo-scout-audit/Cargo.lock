@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.3"
+version = "0.2.5"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -391,12 +391,14 @@ dependencies = [
  "clap",
  "colored",
  "config",
+ "current_platform",
  "dunce",
  "dylint",
  "env_logger 0.11.2",
  "home",
  "itertools 0.12.1",
  "lazy_static",
+ "libloading",
  "log",
  "pulldown-cmark 0.10.0",
  "regex",
@@ -780,6 +782,12 @@ dependencies = [
  "vcpkg",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "current_platform"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a74858bcfe44b22016cb49337d7b6f04618c58e5dbfdef61b06b8c434324a0bc"
 
 [[package]]
 name = "der"
@@ -2592,6 +2600,16 @@ dependencies = [
  "libz-sys",
  "openssl-sys",
  "pkg-config",
+]
+
+[[package]]
+name = "libloading"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c2a198fb6b0eada2a8df47933734e6d35d350665a33a3593d7164fa52c75c19"
+dependencies = [
+ "cfg-if",
+ "windows-targets 0.52.4",
 ]
 
 [[package]]

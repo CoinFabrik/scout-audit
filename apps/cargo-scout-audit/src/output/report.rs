@@ -119,9 +119,27 @@ impl From<RawVulnerability> for Vulnerability {
     }
 }
 
+impl From<&LintInfo> for Vulnerability {
+    fn from(lint_info: &LintInfo) -> Self {
+        Vulnerability {
+            id: lint_info.id.clone(),
+            name: lint_info.name.clone(),
+            short_message: lint_info.short_message.clone(),
+            long_message: lint_info.long_message.clone(),
+            severity: lint_info.severity.clone(),
+            help: lint_info.help.clone(),
+        }
+    }
+}
+
+use crate::startup::LintInfo;
 use crate::startup::ProjectInfo;
 
-pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: BlockChain) -> Report {
+pub fn generate_report(
+    scout_output: String,
+    info: ProjectInfo,
+    detector_info: HashMap<String, LintInfo>,
+) -> Report {
     let scout_findings = scout_output
         .lines()
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
@@ -130,18 +148,12 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
                 .get("message")
                 .and_then(|message| message.get("code"))
                 .and_then(|code| code.get("code"))
-                .and_then(|code| code.as_str())
-                .filter(|code| blockchain.get_array_of_vulnerability_names().contains(code))
                 .is_some()
         })
         .collect::<Vec<Value>>();
 
     let mut id: u32 = 0;
-    let mut det_map: HashMap<_, _> = blockchain
-        .get_array_of_vulnerability_names()
-        .iter()
-        .map(|&detector| (detector.to_string(), 0))
-        .collect();
+    let mut det_map: HashMap<String, u32> = HashMap::new();
 
     let mut findings: Vec<Finding> = Vec::new();
 
@@ -208,10 +220,11 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
         let fndg = Finding {
             id,
             occurrence_index: *v,
-            category_id: blockchain
-                .get_raw_vuln_from_name(&category)
-                .vulnerability_class
-                .to_string(),
+            category_id: detector_info
+                .get(&category)
+                .map_or("Local detector".to_owned(), |f| {
+                    f.vulnerability_class.clone()
+                }),
             vulnerability_id: category,
             error_message,
             span,
@@ -232,10 +245,24 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
 
     let mut categories: Vec<Category> = Vec::new();
 
-    for (vuln, _) in &summary_map {
-        let raw_vuln = blockchain.get_raw_vuln_from_name(vuln);
-        let id = raw_vuln.vulnerability_class.to_string();
-        let vuln = Vulnerability::from(raw_vuln);
+    for (vuln_id, _) in &summary_map {
+        let info = detector_info.get::<String>(vuln_id);
+        let vuln = match info {
+            Some(lint_info) => Vulnerability::from(lint_info),
+            None => Vulnerability {
+                id: vuln_id.to_string(),
+                name: "Local detector:".to_owned() + vuln_id,
+                short_message: "".to_owned(),
+                long_message: "".to_owned(),
+                severity: "unknown".to_owned(),
+                help: "".to_owned(),
+            },
+        };
+        let id = detector_info
+            .get::<String>(vuln_id)
+            .map_or("Local detector".to_owned(), |f| {
+                f.vulnerability_class.clone()
+            });
 
         if categories.iter().any(|cat| cat.id == id) {
             let cat = categories.iter_mut().find(|cat| cat.id == id).unwrap();
@@ -253,25 +280,29 @@ pub fn generate_report(scout_output: String, info: ProjectInfo, blockchain: Bloc
         }
     }
 
-    let mut vulns_by_severity = vec![
+    let mut by_severity: HashMap<String, u32> = vec![
         ("critical".to_string(), 0),
         ("medium".to_string(), 0),
         ("minor".to_string(), 0),
         ("enhancement".to_string(), 0),
-    ];
+        ("unknown".to_string(), 0),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     for (vuln, count) in &summary_map {
-        let severity = blockchain.get_raw_vuln_from_name(vuln).severity.to_string();
-        let severity_count = vulns_by_severity
-            .iter_mut()
-            .find(|(s, _)| s.to_lowercase() == severity.to_lowercase())
-            .unwrap();
-        severity_count.1 += count;
+        let severity = detector_info
+            .get(vuln)
+            .map_or("unknown".to_owned(), |f| f.severity.clone());
+        dbg!(&by_severity, &severity);
+        let severity_count = by_severity.get_mut(&severity.to_lowercase()).unwrap();
+        *severity_count += count;
     }
 
     let summary = Summary {
         total_vulnerabilities: findings.len() as u32,
-        by_severity: vulns_by_severity.into_iter().collect(),
+        by_severity,
     };
 
     let date = format!(
