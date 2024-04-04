@@ -248,7 +248,7 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
-        let json = serde_json::to_string(&detectors_info);
+        let json = serde_json::to_string_pretty(&detectors_info);
         println!("{}", json.unwrap());
         return Ok(());
     }
