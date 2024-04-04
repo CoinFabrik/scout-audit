@@ -1,5 +1,6 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
+use serde::Serialize;
 use std::{
     collections::HashMap,
     env, fs,
@@ -10,7 +11,7 @@ use std::{
     process::{Child, Command},
 };
 
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{bail, Context, Error, Ok, Result};
 use cargo::{ops::new, Config};
 use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
@@ -112,6 +113,15 @@ pub struct Scout {
         default_value_t = false
     )]
     pub verbose: bool,
+
+    #[clap(
+        name = "metadata",
+        short,
+        long,
+        help = "Prints detectors metadata.",
+        default_value_t = false
+    )]
+    pub detectors_metadata: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -127,7 +137,7 @@ pub struct ProjectInfo {
     pub worspace_root: PathBuf,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize)]
 pub struct LintInfo {
     pub id: String,
     pub name: String,
@@ -139,7 +149,6 @@ pub struct LintInfo {
 }
 
 pub fn run_scout(opts: Scout) -> Result<()> {
-    let args: Vec<String> = env::args().collect();
     let opt_child = run_scout_in_nightly()?;
     if let Some(mut child) = opt_child {
         child.wait()?;
@@ -238,6 +247,12 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
+    if opts.detectors_metadata {
+        let json = serde_json::to_string(&detectors_info);
+        println!("{}", json.unwrap());
+        return Ok(());
+    }
+
     let root = metadata.root_package().unwrap();
 
     let mut hasher = std::hash::DefaultHasher::new();
@@ -292,7 +307,7 @@ fn get_detectors_info(detectors_paths: &Vec<PathBuf>) -> Result<HashMap<String, 
                 Some(detector_path),
                 libloading::os::unix::RTLD_LAZY | libloading::os::unix::RTLD_LOCAL,
             );
-            //dbg!(&lib_res);
+
             let lib = lib_res.unwrap();
             let lint_info_func_res = lib.get::<LintInfoFunc>(b"lint_info");
             if lint_info_func_res.is_ok() {
@@ -301,10 +316,8 @@ fn get_detectors_info(detectors_paths: &Vec<PathBuf>) -> Result<HashMap<String, 
                 lint_info_func(&mut info);
                 lint_store.insert(info.id.clone(), info);
             }
-            //dbg!(&name, &desc);
         }
     }
-    dbg!(&lint_store);
     return Ok(lint_store);
 }
 

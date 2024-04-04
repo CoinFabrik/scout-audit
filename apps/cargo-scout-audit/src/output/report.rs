@@ -295,7 +295,6 @@ pub fn generate_report(
         let severity = detector_info
             .get(vuln)
             .map_or("unknown".to_owned(), |f| f.severity.clone());
-        dbg!(&by_severity, &severity);
         let severity_count = by_severity.get_mut(&severity.to_lowercase()).unwrap();
         *severity_count += count;
     }
