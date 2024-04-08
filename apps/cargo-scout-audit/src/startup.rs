@@ -109,7 +109,7 @@ pub struct Scout {
     #[clap(
         short,
         long,
-        help = "Prints verbose information.",
+        help = "Prints detectors metadata.",
         default_value_t = false
     )]
     pub verbose: bool,
@@ -118,7 +118,7 @@ pub struct Scout {
         name = "metadata",
         short,
         long,
-        help = "Prints detectors metadata.",
+        help = "Prints metadata information.",
         default_value_t = false
     )]
     pub detectors_metadata: bool,
@@ -274,7 +274,11 @@ pub fn run_scout(opts: Scout) -> Result<()> {
 }
 
 fn run_scout_in_nightly() -> Result<Option<Child>> {
-    let toolchain = std::env::var("LD_LIBRARY_PATH")?;
+    #[cfg(target_os = "linux")]
+    let var_name = "LD_LIBRARY_PATH";
+    #[cfg(target_os = "macos")]
+    let var_name = "DYLD_LIBRARY_PATH";
+    let toolchain = std::env::var(var_name)?;
     if !toolchain.contains("nightly-2023-12-16") {
         let current_platform = CURRENT_PLATFORM;
         let rustup_home = env::var("RUSTUP_HOME")?;
@@ -290,7 +294,7 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
             command.arg(arg);
         }
 
-        command.env("LD_LIBRARY_PATH", lib_path);
+        command.env(var_name, lib_path);
         let child = command.spawn()?;
         Ok(Some(child))
     } else {

@@ -4,5 +4,4 @@ pub mod command;
 pub mod config;
 pub mod detectors;
 pub mod env;
-pub mod output;
 pub mod rustup;

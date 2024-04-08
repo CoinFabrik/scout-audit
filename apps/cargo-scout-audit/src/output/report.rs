@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
 
-use super::{html, markdown, pdf, vulnerabilities::*};
+use super::{html, markdown, pdf};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -322,66 +322,3 @@ pub fn generate_report(
 }
 
 use crate::startup::BlockChain;
-
-trait GetRawVulnerabilities {
-    fn get_raw_vuln_from_name(&self, name: &str) -> RawVulnerability;
-    fn get_array_of_vulnerability_names(&self) -> Vec<&'static str>;
-}
-
-impl GetRawVulnerabilities for BlockChain {
-    fn get_raw_vuln_from_name(&self, name: &str) -> RawVulnerability {
-        match &self {
-            BlockChain::Ink => match name {
-                "assert_violation" => INK_ASSERT_VIOLATION,
-                "avoid_std_core_mem_forget" => INK_AVOID_STD_CORE_MEM_FORGET,
-                "avoid_format_string" => INK_AVOID_FORMAT_STRING,
-                "delegate_call" => INK_DELEGATE_CALL,
-                "divide_before_multiply" => INK_DIVIDE_BEFORE_MULTIPLY,
-                "dos_unbounded_operation" => INK_DOS_UNBOUNDED_OPERATION,
-                "unexpected_revert_warn" => INK_UNEXPECTED_REVERT_WARN,
-                "check_ink_version" => INK_CHECK_INK_VERSION,
-                "insufficiently_random_values" => INK_INSUFFICIENTLY_RANDOM_VALUES,
-                "integer_overflow_underflow" => INK_INTEGER_OVERFLOW_UNDERFLOW,
-                "iterator_over_indexing" => INK_ITERATOR_OVER_INDEXING,
-                "lazy_delegate" => INK_LAZY_DELEGATE,
-                "panic_error" => INK_PANIC_ERROR,
-                "reentrancy_1" => INK_REENTRANCY,
-                "reentrancy_2" => INK_REENTRANCY,
-                "unprotected_set_code_hash" => INK_UNPROTECTED_SET_CODE_HASH,
-                "set_storage_warn" => INK_SET_STORAGE_WARN,
-                "unprotected_mapping_operation" => INK_UNPROTECTED_MAPPING_OPERATION,
-                "unprotected_self_destruct" => INK_UNPROTECTED_SELF_DESTRUCT,
-                "unrestricted_transfer_from" => INK_UNRESTRICTED_TRANSFER_FROM,
-                "unsafe_expect" => INK_UNSAFE_EXPECT,
-                "unsafe_unwrap" => INK_UNSAFE_UNWRAP,
-                "unused_return_enum" => INK_UNUSED_RETURN_ENUM,
-                "zero_or_test_address" => INK_ZERO_OR_TEST_ADDRESS,
-                _ => panic!("Unknown vulnerability name: {}", name),
-            },
-            BlockChain::Soroban => match name {
-                "avoid_core_mem_forget" => SOROBAN_AVOID_CORE_MEM_FORGET,
-                "avoid_panic_error" => SOROBAN_AVOID_PANIC_ERROR,
-                "avoid_unsafe_block" => SOROBAN_AVOID_UNSAFE_BLOCK,
-                "divide_before_multiply" => SOROBAN_DIVIDE_BEFORE_MULTIPLY,
-                "dos_unbounded_operation" => SOROBAN_DOS_UNBOUNDED_OPERATION,
-                "insufficiently_random_values" => SOROBAN_INSUFFICIENTLY_RANDOM_VALUES,
-                "overflow_check" => SOROBAN_OVERFLOW_CHECK,
-                "set_contract_storage" => SOROBAN_SET_CONTRACT_STORAGE,
-                "soroban_version" => SOROBAN_SOROBAN_VERSION,
-                "unprotected_update_current_contract_wasm" => {
-                    SOROBAN_UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM
-                }
-                "unsafe_expect" => SOROBAN_UNSAFE_EXPECT,
-                "unsafe_unwrap" => SOROBAN_UNSAFE_UNWRAP,
-                "unused_return_enum" => SOROBAN_UNUSED_RETURN_ENUM,
-                _ => panic!("Unknown vulnerability name: {}", name),
-            },
-        }
-    }
-    fn get_array_of_vulnerability_names(&self) -> std::vec::Vec<&'static str> {
-        match &self {
-            BlockChain::Ink => INK_DETECTORS.to_vec(),
-            BlockChain::Soroban => SOROBAN_DETECTORS.to_vec(),
-        }
-    }
-}
