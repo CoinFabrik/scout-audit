@@ -116,7 +116,6 @@ pub struct Scout {
 
     #[clap(
         name = "metadata",
-        short,
         long,
         help = "Prints metadata information.",
         default_value_t = false
@@ -277,7 +276,7 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
     #[cfg(target_os = "linux")]
     let var_name = "LD_LIBRARY_PATH";
     #[cfg(target_os = "macos")]
-    let var_name = "DYLD_LIBRARY_PATH";
+    let var_name = "DYLD_FALLBACK_LIBRARY_PATH";
     let toolchain = std::env::var(var_name)?;
     if !toolchain.contains("nightly-2023-12-16") {
         let current_platform = CURRENT_PLATFORM;
