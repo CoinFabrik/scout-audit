@@ -1,6 +1,5 @@
 use anyhow::Result;
 use chrono::offset::Local;
-use core::panic;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
@@ -189,8 +188,7 @@ pub fn generate_report(
                     .get("file_name")
                     .unwrap_or(&Value::default())
                     .to_string()
-                    .trim_matches('"')
-                    .to_string(),
+                    .trim_matches('"'),
                 sp[0].get("line_start").unwrap_or(&Value::default()),
                 sp[0].get("column_start").unwrap_or(&Value::default()),
                 sp[0].get("line_end").unwrap_or(&Value::default()),
@@ -280,7 +278,7 @@ pub fn generate_report(
         }
     }
 
-    let mut by_severity: HashMap<String, u32> = vec![
+    let mut by_severity: HashMap<String, u32> = [
         ("critical".to_string(), 0),
         ("medium".to_string(), 0),
         ("minor".to_string(), 0),
@@ -320,5 +318,3 @@ pub fn generate_report(
         findings,
     )
 }
-
-use crate::startup::BlockChain;

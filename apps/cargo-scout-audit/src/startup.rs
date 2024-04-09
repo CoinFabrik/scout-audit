@@ -5,14 +5,12 @@ use std::{
     collections::HashMap,
     env, fs,
     hash::{Hash, Hasher},
-    iter::Map,
-    os::unix::process::CommandExt,
     path::PathBuf,
     process::{Child, Command},
 };
 
-use anyhow::{bail, Context, Error, Ok, Result};
-use cargo::{ops::new, Config};
+use anyhow::{bail, Context, Ok, Result};
+use cargo::Config;
 use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
@@ -288,7 +286,7 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
         let args: Vec<String> = env::args().collect();
         let program = args[0].clone();
 
-        let mut command = Command::new(&program);
+        let mut command = Command::new(program);
         for arg in args.iter().skip(1) {
             command.arg(arg);
         }
@@ -321,13 +319,13 @@ fn get_detectors_info(detectors_paths: &Vec<PathBuf>) -> Result<HashMap<String, 
             }
         }
     }
-    return Ok(lint_store);
+    Ok(lint_store)
 }
 
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
-    bc_dependency: BlockChain,
+    _bc_dependency: BlockChain,
     info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
 ) -> Result<()> {
@@ -408,7 +406,7 @@ fn run_dylint(
 
             std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
 
-            std::io::Write::write(&mut json_file, &cts.as_bytes())?;
+            std::io::Write::write(&mut json_file, cts.as_bytes())?;
         }
         OutputFormat::Markdown => {
             let mut content = String::new();
@@ -433,7 +431,7 @@ fn run_dylint(
                 PathBuf::from("report.sarif")
             };
 
-            let mut sarif_file = fs::File::create(&path)?;
+            let mut sarif_file = fs::File::create(path)?;
 
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
