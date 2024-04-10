@@ -118,8 +118,8 @@ impl From<RawVulnerability> for Vulnerability {
     }
 }
 
-impl From<&LintInfo> for Vulnerability {
-    fn from(lint_info: &LintInfo) -> Self {
+impl From<&ToLintInfo> for Vulnerability {
+    fn from(lint_info: &ToLintInfo) -> Self {
         Vulnerability {
             id: lint_info.id.clone(),
             name: lint_info.name.clone(),
@@ -131,13 +131,13 @@ impl From<&LintInfo> for Vulnerability {
     }
 }
 
-use crate::startup::LintInfo;
 use crate::startup::ProjectInfo;
+use crate::startup::ToLintInfo;
 
 pub fn generate_report(
     scout_output: String,
     info: ProjectInfo,
-    detector_info: HashMap<String, LintInfo>,
+    detector_info: HashMap<String, ToLintInfo>,
 ) -> Report {
     let scout_findings = scout_output
         .lines()

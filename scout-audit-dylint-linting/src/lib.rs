@@ -205,6 +205,7 @@ extern crate rustc_span;
 
 use std::{
     any::type_name,
+    ffi,
     fs::read_to_string,
     path::{Path, PathBuf},
     sync::Mutex,
@@ -219,13 +220,13 @@ pub const DYLINT_VERSION: &str = "0.1.0";
 pub use paste;
 
 pub struct LintInfo {
-    pub id: String,
-    pub name: String,
-    pub short_message: String,
-    pub long_message: String,
-    pub severity: String,
-    pub help: String,
-    pub vulnerability_class: String,
+    pub id: ffi::CString,
+    pub name: ffi::CString,
+    pub short_message: ffi::CString,
+    pub long_message: ffi::CString,
+    pub severity: ffi::CString,
+    pub help: ffi::CString,
+    pub vulnerability_class: ffi::CString,
 }
 
 // smoelius: Including `extern crate rustc_driver` causes the library to link against
@@ -291,13 +292,13 @@ macro_rules! __raw_lint_info {
         help: $help:expr,
         vulnerability_class: $vulnerability_class:expr $(,)*
     }) => {
-        $VAR.id = stringify!($NAME).to_lowercase().to_owned();
-        $VAR.name = $name.to_owned();
-        $VAR.short_message = $desc.to_owned();
-        $VAR.long_message = $long_message.to_owned();
-        $VAR.severity = $severity.to_owned();
-        $VAR.help = $help.to_owned();
-        $VAR.vulnerability_class = $vulnerability_class.to_owned();
+        $VAR.id = std::ffi::CString::new(stringify!($NAME).to_lowercase().as_bytes()).unwrap();
+        $VAR.name = std::ffi::CString::new($name.as_bytes()).unwrap();
+        $VAR.short_message = std::ffi::CString::new($desc.as_bytes()).unwrap();
+        $VAR.long_message = std::ffi::CString::new($long_message.as_bytes()).unwrap();
+        $VAR.severity = std::ffi::CString::new($severity.as_bytes()).unwrap();
+        $VAR.help = std::ffi::CString::new($help.as_bytes()).unwrap();
+        $VAR.vulnerability_class = std::ffi::CString::new($vulnerability_class.as_bytes()).unwrap();
     };
 }
 
