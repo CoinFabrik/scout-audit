@@ -95,31 +95,8 @@ impl Report {
     }
 }
 
-pub struct RawVulnerability {
-    pub id: &'static str,
-    pub name: &'static str,
-    pub short_message: &'static str,
-    pub long_message: &'static str,
-    pub severity: &'static str,
-    pub help: &'static str,
-    pub vulnerability_class: &'static str,
-}
-
-impl From<RawVulnerability> for Vulnerability {
-    fn from(finding: RawVulnerability) -> Self {
-        Vulnerability {
-            id: finding.id.to_string(),
-            name: finding.name.to_string(),
-            short_message: finding.short_message.to_string(),
-            long_message: finding.long_message.to_string(),
-            severity: finding.severity.to_string(),
-            help: finding.help.to_string(),
-        }
-    }
-}
-
-impl From<&ToLintInfo> for Vulnerability {
-    fn from(lint_info: &ToLintInfo) -> Self {
+impl From<&LintInfo> for Vulnerability {
+    fn from(lint_info: &LintInfo) -> Self {
         Vulnerability {
             id: lint_info.id.clone(),
             name: lint_info.name.clone(),
@@ -132,12 +109,12 @@ impl From<&ToLintInfo> for Vulnerability {
 }
 
 use crate::startup::ProjectInfo;
-use crate::startup::ToLintInfo;
+use crate::utils::detectors_info::LintInfo;
 
 pub fn generate_report(
     scout_output: String,
     info: ProjectInfo,
-    detector_info: HashMap<String, ToLintInfo>,
+    detector_info: HashMap<String, LintInfo>,
 ) -> Report {
     let scout_findings = scout_output
         .lines()

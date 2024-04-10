@@ -1,9 +1,8 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
-use serde::Serialize;
 use std::{
     collections::HashMap,
-    env, ffi, fs,
+    env, fs,
     hash::{Hash, Hasher},
     path::PathBuf,
     process::{Child, Command},
@@ -21,6 +20,7 @@ use crate::{
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
+        detectors_info::{get_detectors_info, LintInfo},
     },
 };
 
@@ -46,8 +46,6 @@ pub enum OutputFormat {
     Text,
     Pdf,
 }
-
-type LintInfoFunc = unsafe fn(info: &mut FromLintInfo);
 
 #[derive(Clone, Debug, Default, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -132,28 +130,6 @@ pub struct ProjectInfo {
     pub description: String,
     pub hash: String,
     pub worspace_root: PathBuf,
-}
-
-#[derive(Default, Debug, Clone, Serialize)]
-pub struct FromLintInfo {
-    pub id: ffi::CString,
-    pub name: ffi::CString,
-    pub short_message: ffi::CString,
-    pub long_message: ffi::CString,
-    pub severity: ffi::CString,
-    pub help: ffi::CString,
-    pub vulnerability_class: ffi::CString,
-}
-
-#[derive(Default, Debug, Clone, Serialize)]
-pub struct ToLintInfo {
-    pub id: String,
-    pub name: String,
-    pub short_message: String,
-    pub long_message: String,
-    pub severity: String,
-    pub help: String,
-    pub vulnerability_class: String,
 }
 
 pub fn run_scout(opts: Scout) -> Result<()> {
@@ -310,45 +286,12 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
     }
 }
 
-fn get_detectors_info(detectors_paths: &Vec<PathBuf>) -> Result<HashMap<String, ToLintInfo>> {
-    let mut lint_store = HashMap::<String, ToLintInfo>::default();
-
-    println!("Detectors paths: {:?}", detectors_paths);
-    for detector_path in detectors_paths {
-        unsafe {
-            let lib_res = libloading::os::unix::Library::open(
-                Some(detector_path),
-                libloading::os::unix::RTLD_LAZY | libloading::os::unix::RTLD_LOCAL,
-            );
-
-            let lib = lib_res.unwrap();
-            let lint_info_func_res = lib.get::<LintInfoFunc>(b"lint_info");
-            if lint_info_func_res.is_ok() {
-                let lint_info_func = lint_info_func_res.unwrap();
-                let mut info = FromLintInfo::default();
-                lint_info_func(&mut info);
-                let to_lint_info = ToLintInfo {
-                    id: info.id.to_str().unwrap().to_string(),
-                    name: info.name.to_str().unwrap().to_string(),
-                    short_message: info.short_message.to_str().unwrap().to_string(),
-                    long_message: info.long_message.to_str().unwrap().to_string(),
-                    severity: info.severity.to_str().unwrap().to_string(),
-                    help: info.help.to_str().unwrap().to_string(),
-                    vulnerability_class: info.vulnerability_class.to_str().unwrap().to_string(),
-                };
-                lint_store.insert(to_lint_info.id.clone(), to_lint_info);
-            }
-        }
-    }
-    Ok(lint_store)
-}
-
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
     _bc_dependency: BlockChain,
     info: ProjectInfo,
-    detectors_info: HashMap<String, ToLintInfo>,
+    detectors_info: HashMap<String, LintInfo>,
 ) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
