@@ -2,7 +2,8 @@ use anyhow::Result;
 use chrono::offset::Local;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, os::unix::process::CommandExt, path::PathBuf};
+use std::path::Path;
+use std::{collections::HashMap, os::unix::process::CommandExt};
 
 use super::{html, markdown, pdf};
 
@@ -81,7 +82,7 @@ impl Report {
         markdown::generate_markdown(self)
     }
 
-    pub fn generate_pdf(&self, path: &PathBuf) -> Result<()> {
+    pub fn generate_pdf(&self, path: &Path) -> Result<()> {
         let temp_html = pdf::generate_pdf(self)?;
 
         std::process::Command::new("wkhtmltopdf")
@@ -133,7 +134,7 @@ pub fn generate_report(
 
     let mut findings: Vec<Finding> = Vec::new();
 
-    for finding in &scout_findings {
+    for (id, finding) in scout_findings.iter().enumerate() {
         let category: String = finding
             .get("message")
             .and_then(|message| message.get("code"))
@@ -177,7 +178,7 @@ pub fn generate_report(
         let byte_start = sp[0].get("byte_start").unwrap().as_u64().unwrap() as usize;
         let byte_end = sp[0].get("byte_end").unwrap().as_u64().unwrap() as usize;
 
-        let code_snippet: String = std::fs::read_to_string(&(file.trim_matches('"'))).unwrap()
+        let code_snippet: String = std::fs::read_to_string(file.trim_matches('"')).unwrap()
             [byte_start..byte_end]
             .to_string();
 
@@ -193,7 +194,7 @@ pub fn generate_report(
         *v += 1;
 
         let fndg = Finding {
-            id,
+            id: id as u32,
             occurrence_index: *v,
             category_id: detector_info
                 .get(&category)
@@ -209,7 +210,6 @@ pub fn generate_report(
                 .trim_start_matches('/')
                 .to_string(),
         };
-        id += 1;
         findings.push(fndg);
     }
 
