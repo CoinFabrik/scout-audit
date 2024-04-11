@@ -129,7 +129,6 @@ pub fn generate_report(
         })
         .collect::<Vec<Value>>();
 
-    let mut id: u32 = 0;
     let mut det_map: HashMap<String, u32> = HashMap::new();
 
     let mut findings: Vec<Finding> = Vec::new();
