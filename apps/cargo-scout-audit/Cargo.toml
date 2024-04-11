@@ -47,12 +47,7 @@ tempfile = "3.8"
 toml = { version = "0.8.0" }
 tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
-<<<<<<< HEAD
 pulldown-cmark = "0.10.0"
-=======
-
-scout-audit-internal = { version = "0.2.3", path = "../../scout-audit-internal", features = ["detector"] }
->>>>>>> main
 
 [dev-dependencies]
 colored = "2.0.0"
