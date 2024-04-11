@@ -151,7 +151,7 @@ pub fn generate_report(
             .get("file_name")
             .unwrap_or(&Value::default())
             .to_string()
-            .replace("\"", "");
+            .replace('"', "");
         let file_path = info.workspace_root.join(&file);
 
         let span = if ["check_ink_version"].contains(&category.as_str()) {
@@ -213,7 +213,7 @@ pub fn generate_report(
 
     let mut categories: Vec<Category> = Vec::new();
 
-    for (vuln_id, _) in &summary_map {
+    for vuln_id in summary_map.keys() {
         let info = detector_info.get::<String>(vuln_id);
         let vuln = match info {
             Some(lint_info) => Vulnerability::from(lint_info),
