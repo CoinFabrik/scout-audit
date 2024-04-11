@@ -1,6 +1,6 @@
 [package]
 name = "cargo-scout-audit"
-version = "0.2.4"
+version = "0.2.6"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -27,16 +27,18 @@ name = "cargo-scout-audit"
 [dependencies]
 ansi_term = "0.12.1"
 anyhow = "1"
-cargo = "0.72.2"
+cargo = "0.76.0"
 cargo_metadata = "0.18.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 clap = { version = "4.3.0", features = ["derive"] }
+current_platform = "0.2.0"
 dunce = "1.0.4"
 dylint = { version = "2.3.0"}
 env_logger = "0.11.2"
 home = { version = "0.5.5" }
 itertools = "0.12.1"
 lazy_static = "=1.4.0"
+libloading = "0.8"
 log = "0.4"
 regex = { version = "1.5", features = ["unicode"] }
 serde = { version = "1.0.163", features = ["derive"] }
@@ -45,8 +47,12 @@ tempfile = "3.8"
 toml = { version = "0.8.0" }
 tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
+<<<<<<< HEAD
+pulldown-cmark = "0.10.0"
+=======
 
 scout-audit-internal = { version = "0.2.3", path = "../../scout-audit-internal", features = ["detector"] }
+>>>>>>> main
 
 [dev-dependencies]
 colored = "2.0.0"
