@@ -23,7 +23,7 @@ export async function activate(_context: vscode.ExtensionContext) {
 
   // Check scout is installed
 
-  if(sdk == "ink") {
+  if(sdk == "ink" || sdk == "soroban-sdk") {
     console.log("scout-audit")
     try {
       await commandExists("cargo-scout-audit");
@@ -40,24 +40,6 @@ export async function activate(_context: vscode.ExtensionContext) {
       "cargo",
       "scout-audit",
       "-p vscode",
-      "--",
-      "--message-format=json",
-    ]);
-  } else if(sdk == "soroban-sdk") {
-    try {
-      await commandExists("cargo-scout-audit-soroban");
-    } catch (err) {
-      console.error("cargo-scout-audit-soroban is not installed");
-      await vscode.window.showErrorMessage(
-        "cargo-scout-audit-soroban must be installed in order for scout to work"
-      );
-      return false;
-    }
-    
-    // Update settings to change rust-analyzer config
-    await config.update(RUST_ANALYZER_CONFIG, [
-      "cargo",
-      "scout-audit-soroban",
       "--",
       "--message-format=json",
     ]);
