@@ -129,7 +129,6 @@ pub fn generate_report(
         })
         .collect::<Vec<Value>>();
 
-    let mut id: u32 = 0;
     let mut det_map: HashMap<String, u32> = HashMap::new();
 
     let mut findings: Vec<Finding> = Vec::new();
@@ -144,18 +143,16 @@ pub fn generate_report(
             .trim_matches('"')
             .to_string();
 
-        let file = finding
-            .get("target")
-            .and_then(|target| target.get("src_path"))
-            .unwrap()
-            .to_string()
-            .trim_matches('"')
-            .to_string();
-
         let sp = finding
             .get("message")
             .and_then(|message| message.get("spans"))
             .unwrap();
+        let file = sp[0]
+            .get("file_name")
+            .unwrap_or(&Value::default())
+            .to_string()
+            .replace('"', "");
+        let file_path = info.workspace_root.join(&file);
 
         let span = if ["check_ink_version"].contains(&category.as_str()) {
             "Cargo.toml".to_string()
@@ -178,9 +175,8 @@ pub fn generate_report(
         let byte_start = sp[0].get("byte_start").unwrap().as_u64().unwrap() as usize;
         let byte_end = sp[0].get("byte_end").unwrap().as_u64().unwrap() as usize;
 
-        let code_snippet: String = std::fs::read_to_string(file.trim_matches('"')).unwrap()
-            [byte_start..byte_end]
-            .to_string();
+        let code_snippet: String =
+            std::fs::read_to_string(&file_path).unwrap()[byte_start..byte_end].to_string();
 
         let error_message = finding
             .get("message")
@@ -198,17 +194,14 @@ pub fn generate_report(
             occurrence_index: *v,
             category_id: detector_info
                 .get(&category)
-                .map_or("Local detector".to_owned(), |f| {
+                .map_or("Local detectors".to_owned(), |f| {
                     f.vulnerability_class.clone()
                 }),
             vulnerability_id: category,
             error_message,
             span,
             code_snippet,
-            file: file
-                .trim_start_matches(info.worspace_root.as_os_str().to_str().unwrap())
-                .trim_start_matches('/')
-                .to_string(),
+            file,
         };
         findings.push(fndg);
     }
@@ -220,13 +213,13 @@ pub fn generate_report(
 
     let mut categories: Vec<Category> = Vec::new();
 
-    for (vuln_id, _) in &summary_map {
+    for vuln_id in summary_map.keys() {
         let info = detector_info.get::<String>(vuln_id);
         let vuln = match info {
             Some(lint_info) => Vulnerability::from(lint_info),
             None => Vulnerability {
                 id: vuln_id.to_string(),
-                name: "Local detector:".to_owned() + vuln_id,
+                name: vuln_id.to_string(),
                 short_message: "".to_owned(),
                 long_message: "".to_owned(),
                 severity: "unknown".to_owned(),
@@ -235,7 +228,7 @@ pub fn generate_report(
         };
         let id = detector_info
             .get::<String>(vuln_id)
-            .map_or("Local detector".to_owned(), |f| {
+            .map_or("Local detectors".to_owned(), |f| {
                 f.vulnerability_class.clone()
             });
 

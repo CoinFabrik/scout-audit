@@ -125,11 +125,12 @@ pub enum BlockChain {
     Soroban,
 }
 
+#[derive(Debug)]
 pub struct ProjectInfo {
     pub name: String,
     pub description: String,
     pub hash: String,
-    pub worspace_root: PathBuf,
+    pub workspace_root: PathBuf,
 }
 
 pub fn run_scout(opts: Scout) -> Result<()> {
@@ -242,12 +243,11 @@ pub fn run_scout(opts: Scout) -> Result<()> {
     let mut hasher = std::hash::DefaultHasher::new();
 
     root.id.hash(&mut hasher);
-
     let info = ProjectInfo {
         name: root.name.clone(),
         description: root.description.clone().unwrap_or_default(),
         hash: hasher.finish().to_string(),
-        worspace_root: metadata.workspace_root.clone().into(),
+        workspace_root: metadata.workspace_root.clone().into(),
     };
 
     // Run dylint
