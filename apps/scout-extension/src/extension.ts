@@ -74,7 +74,10 @@ async function checkAndInstallScout(): Promise<boolean> {
         name: `Install ${commandName}`,
       });
       terminal.show();
-      terminal.sendText(`cargo install cargo-dylint dylint-link ${commandName}`, true);
+      terminal.sendText(
+        `cargo install cargo-dylint dylint-link ${commandName}`,
+        true
+      );
     }
     return false;
   }
