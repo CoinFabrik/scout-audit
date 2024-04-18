@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as vscode from "vscode";
 import commandExists from "command-exists";
 import toml from "toml";
@@ -5,107 +6,123 @@ import fs from "fs";
 import path from "path";
 
 const RUST_ANALYZER_CONFIG = "rust-analyzer.check.overrideCommand";
+const CARGO_TOML = "Cargo.toml";
+
+enum BlockchainType {
+  Ink = "ink",
+  Soroban = "soroban-sdk",
+}
+
+interface CargoDependencies {
+  ink?: BlockchainType.Ink;
+  "soroban-sdk"?: BlockchainType.Soroban;
+}
+
+interface CargoToml {
+  dependencies?: CargoDependencies;
+}
 
 export async function activate(_context: vscode.ExtensionContext) {
-  // Check workspace is an soroban project
-  const sdk = isProjectSupported();
-  if (sdk == false) return;
+  // Check if the workspace is valid
+  if (!isWorkspaceValid()) return;
 
+  // Get the Cargo.toml file and parse it
+  const cargoToml = await readAndParseCargoToml();
+  if (!cargoToml) return;
+
+  // Check if the Cargo.toml file has the required dependencies
+  if (!(await hasKnownSdk(cargoToml))) return;
+
+  // Get the worspace configuration and check if rust-analyzer is installed
   const config = vscode.workspace.getConfiguration();
-
-  // Check rust-analyzer is installed
   if (!config.has(RUST_ANALYZER_CONFIG)) {
-    console.error("rust-analyzer is not installed");
     await vscode.window.showErrorMessage(
-      "rust-analyzer must be installed in order for scout to work"
+      "rust-analyzer is not installed. Please install rust-analyzer to continue."
     );
+    return;
   }
 
-  // Check scout is installed
+  // Check if scout is installed
+  if (!(await checkAndInstallScout())) return;
 
-  if(sdk == "ink") {
-    console.log("scout-audit")
-    try {
-      await commandExists("cargo-scout-audit");
-    } catch (err) {
-      console.error("cargo-scout-audit is not installed");
-      await vscode.window.showErrorMessage(
-        "cargo-scout-audit must be installed in order for scout to work"
-      );
-      return false;
-    }
-    
-    // Update settings to change rust-analyzer config
-    await config.update(RUST_ANALYZER_CONFIG, [
-      "cargo",
-      "scout-audit",
-      "-p vscode",
-      "--",
-      "--message-format=json",
-    ]);
-  } else if(sdk == "soroban-sdk") {
-    try {
-      await commandExists("cargo-scout-audit-soroban");
-    } catch (err) {
-      console.error("cargo-scout-audit-soroban is not installed");
-      await vscode.window.showErrorMessage(
-        "cargo-scout-audit-soroban must be installed in order for scout to work"
-      );
-      return false;
-    }
-    
-    // Update settings to change rust-analyzer config
-    await config.update(RUST_ANALYZER_CONFIG, [
-      "cargo",
-      "scout-audit-soroban",
-      "--",
-      "--message-format=json",
-    ]);
-  }
+  // Update settings to change rust-analyzer config
+  await config.update(RUST_ANALYZER_CONFIG, [
+    "cargo",
+    "scout-audit",
+    "--",
+    "--message-format=json",
+  ]);
 }
 
 export function deactivate() {
   // unused
 }
 
-function isProjectSupported(): false|string {
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  if (!workspaceFolders) {
-    console.log("No workspace is opened.");
-    return false;
-  }
-
-  // Get the path of the first workspace folder
-  const cargoTomlPath = path.join(workspaceFolders[0].uri.fsPath, "Cargo.toml");
-  if (!fs.existsSync(cargoTomlPath)) {
-    console.log("Cargo.toml does not exist in the workspace root.");
-    return false;
-  }
-
-  // Read and parse the Cargo.toml file
-  const cargoToml = fs.readFileSync(cargoTomlPath, "utf-8");
-  let cargoTomlParsed;
+async function checkAndInstallScout(): Promise<boolean> {
+  const commandName = `cargo-scout-audit`;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    cargoTomlParsed = toml.parse(cargoToml);
-  } catch (error) {
-    console.error("Error parsing Cargo.toml:", error);
+    await commandExists(commandName);
+    return true;
+  } catch (err) {
+    const userChoice = await vscode.window.showErrorMessage(
+      `${commandName} not found. Please install it to proceed.`,
+      "Install",
+      "Cancel"
+    );
+    if (userChoice === "Install") {
+      const terminal = vscode.window.createTerminal({
+        name: `Install ${commandName}`,
+      });
+      terminal.show();
+      terminal.sendText(
+        `cargo install cargo-dylint dylint-link ${commandName}`,
+        true
+      );
+    }
+    return false;
+  }
+}
+
+async function hasKnownSdk(cargoTomlParsed: CargoToml): Promise<boolean> {
+  if (!cargoTomlParsed.dependencies) {
+    await vscode.window.showErrorMessage(
+      "No dependencies found in Cargo.toml. Please add 'soroban-sdk' or 'ink' as a dependency."
+    );
     return false;
   }
 
-  // Check if soroban-sdk or ink are a direct dependency
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  if(cargoTomlParsed?.dependencies?.ink) {
-    console.log("ink crate is a direct dependency in Cargo.toml.")
-    return "ink";
+  if (cargoTomlParsed.dependencies.ink) {
+    return true;
+  } else if (cargoTomlParsed.dependencies["soroban-sdk"]) {
+    return true;
+  } else {
+    await vscode.window.showErrorMessage(
+      "Neither 'soroban-sdk' nor 'ink' crates are direct dependencies in Cargo.toml."
+    );
+    return false;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  if(cargoTomlParsed?.dependencies?.["soroban-sdk"]) {
-    console.log("soroban-sdk crate is a direct dependency in Cargo.toml.")
-    return "soroban-sdk";
-  }
+}
 
-  console.log("soroban-sdk or ink crates are not a direct dependency in Cargo.toml.");
-  return false;
+async function readAndParseCargoToml(): Promise<CargoToml | null> {
+  const workspaceFolders = vscode.workspace.workspaceFolders!;
+  const cargoTomlPath = path.join(workspaceFolders[0].uri.fsPath, CARGO_TOML);
+  try {
+    const cargoToml = fs.readFileSync(cargoTomlPath, "utf-8");
+    return toml.parse(cargoToml) as CargoToml;
+  } catch (error) {
+    await vscode.window.showErrorMessage(
+      "Failed to parse Cargo.toml: " + String(error)
+    );
+    return null;
+  }
+}
+
+function isWorkspaceValid(): boolean {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) return false;
+
+  const cargoTomlPath = path.join(workspaceFolders[0].uri.fsPath, CARGO_TOML);
+  if (!fs.existsSync(cargoTomlPath)) return false;
+
+  return true;
 }
