@@ -1,5 +1,7 @@
 # Scout: Security Analysis Tool
 
+![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green)
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/CoinFabrik/scout/c1eb3073f85b051dc9ce2fa0ab1ebab4bde0914e/assets/scout.png" alt="Scout in a Dark Forest" width="300" center  />
 </p>
