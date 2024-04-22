@@ -1,6 +1,6 @@
 [package]
 name = "cargo-scout-audit"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -14,8 +14,9 @@ authors = [
 license = "MIT"
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 readme = "../../README.md"
-keywords = ["auditor", "security", "ink", "soroban", "smart-contracts"]
+keywords = ["auditor", "security", "ink", "soroban", "smart-contracts", "polkadot", "stellar"]
 categories = ["development-tools", "command-line-utilities"]
+repository = "https://github.com/coinfabrik/scout-audit"
 
 [lib]
 path = "src/lib.rs"
