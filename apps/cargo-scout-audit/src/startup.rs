@@ -133,11 +133,21 @@ pub struct ProjectInfo {
     pub workspace_root: PathBuf,
 }
 
-pub fn run_scout(opts: Scout) -> Result<()> {
+pub fn run_scout(mut opts: Scout) -> Result<()> {
     let opt_child = run_scout_in_nightly()?;
     if let Some(mut child) = opt_child {
         child.wait()?;
         return Ok(());
+    }
+
+    // If the target is not set to wasm32-unknown-unknown, set it
+    let target_args_flag = "--target=wasm32-unknown-unknown".to_string();
+    let no_default = "--no-default-features".to_string();
+    let z_build_std = "-Zbuild-std=std,core,alloc".to_string();
+
+    if !opts.args.iter().any(|x| x.contains("--target=")) {
+        opts.args
+            .extend([target_args_flag, no_default, z_build_std])
     }
 
     // Validations
