@@ -414,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "ansi_term",
  "anyhow",

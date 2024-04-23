@@ -1,6 +1,6 @@
 [package]
 name = "cargo-scout-audit"
-version = "0.2.7"
+version = "0.2.9"
 edition = "2021"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -16,6 +16,7 @@ description = "Scout is an extensible open-source tool intended to assist Ink! a
 readme = "../../README.md"
 keywords = ["auditor", "security", "ink", "soroban", "smart-contracts"]
 categories = ["development-tools", "command-line-utilities"]
+repository = "https://github.com/coinfabrik/scout-audit"
 
 [lib]
 path = "src/lib.rs"
@@ -47,8 +48,3 @@ tempfile = "3.8"
 toml = { version = "0.8.0" }
 tera =  {version = "=1.19.1", features=["builtins"]}
 webbrowser = "=0.8.12"
-pulldown-cmark = "0.10.0"
-
-[dev-dependencies]
-colored = "2.0.0"
-
