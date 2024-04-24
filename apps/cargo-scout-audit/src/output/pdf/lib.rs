@@ -6,7 +6,7 @@ use crate::output::{report::Report, utils::write_to_file};
 
 use super::generator::{generate_body, generate_header, generate_summary};
 
-const REPORT_MD_PATH: &str = "build/report.html";
+const REPORT_MD_PATH: &str = "temp_report.html";
 
 // Generates a markdown report from a given `Report` object.
 pub fn generate_pdf(report: &Report) -> Result<&'static str> {
