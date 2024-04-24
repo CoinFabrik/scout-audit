@@ -85,6 +85,12 @@ impl Report {
     pub fn generate_pdf(&self, path: &Path) -> Result<()> {
         let temp_html = pdf::generate_pdf(self)?;
 
+        //probe if wkhtmltopdf is installed
+        std::process::Command::new("which")
+            .arg("wkhtmltopdf")
+            .output()
+            .expect("Please, install wkhtmltopdf to generate pdf reports.");
+
         std::process::Command::new("wkhtmltopdf")
             .arg(temp_html)
             .arg(path.to_str().unwrap())
