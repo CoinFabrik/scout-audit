@@ -2,8 +2,8 @@ use anyhow::Result;
 use chrono::offset::Local;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::path::Path;
-use std::{collections::HashMap, os::unix::process::CommandExt};
 
 use super::{html, markdown, pdf};
 
@@ -91,10 +91,12 @@ impl Report {
             .output()
             .expect("Please, install wkhtmltopdf to generate pdf reports.");
 
-        std::process::Command::new("wkhtmltopdf")
+        let mut child = std::process::Command::new("wkhtmltopdf")
             .arg(temp_html)
             .arg(path.to_str().unwrap())
-            .exec();
+            .spawn()?;
+
+        child.wait()?;
 
         std::fs::remove_file(temp_html)?;
 
