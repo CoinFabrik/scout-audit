@@ -78,7 +78,7 @@ impl Report {
         html::generate_html(self)
     }
 
-    pub fn generate_markdown(&self) -> Result<&'static str> {
+    pub fn generate_markdown(&self) -> Result<String> {
         markdown::generate_markdown(self)
     }
 
