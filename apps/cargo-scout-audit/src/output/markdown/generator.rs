@@ -4,14 +4,9 @@ use crate::output::report::{Category, Finding};
 
 use super::utils;
 
-const BANNER_URL: &str = "https://www.example.com/banner.png";
-
 // Generate the header for the report
 pub fn generate_header(date: String) -> String {
-    format!(
-        "![Banner Scout report]({})\n# Scout Report - {}\n\n",
-        BANNER_URL, date
-    )
+    format!("# Scout Report - {}\n\n", date)
 }
 
 // Generate the summary for the report
@@ -116,7 +111,7 @@ fn generate_finding(finding: &Finding) -> String {
                           <li>- [ ] Resolved</li></ul>";
 
     format!(
-        "<tr><td>{}</td><td><a href=\"{}\">{}</a></td><td>{}</td></tr>\n",
-        finding.id, "link-to-github", finding.span, status_options
+        "<tr><td>{}</td><td><a>{}</a></td><td>{}</td></tr>\n",
+        finding.id, finding.span, status_options
     )
 }

@@ -1,11 +1,14 @@
 use core::panic;
+use current_platform::CURRENT_PLATFORM;
 use std::{
-    fs,
+    collections::HashMap,
+    env, fs,
     hash::{Hash, Hasher},
     path::PathBuf,
+    process::{Child, Command},
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
 use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
@@ -17,6 +20,7 @@ use crate::{
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
+        detectors_info::{get_detectors_info, LintInfo},
     },
 };
 
@@ -101,10 +105,18 @@ pub struct Scout {
     #[clap(
         short,
         long,
-        help = "Prints verbose information.",
+        help = "Prints detectors metadata.",
         default_value_t = false
     )]
     pub verbose: bool,
+
+    #[clap(
+        name = "metadata",
+        long,
+        help = "Prints metadata information.",
+        default_value_t = false
+    )]
+    pub detectors_metadata: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -113,14 +125,31 @@ pub enum BlockChain {
     Soroban,
 }
 
+#[derive(Debug)]
 pub struct ProjectInfo {
     pub name: String,
     pub description: String,
     pub hash: String,
-    pub worspace_root: PathBuf,
+    pub workspace_root: PathBuf,
 }
 
-pub fn run_scout(opts: Scout) -> Result<()> {
+pub fn run_scout(mut opts: Scout) -> Result<()> {
+    let opt_child = run_scout_in_nightly()?;
+    if let Some(mut child) = opt_child {
+        child.wait()?;
+        return Ok(());
+    }
+
+    // If the target is not set to wasm32-unknown-unknown, set it
+    let target_args_flag = "--target=wasm32-unknown-unknown".to_string();
+    let no_default = "--no-default-features".to_string();
+    let z_build_std = "-Zbuild-std=std,core,alloc".to_string();
+
+    if !opts.args.iter().any(|x| x.contains("--target=")) {
+        opts.args
+            .extend([target_args_flag, no_default, z_build_std])
+    }
+
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
         panic!("You can't use `--exclude` and `--filter` at the same time.");
@@ -211,30 +240,68 @@ pub fn run_scout(opts: Scout) -> Result<()> {
         .build(bc_dependency, used_detectors)
         .context("Failed to build detectors bis")?;
 
+    let detectors_info = get_detectors_info(&detectors_paths)?;
+
+    if opts.detectors_metadata {
+        let json = serde_json::to_string_pretty(&detectors_info);
+        println!("{}", json.unwrap());
+        return Ok(());
+    }
+
     let root = metadata.root_package().unwrap();
 
     let mut hasher = std::hash::DefaultHasher::new();
 
     root.id.hash(&mut hasher);
-
     let info = ProjectInfo {
         name: root.name.clone(),
         description: root.description.clone().unwrap_or_default(),
         hash: hasher.finish().to_string(),
-        worspace_root: metadata.workspace_root.clone().into(),
+        workspace_root: metadata.workspace_root.clone().into(),
     };
 
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency, info).context("Failed to run dylint")?;
+    run_dylint(detectors_paths, opts, bc_dependency, info, detectors_info)
+        .context("Failed to run dylint")?;
 
     Ok(())
+}
+
+fn run_scout_in_nightly() -> Result<Option<Child>> {
+    #[cfg(target_os = "linux")]
+    let var_name = "LD_LIBRARY_PATH";
+    #[cfg(target_os = "macos")]
+    let var_name = "DYLD_FALLBACK_LIBRARY_PATH";
+    let toolchain = std::env::var(var_name)?;
+    if !toolchain.contains("nightly-2023-12-16") {
+        let current_platform = CURRENT_PLATFORM;
+        let rustup_home = env::var("RUSTUP_HOME")?;
+
+        let lib_path =
+            rustup_home.clone() + "/toolchains/nightly-2023-12-16-" + current_platform + "/lib";
+
+        let args: Vec<String> = env::args().collect();
+        let program = args[0].clone();
+
+        let mut command = Command::new(program);
+        for arg in args.iter().skip(1) {
+            command.arg(arg);
+        }
+
+        command.env(var_name, lib_path);
+        let child = command.spawn()?;
+        Ok(Some(child))
+    } else {
+        Ok(None)
+    }
 }
 
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     mut opts: Scout,
-    bc_dependency: BlockChain,
+    _bc_dependency: BlockChain,
     info: ProjectInfo,
+    detectors_info: HashMap<String, LintInfo>,
 ) -> Result<()> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -288,7 +355,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             // Generate HTML
             let html = report.generate_html()?;
@@ -319,17 +386,17 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             // Generate Markdown
-            let markdown_path = report.generate_markdown()?;
+            let md_text = report.generate_markdown()?;
 
             let mut md_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.html")?,
+                None => fs::File::create("report.md")?,
             };
 
-            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
+            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
         }
         OutputFormat::Sarif => {
             let path = if let Some(path) = opts.output_path {
@@ -368,7 +435,7 @@ fn run_dylint(
             let mut content = String::new();
             std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
 
-            let report = generate_report(content, info, bc_dependency);
+            let report = generate_report(content, info, detectors_info);
 
             let path = if let Some(path) = opts.output_path {
                 path

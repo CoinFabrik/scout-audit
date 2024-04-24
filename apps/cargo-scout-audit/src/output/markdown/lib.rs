@@ -1,15 +1,11 @@
-use std::path::PathBuf;
+use anyhow::Result;
 
-use anyhow::{Context, Result};
-
-use crate::output::{report::Report, utils::write_to_file};
+use crate::output::report::Report;
 
 use super::generator::{generate_body, generate_header, generate_summary};
 
-const REPORT_MD_PATH: &str = "build/report.md";
-
 // Generates a markdown report from a given `Report` object.
-pub fn generate_markdown(report: &Report) -> Result<&'static str> {
+pub fn generate_markdown(report: &Report) -> Result<String> {
     let mut report_markdown = String::new();
 
     // Header
@@ -21,8 +17,5 @@ pub fn generate_markdown(report: &Report) -> Result<&'static str> {
     // Body
     report_markdown.push_str(&generate_body(&report.categories, &report.findings));
 
-    write_to_file(&PathBuf::from(REPORT_MD_PATH), report_markdown.as_bytes())
-        .with_context(|| format!("Failed to write markdown to '{}'", REPORT_MD_PATH))?;
-
-    Ok(REPORT_MD_PATH)
+    Ok(report_markdown)
 }
