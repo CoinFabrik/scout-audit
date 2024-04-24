@@ -111,7 +111,7 @@ fn generate_finding(finding: &Finding) -> String {
                           <li>- [ ] Resolved</li></ul>";
 
     format!(
-        "<tr><td>{}</td><td><a href=\"{}\">{}</a></td><td>{}</td></tr>\n",
-        finding.id, "link-to-github", finding.span, status_options
+        "<tr><td>{}</td><td><a>{}</a></td><td>{}</td></tr>\n",
+        finding.id, finding.span, status_options
     )
 }
