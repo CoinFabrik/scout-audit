@@ -13,7 +13,7 @@ ENDC = "\033[0m"
 
 
 @contextmanager
-def timed_operation(msg, color=ENDC):
+def timed_operation(msg, color):
     start_time = time.time()
     try:
         yield
@@ -22,13 +22,16 @@ def timed_operation(msg, color=ENDC):
         print(f"{color}[> {duration:.2f} sec]{ENDC} - {msg}.")
 
 
+# TODO: set dry_run to False by default when ready to publish
 def run_subprocess(command, cwd, dry_run=True):
     if dry_run:
         command.append("--dry-run")
     result = subprocess.run(
         command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    return result.returncode == 0, result.stdout.decode(), result.stderr.decode()
+    stdout = result.stdout.strip() if result.stdout else None
+    stderr = result.stderr.strip() if result.stderr else None
+    return result.returncode == 0, stdout, stderr
 
 
 def get_crate_name(dir_path):
@@ -78,10 +81,12 @@ def publish_crate(name, version, path, dry_run):
                 print(f"{RED}Error: {stderr}{ENDC}")
             else:
                 print(f"{GREEN}Successfully published crate to crates.io.{ENDC}")
+                return True
     else:
         print(
             f"{RED}Error: {name} version {version} is already published and will not be republished.{ENDC}"
         )
+    return False
 
 
 if __name__ == "__main__":
@@ -98,6 +103,7 @@ if __name__ == "__main__":
     crate_name = get_crate_name(crate_path)
     crate_version = get_crate_version(crate_path / "Cargo.toml")
     if crate_version and crate_name:
-        publish_crate(crate_name, crate_version, crate_path, args.dry_run)
+        if not publish_crate(crate_name, crate_version, crate_path, args.dry_run):
+            exit(1)
     else:
-        print(f"{RED}Error: Crate name or version not found.{ENDC}")
+        exit(1)
