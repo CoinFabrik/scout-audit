@@ -10,6 +10,7 @@ on:
 
 jobs:
   filter-paths:
+    name: Filter modified paths by PR
     runs-on: ubuntu-latest
     outputs:
       scout-audit: ${{ steps.filter.outputs.scout_audit }}
@@ -35,6 +36,7 @@ jobs:
               - 'scout-audit-clippy-config/**'
 
   release:
+    name: Release on Crate.io
     needs: filter-paths
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests toml
 
       - name: Publish Scout Audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
