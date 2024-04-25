@@ -8,6 +8,9 @@ on:
       - "scout-audit-clippy-utils/**"
       - "scout-audit-clippy-config/**"
 
+env:
+  PYTHONUNBUFFERED: 1
+
 jobs:
   filter-paths:
     name: Filter modified paths by PR
@@ -36,7 +39,7 @@ jobs:
               - 'scout-audit-clippy-config/**'
 
   release:
-    name: Release on Crate.io
+    name: Test dry-run release
     needs: filter-paths
     runs-on: ubuntu-latest
     steps:
@@ -55,16 +58,16 @@ jobs:
 
       - name: Publish Scout Audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
-        run: python3 scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
+        run: python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
 
       - name: Publish Dylint Linting
         if: ${{ needs.filter-paths.outputs.dylint-linting == 'true' }}
-        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
+        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
 
       - name: Publish Clippy Utils
         if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
-        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
+        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
 
       - name: Publish Clippy Config
         if: ${{ needs.filter-paths.outputs.clippy-config == 'true' }}
-        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
+        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
