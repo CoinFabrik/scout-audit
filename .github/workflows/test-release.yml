@@ -1,0 +1,63 @@
+name: Test Release
+
+on:
+  pull_request:
+    paths:
+      - "apps/cargo-scout-audit/**"
+      - "scout-audit-dylint-linting/**"
+      - "scout-audit-clippy-utils/**"
+      - "scout-audit-clippy-config/**"
+
+jobs:
+  filter-paths:
+    runs-on: ubuntu-latest
+    outputs:
+      scout-audit: ${{ steps.filter.outputs.scout_audit }}
+      dylint-linting: ${{ steps.filter.outputs.dylint_linting }}
+      clippy-utils: ${{ steps.filter.outputs.clippy_utils }}
+      clippy-config: ${{ steps.filter.outputs.clippy_config }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            scout_audit:
+              - 'apps/cargo-scout-audit/**'
+            dylint_linting:
+              - 'scout-audit-dylint-linting/**'
+            clippy_utils:
+              - 'scout-audit-clippy-utils/**'
+            clippy_config:
+              - 'scout-audit-clippy-config/**'
+
+  release:
+    needs: filter-paths
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Publish Scout Audit
+        if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
+        run: python3 scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
+
+      - name: Publish Dylint Linting
+        if: ${{ needs.filter-paths.outputs.dylint-linting == 'true' }}
+        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
+
+      - name: Publish Clippy Utils
+        if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
+        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
+
+      - name: Publish Clippy Config
+        if: ${{ needs.filter-paths.outputs.clippy-config == 'true' }}
+        run: python3 scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
