@@ -196,7 +196,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             .context("Failed to get detectors configuration")?,
     };
 
-    // Misc configurations
+    // Miscellaneous configurations
     // If there is a need to exclude or filter by detector, the dylint tool needs to be recompiled.
     // TODO: improve detector system so that doing this isn't necessary.
     /*if opts.exclude.is_some() || opts.filter.is_some() {
