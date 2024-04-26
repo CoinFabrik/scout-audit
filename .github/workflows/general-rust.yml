@@ -1,18 +1,9 @@
-name: General Rust CI
+name: General Rust
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "apps/cargo-scout-audit/**"
   pull_request:
     paths:
       - "apps/cargo-scout-audit/**"
-  workflow_dispatch:
-
-env:
-  CARGO_TERM_COLOR: always
 
 jobs:
   format:
@@ -30,7 +21,8 @@ jobs:
         run: rustup component add rustfmt
 
       - name: Check Formatting
-        run: cd apps/cargo-scout-audit && cargo fmt -- --check
+        working-directory: apps/cargo-scout-audit
+        run: cargo fmt --all --check
 
   clippy:
     name: Lint with Clippy
@@ -44,10 +36,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+            ~/.cargo
             ./apps/cargo-scout-audit/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
 
       - name: Update Rust Toolchain
         run: rustup update
@@ -56,7 +47,8 @@ jobs:
         run: rustup component add clippy
 
       - name: Lint Code
-        run: cd apps/cargo-scout-audit && cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: apps/cargo-scout-audit
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
@@ -70,10 +62,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+            ~/.cargo
             ./apps/cargo-scout-audit/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
 
       - name: Update Rust Toolchain
         run: rustup update
@@ -82,4 +73,5 @@ jobs:
         run: cargo install cargo-udeps
 
       - name: Check Unused Dependencies
-        run: cd apps/cargo-scout-audit && cargo udeps --all-targets
+        working-directory: apps/cargo-scout-audit
+        run: cargo udeps --all-targets
