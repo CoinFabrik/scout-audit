@@ -389,14 +389,14 @@ fn run_dylint(
             let report = generate_report(content, info, detectors_info);
 
             // Generate Markdown
-            let markdown_path = report.generate_markdown()?;
+            let md_text = report.generate_markdown()?;
 
             let mut md_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.html")?,
+                None => fs::File::create("report.md")?,
             };
 
-            std::io::Write::write_all(&mut md_file, markdown_path.as_bytes())?;
+            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
         }
         OutputFormat::Sarif => {
             let path = if let Some(path) = opts.output_path {
