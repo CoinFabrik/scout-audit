@@ -104,13 +104,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: "🚀 Release Dry-Run Summary"
 
-      - name: Echo job statuses
-        run: |
-          echo "scout-audit: ${{ needs.test-release.outputs.scout-audit }}"
-          echo "dylint-linting: ${{ needs.test-release.outputs.dylint-linting }}"
-          echo "clippy-utils: ${{ needs.test-release.outputs.clippy-utils }}"
-          echo "clippy-config: ${{ needs.test-release.outputs.clippy-config }}"
-
       - name: Create or Update PR Comment
         uses: peter-evans/create-or-update-comment@v4.0.0
         with:
