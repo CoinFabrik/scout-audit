@@ -22,8 +22,7 @@ def timed_operation(msg, color):
         print(f"{color}[> {duration:.2f} sec]{ENDC} - {msg}.")
 
 
-# TODO: set dry_run to False by default when ready to publish
-def run_subprocess(command, cwd, dry_run=True):
+def run_subprocess(command, cwd, dry_run=False):
     if dry_run:
         command.append("--dry-run")
     result = subprocess.run(
@@ -69,7 +68,7 @@ def is_crate_published(name, version):
 
 def publish_crate(name, version, path, dry_run):
     if not is_crate_published(name, version):
-        print(f"Publishing {name} version {version} at {path} to crates.io.")
+        print(f"Publishing {name} version {version} from {path} to crates.io.")
         with timed_operation(f"Attempted to publish crate in {path}", BLUE):
             success, _, stderr = run_subprocess(
                 ["cargo", "publish"], cwd=path, dry_run=dry_run
