@@ -2,6 +2,8 @@ name: Test Release
 
 on:
   pull_request:
+    branches:
+      - main
     paths:
       - "apps/cargo-scout-audit/**"
       - "scout-audit-dylint-linting/**"
@@ -43,10 +45,10 @@ jobs:
     needs: filter-paths
     runs-on: ubuntu-latest
     outputs:
-      scout-audit: ${{ steps.scout-audit.outputs.status }}
-      dylint-linting: ${{ steps.dylint-linting.outputs.status }}
-      clippy-utils: ${{ steps.clippy-utils.outputs.status }}
-      clippy-config: ${{ steps.clippy-config.outputs.status }}
+      scout-audit: ${{ steps.scout-audit.outputs.result }}
+      dylint-linting: ${{ steps.dylint-linting.outputs.result }}
+      clippy-utils: ${{ steps.clippy-utils.outputs.result }}
+      clippy-config: ${{ steps.clippy-config.outputs.result }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -64,22 +66,30 @@ jobs:
       - name: Test Scout Audit
         id: scout-audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
-        run: python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
+        run: |
+          python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
+          echo "result=success" >> $GITHUB_OUTPUT
 
       - name: Test Dylint Linting
         id: dylint-linting
         if: ${{ needs.filter-paths.outputs.dylint-linting == 'true' }}
-        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
+        run: |
+          python scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
+          echo "result=success" >> $GITHUB_OUTPUT
 
       - name: Test Clippy Utils
         id: clippy-utils
         if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
-        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
+        run: |
+          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
+          echo "result=success" >> $GITHUB_OUTPUT
 
       - name: Test Clippy Config
         id: clippy-config
         if: ${{ needs.filter-paths.outputs.clippy-config == 'true' }}
-        run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
+        run: |
+          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
+          echo "result=success" >> $GITHUB_OUTPUT
 
   comment-on-pr:
     name: Comment on PR about release status
