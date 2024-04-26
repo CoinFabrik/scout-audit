@@ -61,22 +61,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests toml
 
-      - name: Publish Scout Audit
+      - name: Test Scout Audit
         id: scout-audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
         run: python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
 
-      - name: Publish Dylint Linting
+      - name: Test Dylint Linting
         id: dylint-linting
         if: ${{ needs.filter-paths.outputs.dylint-linting == 'true' }}
         run: python scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
 
-      - name: Publish Clippy Utils
+      - name: Test Clippy Utils
         id: clippy-utils
         if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
         run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
 
-      - name: Publish Clippy Config
+      - name: Test Clippy Config
         id: clippy-config
         if: ${{ needs.filter-paths.outputs.clippy-config == 'true' }}
         run: python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
