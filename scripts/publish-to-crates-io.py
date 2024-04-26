@@ -40,7 +40,6 @@ def get_crate_name(dir_path):
         return data["package"]["name"]
     except (FileNotFoundError, KeyError) as e:
         print(f"{RED}Error loading name from TOML: {str(e)}{ENDC}")
-        return None
 
 
 def get_crate_version(file_path):
@@ -49,7 +48,6 @@ def get_crate_version(file_path):
         return data["package"]["version"]
     except (FileNotFoundError, KeyError) as e:
         print(f"{RED}Error loading version from TOML: {str(e)}{ENDC}")
-        return None
 
 
 def get_latest_crate_version(crate_name):
@@ -62,7 +60,6 @@ def get_latest_crate_version(crate_name):
         return data.get("crate", {}).get("max_stable_version")
     except requests.RequestException as e:
         print(f"{RED}Failed to fetch data from crates.io: {str(e)}{ENDC}")
-        return None
 
 
 def is_crate_published(name, version):
