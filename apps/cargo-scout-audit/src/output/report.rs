@@ -127,7 +127,7 @@ pub fn generate_report(
 ) -> Report {
     let scout_findings = scout_output
         .lines()
-        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .filter(|finding: &Value| {
             finding
                 .get("message")
