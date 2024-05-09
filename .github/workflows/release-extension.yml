@@ -1,0 +1,56 @@
+name: Release extension
+
+on:
+  pull_request:
+    paths:
+      - "apps/scout-extension"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/scout-extension
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('./docs/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies and vsce
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm install -g vsce
+
+      - name: Build extension
+        run: pnpm esbuild
+
+      - name: Package and Publish Extension
+        id: publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+        run: |
+          vsce package --no-dependencies
+          vsce publish --no-dependencies
