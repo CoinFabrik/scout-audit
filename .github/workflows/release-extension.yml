@@ -2,6 +2,8 @@ name: Release VS Code extension
 
 on:
   pull_request:
+    branches:
+      - develop
     paths:
       - "apps/scout-extension"
   workflow_dispatch:
