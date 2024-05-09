@@ -1,4 +1,4 @@
-name: Release extension
+name: Release VS Code extension
 
 on:
   pull_request:
