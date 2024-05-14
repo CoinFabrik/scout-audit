@@ -255,7 +255,7 @@ dependencies = [
  "os_info",
  "pasetors",
  "pathdiff",
- "pulldown-cmark 0.9.6",
+ "pulldown-cmark",
  "rand",
  "rustfix",
  "semver",
@@ -329,7 +329,7 @@ dependencies = [
  "os_info",
  "pasetors",
  "pathdiff",
- "pulldown-cmark 0.9.6",
+ "pulldown-cmark",
  "rand",
  "rustfix",
  "semver",
@@ -414,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.8"
+version = "0.2.10"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -422,7 +422,6 @@ dependencies = [
  "cargo_metadata",
  "chrono",
  "clap",
- "colored",
  "current_platform",
  "dunce",
  "dylint",
@@ -432,7 +431,6 @@ dependencies = [
  "lazy_static",
  "libloading",
  "log",
- "pulldown-cmark 0.10.0",
  "regex",
  "serde",
  "serde_json",
@@ -610,17 +608,6 @@ name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
-
-[[package]]
-name = "colored"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2674ec482fbc38012cf31e6c42ba0177b431a0cb6f15fe40efa5aab1bda516f6"
-dependencies = [
- "is-terminal",
- "lazy_static",
- "windows-sys 0.48.0",
-]
 
 [[package]]
 name = "combine"
@@ -1088,15 +1075,6 @@ dependencies = [
  "typenum",
  "version_check",
  "zeroize",
-]
-
-[[package]]
-name = "getopts"
-version = "0.2.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
-dependencies = [
- "unicode-width",
 ]
 
 [[package]]
@@ -3239,25 +3217,6 @@ dependencies = [
  "memchr",
  "unicase",
 ]
-
-[[package]]
-name = "pulldown-cmark"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dce76ce678ffc8e5675b22aa1405de0b7037e2fdf8913fea40d1926c6fe1e6e7"
-dependencies = [
- "bitflags 2.4.0",
- "getopts",
- "memchr",
- "pulldown-cmark-escape",
- "unicase",
-]
-
-[[package]]
-name = "pulldown-cmark-escape"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5d8f9aa0e3cbcfaf8bf00300004ee3b72f74770f9cbac93f6928771f613276b"
 
 [[package]]
 name = "quote"
