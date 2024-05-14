@@ -414,7 +414,11 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
+<<<<<<< Updated upstream
 version = "0.2.10"
+=======
+version = "0.2.11"
+>>>>>>> Stashed changes
 dependencies = [
  "ansi_term",
  "anyhow",
