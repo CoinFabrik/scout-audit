@@ -43,6 +43,8 @@ pub enum OutputFormat {
     RawJson,
     #[clap(name = "md")]
     Markdown,
+    #[clap(name = "md-gh")]
+    MarkdownGithub,
     Sarif,
     Text,
     Pdf,
@@ -406,7 +408,23 @@ fn run_dylint(
             let report = generate_report(content, info, detectors_info);
 
             // Generate Markdown
-            let md_text = report.generate_markdown()?;
+            let md_text = report.generate_markdown(true)?;
+
+            let mut md_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("report.md")?,
+            };
+
+            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
+        }
+        OutputFormat::MarkdownGithub => {
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content, info, detectors_info);
+
+            // Generate Markdown
+            let md_text = report.generate_markdown(false)?;
 
             let mut md_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
