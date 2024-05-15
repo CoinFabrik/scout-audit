@@ -40,6 +40,7 @@ pub enum OutputFormat {
     #[default]
     Html,
     Json,
+    RawJson,
     #[clap(name = "md")]
     Markdown,
     Sarif,
@@ -371,9 +372,25 @@ fn run_dylint(
             webbrowser::open(html_path.to_str().unwrap()).context("Failed to open HTML report")?;
         }
         OutputFormat::Json => {
+            //read json_file to a string
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+
+            let report = generate_report(content, info, detectors_info);
+
+            let json = report.generate_json()?;
+
             let mut json_file = match &opts.output_path {
                 Some(path) => fs::File::create(path)?,
                 None => fs::File::create("report.json")?,
+            };
+
+            std::io::Write::write_all(&mut json_file, json.as_bytes())?;
+        }
+        OutputFormat::RawJson => {
+            let mut json_file = match &opts.output_path {
+                Some(path) => fs::File::create(path)?,
+                None => fs::File::create("raw-report.json")?,
             };
 
             let mut cts = String::new();
