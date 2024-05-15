@@ -78,8 +78,8 @@ impl Report {
         html::generate_html(self)
     }
 
-    pub fn generate_markdown(&self) -> Result<String> {
-        markdown::generate_markdown(self)
+    pub fn generate_markdown(&self, render_styles: bool) -> Result<String> {
+        markdown::generate_markdown(self, render_styles)
     }
 
     pub fn generate_pdf(&self, path: &Path) -> Result<()> {
