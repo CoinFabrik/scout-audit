@@ -52,7 +52,9 @@
     <div class="flex-grow flex sm:flex-row flex-col">
         {% include "categories.html" %}
         {% include "findings_list.html" %}
-        {% include "vulnerability_details.html" %}
+        <div class="sm:w-1/3 sm:overflow-y-auto">
+            {% include "vulnerability_details.html" %}
+        </div>
     </div>
 
     <footer class="p-4 text-center bg-gray-800 border-t border-gray-700 text-xs sm:text-base">
@@ -94,6 +96,11 @@
         .summary-tag {
             margin-top: 0;
         }
+    }
+
+    .sticky {
+        position: sticky;
+        top: 0;
     }
 
     .severity-critical {
