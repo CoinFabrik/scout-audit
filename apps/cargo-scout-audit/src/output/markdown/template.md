@@ -45,16 +45,17 @@
 
 **Impact:** {{ vulnerability.severity | capitalize }}
 
-**Description:** {{ vulnerability.short_message }}
+**Issue:** {{ vulnerability.short_message }}
 
-**Detailed Message:** {{ vulnerability.long_message }}
+**Description:** {{ vulnerability.long_message }}
 
-**Learn More:** [here]({{ vulnerability.help }})
+[**Learn More**]({{ vulnerability.help }})
 
 #### Findings
 
 | ID  | File Location | Status |
 | --- | ------------- | ------ |
+
 {% for finding in report.findings -%}
 {% if finding.category_id == category.id and finding.vulnerability_id == vulnerability.id -%}
 | {{ finding.id }} | {{ finding.span }} | <ul><li>- [ ] False Positive </li><li>- [ ] Acknowledged</li><li>- [ ] Resolved</li></ul> |
