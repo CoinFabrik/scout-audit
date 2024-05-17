@@ -16,22 +16,11 @@ const STYLES: &str = include_str!("./build/styles.css");
 pub struct HtmlEngine {
     tera: Tera,
 }
-impl Default for HtmlEngine {
-    fn default() -> Self {
-        let mut engine = HtmlEngine {
-            tera: Tera::default(),
-        };
-        let _ = engine.load_templates();
-        engine
-    }
-}
-impl HtmlEngine {
-    pub fn new() -> HtmlEngine {
-        HtmlEngine::default()
-    }
 
-    fn load_templates(&mut self) -> Result<()> {
-        self.tera.add_raw_templates(vec![
+impl HtmlEngine {
+    pub fn new() -> Result<Self> {
+        let mut tera = Tera::default();
+        tera.add_raw_templates(vec![
             ("base.html", TEMPLATE_BASE),
             ("modal.html", TEMPLATE_MODAL),
             ("categories.html", TEMPLATE_CATEGORIES),
@@ -42,15 +31,16 @@ impl HtmlEngine {
             ("vulnerability-expansion.js", JS_VULNERABILITY_EXPANSION),
             ("vulnerability-details-display.js", JS_VULNERABILITY_DETAILS),
             ("styles.css", STYLES),
-        ])
+        ])?;
+        Ok(HtmlEngine { tera })
     }
 
-    pub fn render_template(&self, template_name: &str, contexts: Vec<Context>) -> Result<String> {
+    pub fn render_template(&self, contexts: Vec<Context>) -> Result<String> {
         let context = Self::merge_contexts(contexts);
-        self.tera.render(template_name, &context)
+        self.tera.render("base.html", &context)
     }
 
-    pub fn create_context(&self, key: &str, context: impl serde::Serialize) -> Context {
+    pub fn create_context<T: serde::Serialize>(&self, key: &str, context: T) -> Context {
         let mut ctx = Context::new();
         ctx.insert(key, &context);
         ctx

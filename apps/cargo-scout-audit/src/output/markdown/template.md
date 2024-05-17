@@ -45,11 +45,11 @@
 
 **Impact:** {{ vulnerability.severity | capitalize }}
 
-**Description:** {{ vulnerability.short_message }}
+**Issue:** {{ vulnerability.short_message }}
 
-**Detailed Message:** {{ vulnerability.long_message }}
+**Description:** {{ vulnerability.long_message }}
 
-**Learn More:** [here]({{ vulnerability.help }})
+[**Learn More**]({{ vulnerability.help }})
 
 #### Findings
 
