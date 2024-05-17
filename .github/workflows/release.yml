@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Filter Paths
         uses: dorny/paths-filter@v3
@@ -34,6 +36,9 @@ jobs:
               - 'scout-audit-clippy-utils/**'
             clippy_config:
               - 'scout-audit-clippy-config/**'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          list-files: none
+          initial-fetch-depth: 0
 
   release:
     name: Release
@@ -42,6 +47,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
