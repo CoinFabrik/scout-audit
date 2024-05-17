@@ -37,6 +37,7 @@ jobs:
             clippy_config:
               - 'scout-audit-clippy-config/**'
           token: ${{ secrets.GITHUB_TOKEN }}
+          base: develop
           list-files: none
           initial-fetch-depth: 0
 
