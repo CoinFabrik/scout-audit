@@ -30,16 +30,16 @@
                 <span class="bg-gray-700 summary-tag">Total: {{
                     report.summary.total_vulnerabilities
                     }}</span>
-                <span class="bg-red-500 summary-tag">Critical: {{
+                <span class="severity-critical summary-tag">Critical: {{
                     report.summary.by_severity.critical
                     }}</span>
-                <span class="bg-yellow-500 summary-tag">Medium: {{
+                <span class="severity-medium summary-tag">Medium: {{
                     report.summary.by_severity.medium
                     }}</span>
-                <span class="bg-green-500 summary-tag">Minor: {{
+                <span class="severity-minor summary-tag">Minor: {{
                     report.summary.by_severity.minor
                     }}</span>
-                <span class="bg-blue-500 summary-tag">Enhancements: {{
+                <span class="severity-enhancement summary-tag">Enhancements: {{
                     report.summary.by_severity.enhancement
                     }}</span>
                 <button class="analytics-btn border border-gray-200 rounded px-2 py-1 bg-gray-800 mt-2 sm:mt-0">
@@ -52,7 +52,9 @@
     <div class="flex-grow flex sm:flex-row flex-col">
         {% include "categories.html" %}
         {% include "findings_list.html" %}
-        {% include "vulnerability_details.html" %}
+        <div class="sm:w-1/3 sm:overflow-y-auto">
+            {% include "vulnerability_details.html" %}
+        </div>
     </div>
 
     <footer class="p-4 text-center bg-gray-800 border-t border-gray-700 text-xs sm:text-base">
@@ -96,20 +98,25 @@
         }
     }
 
+    .sticky {
+        position: sticky;
+        top: 0;
+    }
+
     .severity-critical {
-        background-color: #E53E3E;
+        background-color: #e3342f;
     }
 
     .severity-medium {
-        background-color: #ED8936;
+        background-color: #f6993f;
     }
 
     .severity-minor {
-        background-color: #ECC94B;
+        background-color: #38c172;
     }
 
     .severity-enhancement {
-        background-color: #38B2AC;
+        background-color: #3490dc;
     }
 </style>
 

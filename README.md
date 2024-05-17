@@ -16,17 +16,63 @@ Our interest in this project comes from our experience in manual auditing and ou
 
 For a quick start, make sure that Cargo is installed on your computer. Then, install Scout dependencies by running the following command:
 
-`cargo +nightly install cargo-dylint dylint-link`
+```bash
+cargo install cargo-dylint dylint-link
+```
 
 Afterwards, install Scout with the following command:
 
-`cargo +nightly install cargo-scout-audit`
+```bash
+cargo install cargo-scout-audit
+```
 
-To run Scout, navigate to the root directory of any ink! or Soroban project and execute the following command:
+Finally, install additional Rust components required by Scout.
 
-`cargo scout-audit`
+```bash
+rustup component add rust-src --toolchain nightly-2023-12-16
+```
+
+To run Scout on your project, navigate to the root directory of your smart contract (where the `Cargo.toml` file is) and execute the following command:
+
+```bash
+cargo scout-audit
+```
 
 For more information on Scout's installation and usage, please refer to Scout's documentation for [ink!](https://github.com/CoinFabrik/scout) or [Soroban](https://github.com/CoinFabrik/scout-soroban).
+
+## Output formats
+
+You can choose the output format that best suit your needs (html or markdown). To specify the desired output run the following command:
+
+```
+cargo scout-audit --output-format [html|md]
+```
+
+**Example HTML report**
+
+![Scout HTML report.](img/html.png)
+
+## Scout VS Code extension
+
+Add Scout to your development workspace with Scout's VS Code extension to run Scout automatically upon saving your file.
+
+![Scout VS Code extension.](img/vscode-extension.png)
+
+:warning: To ensure the extension runs properly, make sure that you open the directory containing your smart contract, rather than the entire project. For example, if your smart contracts are located in `myproject/contracts`, and you want to work on the `token` contract while using the Scout VS Code Extension, open `myproject/contracts/token`.
+
+:bulb: Tip: To see the errors highlighted in your code, we recommend installing the [Error Lens Extension](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens).
+
+:point_right: Download Scout VS Code from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=CoinFabrik.scout-audit).
+
+## Scout GitHub Action
+
+Integrate Scout into your CI/CD pipeline! Automatically run the tool against the targeted smart contracts. This immediate feedback loop allows developers to quickly address any issues before merging the code into the main branch, reducing the risk of introducing bugs or vulnerabilities.
+
+**Scout output as a comment in a pull request**
+
+![Scout GitHub action output](img/github-action-output.jpg)
+
+:point_right: Find Scout GitHub Action in [GitHub Marketplace](https://github.com/marketplace/actions/run-scout-action).
 
 ## Tests
 
@@ -34,7 +80,9 @@ To validate our tool, we provide a set of code examples located in the test-case
 
 In order to run the integration tests, navigate to apps/cargo-scout-audit and run:
 
-`cargo test --all --all-features`
+```bash
+cargo test --all --all-features
+```
 
 In order to run the tests for a particular test-case, run the same command on that particular test-case folder (e.g: test-cases/delegate-call/delegate-call-1/vulnerable-example).
 
@@ -52,7 +100,7 @@ We received support through grants from both the [Web3 Foundation Grants Program
 |---------------|-------------|
 | ![Web3 Foundation](https://raw.githubusercontent.com/CoinFabrik/scout/main/assets/web3-foundation.png) | **Proof of Concept:** We collaborated with the [Laboratory on Foundations and Tools for Software Engineering (LaFHIS)](https://lafhis.dc.uba.ar/) at the [University of Buenos Aires](https://www.uba.ar/internacionales/index.php?lang=en) to establish analysis techniques and tools for our detectors, as well as to create an initial list of vulnerability classes and code examples. [View Grant](https://github.com/CoinFabrik/web3-grant) \| [Application Form](https://github.com/w3f/Grants-Program/blob/master/applications/ScoutCoinFabrik.md).<br><br>**Prototype:** We built a functioning prototype using linting detectors built with [Dylint](https://github.com/trailofbits/dylint) and expanded the list of vulnerability classes, detectors, and test cases. [View Prototype](https://coinfabrik.github.io/scout/) \| [Application Form](https://github.com/w3f/Grants-Program/blob/master/applications/ScoutCoinFabrik_2.md). |
 | ![Aleph Zero](https://raw.githubusercontent.com/CoinFabrik/scout/main/assets/aleph-zero.png) | We improved the precision and number of detectors for the tool with a multi-phase approach. This included a manual vulnerability analysis of projects within the Aleph Zero ecosystem, comprehensive testing of the tool on leading projects, and refining its detection accuracy. |
-| ![Stellar Community Fund](https://github.com/CoinFabrik/scout-soroban/blob/main/docs/static/img/stellar.png) | We added support for Stellar's smart contract language, Soroban. We included various output formats, such as an HTML report, improved the tool's precision and recall, and added a GitHub action to run the tool with pull requests.|
+| ![Stellar Community Fund](img/stellar.png) | We added support for Stellar's smart contract language, Soroban. We included various output formats, such as an HTML report, improved the tool's precision and recall, and added a GitHub action to run the tool with pull requests.|
 
 ## About CoinFabrik
 

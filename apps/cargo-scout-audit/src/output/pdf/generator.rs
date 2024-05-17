@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::output::report::{Category, Finding};
-
-use super::utils;
+use crate::output::{
+    report::{Category, Finding},
+    utils,
+};
 
 // Generate the header for the report
 pub fn generate_header(date: String) -> String {

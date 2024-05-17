@@ -78,8 +78,13 @@ impl Report {
         html::generate_html(self)
     }
 
-    pub fn generate_markdown(&self) -> Result<String> {
-        markdown::generate_markdown(self)
+    pub fn generate_markdown(&self, render_styles: bool) -> Result<String> {
+        markdown::generate_markdown(self, render_styles)
+    }
+
+    pub fn generate_json(&self) -> Result<String> {
+        let json = serde_json::to_string_pretty(self)?;
+        Ok(json)
     }
 
     pub fn generate_pdf(&self, path: &Path) -> Result<()> {
@@ -150,6 +155,10 @@ pub fn generate_report(
             .to_string()
             .trim_matches('"')
             .to_string();
+
+        if !detector_info.contains_key(&category) {
+            continue;
+        }
 
         let sp = finding
             .get("message")

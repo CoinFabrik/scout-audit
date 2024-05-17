@@ -1,33 +1,104 @@
+<style>
+    .minor {
+        color: #38c172;
+    }
+
+    .medium {
+        color: #f6993f;
+    }
+
+    .critical {
+        color: #e3342f;
+    }
+
+    .enhancement {
+        color: #3490dc;
+    }
+
+    .vulnerability-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .vulnerability-name {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    .icon {
+        margin-left: auto;
+    }
+
+    .expand-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .category-section {
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+
+    .vulnerability {
+        border-top: 1px solid #4a5568;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+    }
+
+    .vulnerability:first-child {
+        border-top: none;
+    }
+
+    .vulnerability .additional-details {
+        border-radius: 0;
+    }
+
+    .category-section h3 {
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+    }
+</style>
+
 <!-- Column 2: Vulnerabilities List -->
 <div class="sm:w-2/6 w-full p-4 overflow-y-auto sm:border-r border-gray-700 text-gray-100" id="vulnerabilitiesList">
     {% for category in report.categories %}
-    <div class="category-section mb-5" data-category="{{ category.name }}">
-        <h3 class="text-lg font-bold p-3 bg-gray-700 mt-4 rounded-t-md">
+    <div class="category-section mb-5 pb-5" data-category="{{ category.name }}">
+        <h3 class="text-lg font-bold p-3 bg-gray-700 mt-4">
             {{ category.id }}
         </h3>
         {% for vulnerability in category.vulnerabilities %}
-        <div
-            class="vulnerability p-3 hover:bg-gray-600 border bg-gray-500 border-t-0 border-gray-600 rounded-md rounded-t-none flex flex-col cursor-pointer">
-            <div class="flex items-center expand-div relative">
-                <button class="expand-btn bg-blue-500 hover:bg-blue-700 text-white font-bold w-8 h-8 rounded-md">
+        <div class="vulnerability p-3 hover:bg-gray-600 bg-gray-500 flex flex-col cursor-pointer">
+            <div class="flex items-center expand-div vulnerability-header">
+                <button class="expand-btn bg-blue-500 hover:bg-blue-700 text-white font-bold rounded-md">
                     &#x25B6;
                 </button>
-                <div class="ml-4 w-fit">
-                    <div class="font-bold">
-                        {{ vulnerability.name | replace(from="_", to=" ") | capitalize }}
-                        <span class="absolute right-2">
-                            {% if vulnerability.severity == "high" %}
-                            <i class="fas fa-exclamation-circle text-red-500"></i>
-                            {% elif vulnerability.severity == "medium" %}
-                            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-                            {% elif vulnerability.severity == "low" %}
-                            <i class="fas fa-info-circle text-green-500"></i>
-                            {% else %}
-                            <i class="fas fa-info-circle text-blue-500"></i>
-                            {% endif %}
-                        </span>
+                <div class="ml-4 vulnerability-name">
+                    <div>
+                        <div class="font-bold">
+                            {{ vulnerability.name | replace(from="_", to=" ") | capitalize }}
+                        </div>
+                        <div>{{ vulnerability.short_message }}</div>
                     </div>
-                    <div>{{ vulnerability.short_message }}</div>
+                    <div class="icon">
+                        {% if vulnerability.severity == "Critical" %}
+                        <i class="fas fa-exclamation-circle critical"></i>
+                        {% elif vulnerability.severity == "Medium" %}
+                        <i class="fas fa-exclamation-triangle medium"></i>
+                        {% elif vulnerability.severity == "Minor" %}
+                        <i class="fas fa-info-circle minor"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle enhancement"></i>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -37,7 +108,7 @@
                     <thead class="text-xs uppercase bg-gray-700 font-bold">
                         <tr>
                             <th class="px-4 py-2 border-b border-gray-600 border-r w-4">Ref</th>
-                            <th class="px-4 py-2 border-b  border-gray-600">Location</th>
+                            <th class="px-4 py-2 border-b border-gray-600">Location</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-600">

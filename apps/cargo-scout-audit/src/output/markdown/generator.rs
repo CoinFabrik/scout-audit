@@ -1,36 +1,51 @@
 use std::collections::HashMap;
 
-use crate::output::report::{Category, Finding};
+use serde::{Deserialize, Serialize};
 
-use super::utils;
+use crate::output::{
+    report::{Category, Finding, Report},
+    utils,
+};
 
-// Generate the header for the report
-pub fn generate_header(date: String) -> String {
-    format!("# Scout Report - {}\n\n", date)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SummaryContext {
+    pub date: String,
+    pub categories: Vec<SummaryCategory>,
 }
 
-// Generate the summary for the report
-pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String {
-    let mut summary_markdown = String::from("## Summary\n");
-    let findings_summary = summarize_findings(categories, findings);
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SummaryCategory {
+    pub name: String,
+    pub link: String,
+    pub results_count: usize,
+    pub severity: String,
+}
 
-    for category in categories {
-        if let Some((count, severity)) = findings_summary.get(&category.id) {
-            summary_markdown.push_str(&format!(
-                " - [{}]({}) ({} results) ({})\n",
-                category.name,
-                utils::sanitize_category_name(&category.name),
-                count,
-                severity
-            ));
-        }
+pub fn generate_summary_context(report: &Report) -> SummaryContext {
+    let summary_map = summarize_findings(&report.categories, &report.findings);
+
+    let summary_categories = report
+        .categories
+        .iter()
+        .filter_map(|category| {
+            summary_map
+                .get(&category.id)
+                .map(|&(count, ref severity)| SummaryCategory {
+                    name: category.name.clone(),
+                    link: utils::sanitize_category_name(&category.name),
+                    results_count: count,
+                    severity: severity.clone(),
+                })
+        })
+        .collect();
+
+    SummaryContext {
+        date: report.date.clone(),
+        categories: summary_categories,
     }
-
-    summary_markdown.push('\n');
-    summary_markdown
 }
 
-// This function summarizes the findings by category
+// This function remains mostly the same, but ensures it returns a map with the severity string
 fn summarize_findings(
     categories: &[Category],
     findings: &[Finding],
@@ -50,68 +65,4 @@ fn summarize_findings(
     }
 
     summary
-}
-
-// Generate the body for the report
-pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
-    categories
-        .iter()
-        .map(|category| {
-            let category_markdown = generate_category(category);
-            let table = generate_table_for_category(category, findings);
-            format!("{}{}", category_markdown, table)
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-// Function to generate Markdown for a category
-fn generate_category(category: &Category) -> String {
-    let mut category_markdown = format!("## {}\n\n", category.id);
-    for vulnerability in &category.vulnerabilities {
-        category_markdown.push_str(&format!("### {}\n\n", vulnerability.name));
-        category_markdown.push_str(&format!(
-            "**Impact:** {}\n\n",
-            utils::capitalize(&vulnerability.severity)
-        ));
-        category_markdown.push_str(&format!(
-            "**Description:** {}\n\n",
-            vulnerability.short_message
-        ));
-        category_markdown.push_str(&format!(
-            "**More about:** [here]({})\n\n",
-            vulnerability.help
-        ));
-    }
-    category_markdown
-}
-
-// Function to generate a table for a category
-fn generate_table_for_category(category: &Category, findings: &[Finding]) -> String {
-    let table_header = "<table style=\"width: 100%; table-layout: fixed;\"><thead><tr>\
-                        <th style=\"width: 20%;\">ID</th>\
-                        <th style=\"width: 60%;\">Detection</th>\
-                        <th style=\"width: 20%;\">Status</th>\
-                        </tr></thead><tbody>\n";
-    let table_body: String = findings
-        .iter()
-        .filter(|finding| finding.category_id == category.id)
-        .map(generate_finding)
-        .collect();
-    format!(
-        "{}{}{}</tbody></table>\n\n",
-        table_header, table_body, "</tbody></table>\n\n"
-    )
-}
-
-// Function to generate Markdown for a finding
-fn generate_finding(finding: &Finding) -> String {
-    let status_options = "<ul><li>- [ ] False Positive </li>\
-                          <li>- [ ] Acknowledged</li>\
-                          <li>- [ ] Resolved</li></ul>";
-
-    format!(
-        "<tr><td>{}</td><td><a>{}</a></td><td>{}</td></tr>\n",
-        finding.id, finding.span, status_options
-    )
 }

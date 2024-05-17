@@ -8,7 +8,7 @@ const BASE_TEMPLATE_NAME: &str = "base.html";
 
 // Generates an HTML report from a given `Report` object.
 pub fn generate_html(report: &Report) -> Result<String> {
-    let tera = HtmlEngine::new();
+    let tera = HtmlEngine::new()?;
     // Report context
     let report_context = tera.create_context("report", report);
 
@@ -17,7 +17,7 @@ pub fn generate_html(report: &Report) -> Result<String> {
     let analytics_context = tera.create_context("analytics", report_analytics);
 
     let html = tera
-        .render_template(BASE_TEMPLATE_NAME, vec![report_context, analytics_context])
+        .render_template(vec![report_context, analytics_context])
         .with_context(|| format!("Failed to render template '{}'", BASE_TEMPLATE_NAME))?;
 
     Ok(html)
