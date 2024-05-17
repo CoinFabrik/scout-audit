@@ -55,7 +55,6 @@
 
 | ID  | File Location | Status |
 | --- | ------------- | ------ |
-
 {% for finding in report.findings -%}
 {% if finding.category_id == category.id and finding.vulnerability_id == vulnerability.id -%}
 | {{ finding.id }} | {{ finding.span }} | <ul><li>- [ ] False Positive </li><li>- [ ] Acknowledged</li><li>- [ ] Resolved</li></ul> |
