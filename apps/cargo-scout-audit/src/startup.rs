@@ -350,8 +350,7 @@ fn run_dylint(
     let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate report with Report::new(...)
-    // let report = Report::new(name, description, date, source_url, summary, categories, findings);
+    // Generate output
     match opts.output_format {
         OutputFormat::Html => {
             //read json_file to a string
