@@ -105,8 +105,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Get version from Cargo.toml
-        id: cargo_version
+      - name: Get scout version
+        id: scout-version
         run: |
           version=$(cat apps/cargo-scout-audit/Cargo.toml | grep '^version' | head -1 | awk -F '"' '{print $2}')
           echo "Version extracted: $version"
@@ -125,7 +125,14 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: coinfabrik/scout:${{ steps.cargo_version.outputs.version }}
+          tags: coinfabrik/scout:${{ steps.scout-version.outputs.version }}, coinfabrik/scout:latest
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: false
 
   comment-on-pr:
     name: Comment on PR about release status
