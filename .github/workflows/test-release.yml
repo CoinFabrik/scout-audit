@@ -12,8 +12,8 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
-  REGISTRY: ghcr.io
-  IMAGE_NAME: coinfabrik/scout-image
+  REGISTRY: coinfabrik
+  IMAGE_NAME: scout
 
 jobs:
   filter-paths:
@@ -124,8 +124,12 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha
           push: false
-          tags: coinfabrik/scout:${{ steps.scout-version.outputs.version }}, coinfabrik/scout:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
