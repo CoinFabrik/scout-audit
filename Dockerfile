@@ -14,9 +14,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Rust tools
-RUN rustup toolchain install nightly-2023-12-16-x86_64-unknown-linux-gnu && \
+RUN rustup toolchain install nightly-2023-12-16-x86_64 && \
     rustup default nightly-2023-12-16 && \
-    rustup component add rust-src --toolchain nightly-2023-12-16-x86_64-unknown-linux-gnu
+    rustup component add rust-src --toolchain nightly-2023-12-16-x86_64
 
 # Install Rust dependencies
 RUN cargo install \
