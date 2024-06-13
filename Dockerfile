@@ -1,4 +1,5 @@
-FROM rust:latest
+# Build stage
+FROM rust:latest AS builder
 SHELL ["/bin/bash", "-c"]
 
 WORKDIR /usr/src/myapp
@@ -27,6 +28,35 @@ RUN cargo install \
 
 COPY entrypoint.sh /usr/src/entrypoint.sh
 RUN chmod +x /usr/src/entrypoint.sh
+
+# Final stage
+FROM rust:slim
+
+# Install necessary runtime dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        bash \
+        curl \
+        openssl \
+        ca-certificates \
+        libstdc++6 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN useradd -m myuser
+
+WORKDIR /usr/src/myapp
+
+# Copy entrypoint script and installed tools from the builder stage
+COPY --from=builder /usr/src/entrypoint.sh /usr/src/entrypoint.sh
+COPY --from=builder /usr/local/cargo/bin/cargo-scout-audit /usr/local/cargo/bin/cargo-scout-audit
+
+# Ensure the script and binary have the correct permissions
+RUN chmod +x /usr/src/entrypoint.sh /usr/local/cargo/bin/cargo-scout-audit
+
+# Run as non-root user
+RUN chown -R myuser:myuser /usr/src/myapp
+USER myuser
 
 VOLUME /scoutme
 ENTRYPOINT ["/usr/src/entrypoint.sh"]
