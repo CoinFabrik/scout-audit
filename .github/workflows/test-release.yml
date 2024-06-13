@@ -139,7 +139,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
           push-to-registry: false
 
   comment-on-pr:
