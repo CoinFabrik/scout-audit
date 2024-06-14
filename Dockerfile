@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:latest AS builder
+FROM rust:1.74 as builder
 SHELL ["/bin/bash", "-c"]
 
 WORKDIR /usr/src/myapp
@@ -30,7 +30,7 @@ COPY entrypoint.sh /usr/src/entrypoint.sh
 RUN chmod +x /usr/src/entrypoint.sh
 
 # Final stage
-FROM rust:slim
+FROM rust:1.74-slim
 
 # Install necessary runtime dependencies
 RUN apt-get update && \
@@ -52,10 +52,10 @@ COPY --from=builder /usr/src/entrypoint.sh /usr/src/entrypoint.sh
 COPY --from=builder /usr/local/cargo/bin/cargo-scout-audit /usr/local/cargo/bin/cargo-scout-audit
 
 # Ensure the script and binary have the correct permissions
-RUN chmod +x /usr/src/entrypoint.sh /usr/local/cargo/bin/cargo-scout-audit
+RUN chmod +x /usr/src/entrypoint.sh /usr/local/cargo/bin/cargo-scout-audit && \
+    chown -R myuser:myuser /usr/src/myapp
 
 # Run as non-root user
-RUN chown -R myuser:myuser /usr/src/myapp
 USER myuser
 
 VOLUME /scoutme
