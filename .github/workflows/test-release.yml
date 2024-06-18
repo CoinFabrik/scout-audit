@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - develop
+      - main
     paths:
       - "apps/cargo-scout-audit/**"
       - "scout-audit-dylint-linting/**"
