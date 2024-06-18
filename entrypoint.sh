@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e -o pipefail
 
-# Ensure INPUT_TARGET is set
-if [ -z "$INPUT_TARGET" ]; then
-  echo "Error: Target directory is not specified."
-  exit 1
-fi
-
 # Change to the target directory
 cd "$INPUT_TARGET"
 
