@@ -6,3 +6,4 @@ pub mod detectors;
 pub mod detectors_info;
 pub mod env;
 pub mod rustup;
+pub mod telemetry;
