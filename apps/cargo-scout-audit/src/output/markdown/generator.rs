@@ -9,7 +9,6 @@ use crate::output::{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SummaryContext {
-    pub date: String,
     pub categories: Vec<SummaryCategory>,
 }
 
@@ -40,12 +39,10 @@ pub fn generate_summary_context(report: &Report) -> SummaryContext {
         .collect();
 
     SummaryContext {
-        date: report.date.clone(),
         categories: summary_categories,
     }
 }
 
-// This function remains mostly the same, but ensures it returns a map with the severity string
 fn summarize_findings(
     categories: &[Category],
     findings: &[Finding],

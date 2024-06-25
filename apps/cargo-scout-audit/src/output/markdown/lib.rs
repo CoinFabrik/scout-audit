@@ -3,6 +3,7 @@ use crate::output::report::Report;
 use anyhow::{Context, Result};
 
 // Generates an Markdown report from a given `Report` object.
+#[tracing::instrument(name = "GENERATING MARKDOWN REPORT", skip_all)]
 pub fn generate_markdown(report: &Report, render_styles: bool) -> Result<String> {
     let tera = MdEngine::new()?;
 

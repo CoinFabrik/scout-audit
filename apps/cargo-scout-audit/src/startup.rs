@@ -1,5 +1,6 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
+use regex::Regex;
 use std::{
     collections::HashMap,
     env, fs,
@@ -15,7 +16,7 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::report::Report,
+    output::report::{Package, Report},
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -120,20 +121,12 @@ pub enum BlockChain {
     Soroban,
 }
 
-const PROJECT_NAME: &str = "Scout Report";
-
-#[derive(Debug)]
-pub struct Packages {
-    pub name: String,
-    pub root: PathBuf,
-}
-
 #[derive(Debug)]
 pub struct ProjectInfo {
     pub name: String,
     pub date: String,
     pub workspace_root: PathBuf,
-    pub packages: Vec<Packages>,
+    pub packages: Vec<Package>,
 }
 
 pub fn run_scout(mut opts: Scout) -> Result<()> {
@@ -266,44 +259,54 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
 #[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
 fn get_project_info(metadata: Metadata) -> Result<ProjectInfo> {
-    let workspace_root = metadata.workspace_root.clone().into();
     let mut packages = Vec::new();
-
     if let Some(root_package) = metadata.root_package() {
-        // Process the root package if it exists
-        let root = root_package
-            .manifest_path
-            .parent()
-            .context("Root package manifest has no parent directory")?;
-        packages.push(Packages {
+        let root = root_package.manifest_path.parent().context(format!(
+            "Root package manifest at '{}' has no parent directory",
+            root_package.manifest_path
+        ))?;
+        packages.push(Package {
             name: root_package.name.clone(),
             root: root.into(),
         });
     } else if !metadata.workspace_default_members.is_empty() {
-        // Process all packages in the workspace if they exist
         for package_id in metadata.workspace_default_members.iter() {
             let package = metadata
                 .packages
                 .iter()
                 .find(|p| p.id == *package_id)
-                .context("Package not found in the workspace")?;
-            let root = package
-                .manifest_path
-                .parent()
-                .context("Package manifest has no parent directory")?;
-            packages.push(Packages {
+                .context(format!(
+                    "Package ID '{}' not found in the workspace",
+                    package_id
+                ))?;
+            let root = package.manifest_path.parent().context(format!(
+                "Package manifest at '{}' has no parent directory",
+                package.manifest_path
+            ))?;
+            packages.push(Package {
                 name: package.name.clone(),
                 root: root.into(),
             });
         }
     } else {
-        bail!("No packages found in the workspace");
+        bail!("No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package.");
+    }
+
+    let mut project_name = String::new();
+    if let Some(name) = metadata.workspace_root.file_name() {
+        project_name = name.replace('-', " ");
+        let re = Regex::new(r"(^|\s)\w").unwrap();
+        project_name = re
+            .replace_all(&project_name, |caps: &regex::Captures| {
+                caps.get(0).unwrap().as_str().to_uppercase()
+            })
+            .to_string();
     }
 
     let project_info = ProjectInfo {
-        name: PROJECT_NAME.to_string(),
+        name: project_name,
         date: chrono::Local::now().format("%Y-%m-%d").to_string(),
-        workspace_root,
+        workspace_root: metadata.workspace_root.into_std_path_buf(),
         packages,
     };
     tracing::debug!(?project_info, "Project info");
