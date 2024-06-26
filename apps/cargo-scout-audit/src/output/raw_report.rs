@@ -8,9 +8,8 @@ use crate::{startup::ProjectInfo, utils::detectors_info::LintInfo};
 
 pub struct RawReport;
 
-// TODO: improve error messages, search for unwrap_or and find a better solution
-
 impl RawReport {
+    #[tracing::instrument(name = "GENERATE FROM RAW REPORT", level = "debug", skip_all, fields(project = %info.name))]
     pub fn generate_report(
         scout_output: &str,
         info: &ProjectInfo,
@@ -37,14 +36,12 @@ fn parse_scout_findings(scout_output: &str) -> Result<Vec<Value>> {
     let mut results = Vec::new();
     for line in scout_output.lines() {
         let value = serde_json::from_str::<Value>(line)
-            .context(format!("Failed to parse JSON from line: {}", line))?;
-
+            .with_context(|| format!("Failed to parse JSON from line: {}", line))?;
         let has_code = value
             .get("message")
             .and_then(|message| message.get("code"))
             .and_then(|code| code.get("code"))
             .is_some();
-
         if has_code {
             results.push(value);
         }
@@ -61,16 +58,18 @@ fn process_findings(
     let mut findings: Vec<Finding> = Vec::new();
 
     for (id, finding) in scout_findings.iter().enumerate() {
-        let category = parse_category(finding).context("Failed to parse category")?;
+        let category = parse_category(finding)
+            .with_context(|| format!("Failed to parse category for finding id {}", id))?;
         if !detector_info.contains_key(&category) {
             continue;
         }
 
         let (file, file_path, package, file_name) =
-            parse_file_details(finding, &info.workspace_root).context("Failed to parse file")?;
+            parse_file_details(finding, &info.workspace_root)
+                .with_context(|| format!("Failed to parse file details for finding id {}", id))?;
         let span = parse_span(finding, &file_name);
-        let code_snippet =
-            extract_code_snippet(&file_path, finding).context("Failed to extract code snippet")?;
+        let code_snippet = extract_code_snippet(&file_path, finding)
+            .with_context(|| format!("Failed to extract code snippet for finding id {}", id))?;
 
         let error_message = parse_error_message(finding);
 
@@ -94,7 +93,7 @@ fn process_findings(
 }
 
 fn parse_category(finding: &Value) -> Result<String> {
-    let category: String = finding
+    let category = finding
         .get("message")
         .and_then(|message| message.get("code"))
         .and_then(|code| code.get("code"))
@@ -143,7 +142,6 @@ fn parse_span(finding: &Value, file_name: &str) -> String {
                 spans[0].get("column_end").unwrap_or(&Value::default())
             )
         })
-        //TODO: handle non-span detectors
         .unwrap_or_else(|| "Span not valid".to_string())
 }
 
@@ -188,7 +186,7 @@ fn generate_categories(
         }
         let vuln_info = detector_info
             .get(id)
-            .ok_or_else(|| anyhow::anyhow!("Vulnerability info not found for id: {}", id))?;
+            .with_context(|| format!("Vulnerability info not found for id: {}", id))?;
         let category = Category {
             id: vuln_info.vulnerability_class.clone(),
             name: vuln_info.name.clone(),
@@ -199,6 +197,7 @@ fn generate_categories(
     Ok(categories)
 }
 
+#[tracing::instrument(name = "CREATE SUMMARY", level = "trace", skip_all)]
 fn create_summary(
     det_map: &HashMap<String, u32>,
     info: &ProjectInfo,

@@ -309,7 +309,7 @@ fn get_project_info(metadata: Metadata) -> Result<ProjectInfo> {
         workspace_root: metadata.workspace_root.into_std_path_buf(),
         packages,
     };
-    tracing::debug!(?project_info, "Project info");
+    tracing::trace!(?project_info, "Project info");
     Ok(project_info)
 }
 
@@ -489,8 +489,8 @@ fn generate_report(
 
     stdout_temp_file.close()?;
 
-    tracing::debug!(?output_format, "Output format");
-    tracing::debug!(?report, "Report");
+    tracing::trace!(?output_format, "Output format");
+    tracing::trace!(?report, "Report");
 
     Ok(())
 }
