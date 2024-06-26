@@ -89,24 +89,29 @@ impl Report {
         }
     }
 
+    #[tracing::instrument(name = "SAVING REPORT TO FILE", level = "debug", skip_all, fields(path = %path.display()))]
     pub fn save_to_file(&self, path: &PathBuf, content: String) -> Result<()> {
         utils::write_to_file(path, content.as_bytes())?;
         Ok(())
     }
 
+    #[tracing::instrument(name = "GENERATING HTML FROM REPORT", level = "debug", skip_all)]
     pub fn generate_html(&self) -> Result<String> {
         html::generate_html(self)
     }
 
+    #[tracing::instrument(name = "GENERATING MARKDOWN FROM REPORT", level = "debug", skip_all)]
     pub fn generate_markdown(&self, render_styles: bool) -> Result<String> {
         markdown::generate_markdown(self, render_styles)
     }
 
+    #[tracing::instrument(name = "GENERATING JSON FROM REPORT", level = "debug", skip_all)]
     pub fn generate_json(&self) -> Result<String> {
         let json = serde_json::to_string_pretty(self)?;
         Ok(json)
     }
 
+    #[tracing::instrument(name = "GENERATING PDF FROM REPORT", level = "debug", skip_all)]
     pub fn generate_pdf(&self, path: &Path) -> Result<()> {
         let temp_html = pdf::generate_pdf(self)?;
 
