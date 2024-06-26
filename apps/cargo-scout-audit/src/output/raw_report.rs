@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
 
-use super::report::{Category, Finding, Report, Summary, Vulnerability};
+use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
 use crate::{startup::ProjectInfo, utils::detectors_info::LintInfo};
 
 pub struct RawReport;
@@ -21,7 +21,7 @@ impl RawReport {
             .context("Failed to process findings")?;
         let categories = generate_categories(&det_map, detector_info)
             .context("Failed to generate categories")?;
-        let summary = create_summary(&det_map, info, &findings);
+        let summary = create_summary(detector_info, info, &findings);
         Ok(Report::new(
             info.name.clone(),
             info.date.clone(),
@@ -199,12 +199,34 @@ fn generate_categories(
 
 #[tracing::instrument(name = "CREATE SUMMARY", level = "trace", skip_all)]
 fn create_summary(
-    det_map: &HashMap<String, u32>,
+    detector_info: &HashMap<String, LintInfo>,
     info: &ProjectInfo,
     findings: &[Finding],
 ) -> Summary {
     let total_vulnerabilities = findings.len() as u32;
-    let by_severity = det_map.iter().map(|(k, v)| (k.clone(), *v)).collect();
+
+    let mut by_severity: HashMap<Severity, u32> = [
+        (Severity::Critical, 0),
+        (Severity::Medium, 0),
+        (Severity::Minor, 0),
+        (Severity::Enhancement, 0),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+
+    for finding in findings {
+        if let Some(lint_info) = detector_info.get(&finding.vulnerability_id) {
+            match lint_info.severity.as_ref() {
+                "Critical" => *by_severity.get_mut(&Severity::Critical).unwrap() += 1,
+                "Medium" => *by_severity.get_mut(&Severity::Medium).unwrap() += 1,
+                "Minor" => *by_severity.get_mut(&Severity::Minor).unwrap() += 1,
+                "Enhancement" => *by_severity.get_mut(&Severity::Enhancement).unwrap() += 1,
+                _ => continue,
+            };
+        }
+    }
+
     Summary {
         executed_on: info.packages.clone(),
         total_vulnerabilities,

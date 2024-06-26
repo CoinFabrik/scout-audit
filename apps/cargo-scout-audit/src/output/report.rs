@@ -16,11 +16,20 @@ pub struct Report {
     pub findings: Vec<Finding>,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum Severity {
+    Critical,
+    Medium,
+    Minor,
+    Enhancement,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Summary {
     pub executed_on: Vec<Package>,
     pub total_vulnerabilities: u32,
-    pub by_severity: HashMap<String, u32>,
+    pub by_severity: HashMap<Severity, u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

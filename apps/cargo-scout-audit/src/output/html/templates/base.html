@@ -13,16 +13,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-center">
             <div class="flex flex-wrap items-center justify-between">
                 <span class="flex items-center px-3 py-1 font-bold">
+                    Scout Report
+                </span>
+                <span class="border-l-2 border-gray-400 h-6 my-auto mx-2 hidden sm:block"></span>
+                <span class="flex items-center px-3 py-1 font-bold">
                     {{ report.name }}
                 </span>
                 <span class="border-l-2 border-gray-400 h-6 my-auto mx-2 hidden sm:block"></span>
                 <span class="flex items-center px-3 py-1">
                     Date: {{ report.date }}
                 </span>
-                <span class="border-l-2 border-gray-400 h-6 my-auto mx-2 hidden sm:block"></span>
-                <a href="{{ report.source_url }}" class="flex items-center px-3 py-1 hover:underline" target="_blank">
-                    Hash: {{ report.source_url | split(pat='#') | last }}
-                </a>
             </div>
 
             <div class="text-sm flex flex-wrap items-center">

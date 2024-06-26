@@ -401,6 +401,9 @@ fn generate_report(
     std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
     let report = RawReport::generate_report(&content, &project_info, &detectors_info)?;
 
+    tracing::trace!(?output_format, "Output format");
+    tracing::trace!(?report, "Report");
+
     // Save the report
     match output_format {
         OutputFormat::Html => {
@@ -488,9 +491,6 @@ fn generate_report(
     }
 
     stdout_temp_file.close()?;
-
-    tracing::trace!(?output_format, "Output format");
-    tracing::trace!(?report, "Report");
 
     Ok(())
 }
