@@ -16,7 +16,7 @@ use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::report::{Package, Report},
+    output::{raw_report::RawReport, report::Package},
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -399,7 +399,7 @@ fn generate_report(
     // Generate report
     let mut content = String::new();
     std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-    let report = Report::generate_report(content, project_info, detectors_info);
+    let report = RawReport::generate_report(&content, &project_info, &detectors_info)?;
 
     // Save the report
     match output_format {
