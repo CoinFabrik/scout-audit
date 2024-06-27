@@ -26,14 +26,25 @@
 
 {% endif %}
 
-# Scout Report - {{ summary.date }}
+# Scout Report - {{ report.name }} - {{ report.date }}
 
 ## Summary
+
+Executed on:
+
+{% for package in report.summary.executed_on %}
+
+- [{{ package.name }}]({{ package.relative_path }})
+
+{% endfor %}
+
+Issues found:
 
 {% for category in summary.categories %}
 
 - [{{ category.name }}](#{{ category.link }}) ({{ category.results_count }} results) ({{ category.severity }})
-  {% endfor %}
+
+{% endfor %}
 
 {% for category in report.categories %}
 
@@ -53,11 +64,11 @@
 
 #### Findings
 
-| ID  | File Location | Status |
-| --- | ------------- | ------ |
+| ID  | Package | File Location |
+| --- | ------- | ------------- |
 {% for finding in report.findings -%}
 {% if finding.category_id == category.id and finding.vulnerability_id == vulnerability.id -%}
-| {{ finding.id }} | {{ finding.span }} | <ul><li>- [ ] False Positive </li><li>- [ ] Acknowledged</li><li>- [ ] Resolved</li></ul> |
+| {{ finding.id }} | {{ finding.package }} | [{{ finding.span }}]({{ finding.file }}) |
 {% endif -%}
 {% endfor -%}
 

@@ -108,7 +108,8 @@
                     <thead class="text-xs uppercase bg-gray-700 font-bold">
                         <tr>
                             <th class="px-4 py-2 border-b border-gray-600 border-r w-4">Ref</th>
-                            <th class="px-4 py-2 border-b border-gray-600">Location</th>
+                            <th class="px-4 py-2 border-b border-gray-600 border-r">Package</th>
+                            <th class="px-4 py-2 border-b border-gray-600">File</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-600">
@@ -117,7 +118,8 @@
                         <tr class="hover:bg-gray-600 finding-detail" finding-id="{{ finding.id }}">
                             <td class="px-4 py-2 text-center border-r border-gray-600">{{ finding.occurrence_index }}
                             </td>
-                            <td class="px-4 py-2">{{ finding.span }}</td>
+                            <td class="px-4 py-2 text-center border-r border-gray-600">{{ finding.package }}</td>
+                            <td class="px-4 py-2 text-center">{{ finding.span }}</td>
                         </tr>
                         {% endif %}
                         {% endfor %}

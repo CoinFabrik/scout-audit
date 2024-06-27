@@ -1,22 +1,22 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
+use regex::Regex;
 use std::{
     collections::HashMap,
     env, fs,
-    hash::{Hash, Hasher},
     path::PathBuf,
     process::{Child, Command},
 };
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::report::generate_report,
+    output::{raw_report::RawReport, report::Package},
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -46,7 +46,6 @@ pub enum OutputFormat {
     #[clap(name = "md-gh")]
     MarkdownGithub,
     Sarif,
-    Text,
     Pdf,
 }
 
@@ -90,14 +89,8 @@ pub struct Scout {
     #[clap(last = true, help = "Arguments for `cargo check`.")]
     pub args: Vec<String>,
 
-    #[clap(
-        short,
-        long,
-        value_name = "type",
-        help = "Sets the output type",
-        default_value = "text"
-    )]
-    pub output_format: OutputFormat,
+    #[clap(short, long, value_name = "type", help = "Sets the output type")]
+    pub output_format: Option<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -131,9 +124,9 @@ pub enum BlockChain {
 #[derive(Debug)]
 pub struct ProjectInfo {
     pub name: String,
-    pub description: String,
-    pub hash: String,
+    pub date: String,
     pub workspace_root: PathBuf,
+    pub packages: Vec<Package>,
 }
 
 pub fn run_scout(mut opts: Scout) -> Result<()> {
@@ -173,7 +166,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     if let Some(manifest_path) = &opts.manifest_path {
         metadata.manifest_path(manifest_path);
     }
-
     let metadata = metadata.exec().context("Failed to get metadata")?;
 
     let bc_dependency = metadata
@@ -198,13 +190,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         None => get_detectors_configuration(bc_dependency)
             .context("Failed to get detectors configuration")?,
     };
-
-    // Miscellaneous configurations
-    // If there is a need to exclude or filter by detector, the dylint tool needs to be recompiled.
-    // TODO: improve detector system so that doing this isn't necessary.
-    /*if opts.exclude.is_some() || opts.filter.is_some() {
-        remove_target_dylint(&opts.manifest_path)?;
-    }*/
 
     // Instantiate detectors
     let detectors = Detectors::new(
@@ -251,25 +236,88 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let root = metadata.root_package().unwrap();
-
-    let mut hasher = std::hash::DefaultHasher::new();
-
-    root.id.hash(&mut hasher);
-    let info = ProjectInfo {
-        name: root.name.clone(),
-        description: root.description.clone().unwrap_or_default(),
-        hash: hasher.finish().to_string(),
-        workspace_root: metadata.workspace_root.clone().into(),
-    };
+    let project_info = get_project_info(&metadata).context("Failed to get project info")?;
 
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency, info, detectors_info)
-        .context("Failed to run dylint")?;
+    // let (stdout_temp_file, stderr_temp_file) =
+    let stdout_temp_file =
+        run_dylint(detectors_paths, &opts, bc_dependency).context("Failed to run dylint")?;
+
+    // Generate report
+    if let Some(output_format) = opts.output_format {
+        generate_report(
+            stdout_temp_file,
+            project_info,
+            detectors_info,
+            opts.output_path,
+            output_format,
+        )?;
+    }
 
     Ok(())
 }
 
+#[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
+fn get_project_info(metadata: &Metadata) -> Result<ProjectInfo> {
+    let mut packages = Vec::new();
+    let workspace_root = &metadata.workspace_root;
+    if let Some(root_package) = metadata.root_package() {
+        // Scout is executed on a single project
+        let root = &root_package.manifest_path;
+        packages.push(Package {
+            name: root_package.name.clone(),
+            absolute_path: root.into(),
+            relative_path: root
+                .strip_prefix(workspace_root)
+                .with_context(|| "Failed to strip prefix")?
+                .into(),
+        });
+    } else if !metadata.workspace_default_members.is_empty() {
+        // Scout is executed on a workspace
+        for package_id in metadata.workspace_default_members.iter() {
+            let package = metadata
+                .packages
+                .iter()
+                .find(|p| p.id == *package_id)
+                .with_context(|| {
+                    format!("Package ID '{}' not found in the workspace", package_id)
+                })?;
+            let root = &package.manifest_path;
+            packages.push(Package {
+                name: package.name.clone(),
+                absolute_path: root.into(),
+                relative_path: root
+                    .strip_prefix(workspace_root)
+                    .with_context(|| "Failed to strip prefix")?
+                    .into(),
+            });
+        }
+    } else {
+        bail!("No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package.");
+    }
+
+    let mut project_name = String::new();
+    if let Some(name) = metadata.workspace_root.file_name() {
+        project_name = name.replace('-', " ");
+        let re = Regex::new(r"(^|\s)\w").unwrap();
+        project_name = re
+            .replace_all(&project_name, |caps: &regex::Captures| {
+                caps.get(0).unwrap().as_str().to_uppercase()
+            })
+            .to_string();
+    }
+
+    let project_info = ProjectInfo {
+        name: project_name,
+        date: chrono::Local::now().format("%Y-%m-%d").to_string(),
+        workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
+        packages,
+    };
+    tracing::trace!(?project_info, "Project info");
+    Ok(project_info)
+}
+
+#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip())]
 fn run_scout_in_nightly() -> Result<Option<Child>> {
     #[cfg(target_os = "linux")]
     let var_name = "LD_LIBRARY_PATH";
@@ -299,97 +347,96 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
     }
 }
 
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
-    mut opts: Scout,
+    opts: &Scout,
     _bc_dependency: BlockChain,
-    info: ProjectInfo,
-    detectors_info: HashMap<String, LintInfo>,
-) -> Result<()> {
+) -> Result<tempfile::NamedTempFile> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
         .map(|path| path.to_string_lossy().to_string())
         .collect();
 
-    // Initialize options
-    let stderr_temp_file = tempfile::NamedTempFile::new()?;
+    // Initialize temporary file for stdout
     let stdout_temp_file = tempfile::NamedTempFile::new()?;
-
-    let is_output_stdout = opts.output_format == OutputFormat::Text && opts.output_path.is_none();
-    let is_output_stdout_json = opts.args.contains(&"--message-format=json".to_string());
-
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().to_string());
-    let pipe_stderr = if is_output_stdout && !is_output_stdout_json {
-        None
-    } else {
-        Some(stderr_temp_file.path().to_string_lossy().to_string())
-    };
 
-    if opts.output_format != OutputFormat::Text {
-        opts.args.push("--message-format=json".to_string());
+    // Get the manifest path
+    let manifest_path = opts
+        .manifest_path
+        .as_ref()
+        .map(|p| p.to_string_lossy().to_string());
+
+    // Prepare arguments
+    let mut args = opts.args.clone();
+    if opts.output_format.is_some() {
+        args.push("--message-format=json".to_string());
     }
 
     let options = Dylint {
         paths: detectors_paths,
-        args: opts.args,
-        manifest_path: opts.manifest_path.map(|p| p.to_string_lossy().to_string()),
+        args,
         pipe_stdout,
-        pipe_stderr,
+        manifest_path,
         quiet: !opts.verbose,
         ..Default::default()
     };
 
     dylint::run(&options)?;
 
-    // Format output and write to file (if necessary)
-    if is_output_stdout && !is_output_stdout_json {
-        return Ok(());
-    }
+    Ok(stdout_temp_file)
+}
 
-    let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
+#[tracing::instrument(name = "GENERATE REPORT", skip_all)]
+fn generate_report(
+    stdout_temp_file: tempfile::NamedTempFile,
+    project_info: ProjectInfo,
+    detectors_info: HashMap<String, LintInfo>,
+    output_path: Option<PathBuf>,
+    output_format: OutputFormat,
+) -> Result<()> {
+    // Read the stdout temporary file
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate output from report
-    match opts.output_format {
+    // Generate report
+    let mut content = String::new();
+    std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+    let report = RawReport::generate_report(&content, &project_info, &detectors_info)?;
+
+    tracing::trace!(?output_format, "Output format");
+    tracing::trace!(?report, "Report");
+
+    // Save the report
+    match output_format {
         OutputFormat::Html => {
-            //read json_file to a string
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
-            // Generate HTML
+            // Generate HTML report
             let html = report.generate_html()?;
 
-            let html_path = match opts.output_path {
-                Some(path) => path,
-                None => PathBuf::from("report.html"),
-            };
-            let mut html_file = fs::File::create(&html_path)?;
-            std::io::Write::write_all(&mut html_file, html.as_bytes())?;
+            // Save to file
+            let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
+            report.save_to_file(&html_path, html)?;
 
             // Open the HTML report in the default web browser
-            webbrowser::open(html_path.to_str().unwrap()).context("Failed to open HTML report")?;
+            webbrowser::open(
+                html_path
+                    .to_str()
+                    .expect("Path conversion to string failed"),
+            )
+            .context("Failed to open HTML report")?;
         }
+
         OutputFormat::Json => {
-            //read json_file to a string
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
+            // Generate JSON report
             let json = report.generate_json()?;
 
-            let mut json_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.json")?,
-            };
-
-            std::io::Write::write_all(&mut json_file, json.as_bytes())?;
+            // Save to file
+            let json_path = output_path.unwrap_or_else(|| PathBuf::from("report.json"));
+            report.save_to_file(&json_path, json)?;
         }
         OutputFormat::RawJson => {
-            let mut json_file = match &opts.output_path {
+            let mut json_file = match &output_path {
                 Some(path) => fs::File::create(path)?,
                 None => fs::File::create("raw-report.json")?,
             };
@@ -401,39 +448,23 @@ fn run_dylint(
             std::io::Write::write(&mut json_file, cts.as_bytes())?;
         }
         OutputFormat::Markdown => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
             // Generate Markdown
-            let md_text = report.generate_markdown(true)?;
+            let markdown = report.generate_markdown(true)?;
 
-            let mut md_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.md")?,
-            };
-
-            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
+            // Save to file
+            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+            report.save_to_file(&md_path, markdown)?;
         }
         OutputFormat::MarkdownGithub => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
             // Generate Markdown
-            let md_text = report.generate_markdown(false)?;
+            let markdown = report.generate_markdown(false)?;
 
-            let mut md_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.md")?,
-            };
-
-            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
+            // Save to file
+            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+            report.save_to_file(&md_path, markdown)?;
         }
         OutputFormat::Sarif => {
-            let path = if let Some(path) = opts.output_path {
+            let path = if let Some(path) = output_path {
                 path
             } else {
                 PathBuf::from("report.sarif")
@@ -453,25 +484,8 @@ fn run_dylint(
 
             std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
         }
-        OutputFormat::Text => {
-            // If the output path is not set, dylint prints the report to stdout
-            if let Some(output_file) = opts.output_path {
-                let mut txt_file = fs::File::create(output_file)?;
-                std::io::copy(&mut stderr_file, &mut txt_file)?;
-            } else {
-                let stdout = std::io::stdout();
-                let mut handle = stdout.lock();
-                std::io::copy(&mut stdout_file, &mut handle)
-                    .expect("Error writing dylint result to stdout");
-            }
-        }
         OutputFormat::Pdf => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
-            let path = if let Some(path) = opts.output_path {
+            let path = if let Some(path) = output_path {
                 path
             } else {
                 PathBuf::from("report.pdf")
@@ -480,7 +494,6 @@ fn run_dylint(
         }
     }
 
-    stderr_temp_file.close()?;
     stdout_temp_file.close()?;
 
     Ok(())

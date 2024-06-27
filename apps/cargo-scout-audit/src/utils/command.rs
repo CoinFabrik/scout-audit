@@ -67,10 +67,6 @@ impl Command {
     }
 
     pub fn output(&mut self) -> Result<Output> {
-        log::debug!("{:?}", self.command.get_envs().collect::<Vec<_>>());
-        log::debug!("{:?}", self.command.get_current_dir());
-        log::debug!("{:?}", self.command);
-
         let output = self
             .command
             .output()
@@ -88,10 +84,6 @@ impl Command {
     }
 
     pub fn success(&mut self) -> Result<()> {
-        log::debug!("{:?}", self.command.get_envs().collect::<Vec<_>>());
-        log::debug!("{:?}", self.command.get_current_dir());
-        log::debug!("{:?}", self.command);
-
         let status = self
             .command
             .status()
