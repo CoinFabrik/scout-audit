@@ -1,4 +1,3 @@
-use core::panic;
 use current_platform::CURRENT_PLATFORM;
 use regex::Regex;
 use std::{
@@ -17,6 +16,7 @@ use dylint::Dylint;
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
     output::{raw_report::RawReport, report::Package},
+    scout::blockchain::BlockChain,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -115,12 +115,6 @@ pub struct Scout {
     pub detectors_metadata: bool,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum BlockChain {
-    Ink,
-    Soroban,
-}
-
 #[derive(Debug)]
 pub struct ProjectInfo {
     pub name: String,
@@ -129,6 +123,7 @@ pub struct ProjectInfo {
     pub packages: Vec<Package>,
 }
 
+#[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<()> {
     let opt_child = run_scout_in_nightly()?;
     if let Some(mut child) = opt_child {
@@ -148,11 +143,11 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     // Validations
     if opts.filter.is_some() && opts.exclude.is_some() {
-        panic!("You can't use `--exclude` and `--filter` at the same time.");
+        bail!("The flags `--filter` and `--exclude` can't be used together.");
     }
 
     if opts.filter.is_some() && opts.profile.is_some() {
-        panic!("You can't use `--exclude` and `--profile` at the same time.");
+        bail!("The flags `--filter` and `--profile` can't be used together.");
     }
 
     if let Some(path) = &opts.output_path {
@@ -166,17 +161,11 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     if let Some(manifest_path) = &opts.manifest_path {
         metadata.manifest_path(manifest_path);
     }
-    let metadata = metadata.exec().context("Failed to get metadata")?;
+    let metadata = metadata
+        .exec()
+        .context("Metadata command execution failed.")?;
 
-    let bc_dependency = metadata
-        .packages
-        .iter()
-        .find_map(|p| match p.name.as_str() {
-            "soroban-sdk" => Some(BlockChain::Soroban),
-            "ink" => Some(BlockChain::Ink),
-            _ => None,
-        })
-        .expect("Blockchain dependency not found");
+    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
     let cargo_config = Config::default().context("Failed to get config")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
