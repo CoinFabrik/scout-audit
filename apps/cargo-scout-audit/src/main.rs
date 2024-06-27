@@ -5,8 +5,7 @@ use cargo_scout_audit::{
 use clap::Parser;
 
 fn main() {
-    let subscriber =
-        telemetry::get_subscriber("scout".into(), "warn".into(), std::io::stdout);
+    let subscriber = telemetry::get_subscriber("scout".into(), "warn".into(), std::io::stdout);
     telemetry::init_subscriber(subscriber);
 
     let cli = Cli::parse();
