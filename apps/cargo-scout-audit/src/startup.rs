@@ -236,7 +236,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let project_info = get_project_info(metadata.clone()).context("Failed to get project info")?;
+    let project_info = get_project_info(&metadata).context("Failed to get project info")?;
 
     // Run dylint
     // let (stdout_temp_file, stderr_temp_file) =
@@ -258,34 +258,38 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 }
 
 #[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
-fn get_project_info(metadata: Metadata) -> Result<ProjectInfo> {
+fn get_project_info(metadata: &Metadata) -> Result<ProjectInfo> {
     let mut packages = Vec::new();
+    let workspace_root = &metadata.workspace_root;
     if let Some(root_package) = metadata.root_package() {
-        let root = root_package.manifest_path.parent().context(format!(
-            "Root package manifest at '{}' has no parent directory",
-            root_package.manifest_path
-        ))?;
+        // Scout is executed on a single project
+        let root = &root_package.manifest_path;
         packages.push(Package {
             name: root_package.name.clone(),
-            root: root.into(),
+            absolute_path: root.into(),
+            relative_path: root
+                .strip_prefix(workspace_root)
+                .with_context(|| "Failed to strip prefix")?
+                .into(),
         });
     } else if !metadata.workspace_default_members.is_empty() {
+        // Scout is executed on a workspace
         for package_id in metadata.workspace_default_members.iter() {
             let package = metadata
                 .packages
                 .iter()
                 .find(|p| p.id == *package_id)
-                .context(format!(
-                    "Package ID '{}' not found in the workspace",
-                    package_id
-                ))?;
-            let root = package.manifest_path.parent().context(format!(
-                "Package manifest at '{}' has no parent directory",
-                package.manifest_path
-            ))?;
+                .with_context(|| {
+                    format!("Package ID '{}' not found in the workspace", package_id)
+                })?;
+            let root = &package.manifest_path;
             packages.push(Package {
                 name: package.name.clone(),
-                root: root.into(),
+                absolute_path: root.into(),
+                relative_path: root
+                    .strip_prefix(workspace_root)
+                    .with_context(|| "Failed to strip prefix")?
+                    .into(),
             });
         }
     } else {
@@ -306,7 +310,7 @@ fn get_project_info(metadata: Metadata) -> Result<ProjectInfo> {
     let project_info = ProjectInfo {
         name: project_name,
         date: chrono::Local::now().format("%Y-%m-%d").to_string(),
-        workspace_root: metadata.workspace_root.into_std_path_buf(),
+        workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
         packages,
     };
     tracing::trace!(?project_info, "Project info");
