@@ -29,6 +29,10 @@ path = "src/main.rs"
 ansi_term = "0.12.1"
 anyhow = "1"
 cargo = "0.76.0"
+cargo-credential-libsecret = "=0.4.4"
+cargo-credential-macos-keychain = "=0.4.4"
+cargo-credential-wincred = "=0.4.4"
+cargo-util = "=0.2.11"
 cargo_metadata = "0.18.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 clap = { version = "4.3.0", features = ["derive"] }
@@ -43,10 +47,10 @@ regex = { version = "1.5", features = ["unicode"] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.8"
-tera = { version = "=1.19.1", features = ["builtins"] }
+tera = { version = "=1.20.0", features = ["builtins"] }
 toml = { version = "0.8.0" }
 tracing = "0.1.37"
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
-webbrowser = "=0.8.12"
+webbrowser = "1"
