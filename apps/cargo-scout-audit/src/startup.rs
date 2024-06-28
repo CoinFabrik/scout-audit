@@ -1,3 +1,4 @@
+use colored::Colorize;
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
 use regex::Regex;
@@ -384,7 +385,20 @@ fn run_dylint(
         ..Default::default()
     };
 
-    dylint::run(&options)?;
+    if let Err(e) = dylint::run(&options) {
+        println!(
+            "\n{}Failed to run dylint, likely due to an issue in the code:\n\n{}\n",
+            "[ERROR] ".red(),
+            e.root_cause()
+        );
+        if opts.output_format.is_some() {
+            println!(
+                "{}",
+                "-> Report generation was not skipped, but we recommend fixing the error above first."
+                    .red()
+            );
+        }
+    }
 
     Ok(stdout_temp_file)
 }
