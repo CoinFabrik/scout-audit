@@ -93,24 +93,24 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
             format!("{}{}", html_category, table)
         })
         .collect::<Vec<_>>()
-        .join("<br>")
+        .join("\n")
 }
 
 // Function to generate HTML for a category
 fn generate_category(category: &Category) -> String {
-    let mut html_category = format!("<h2>{}</h2><br>", category.name);
+    let mut html_category = format!("<h2>{}</h2>\n", category.id);
     for vulnerability in &category.vulnerabilities {
-        html_category.push_str(&format!("<h3>{}</h3><br>", vulnerability.name));
+        html_category.push_str(&format!("<h3>{}</h3>\n", vulnerability.name));
         html_category.push_str(&format!(
-            "<strong>Impact:</strong> <span style=\"font-weight: bold\">{}</span><br><br>",
+            "<p><strong>Impact:</strong> {}</p>\n",
             utils::capitalize(&vulnerability.severity)
         ));
         html_category.push_str(&format!(
-            "<strong>Description:</strong> {}<br><br>",
+            "<p><strong>Description:</strong> {}</p>\n",
             vulnerability.short_message
         ));
         html_category.push_str(&format!(
-            "<strong>More about:</strong> <a href=\"{}\">here</a><br><br>",
+            "<p><strong>More about:</strong> <a href=\"{}\">here</a></p>\n",
             vulnerability.help
         ));
     }
@@ -119,23 +119,23 @@ fn generate_category(category: &Category) -> String {
 
 // Function to generate a table for a category
 fn generate_table_for_category(category: &Category, findings: &[Finding]) -> String {
-    let table_header = "<table style=\"width: 100%; table-layout: fixed;\"><thead><tr>\
+    let table_header = "<table style=\"width: 100%; table-layout: fixed;\">\n<thead>\n<tr>\
                         <th style=\"width: 20%;\">ID</th>\
                         <th style=\"width: 30%;\">Package</th>\
                         <th style=\"width: 50%;\">Detection</th>\
-                        </tr></thead><tbody>\n";
+                        </tr>\n</thead>\n<tbody>\n";
     let table_body: String = findings
         .iter()
         .filter(|finding| finding.category_id == category.id)
         .map(generate_finding)
         .collect();
-    format!("{}{}</tbody></table><br><br>", table_header, table_body)
+    format!("{}{}</tbody>\n</table>\n", table_header, table_body)
 }
 
 // Function to generate HTML for a finding
 fn generate_finding(finding: &Finding) -> String {
     format!(
-        "<tr><td>{}</td><td>{}</td><td><a>{}</a></td></tr>\n",
+        "<tr>\n<td>{}</td>\n<td>{}</td>\n<td>{}</td>\n</tr>\n",
         finding.id, finding.package, finding.span
     )
 }
