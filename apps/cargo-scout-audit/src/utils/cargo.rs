@@ -1,4 +1,3 @@
-use crate::startup::BlockChain;
 use ansi_term::Style;
 #[cfg(windows)]
 use std::path::Path;
@@ -6,6 +5,8 @@ use std::{
     io::{IsTerminal, Write},
     process::Stdio,
 };
+
+use crate::scout::blockchain::BlockChain;
 
 use super::command::Command;
 #[must_use]

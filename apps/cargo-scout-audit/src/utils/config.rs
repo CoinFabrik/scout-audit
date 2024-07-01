@@ -1,9 +1,10 @@
-use crate::startup::BlockChain;
 use anyhow::{Error, Result};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::{env, fs};
+
+use crate::scout::blockchain::BlockChain;
 
 const INK_DEFAULT_CONFIG: &str = include_str!("./ink_default_config.toml");
 

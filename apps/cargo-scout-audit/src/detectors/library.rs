@@ -4,8 +4,10 @@ use anyhow::Result;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
-use crate::startup::BlockChain;
-use crate::utils::{cargo, env};
+use crate::{
+    scout::blockchain::BlockChain,
+    utils::{cargo, env},
+};
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
 pub struct Library {
@@ -50,7 +52,6 @@ impl Library {
             .into_iter()
             .filter(|p| !p.exists())
             .collect_vec();
-
         if !unexistant_libraries.is_empty() {
             anyhow::bail!("Could not determine if {:?} exist", unexistant_libraries);
         }
