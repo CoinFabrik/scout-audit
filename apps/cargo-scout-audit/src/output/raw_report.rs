@@ -64,9 +64,8 @@ fn process_findings(
             continue;
         }
 
-        let (file, file_path, package, file_name) =
-            parse_file_details(finding, &info.workspace_root)
-                .with_context(|| format!("Failed to parse file details for finding id {}", id))?;
+        let (file_path, package, file_name) = parse_file_details(finding, &info.workspace_root)
+            .with_context(|| format!("Failed to parse file details for finding id {}", id))?;
         let span = parse_span(finding, &file_name);
         let code_snippet = extract_code_snippet(&file_path, finding)
             .with_context(|| format!("Failed to extract code snippet for finding id {}", id))?;
@@ -75,6 +74,8 @@ fn process_findings(
 
         let occurrence_index = det_map.entry(category.clone()).or_insert(0);
         *occurrence_index += 1;
+
+        let file_path = file_path.to_string_lossy().to_string();
 
         findings.push(Finding {
             id: id as u32,
@@ -85,7 +86,7 @@ fn process_findings(
             span,
             code_snippet,
             package,
-            file,
+            file_path,
         });
     }
 
@@ -104,10 +105,7 @@ fn parse_category(finding: &Value) -> Result<String> {
     Ok(category)
 }
 
-fn parse_file_details(
-    finding: &Value,
-    workspace_root: &Path,
-) -> Result<(String, PathBuf, String, String)> {
+fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<(PathBuf, String, String)> {
     let file = finding
         .get("message")
         .and_then(|message| message.get("spans"))
@@ -118,14 +116,12 @@ fn parse_file_details(
         .to_string()
         .replace('"', "");
 
-    let file_path = workspace_root.join(&file);
+    let file_path_binding = workspace_root.join(&file);
+    let file_path = file_path_binding
+        .strip_prefix(std::env::current_dir()?)?
+        .to_path_buf();
     let (package, file_name) = file.split_once('/').unwrap_or(("", &file));
-    Ok((
-        file.clone(),
-        file_path,
-        package.to_string(),
-        file_name.to_string(),
-    ))
+    Ok((file_path, package.to_string(), file_name.to_string()))
 }
 
 fn parse_span(finding: &Value, file_name: &str) -> String {

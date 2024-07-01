@@ -4,11 +4,12 @@ use anyhow::{Ok, Result};
 use cargo::Config;
 use itertools::Itertools;
 
+use crate::scout::blockchain::BlockChain;
+
 use self::{
     builder::DetectorBuilder,
     configuration::{DetectorConfiguration, DetectorsConfigurationList},
 };
-use crate::startup::BlockChain;
 mod builder;
 mod configuration;
 mod library;
