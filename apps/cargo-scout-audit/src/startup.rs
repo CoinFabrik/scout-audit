@@ -1,6 +1,5 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
-use regex::Regex;
 use std::{
     collections::HashMap,
     env, fs,
@@ -10,13 +9,14 @@ use std::{
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::{Metadata, MetadataCommand};
+use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::{raw_report::RawReport, report::Package},
+    output::raw_report::RawReport,
+    scout::project_info::ProjectInfo,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -119,14 +119,6 @@ pub struct Scout {
 pub enum BlockChain {
     Ink,
     Soroban,
-}
-
-#[derive(Debug)]
-pub struct ProjectInfo {
-    pub name: String,
-    pub date: String,
-    pub workspace_root: PathBuf,
-    pub packages: Vec<Package>,
 }
 
 pub fn run_scout(mut opts: Scout) -> Result<()> {
@@ -236,7 +228,8 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let project_info = get_project_info(&metadata).context("Failed to get project info")?;
+    let project_info =
+        ProjectInfo::get_project_info(&metadata).context("Failed to get project info")?;
 
     // Run dylint
     // let (stdout_temp_file, stderr_temp_file) =
@@ -255,66 +248,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     Ok(())
-}
-
-#[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
-fn get_project_info(metadata: &Metadata) -> Result<ProjectInfo> {
-    let mut packages = Vec::new();
-    let workspace_root = &metadata.workspace_root;
-    if let Some(root_package) = metadata.root_package() {
-        // Scout is executed on a single project
-        let root = &root_package.manifest_path;
-        packages.push(Package {
-            name: root_package.name.clone(),
-            absolute_path: root.into(),
-            relative_path: root
-                .strip_prefix(workspace_root)
-                .with_context(|| "Failed to strip prefix")?
-                .into(),
-        });
-    } else if !metadata.workspace_default_members.is_empty() {
-        // Scout is executed on a workspace
-        for package_id in metadata.workspace_default_members.iter() {
-            let package = metadata
-                .packages
-                .iter()
-                .find(|p| p.id == *package_id)
-                .with_context(|| {
-                    format!("Package ID '{}' not found in the workspace", package_id)
-                })?;
-            let root = &package.manifest_path;
-            packages.push(Package {
-                name: package.name.clone(),
-                absolute_path: root.into(),
-                relative_path: root
-                    .strip_prefix(workspace_root)
-                    .with_context(|| "Failed to strip prefix")?
-                    .into(),
-            });
-        }
-    } else {
-        bail!("No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package.");
-    }
-
-    let mut project_name = String::new();
-    if let Some(name) = metadata.workspace_root.file_name() {
-        project_name = name.replace('-', " ");
-        let re = Regex::new(r"(^|\s)\w").unwrap();
-        project_name = re
-            .replace_all(&project_name, |caps: &regex::Captures| {
-                caps.get(0).unwrap().as_str().to_uppercase()
-            })
-            .to_string();
-    }
-
-    let project_info = ProjectInfo {
-        name: project_name,
-        date: chrono::Local::now().format("%Y-%m-%d").to_string(),
-        workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
-        packages,
-    };
-    tracing::trace!(?project_info, "Project info");
-    Ok(project_info)
 }
 
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip())]

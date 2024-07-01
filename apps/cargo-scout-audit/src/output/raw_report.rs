@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
 
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
-use crate::{startup::ProjectInfo, utils::detectors_info::LintInfo};
+use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 
 pub struct RawReport;
 
