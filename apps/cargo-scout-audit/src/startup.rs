@@ -392,7 +392,7 @@ fn run_dylint(
         );
         if opts.output_format.is_some() {
             println!(
-                "{} This report may be incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.",
+                "{} This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.",
                 "[WARNING]".yellow()
             );
         }
