@@ -393,9 +393,8 @@ fn run_dylint(
         );
         if opts.output_format.is_some() {
             println!(
-                "{}",
-                "-> Report generation was not skipped, but we recommend fixing the error above first."
-                    .red()
+                "{} Report generation is still enabled, but the report may be incomplete and in no way representative of the actual results.",
+                "[DISCLAIMER]".yellow()
             );
         }
     }
