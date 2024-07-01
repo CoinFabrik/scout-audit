@@ -385,16 +385,15 @@ fn run_dylint(
         ..Default::default()
     };
 
-    if let Err(e) = dylint::run(&options) {
+    if dylint::run(&options).is_err() {
         println!(
-            "\n{}Failed to run dylint, likely due to an issue in the code:\n\n{}\n",
+            "\n{}Failed to run dylint, most likely due to an issue in the code.",
             "[ERROR] ".red(),
-            e.root_cause()
         );
         if opts.output_format.is_some() {
             println!(
-                "{} Report generation is still enabled, but the report may be incomplete and in no way representative of the actual results.",
-                "[DISCLAIMER]".yellow()
+                "{} This report may be incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.",
+                "[WARNING]".yellow()
             );
         }
     }
