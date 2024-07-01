@@ -36,6 +36,7 @@ cargo-util = "=0.2.11"
 cargo_metadata = "0.18.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 clap = { version = "4.3.0", features = ["derive"] }
+colored = "2"
 current_platform = "0.2.0"
 dunce = "1.0.4"
 dylint = { version = "2.3.0" }

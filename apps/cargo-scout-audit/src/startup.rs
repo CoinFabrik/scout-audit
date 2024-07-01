@@ -1,3 +1,4 @@
+use colored::Colorize;
 use current_platform::CURRENT_PLATFORM;
 use regex::Regex;
 use std::{
@@ -373,7 +374,18 @@ fn run_dylint(
         ..Default::default()
     };
 
-    dylint::run(&options)?;
+    if dylint::run(&options).is_err() {
+        println!(
+            "\n{}Failed to run dylint, most likely due to an issue in the code.",
+            "[ERROR] ".red(),
+        );
+        if opts.output_format.is_some() {
+            println!(
+                "{} This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.",
+                "[WARNING]".yellow()
+            );
+        }
+    }
 
     Ok(stdout_temp_file)
 }
