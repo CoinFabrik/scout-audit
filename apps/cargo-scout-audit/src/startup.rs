@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
@@ -116,37 +116,43 @@ pub struct Scout {
     pub detectors_metadata: bool,
 }
 
+impl Scout {
+    fn prepare_args(&mut self) {
+        if !self.args.iter().any(|x| x.contains("--target=")) {
+            self.args.extend([
+                "--target=wasm32-unknown-unknown".to_string(),
+                "--no-default-features".to_string(),
+                "-Zbuild-std=std,core,alloc".to_string(),
+            ]);
+        }
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self.filter.is_some() && self.exclude.is_some() {
+            bail!("The flags `--filter` and `--exclude` can't be used together");
+        }
+        if self.filter.is_some() && self.profile.is_some() {
+            bail!("The flags `--filter` and `--profile` can't be used together");
+        }
+        if let Some(path) = &self.output_path {
+            if path.is_dir() {
+                bail!("The output path can't be a directory");
+            }
+        }
+        Ok(())
+    }
+}
+
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<()> {
-    let opt_child = run_scout_in_nightly()?;
-    if let Some(mut child) = opt_child {
-        child.wait()?;
+    opts.validate()?;
+    opts.prepare_args();
+
+    if let Some(mut child) = run_scout_in_nightly()? {
+        child
+            .wait()
+            .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(());
-    }
-
-    // If the target is not set to wasm32-unknown-unknown, set it
-    let target_args_flag = "--target=wasm32-unknown-unknown".to_string();
-    let no_default = "--no-default-features".to_string();
-    let z_build_std = "-Zbuild-std=std,core,alloc".to_string();
-
-    if !opts.args.iter().any(|x| x.contains("--target=")) {
-        opts.args
-            .extend([target_args_flag, no_default, z_build_std])
-    }
-
-    // Validations
-    if opts.filter.is_some() && opts.exclude.is_some() {
-        bail!("The flags `--filter` and `--exclude` can't be used together.");
-    }
-
-    if opts.filter.is_some() && opts.profile.is_some() {
-        bail!("The flags `--filter` and `--profile` can't be used together.");
-    }
-
-    if let Some(path) = &opts.output_path {
-        if path.is_dir() {
-            bail!("The output path can't be a directory.");
-        }
     }
 
     // Prepare configurations
@@ -180,6 +186,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         metadata.clone(),
         opts.verbose,
     );
+
     let mut detectors_names = detectors
         .get_detector_names()
         .context("Failed to build detectors")?;
@@ -222,7 +229,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         ProjectInfo::get_project_info(&metadata).context("Failed to get project info")?;
 
     // Run dylint
-    // let (stdout_temp_file, stderr_temp_file) =
     let stdout_temp_file =
         run_dylint(detectors_paths, &opts, bc_dependency).context("Failed to run dylint")?;
 
@@ -240,30 +246,37 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip())]
+const NIGHTLY_VERSION: &str = "nightly-2023-12-16";
+
+#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
 fn run_scout_in_nightly() -> Result<Option<Child>> {
-    #[cfg(target_os = "linux")]
-    let var_name = "LD_LIBRARY_PATH";
-    #[cfg(target_os = "macos")]
-    let var_name = "DYLD_FALLBACK_LIBRARY_PATH";
-    let toolchain = std::env::var(var_name)?;
-    if !toolchain.contains("nightly-2023-12-16") {
-        let current_platform = CURRENT_PLATFORM;
-        let rustup_home = env::var("RUSTUP_HOME")?;
-
-        let lib_path =
-            rustup_home.clone() + "/toolchains/nightly-2023-12-16-" + current_platform + "/lib";
-
-        let args: Vec<String> = env::args().collect();
-        let program = args[0].clone();
-
-        let mut command = Command::new(program);
-        for arg in args.iter().skip(1) {
-            command.arg(arg);
+    let var_name = match env::consts::OS {
+        "linux" => "LD_LIBRARY_PATH",
+        "macos" => "DYLD_FALLBACK_LIBRARY_PATH",
+        _ => {
+            return Err(anyhow::anyhow!(
+                "Unsupported operating system: {}",
+                env::consts::OS
+            ))
         }
+    };
 
-        command.env(var_name, lib_path);
-        let child = command.spawn()?;
+    let current_lib_path =
+        env::var(var_name).context(format!("Failed to read {} environment variable", var_name))?;
+
+    if !current_lib_path.contains(NIGHTLY_VERSION) {
+        let rustup_home = env::var("RUSTUP_HOME").context("Failed to read RUSTUP_HOME")?;
+        let nightly_lib_path = format!(
+            "{}/toolchains/{}-{}/lib",
+            rustup_home, NIGHTLY_VERSION, CURRENT_PLATFORM
+        );
+
+        let mut command = Command::new(env::args().next().context("No program name found")?);
+        command
+            .args(env::args().skip(1))
+            .env(var_name, nightly_lib_path);
+
+        let child = command.spawn().context("Failed to spawn child process")?;
         Ok(Some(child))
     } else {
         Ok(None)
@@ -292,15 +305,9 @@ fn run_dylint(
         .as_ref()
         .map(|p| p.to_string_lossy().to_string());
 
-    // Prepare arguments
-    let mut args = opts.args.clone();
-    if opts.output_format.is_some() {
-        args.push("--message-format=json".to_string());
-    }
-
     let options = Dylint {
         paths: detectors_paths,
-        args,
+        args: opts.args.clone(),
         pipe_stdout,
         manifest_path,
         quiet: !opts.verbose,
