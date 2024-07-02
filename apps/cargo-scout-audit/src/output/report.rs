@@ -66,7 +66,7 @@ pub struct Finding {
     pub span: String,
     pub code_snippet: String,
     pub package: String,
-    pub file: String,
+    pub file_path: String,
 }
 
 impl From<&LintInfo> for Vulnerability {

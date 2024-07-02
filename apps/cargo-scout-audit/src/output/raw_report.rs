@@ -1,12 +1,18 @@
 use anyhow::{Context, Result};
 use serde_json::Value;
-use std::path::PathBuf;
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
-use crate::{startup::ProjectInfo, utils::detectors_info::LintInfo};
+use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 
 pub struct RawReport;
+
+struct FileDetails {
+    relative_path: String,
+    absolute_path: PathBuf,
+    package: String,
+}
 
 impl RawReport {
     #[tracing::instrument(name = "GENERATE FROM RAW REPORT", level = "debug", skip_all, fields(project = %info.name))]
@@ -15,12 +21,13 @@ impl RawReport {
         info: &ProjectInfo,
         detector_info: &HashMap<String, LintInfo>,
     ) -> Result<Report> {
-        let scout_findings =
-            parse_scout_findings(scout_output).context("Failed to parse scout findings")?;
+        let scout_findings = parse_scout_findings(scout_output).with_context(|| {
+            format!("Failed to parse scout findings for project '{}'", info.name)
+        })?;
         let (findings, det_map) = process_findings(&scout_findings, info, detector_info)
-            .context("Failed to process findings")?;
+            .with_context(|| format!("Failed to process findings for project '{}'", info.name))?;
         let categories = generate_categories(&det_map, detector_info)
-            .context("Failed to generate categories")?;
+            .with_context(|| "Failed to generate vulnerability categories")?;
         let summary = create_summary(detector_info, info, &findings);
         Ok(Report::new(
             info.name.clone(),
@@ -34,9 +41,14 @@ impl RawReport {
 
 fn parse_scout_findings(scout_output: &str) -> Result<Vec<Value>> {
     let mut results = Vec::new();
-    for line in scout_output.lines() {
-        let value = serde_json::from_str::<Value>(line)
-            .with_context(|| format!("Failed to parse JSON from line: {}", line))?;
+    for (line_number, line) in scout_output.lines().enumerate() {
+        let value = serde_json::from_str::<Value>(line).with_context(|| {
+            format!(
+                "Failed to parse JSON from line {}: '{}'",
+                line_number + 1,
+                line
+            )
+        })?;
         let has_code = value
             .get("message")
             .and_then(|message| message.get("code"))
@@ -58,18 +70,33 @@ fn process_findings(
     let mut findings: Vec<Finding> = Vec::new();
 
     for (id, finding) in scout_findings.iter().enumerate() {
-        let category = parse_category(finding)
-            .with_context(|| format!("Failed to parse category for finding id {}", id))?;
+        let category = parse_category(finding).with_context(|| {
+            format!("Failed to parse vulnerability category for finding {}", id)
+        })?;
         if !detector_info.contains_key(&category) {
             continue;
         }
 
-        let (file, file_path, package, file_name) =
-            parse_file_details(finding, &info.workspace_root)
-                .with_context(|| format!("Failed to parse file details for finding id {}", id))?;
+        let FileDetails {
+            relative_path,
+            absolute_path,
+            package,
+        } = parse_file_details(finding, &info.workspace_root)
+            .with_context(|| format!("Failed to parse file details for finding {}", id))?;
+
+        let file_name = absolute_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("")
+            .to_string();
+
         let span = parse_span(finding, &file_name);
-        let code_snippet = extract_code_snippet(&file_path, finding)
-            .with_context(|| format!("Failed to extract code snippet for finding id {}", id))?;
+        let code_snippet = extract_code_snippet(&absolute_path, finding).with_context(|| {
+            format!(
+                "Failed to extract code snippet for finding {} in file '{}'",
+                id, relative_path
+            )
+        })?;
 
         let error_message = parse_error_message(finding);
 
@@ -85,7 +112,7 @@ fn process_findings(
             span,
             code_snippet,
             package,
-            file,
+            file_path: relative_path,
         });
     }
 
@@ -98,34 +125,38 @@ fn parse_category(finding: &Value) -> Result<String> {
         .and_then(|message| message.get("code"))
         .and_then(|code| code.get("code"))
         .and_then(Value::as_str)
-        .context("Category not found in finding")?
+        .with_context(|| "Category not found in finding structure")?
         .trim_matches('"')
         .to_string();
     Ok(category)
 }
 
-fn parse_file_details(
-    finding: &Value,
-    workspace_root: &Path,
-) -> Result<(String, PathBuf, String, String)> {
-    let file = finding
+fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<FileDetails> {
+    let relative_path = finding
         .get("message")
         .and_then(|message| message.get("spans"))
         .and_then(|spans| spans.get(0))
         .and_then(|span| span.get("file_name"))
         .and_then(Value::as_str)
-        .context("File name not found in finding")?
-        .to_string()
-        .replace('"', "");
+        .with_context(|| "File name not found in finding structure")?
+        .trim_matches('"')
+        .to_string();
 
-    let file_path = workspace_root.join(&file);
-    let (package, file_name) = file.split_once('/').unwrap_or(("", &file));
-    Ok((
-        file.clone(),
-        file_path,
-        package.to_string(),
-        file_name.to_string(),
-    ))
+    let absolute_path = workspace_root.join(&relative_path);
+
+    let path = Path::new(&relative_path);
+    let package = path
+        .components()
+        .next()
+        .and_then(|comp| comp.as_os_str().to_str())
+        .unwrap_or("")
+        .to_string();
+
+    Ok(FileDetails {
+        relative_path,
+        absolute_path,
+        package,
+    })
 }
 
 fn parse_span(finding: &Value, file_name: &str) -> String {
@@ -142,26 +173,27 @@ fn parse_span(finding: &Value, file_name: &str) -> String {
                 spans[0].get("column_end").unwrap_or(&Value::default())
             )
         })
-        .unwrap_or_else(|| "Span not valid".to_string())
+        .unwrap_or_else(|| "Span information not available".to_string())
 }
 
-fn extract_code_snippet(file_path: &PathBuf, finding: &Value) -> Result<String> {
+fn extract_code_snippet(file_path: &Path, finding: &Value) -> Result<String> {
     let sp = finding
         .get("message")
         .and_then(|message| message.get("spans"))
         .and_then(|spans| spans.get(0))
-        .context("Span not found in finding")?;
+        .with_context(|| "Span information not found in finding structure")?;
 
     let byte_start = sp
         .get("byte_start")
         .and_then(Value::as_u64)
-        .context("Byte start is missing in spans")? as usize;
+        .with_context(|| "Byte start information missing in span")? as usize;
     let byte_end = sp
         .get("byte_end")
         .and_then(Value::as_u64)
-        .context("Byte end is missing in spans")? as usize;
+        .with_context(|| "Byte end information missing in span")? as usize;
 
-    let file_content = std::fs::read_to_string(file_path)?;
+    let file_content = std::fs::read_to_string(file_path)
+        .with_context(|| format!("Failed to read file content from '{}'", file_path.display()))?;
 
     Ok(file_content[byte_start..byte_end].to_string())
 }
@@ -171,7 +203,7 @@ fn parse_error_message(finding: &Value) -> String {
         .get("message")
         .and_then(|message| message.get("message"))
         .and_then(Value::as_str)
-        .unwrap_or_default()
+        .unwrap_or("Error message not available")
         .to_string()
 }
 
@@ -186,7 +218,7 @@ fn generate_categories(
         }
         let vuln_info = detector_info
             .get(id)
-            .with_context(|| format!("Vulnerability info not found for id: {}", id))?;
+            .with_context(|| format!("Vulnerability info not found for detector ID: {}", id))?;
         let category = Category {
             id: vuln_info.vulnerability_class.clone(),
             name: vuln_info.name.clone(),
@@ -197,7 +229,6 @@ fn generate_categories(
     Ok(categories)
 }
 
-#[tracing::instrument(name = "CREATE SUMMARY", level = "trace", skip_all)]
 fn create_summary(
     detector_info: &HashMap<String, LintInfo>,
     info: &ProjectInfo,
