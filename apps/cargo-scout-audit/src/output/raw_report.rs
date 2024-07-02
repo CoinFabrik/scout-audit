@@ -229,7 +229,6 @@ fn generate_categories(
     Ok(categories)
 }
 
-#[tracing::instrument(name = "CREATE SUMMARY", level = "trace", skip_all)]
 fn create_summary(
     detector_info: &HashMap<String, LintInfo>,
     info: &ProjectInfo,
