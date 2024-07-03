@@ -9,7 +9,13 @@ fn main() {
     telemetry::init_subscriber(subscriber);
 
     let cli = Cli::parse();
+
     match cli.subcmd {
-        CargoSubCommand::ScoutAudit(opts) => run_scout(opts).unwrap(),
+        CargoSubCommand::ScoutAudit(opts) => {
+            if let Err(e) = run_scout(opts) {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        }
     }
 }
