@@ -400,6 +400,14 @@ fn run_dylint(
         }
     }
 
+    if options.args.contains(&"--message-format=json".to_string()) {
+        let stdout = std::io::stdout();
+        let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
+        let mut handle = stdout.lock();
+        std::io::copy(&mut stdout_file, &mut handle)
+            .expect("Error writing dylint result to stdout");
+    }
+
     Ok(stdout_temp_file)
 }
 
