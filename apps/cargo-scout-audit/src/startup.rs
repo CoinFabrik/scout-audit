@@ -250,13 +250,15 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     // Generate report
     if let Some(output_format) = opts.output_format {
         generate_report(
-            stdout_temp_file,
+            &stdout_temp_file,
             project_info,
             detectors_info,
             opts.output_path,
             output_format,
         )?;
     }
+
+    stdout_temp_file.close()?;
 
     Ok(())
 }
@@ -403,7 +405,7 @@ fn run_dylint(
         }
     }
 
-    if options.args.contains(&"--message-format=json".to_string()) {
+    if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
         let stdout_content = fs::read(stdout_temp_file.path())
             .with_context(|| pretty_error("Failed to read stdout temporary file"))?;
         std::io::stdout()
@@ -417,7 +419,7 @@ fn run_dylint(
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    stdout_temp_file: NamedTempFile,
+    stdout_temp_file: &NamedTempFile,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
@@ -519,8 +521,6 @@ fn generate_report(
             report.generate_pdf(&path)?;
         }
     }
-
-    stdout_temp_file.close()?;
 
     Ok(())
 }
