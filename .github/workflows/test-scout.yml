@@ -1,0 +1,61 @@
+name: Test Scout Audit
+
+# On all pull requests
+on:
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - "apps/cargo-scout-audit/**"
+      - "scout-audit-dylint-linting/**"
+      - "scout-audit-clippy-utils/**"
+      - "scout-audit-clippy-config/**"
+
+env:
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  install-dependencies:
+    name: Install dependencies
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-13
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache cargo dependencies and tool versions
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ~/.rustup
+          key: ${{ runner.os }}-test-scout-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-test-scout-
+
+      - name: Install Rust nightly and add rust-src
+        run: |
+          rustup install nightly-2023-12-16
+          rustup component add rust-src --toolchain nightly-2023-12-16
+
+      - name: Install dylint, dylint-link
+        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link
+
+      - name: Install local scout
+        run: cargo install --path apps/cargo-scout-audit
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests toml
+
+      - name: Run tests
+        run: python scripts/test-scout.py
