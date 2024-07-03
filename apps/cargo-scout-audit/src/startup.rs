@@ -1,7 +1,6 @@
 use core::panic;
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
-use regex::Regex;
 use std::{
     collections::HashMap,
     env, fs,
@@ -11,20 +10,19 @@ use std::{
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::{Metadata, MetadataCommand};
+use cargo_metadata::MetadataCommand;
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
     detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
     output::raw_report::RawReport,
-    scout::blockchain::BlockChain,
-    scout::project_info::ProjectInfo,
+    scout::{blockchain::BlockChain, project_info::ProjectInfo},
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{print_error, print_warning},
+        print::{pretty_error, pretty_warning},
     },
 };
 
@@ -267,7 +265,10 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
     }
 
     let rustup_home = env::var("RUSTUP_HOME").unwrap_or_else(|_| {
-        print_warning("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'");
+        println!(
+            "{}",
+            pretty_error("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'")
+        );
         "~/.rustup".to_string()
     });
 
@@ -318,9 +319,12 @@ fn run_dylint(
     };
 
     if dylint::run(&options).is_err() {
-        print_error("Failed to run dylint, most likely due to an issue in the code.");
+        println!(
+            "{}",
+            pretty_error("Failed to run dylint, most likely due to an issue in the code.")
+        );
         if opts.output_format.is_some() {
-            print_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.");
+            println!("{}",pretty_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again."));
         }
     }
 
