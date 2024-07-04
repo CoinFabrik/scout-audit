@@ -5,9 +5,11 @@ use regex::Regex;
 use std::{
     collections::HashMap,
     env, fs,
+    io::Write,
     path::{Path, PathBuf},
     process::{Child, Command},
 };
+use tempfile::NamedTempFile;
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
@@ -22,7 +24,7 @@ use crate::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{print_error, print_warning},
+        print::{pretty_error, print_error, print_warning},
     },
 };
 
@@ -248,13 +250,15 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     // Generate report
     if let Some(output_format) = opts.output_format {
         generate_report(
-            stdout_temp_file,
+            &stdout_temp_file,
             project_info,
             detectors_info,
             opts.output_path,
             output_format,
         )?;
     }
+
+    stdout_temp_file.close()?;
 
     Ok(())
 }
@@ -361,22 +365,23 @@ fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
     _bc_dependency: BlockChain,
-) -> Result<tempfile::NamedTempFile> {
+) -> Result<NamedTempFile> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
-        .map(|path| path.to_string_lossy().to_string())
+        .map(|path| path.to_string_lossy().into_owned())
         .collect();
 
     // Initialize temporary file for stdout
-    let stdout_temp_file = tempfile::NamedTempFile::new()?;
-    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().to_string());
+    let stdout_temp_file = NamedTempFile::new()
+        .with_context(|| pretty_error("Failed to create stdout temporary file"))?;
+    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
     let manifest_path = opts
         .manifest_path
         .as_ref()
-        .map(|p| p.to_string_lossy().to_string());
+        .map(|p| p.to_string_lossy().into_owned());
 
     // Prepare arguments
     let mut args = opts.args.clone();
@@ -400,12 +405,21 @@ fn run_dylint(
         }
     }
 
+    if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
+        let stdout_content = fs::read(stdout_temp_file.path())
+            .with_context(|| pretty_error("Failed to read stdout temporary file"))?;
+        std::io::stdout()
+            .lock()
+            .write_all(&stdout_content)
+            .with_context(|| pretty_error("Failed to write stdout content"))?;
+    }
+
     Ok(stdout_temp_file)
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    stdout_temp_file: tempfile::NamedTempFile,
+    stdout_temp_file: &NamedTempFile,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
@@ -507,8 +521,6 @@ fn generate_report(
             report.generate_pdf(&path)?;
         }
     }
-
-    stdout_temp_file.close()?;
 
     Ok(())
 }
