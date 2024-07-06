@@ -4,9 +4,11 @@ use lazy_static::lazy_static;
 use std::{
     collections::HashMap,
     env, fs,
+    io::Write,
     path::{Path, PathBuf},
     process::{Child, Command},
 };
+use tempfile::NamedTempFile;
 
 use anyhow::{bail, Context, Ok, Result};
 use cargo::Config;
@@ -157,17 +159,18 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     // Prepare configurations
+    fs::metadata("Cargo.toml").with_context(|| "Cargo.toml file could not be found, please ensure that scout is being run in a rust project")?;
     let mut metadata = MetadataCommand::new();
     if let Some(manifest_path) = &opts.manifest_path {
         metadata.manifest_path(manifest_path);
     }
     let metadata = metadata
         .exec()
-        .context("Metadata command execution failed.")?;
+        .with_context(|| "Could not execute metadata command on this project.")?;
 
     let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
-    let cargo_config = Config::default().context("Failed to get config")?;
+    let cargo_config = Config::default().with_context(|| "Failed to get cargo config")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
@@ -175,9 +178,9 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     });
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
-            .context("Failed to get local detectors configuration")?,
+            .with_context(|| "Failed to get local detectors configuration")?,
         None => get_detectors_configuration(bc_dependency)
-            .context("Failed to get detectors configuration")?,
+            .with_context(|| "Failed to get detectors configuration")?,
     };
 
     // Instantiate detectors
@@ -190,7 +193,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let mut detectors_names = detectors
         .get_detector_names()
-        .context("Failed to build detectors")?;
+        .with_context(|| "Failed to build detectors")?;
 
     if opts.list_detectors {
         list_detectors(detectors_names);
@@ -199,7 +202,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     detectors_names = if let Some(profile) = &opts.profile {
         let config = open_config_or_default(bc_dependency, detectors_names.clone())
-            .context("Failed to load or generate config")?;
+            .with_context(|| "Failed to load or generate config")?;
 
         profile_enabled_detectors(config, profile.clone())?
     } else {
@@ -216,7 +219,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let detectors_paths = detectors
         .build(bc_dependency, used_detectors)
-        .context("Failed to build detectors bis")?;
+        .with_context(|| "Failed to build detectors bis")?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
@@ -227,22 +230,24 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     let project_info =
-        ProjectInfo::get_project_info(&metadata).context("Failed to get project info")?;
+        ProjectInfo::get_project_info(&metadata).with_context(|| "Failed to get project info")?;
 
     // Run dylint
-    let stdout_temp_file =
-        run_dylint(detectors_paths, &opts, bc_dependency).context("Failed to run dylint")?;
+    let stdout_temp_file = run_dylint(detectors_paths, &opts, bc_dependency)
+        .with_context(|| "Failed to run dylint")?;
 
     // Generate report
     if let Some(output_format) = opts.output_format {
         generate_report(
-            stdout_temp_file,
+            &stdout_temp_file,
             project_info,
             detectors_info,
             opts.output_path,
             output_format,
         )?;
     }
+
+    stdout_temp_file.close()?;
 
     Ok(())
 }
@@ -276,14 +281,18 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
         .join("toolchains")
         .join(format!("{}-{}", NIGHTLY_VERSION, CURRENT_PLATFORM))
         .join("lib");
-    let mut command = Command::new(env::args().next().context("No program name found")?);
+    let mut command = Command::new(
+        env::args()
+            .next()
+            .with_context(|| "No program name found")?,
+    );
     command
         .args(env::args().skip(1))
         .env(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
 
     let child = command
         .spawn()
-        .context("Failed to spawn scout with nightly toolchain")?;
+        .with_context(|| "Failed to spawn scout with nightly toolchain")?;
     Ok(Some(child))
 }
 
@@ -292,22 +301,23 @@ fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
     _bc_dependency: BlockChain,
-) -> Result<tempfile::NamedTempFile> {
+) -> Result<NamedTempFile> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
-        .map(|path| path.to_string_lossy().to_string())
+        .map(|path| path.to_string_lossy().into_owned())
         .collect();
 
     // Initialize temporary file for stdout
-    let stdout_temp_file = tempfile::NamedTempFile::new()?;
-    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().to_string());
+    let stdout_temp_file = NamedTempFile::new()
+        .with_context(|| pretty_error("Failed to create stdout temporary file"))?;
+    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
     let manifest_path = opts
         .manifest_path
         .as_ref()
-        .map(|p| p.to_string_lossy().to_string());
+        .map(|p| p.to_string_lossy().into_owned());
 
     let options = Dylint {
         paths: detectors_paths,
@@ -328,12 +338,21 @@ fn run_dylint(
         }
     }
 
+    if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
+        let stdout_content = fs::read(stdout_temp_file.path())
+            .with_context(|| pretty_error("Failed to read stdout temporary file"))?;
+        std::io::stdout()
+            .lock()
+            .write_all(&stdout_content)
+            .with_context(|| pretty_error("Failed to write stdout content"))?;
+    }
+
     Ok(stdout_temp_file)
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    stdout_temp_file: tempfile::NamedTempFile,
+    stdout_temp_file: &NamedTempFile,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
@@ -366,7 +385,7 @@ fn generate_report(
                     .to_str()
                     .expect("Path conversion to string failed"),
             )
-            .context("Failed to open HTML report")?;
+            .with_context(|| "Failed to open HTML report")?;
         }
 
         OutputFormat::Json => {
@@ -435,8 +454,6 @@ fn generate_report(
             report.generate_pdf(&path)?;
         }
     }
-
-    stdout_temp_file.close()?;
 
     Ok(())
 }
