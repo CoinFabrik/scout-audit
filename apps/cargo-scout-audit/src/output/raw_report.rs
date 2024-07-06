@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde_json::Value;
+use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
 
@@ -17,9 +18,9 @@ impl RawReport {
     ) -> Result<Report> {
         let scout_findings =
             parse_scout_findings(scout_output).context("Failed to parse scout findings")?;
-        let (findings, det_map) = process_findings(&scout_findings, info, detector_info)
+        let findings = process_findings(&scout_findings, info, detector_info)
             .context("Failed to process findings")?;
-        let categories = generate_categories(&det_map, detector_info)
+        let categories = generate_categories(detector_info, &findings)
             .context("Failed to generate categories")?;
         let summary = create_summary(detector_info, info, &findings);
         Ok(Report::new(
@@ -53,7 +54,7 @@ fn process_findings(
     scout_findings: &[Value],
     info: &ProjectInfo,
     detector_info: &HashMap<String, LintInfo>,
-) -> Result<(Vec<Finding>, HashMap<String, u32>)> {
+) -> Result<Vec<Finding>> {
     let mut det_map: HashMap<String, u32> = HashMap::new();
     let mut findings: Vec<Finding> = Vec::new();
 
@@ -89,7 +90,7 @@ fn process_findings(
         });
     }
 
-    Ok((findings, det_map))
+    Ok(findings)
 }
 
 fn parse_category(finding: &Value) -> Result<String> {
@@ -155,15 +156,21 @@ fn extract_code_snippet(file_path: &PathBuf, finding: &Value) -> Result<String> 
     let byte_start = sp
         .get("byte_start")
         .and_then(Value::as_u64)
-        .context("Byte start is missing in spans")? as usize;
+        .context("Byte start is missing in spans")?;
     let byte_end = sp
         .get("byte_end")
         .and_then(Value::as_u64)
-        .context("Byte end is missing in spans")? as usize;
+        .context("Byte end is missing in spans")?;
 
-    let file_content = std::fs::read_to_string(file_path)?;
+    let file = std::fs::File::open(file_path)
+        .with_context(|| format!("Failed to open file: {}", file_path.display()))?;
+    let mut reader = BufReader::new(file);
 
-    Ok(file_content[byte_start..byte_end].to_string())
+    reader.seek(SeekFrom::Start(byte_start))?;
+    let mut buffer = vec![0; (byte_end - byte_start) as usize];
+    reader.read_exact(&mut buffer)?;
+
+    String::from_utf8(buffer).with_context(|| "Failed to convert extracted bytes to UTF-8 string")
 }
 
 fn parse_error_message(finding: &Value) -> String {
@@ -176,25 +183,34 @@ fn parse_error_message(finding: &Value) -> String {
 }
 
 fn generate_categories(
-    det_map: &HashMap<String, u32>,
     detector_info: &HashMap<String, LintInfo>,
+    findings: &[Finding],
 ) -> Result<Vec<Category>> {
-    let mut categories: Vec<Category> = Vec::new();
-    for (id, count) in det_map {
-        if *count == 0 {
-            continue;
+    let mut categories: HashMap<String, Category> = HashMap::new();
+
+    for finding in findings {
+        if let Some(vuln_info) = detector_info.get(&finding.vulnerability_id) {
+            let category = categories
+                .entry(vuln_info.vulnerability_class.clone())
+                .or_insert_with(|| Category {
+                    id: vuln_info.vulnerability_class.clone(),
+                    name: vuln_info.name.clone(),
+                    vulnerabilities: Vec::new(),
+                });
+
+            if !category
+                .vulnerabilities
+                .iter()
+                .any(|v| v.id == finding.vulnerability_id)
+            {
+                category
+                    .vulnerabilities
+                    .push(Vulnerability::from(vuln_info));
+            }
         }
-        let vuln_info = detector_info
-            .get(id)
-            .with_context(|| format!("Vulnerability info not found for id: {}", id))?;
-        let category = Category {
-            id: vuln_info.vulnerability_class.clone(),
-            name: vuln_info.name.clone(),
-            vulnerabilities: vec![Vulnerability::from(vuln_info)],
-        };
-        categories.push(category);
     }
-    Ok(categories)
+
+    Ok(categories.into_values().collect())
 }
 
 #[tracing::instrument(name = "CREATE SUMMARY", level = "trace", skip_all)]
