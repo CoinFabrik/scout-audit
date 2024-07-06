@@ -24,7 +24,7 @@ use crate::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{pretty_error, pretty_warning},
+        print::{print_error, print_warning},
     },
 };
 
@@ -127,6 +127,10 @@ impl Scout {
                 "--no-default-features".to_string(),
                 "-Zbuild-std=std,core,alloc".to_string(),
             ]);
+        }
+
+        if self.output_format.is_some() {
+            self.args.push("--message-format=json".to_string());
         }
     }
 
@@ -270,10 +274,7 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
     }
 
     let rustup_home = env::var("RUSTUP_HOME").unwrap_or_else(|_| {
-        println!(
-            "{}",
-            pretty_error("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'")
-        );
+        print_error("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'");
         "~/.rustup".to_string()
     });
 
@@ -309,8 +310,8 @@ fn run_dylint(
         .collect();
 
     // Initialize temporary file for stdout
-    let stdout_temp_file = NamedTempFile::new()
-        .with_context(|| pretty_error("Failed to create stdout temporary file"))?;
+    let stdout_temp_file =
+        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
@@ -329,22 +330,19 @@ fn run_dylint(
     };
 
     if dylint::run(&options).is_err() {
-        println!(
-            "{}",
-            pretty_error("Failed to run dylint, most likely due to an issue in the code.")
-        );
+        print_error("Failed to run dylint, most likely due to an issue in the code.");
         if opts.output_format.is_some() {
-            println!("{}",pretty_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again."));
+            print_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.");
         }
     }
 
     if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
         let stdout_content = fs::read(stdout_temp_file.path())
-            .with_context(|| pretty_error("Failed to read stdout temporary file"))?;
+            .with_context(|| ("Failed to read stdout temporary file"))?;
         std::io::stdout()
             .lock()
             .write_all(&stdout_content)
-            .with_context(|| pretty_error("Failed to write stdout content"))?;
+            .with_context(|| ("Failed to write stdout content"))?;
     }
 
     Ok(stdout_temp_file)
@@ -383,7 +381,7 @@ fn generate_report(
             webbrowser::open(
                 html_path
                     .to_str()
-                    .expect("Path conversion to string failed"),
+                    .with_context(|| "Path conversion to string failed")?,
             )
             .with_context(|| "Failed to open HTML report")?;
         }

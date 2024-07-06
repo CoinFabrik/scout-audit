@@ -27,7 +27,7 @@ impl BlockChain {
             .with_context(|| {
                 let supported_blockchains = BlockChain::variants().join(", ");
                 format!(
-                    "\n\n-> Error: Could not find any supported blockchain dependency in the Cargo.toml file.\n   Supported blockchains include:\n   - {}\n",
+                    "Could not find any supported blockchain dependency in the Cargo.toml file.\n   Supported blockchains include:\n   - {}\n",
                     supported_blockchains.replace(", ", "\n   - ")
                 )
             })?;
