@@ -17,7 +17,9 @@ pub struct DetectorConfiguration {
 pub type DetectorsConfigurationList = Vec<DetectorConfiguration>;
 
 /// Returns list of detectors.
-pub fn get_detectors_configuration(blockchain: BlockChain) -> Result<DetectorsConfigurationList> {
+pub fn get_remote_detectors_configuration(
+    blockchain: BlockChain,
+) -> Result<DetectorsConfigurationList> {
     let dependency = Dependency::parse(
         "library",
         None,

@@ -17,7 +17,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
-    detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
+    detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
     output::raw_report::RawReport,
     scout::{blockchain::BlockChain, project_info::ProjectInfo},
     utils::{
@@ -174,7 +174,8 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
-    let cargo_config = Config::default().with_context(|| "Failed to create default cargo configuration")?;
+    let cargo_config =
+        Config::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
@@ -183,8 +184,8 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
             .with_context(|| "Failed to get local detectors configuration")?,
-        None => get_detectors_configuration(bc_dependency)
-            .with_context(|| "Failed to get detectors configuration")?,
+        None => get_remote_detectors_configuration(bc_dependency)
+            .with_context(|| "Failed to get remote detectors configuration")?,
     };
 
     // Instantiate detectors
