@@ -1,6 +1,5 @@
 name: Test Scout Audit
 
-# On all pull requests
 on:
   pull_request:
     branches:
@@ -11,12 +10,9 @@ on:
       - "scout-audit-clippy-utils/**"
       - "scout-audit-clippy-config/**"
 
-env:
-  PYTHONUNBUFFERED: 1
-
 jobs:
-  install-dependencies:
-    name: Install dependencies
+  run-tests:
+    name: Run tests
     strategy:
       matrix:
         os:
@@ -45,17 +41,9 @@ jobs:
         run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link
 
       - name: Install local scout
-        run: cargo install --path apps/cargo-scout-audit
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests toml
+        working-directory: apps/cargo-scout-audit
+        run: cargo install --path .
 
       - name: Run tests
-        run: python scripts/test-scout.py
+        working-directory: apps/cargo-scout-audit
+        run: cargo test --all --all-features

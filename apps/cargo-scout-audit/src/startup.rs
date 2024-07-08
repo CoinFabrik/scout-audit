@@ -37,6 +37,7 @@ pub struct Cli {
 pub enum CargoSubCommand {
     ScoutAudit(Scout),
 }
+
 #[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
 pub enum OutputFormat {
     #[default]
@@ -455,11 +456,7 @@ fn generate_report(
                 None => fs::File::create("raw-report.json")?,
             };
 
-            let mut cts = String::new();
-
-            std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
-
-            std::io::Write::write(&mut json_file, cts.as_bytes())?;
+            std::io::Write::write(&mut json_file, content.as_bytes())?;
         }
         OutputFormat::Markdown => {
             // Generate Markdown
