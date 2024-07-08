@@ -62,16 +62,6 @@ impl Library {
             std::fs::create_dir_all(&target_dir)?;
         }
 
-        /*let target_compiled_library_paths = compiled_library_paths
-            .into_iter()
-            .map(|p| {
-                let target_path = target_dir.join(p.file_name().unwrap());
-                std::fs::copy(&p, &target_path)?;
-                Ok(target_path)
-            })
-            .collect::<Result<Vec<PathBuf>>>()?;
-        Ok(target_compiled_library_paths)
-        */
         Ok(compiled_library_paths)
     }
 

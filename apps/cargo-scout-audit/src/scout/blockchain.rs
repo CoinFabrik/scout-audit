@@ -14,6 +14,13 @@ impl BlockChain {
         Self::iter().map(|e| e.to_string()).collect()
     }
 
+    pub fn get_detectors_url(&self) -> &'static str {
+        match self {
+            BlockChain::Ink => "https://github.com/CoinFabrik/scout",
+            BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
+        }
+    }
+
     #[tracing::instrument(name = "GET BLOCKCHAIN DEPENDENCY", level = "debug", skip_all)]
     pub fn get_blockchain_dependency(metadata: &Metadata) -> Result<Self> {
         let blockchain = metadata

@@ -174,7 +174,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
-    let cargo_config = Config::default().with_context(|| "Failed to get cargo config")?;
+    let cargo_config = Config::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
