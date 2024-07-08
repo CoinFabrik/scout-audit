@@ -1,6 +1,6 @@
 use cargo_scout_audit::{
     startup::{run_scout, CargoSubCommand, Cli},
-    utils::telemetry::{self},
+    utils::{print::print_error, telemetry},
 };
 use clap::Parser;
 
@@ -13,7 +13,7 @@ fn main() {
     match cli.subcmd {
         CargoSubCommand::ScoutAudit(opts) => {
             if let Err(e) = run_scout(opts) {
-                eprintln!("{}", e);
+                print_error(&e.to_string());
                 std::process::exit(1);
             }
         }
