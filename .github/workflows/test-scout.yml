@@ -1,0 +1,95 @@
+name: Test Scout Audit
+
+on:
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - "apps/cargo-scout-audit/**"
+      - "scout-audit-dylint-linting/**"
+      - "scout-audit-clippy-utils/**"
+      - "scout-audit-clippy-config/**"
+
+jobs:
+  run-tests:
+    name: Run tests
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-13
+    runs-on: ${{ matrix.os }}
+    outputs:
+      linux_status: ${{ steps.run-tests.outputs.linux_status }}
+      macos_status: ${{ steps.run-tests.outputs.macos_status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache cargo dependencies and tool versions
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ~/.rustup
+          key: ${{ runner.os }}-test-scout-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-test-scout-
+
+      - name: Install dependencies
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y wkhtmltopdf
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install wkhtmltopdf
+          fi
+
+      - name: Install Rust nightly and add rust-src
+        run: |
+          rustup install nightly-2023-12-16
+          rustup component add rust-src --toolchain nightly-2023-12-16
+
+      - name: Install dylint, dylint-link
+        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
+
+      - name: Install local scout
+        working-directory: apps/cargo-scout-audit
+        run: cargo install --path .
+
+      - name: Run tests and set output
+        id: run-tests
+        working-directory: apps/cargo-scout-audit
+        run: |
+          if cargo test --all --all-features; then
+            echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  comment-on-pr:
+    name: Comment on PR about test status
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [run-tests]
+    steps:
+      - name: Find existing comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "📝 Test results"
+
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 📝 Test results
+            | OS     | Status |
+            |--------|--------|
+            | Ubuntu | ${{ needs.run-tests.outputs.linux_status == 'success' && '✅ Passed' || '❌ Error' }} |
+            | macOS  | ${{ needs.run-tests.outputs.macos_status  == 'success' && '✅ Passed' || '❌ Error' }} |

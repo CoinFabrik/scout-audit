@@ -46,3 +46,8 @@ node_modules
 report.sarif
 report.html
 report.json
+report.md
+
+# Python virtual environment
+env/
+venv/
