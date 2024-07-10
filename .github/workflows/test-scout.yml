@@ -19,6 +19,9 @@ jobs:
           - ubuntu-latest
           - macos-13
     runs-on: ${{ matrix.os }}
+    outputs:
+      ubuntu_status: ${{ steps.run-tests.outputs.ubuntu_status }}
+      macos_status: ${{ steps.run-tests.outputs.macos_status }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -32,6 +35,15 @@ jobs:
           key: ${{ runner.os }}-test-scout-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-test-scout-
 
+      - name: Install dependencies
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y wkhtmltopdf
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install wkhtmltopdf
+          fi
+
       - name: Install Rust nightly and add rust-src
         run: |
           rustup install nightly-2023-12-16
@@ -44,6 +56,37 @@ jobs:
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
 
-      - name: Run tests
+      - name: Run tests and set output
+        id: run-tests
         working-directory: apps/cargo-scout-audit
-        run: cargo test --all --all-features
+        run: |
+          if cargo test --all --all-features; then
+            echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
+          fi
+
+  comment-on-pr:
+    name: Comment on PR about test status
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [run-tests]
+    steps:
+      - name: Find existing comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "📝 Test results"
+
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 📝 Test results
+            | OS     | Status |
+            |--------|--------|
+            | Ubuntu | ${{ needs.run-tests.outputs.ubuntu_status == 'success' && '✅ Passed' || '❌ Error' }} |
+            | macOS  | ${{ needs.run-tests.outputs.macos_status  == 'success' && '✅ Passed' || '❌ Error' }} |
