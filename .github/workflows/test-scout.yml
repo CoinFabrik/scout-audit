@@ -62,6 +62,9 @@ jobs:
         run: |
           if cargo test --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
   comment-on-pr:
