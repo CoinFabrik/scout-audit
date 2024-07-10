@@ -298,11 +298,11 @@ fn run_scout_in_nightly() -> Result<Option<Child>> {
         .join("toolchains")
         .join(format!("{}-{}", NIGHTLY_VERSION, CURRENT_PLATFORM))
         .join("lib");
-    let mut command = Command::new(
-        env::args()
-            .next()
-            .with_context(|| "No program name found")?,
-    );
+
+    let program_name =
+        env::current_exe().with_context(|| "Failed to get current executable path")?;
+
+    let mut command = Command::new(program_name);
     command
         .args(env::args().skip(1))
         .env(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
