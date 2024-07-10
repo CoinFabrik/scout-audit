@@ -20,7 +20,7 @@ jobs:
           - macos-13
     runs-on: ${{ matrix.os }}
     outputs:
-      ubuntu_status: ${{ steps.run-tests.outputs.ubuntu_status }}
+      linux_status: ${{ steps.run-tests.outputs.linux_status }}
       macos_status: ${{ steps.run-tests.outputs.macos_status }}
     steps:
       - name: Checkout Code
@@ -91,5 +91,5 @@ jobs:
             ## 📝 Test results
             | OS     | Status |
             |--------|--------|
-            | Ubuntu | ${{ needs.run-tests.outputs.ubuntu_status == 'success' && '✅ Passed' || '❌ Error' }} |
+            | Ubuntu | ${{ needs.run-tests.outputs.linux_status == 'success' && '✅ Passed' || '❌ Error' }} |
             | macOS  | ${{ needs.run-tests.outputs.macos_status  == 'success' && '✅ Passed' || '❌ Error' }} |
