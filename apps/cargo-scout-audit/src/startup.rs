@@ -10,9 +10,9 @@ use std::{
 };
 use tempfile::NamedTempFile;
 
-use anyhow::{bail, Context, Ok, Result};
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
@@ -150,6 +150,33 @@ impl Scout {
     }
 }
 
+fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
+    let mut metadata_command = MetadataCommand::new();
+
+    if let Some(manifest_path) = manifest_path {
+        if !manifest_path.ends_with("Cargo.toml") {
+            bail!(
+                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\nManifest path: {:?}",
+                manifest_path
+            );
+        }
+
+        fs::metadata(manifest_path).with_context(|| {
+            format!(
+                "Cargo.toml file not found, ensure the path is a valid file path.\nManifest path: {:?}",
+                manifest_path
+            )
+        })?;
+
+        metadata_command.manifest_path(manifest_path);
+    }
+
+    metadata_command
+        .exec()
+        .map_err(|e| {
+            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\nCaused by: {}", e.to_string())})
+}
+
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<()> {
     opts.validate()?;
@@ -162,15 +189,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    // Prepare configurations
-    fs::metadata("Cargo.toml").with_context(|| "Cargo.toml file could not be found, please ensure that scout is being run in a rust project")?;
-    let mut metadata = MetadataCommand::new();
-    if let Some(manifest_path) = &opts.manifest_path {
-        metadata.manifest_path(manifest_path);
-    }
-    let metadata = metadata
-        .exec()
-        .with_context(|| "Could not execute metadata command on this project.")?;
+    let metadata = get_project_metadata(&opts.manifest_path)?;
 
     let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
