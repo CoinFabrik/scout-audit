@@ -200,6 +200,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     } else {
         cargo::core::Verbosity::Quiet
     });
+
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
             .with_context(|| "Failed to get local detectors configuration")?,
@@ -208,19 +209,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     // Instantiate detectors
-    let detectors = Detectors::new(
-        cargo_config,
-        detectors_config,
-        metadata.clone(),
-        opts.verbose,
-    );
+    let detectors = Detectors::new(cargo_config, detectors_config, &metadata, opts.verbose);
 
     let mut detectors_names = detectors
         .get_detector_names()
-        .with_context(|| "Failed to build detectors")?;
+        .with_context(|| "Failed to get detector names")?;
 
     if opts.list_detectors {
-        list_detectors(detectors_names);
+        list_detectors(&detectors_names);
         return Ok(());
     }
 
@@ -234,16 +230,16 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     let used_detectors = if let Some(filter) = &opts.filter {
-        get_filtered_detectors(filter.to_string(), detectors_names)?
+        get_filtered_detectors(filter, &detectors_names)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded.to_string(), detectors_names)?
+        get_excluded_detectors(excluded, &detectors_names)?
     } else {
         detectors_names
     };
 
     let detectors_paths = detectors
-        .build(bc_dependency, used_detectors)
-        .with_context(|| "Failed to build detectors bis")?;
+        .build(bc_dependency, &used_detectors)
+        .with_context(|| "Failed to build detectors")?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 

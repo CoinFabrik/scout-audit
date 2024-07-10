@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use cargo::Config;
 use itertools::Itertools;
 
@@ -16,22 +16,22 @@ mod library;
 mod source;
 
 use cargo_metadata::Metadata;
-pub use configuration::{get_remote_detectors_configuration, get_local_detectors_configuration};
+pub use configuration::{get_local_detectors_configuration, get_remote_detectors_configuration};
 
 #[derive(Debug)]
-pub struct Detectors {
+pub struct Detectors<'a> {
     cargo_config: Config,
     detectors_configs: DetectorsConfigurationList,
-    metadata: Metadata,
+    metadata: &'a Metadata,
     verbose: bool,
 }
 
-impl Detectors {
+impl<'a> Detectors<'a> {
     /// Creates a new instance of `Detectors`
     pub fn new(
         cargo_config: Config,
         detectors_configs: DetectorsConfigurationList,
-        metadata: Metadata,
+        metadata: &'a Metadata,
         verbose: bool,
     ) -> Self {
         Self {
@@ -43,49 +43,42 @@ impl Detectors {
     }
 
     /// Builds detectors and returns the paths to the built libraries
-    pub fn build(self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
-        let detectors_paths = self
-            .detectors_configs
+    pub fn build(self, bc: BlockChain, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
+        self.detectors_configs
             .iter()
-            .map(|detectors_config| {
-                self.build_detectors(detectors_config.clone(), bc, used_detectors.clone())
-            })
+            .map(|detectors_config| self.build_detectors(detectors_config, bc, used_detectors))
             .flatten_ok()
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(detectors_paths)
+            .collect::<Result<Vec<_>>>()
     }
 
     pub fn get_detector_names(&self) -> Result<Vec<String>> {
-        let detectors_names = self
-            .detectors_configs
+        self.detectors_configs
             .iter()
             .map(|detectors_config| {
                 let builder = DetectorBuilder::new(
                     &self.cargo_config,
-                    detectors_config.clone(),
-                    self.metadata.clone(),
+                    detectors_config,
+                    self.metadata,
                     self.verbose,
                 );
                 builder.get_detector_names()
             })
             .flatten_ok()
-            .collect::<Result<Vec<_>>>()?;
-        Ok(detectors_names)
+            .collect::<Result<Vec<_>>>()
     }
 
     fn build_detectors(
         &self,
-        detectors_config: DetectorConfiguration,
+        detectors_config: &DetectorConfiguration,
         bc: BlockChain,
-        used_detectors: Vec<String>,
+        used_detectors: &[String],
     ) -> Result<Vec<PathBuf>> {
         let builder = DetectorBuilder::new(
             &self.cargo_config,
             detectors_config,
-            self.metadata.clone(),
+            self.metadata,
             self.verbose,
         );
-        builder.build(bc, used_detectors)
+        builder.build(bc, used_detectors.to_vec())
     }
 }

@@ -13,8 +13,8 @@ use crate::{
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a Config,
-    detectors_config: DetectorConfiguration,
-    root_metadata: Metadata,
+    detectors_config: &'a DetectorConfiguration,
+    root_metadata: &'a Metadata,
     verbose: bool,
 }
 
@@ -22,8 +22,8 @@ impl<'a> DetectorBuilder<'a> {
     /// Creates a new instance of `DetectorsBuilder`.
     pub fn new(
         cargo_config: &'a Config,
-        detectors_config: DetectorConfiguration,
-        root_metadata: Metadata,
+        detectors_config: &'a DetectorConfiguration,
+        root_metadata: &'a Metadata,
         verbose: bool,
     ) -> Self {
         Self {
