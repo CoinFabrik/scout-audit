@@ -106,6 +106,9 @@ mod tests {
     }
 
     fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
+        // For debugging purposes
+        let output_format = format.clone();
+
         // Given
         let scout_opts = Scout {
             manifest_path: Some(CONTRACT_PATH.clone()),
@@ -118,27 +121,47 @@ mod tests {
         let result = run_scout(scout_opts);
 
         // Then
-        assert!(result.is_ok(), "Scout should run");
+        assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
 
         // Check if file exists and is a file
         let metadata = fs::metadata(output_file);
-        assert!(metadata.is_ok(), "Metadata should be readable",);
+        assert!(
+            metadata.is_ok(),
+            "[{:?}] Metadata should be readable",
+            output_format
+        );
         let metadata = metadata.unwrap();
-        assert!(metadata.is_file(), "Output should be a file",);
+        assert!(
+            metadata.is_file(),
+            "[{:?}] Output should be a file",
+            output_format
+        );
 
         // Check file size
-        assert!(metadata.len() > 0, "File should not be empty",);
+        assert!(
+            metadata.len() > 0,
+            "[{:?}] File should not be empty",
+            output_format
+        );
 
         if format == &OutputFormat::Pdf {
             return Ok(());
         }
         // Read file contents
         let contents = fs::read_to_string(output_file);
-        assert!(contents.is_ok(), "File should be readable",);
+        assert!(
+            contents.is_ok(),
+            "[{:?}] File should be readable",
+            output_format
+        );
         let contents = contents.unwrap();
 
         // Check file contents
-        assert!(!contents.is_empty(), "File contents should not be empty",);
+        assert!(
+            !contents.is_empty(),
+            "[{:?}] File contents should not be empty",
+            output_format
+        );
 
         Ok(())
     }

@@ -50,7 +50,7 @@ jobs:
           rustup component add rust-src --toolchain nightly-2023-12-16
 
       - name: Install dylint, dylint-link
-        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link --locked
+        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
 
       - name: Install local scout
         working-directory: apps/cargo-scout-audit
