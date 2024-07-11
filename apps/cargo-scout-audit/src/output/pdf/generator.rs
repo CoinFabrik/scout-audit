@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::output::{
-    report::{Category, Finding},
+    report::{Category, Finding, Report},
     utils,
 };
 
@@ -28,14 +28,27 @@ pub fn generate_header(date: String) -> String {
 }
 
 // Generate the summary for the report
-pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String {
-    let mut summary_markdown = String::from("<h2>Summary</h2>");
-    let findings_summary = summarize_findings(categories, findings);
+pub fn generate_summary(report: &Report) -> String {
+    let mut summary_html = String::from("<h2>Summary</h2>");
 
-    for category in categories {
+    // Add "Executed on" section
+    summary_html.push_str("<h3>Executed on:</h3><ul>");
+    for package in &report.summary.executed_on {
+        summary_html.push_str(&format!(
+            "<li><a href=\"#\" style=\"text-decoration: none; color: inherit;\">{}</a></li>",
+            package.name
+        ));
+    }
+    summary_html.push_str("</ul>");
+
+    // Add "Issues found" section
+    summary_html.push_str("<h3>Issues found:</h3><ul>");
+    let findings_summary = summarize_findings(&report.categories, &report.findings);
+
+    for category in &report.categories {
         if let Some((count, severity)) = findings_summary.get(&category.id) {
-            summary_markdown.push_str(&format!(
-                " - <a href=\"{}\">{}</a> ({} results) ({})<br>",
+            summary_html.push_str(&format!(
+                "<li><a href=\"#{}\" style=\"text-decoration: none; color: inherit;\">{} ({} results) ({})</a></li>",
                 utils::sanitize_category_name(&category.name),
                 category.name,
                 count,
@@ -43,9 +56,9 @@ pub fn generate_summary(categories: &[Category], findings: &[Finding]) -> String
             ));
         }
     }
+    summary_html.push_str("</ul>");
 
-    summary_markdown.push_str("<br>");
-    summary_markdown
+    summary_html
 }
 
 // This function summarizes the findings by category
@@ -75,61 +88,54 @@ pub fn generate_body(categories: &[Category], findings: &[Finding]) -> String {
     categories
         .iter()
         .map(|category| {
-            let category_markdown = generate_category(category);
+            let html_category = generate_category(category);
             let table = generate_table_for_category(category, findings);
-            format!("{}{}", category_markdown, table)
+            format!("{}{}", html_category, table)
         })
         .collect::<Vec<_>>()
-        .join("<br>")
+        .join("\n")
 }
 
 // Function to generate HTML for a category
 fn generate_category(category: &Category) -> String {
-    let mut category_markdown = format!("<h2>{}</h2><br>", category.name);
+    let mut html_category = format!("<h2>{}</h2>\n", category.id);
     for vulnerability in &category.vulnerabilities {
-        category_markdown.push_str(&format!("<h3>{}</h3><br>", vulnerability.name));
-        category_markdown.push_str(&format!(
-            "<strong>Impact:</strong> <span style=\"font-weight: bold\">{}</span><br><br>",
+        html_category.push_str(&format!("<h3>{}</h3>\n", vulnerability.name));
+        html_category.push_str(&format!(
+            "<p><strong>Impact:</strong> {}</p>\n",
             utils::capitalize(&vulnerability.severity)
         ));
-        category_markdown.push_str(&format!(
-            "<strong>Description:</strong> {}<br><br>",
+        html_category.push_str(&format!(
+            "<p><strong>Description:</strong> {}</p>\n",
             vulnerability.short_message
         ));
-        category_markdown.push_str(&format!(
-            "<strong>More about:</strong> <a href=\"{}\">here</a><br><br>",
+        html_category.push_str(&format!(
+            "<p><strong>More about:</strong> <a href=\"{}\">here</a></p>\n",
             vulnerability.help
         ));
     }
-    category_markdown
+    html_category
 }
 
 // Function to generate a table for a category
 fn generate_table_for_category(category: &Category, findings: &[Finding]) -> String {
-    let table_header = "<table style=\"width: 100%; table-layout: fixed;\"><thead><tr>\
+    let table_header = "<table style=\"width: 100%; table-layout: fixed;\">\n<thead>\n<tr>\
                         <th style=\"width: 20%;\">ID</th>\
-                        <th style=\"width: 60%;\">Detection</th>\
-                        <th style=\"width: 20%;\">Status</th>\
-                        </tr></thead><tbody>\n";
+                        <th style=\"width: 30%;\">Package</th>\
+                        <th style=\"width: 50%;\">Detection</th>\
+                        </tr>\n</thead>\n<tbody>\n";
     let table_body: String = findings
         .iter()
         .filter(|finding| finding.category_id == category.id)
         .map(generate_finding)
         .collect();
-    format!(
-        "{}{}{}</tbody></table><br><br>",
-        table_header, table_body, "</tbody></table><br><br>"
-    )
+    format!("{}{}</tbody>\n</table>\n", table_header, table_body)
 }
 
-// Function to generate Markdown for a finding
+// Function to generate HTML for a finding
 fn generate_finding(finding: &Finding) -> String {
-    let status_options = "<ul><li>- [ ] False Positive </li>\
-                          <li>- [ ] Acknowledged</li>\
-                          <li>- [ ] Resolved</li></ul>";
-
     format!(
-        "<tr><td>{}</td><td><a >{}</a></td><td>{}</td></tr>\n",
-        finding.id, finding.span, status_options
+        "<tr>\n<td>{}</td>\n<td>{}</td>\n<td>{}</td>\n</tr>\n",
+        finding.id, finding.package, finding.span
     )
 }

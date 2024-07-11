@@ -4,8 +4,10 @@ use anyhow::Result;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
-use crate::startup::BlockChain;
-use crate::utils::{cargo, env};
+use crate::{
+    scout::blockchain::BlockChain,
+    utils::{cargo, env},
+};
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
 pub struct Library {
@@ -50,7 +52,6 @@ impl Library {
             .into_iter()
             .filter(|p| !p.exists())
             .collect_vec();
-
         if !unexistant_libraries.is_empty() {
             anyhow::bail!("Could not determine if {:?} exist", unexistant_libraries);
         }
@@ -61,16 +62,6 @@ impl Library {
             std::fs::create_dir_all(&target_dir)?;
         }
 
-        /*let target_compiled_library_paths = compiled_library_paths
-            .into_iter()
-            .map(|p| {
-                let target_path = target_dir.join(p.file_name().unwrap());
-                std::fs::copy(&p, &target_path)?;
-                Ok(target_path)
-            })
-            .collect::<Result<Vec<PathBuf>>>()?;
-        Ok(target_compiled_library_paths)
-        */
         Ok(compiled_library_paths)
     }
 

@@ -3,6 +3,7 @@ name: Test Release
 on:
   pull_request:
     branches:
+      - develop
       - main
     paths:
       - "apps/cargo-scout-audit/**"
@@ -12,6 +13,8 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
+  REGISTRY: coinfabrik
+  IMAGE_NAME: scout
 
 jobs:
   filter-paths:
@@ -91,11 +94,54 @@ jobs:
           python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
           echo "result=success" >> $GITHUB_OUTPUT
 
+  test-docker-release:
+    name: Test docker release
+    runs-on: ubuntu-latest
+    needs: filter-paths
+    if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    outputs:
+      docker-release: ${{ steps.test-docker-release.outputs.result }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get scout version
+        id: scout-version
+        run: |
+          version=$(cat apps/cargo-scout-audit/Cargo.toml | grep '^version' | head -1 | awk -F '"' '{print $2}')
+          echo "Version extracted: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha
+          push: false
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
+
+      - name: Set Docker release status
+        id: test-docker-release
+        run: echo "result=success" >> $GITHUB_OUTPUT
+
   comment-on-pr:
     name: Comment on PR about release status
     runs-on: ubuntu-latest
     if: ${{ always() }}
-    needs: [filter-paths, test-release]
+    needs: [filter-paths, test-release, test-docker-release]
     steps:
       - name: Find existing comment
         id: find_comment
@@ -119,3 +165,4 @@ jobs:
             | [scout-audit-dylint-linting](https://crates.io/crates/scout-audit-dylint-linting) | ${{ needs.filter-paths.outputs.dylint-linting == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.dylint-linting == 'true' && (needs.test-release.outputs.dylint-linting == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
             | [scout-audit-clippy-utils](https://crates.io/crates/scout-audit-clippy-utils) | ${{ needs.filter-paths.outputs.clippy-utils == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.clippy-utils == 'true' && (needs.test-release.outputs.clippy-utils == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
             | [scout-audit-clippy-config](https://crates.io/crates/scout-audit-clippy-config) | ${{ needs.filter-paths.outputs.clippy-config == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.clippy-config == 'true' && (needs.test-release.outputs.clippy-config == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
+            | [scout-docker](https://hub.docker.com/repository/docker/coinfabrik/scout/general) | ${{ needs.filter-paths.outputs.scout-audit == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.scout-audit == 'true' && (needs.test-docker-release.outputs.docker-release == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |

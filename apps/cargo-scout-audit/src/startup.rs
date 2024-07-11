@@ -1,26 +1,23 @@
-use core::panic;
-use current_platform::CURRENT_PLATFORM;
-use std::{
-    collections::HashMap,
-    env, fs,
-    hash::{Hash, Hasher},
-    path::PathBuf,
-    process::{Child, Command},
-};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
+use tempfile::NamedTempFile;
 
-use anyhow::{bail, Context, Ok, Result};
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::Config;
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
-    detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::report::generate_report,
+    detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
+    output::raw_report::RawReport,
+    scout::{
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+    },
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
+        print::{print_error, print_warning},
     },
 };
 
@@ -35,6 +32,7 @@ pub struct Cli {
 pub enum CargoSubCommand {
     ScoutAudit(Scout),
 }
+
 #[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
 pub enum OutputFormat {
     #[default]
@@ -46,7 +44,6 @@ pub enum OutputFormat {
     #[clap(name = "md-gh")]
     MarkdownGithub,
     Sarif,
-    Text,
     Pdf,
 }
 
@@ -90,14 +87,8 @@ pub struct Scout {
     #[clap(last = true, help = "Arguments for `cargo check`.")]
     pub args: Vec<String>,
 
-    #[clap(
-        short,
-        long,
-        value_name = "type",
-        help = "Sets the output type",
-        default_value = "text"
-    )]
-    pub output_format: OutputFormat,
+    #[clap(short, long, value_name = "type", help = "Sets the output type")]
+    pub output_format: Option<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -122,109 +113,108 @@ pub struct Scout {
     pub detectors_metadata: bool,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum BlockChain {
-    Ink,
-    Soroban,
-}
+impl Scout {
+    fn prepare_args(&mut self) {
+        if !self.args.iter().any(|x| x.contains("--target=")) {
+            self.args.extend([
+                "--target=wasm32-unknown-unknown".to_string(),
+                "--no-default-features".to_string(),
+                "-Zbuild-std=std,core,alloc".to_string(),
+            ]);
+        }
 
-#[derive(Debug)]
-pub struct ProjectInfo {
-    pub name: String,
-    pub description: String,
-    pub hash: String,
-    pub workspace_root: PathBuf,
-}
-
-pub fn run_scout(mut opts: Scout) -> Result<()> {
-    let opt_child = run_scout_in_nightly()?;
-    if let Some(mut child) = opt_child {
-        child.wait()?;
-        return Ok(());
-    }
-
-    // If the target is not set to wasm32-unknown-unknown, set it
-    let target_args_flag = "--target=wasm32-unknown-unknown".to_string();
-    let no_default = "--no-default-features".to_string();
-    let z_build_std = "-Zbuild-std=std,core,alloc".to_string();
-
-    if !opts.args.iter().any(|x| x.contains("--target=")) {
-        opts.args
-            .extend([target_args_flag, no_default, z_build_std])
-    }
-
-    // Validations
-    if opts.filter.is_some() && opts.exclude.is_some() {
-        panic!("You can't use `--exclude` and `--filter` at the same time.");
-    }
-
-    if opts.filter.is_some() && opts.profile.is_some() {
-        panic!("You can't use `--exclude` and `--profile` at the same time.");
-    }
-
-    if let Some(path) = &opts.output_path {
-        if path.is_dir() {
-            bail!("The output path can't be a directory.");
+        if self.output_format.is_some() {
+            self.args.push("--message-format=json".to_string());
         }
     }
 
-    // Prepare configurations
-    let mut metadata = MetadataCommand::new();
-    if let Some(manifest_path) = &opts.manifest_path {
-        metadata.manifest_path(manifest_path);
+    fn validate(&self) -> Result<()> {
+        if self.filter.is_some() && self.exclude.is_some() {
+            bail!("The flags `--filter` and `--exclude` can't be used together");
+        }
+        if self.filter.is_some() && self.profile.is_some() {
+            bail!("The flags `--filter` and `--profile` can't be used together");
+        }
+        if let Some(path) = &self.output_path {
+            if path.is_dir() {
+                bail!("The output path can't be a directory");
+            }
+        }
+        Ok(())
+    }
+}
+
+fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
+    let mut metadata_command = MetadataCommand::new();
+
+    if let Some(manifest_path) = manifest_path {
+        if !manifest_path.ends_with("Cargo.toml") {
+            bail!(
+                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\n     → Manifest path: {:?}",
+                manifest_path
+            );
+        }
+
+        fs::metadata(manifest_path).context(format!(
+            "Cargo.toml file not found, ensure the path is a valid file path.\n     → Manifest path: {:?}",
+            manifest_path
+        ))?;
+
+        metadata_command.manifest_path(manifest_path);
     }
 
-    let metadata = metadata.exec().context("Failed to get metadata")?;
+    metadata_command
+        .exec()
+        .map_err(|e| {
+            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
+}
 
-    let bc_dependency = metadata
-        .packages
-        .iter()
-        .find_map(|p| match p.name.as_str() {
-            "soroban-sdk" => Some(BlockChain::Soroban),
-            "ink" => Some(BlockChain::Ink),
-            _ => None,
-        })
-        .expect("Blockchain dependency not found");
+#[tracing::instrument(name = "RUN SCOUT", skip_all)]
+pub fn run_scout(mut opts: Scout) -> Result<()> {
+    opts.validate()?;
+    opts.prepare_args();
 
-    let cargo_config = Config::default().context("Failed to get config")?;
+    if let Some(mut child) = run_scout_in_nightly()? {
+        child
+            .wait()
+            .with_context(|| "Failed to wait for nightly child process")?;
+        return Ok(());
+    }
+
+    let metadata = get_project_metadata(&opts.manifest_path)?;
+
+    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+
+    let cargo_config =
+        Config::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
         cargo::core::Verbosity::Quiet
     });
+
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
-            .context("Failed to get local detectors configuration")?,
-        None => get_detectors_configuration(bc_dependency)
-            .context("Failed to get detectors configuration")?,
+            .with_context(|| "Failed to get local detectors configuration")?,
+        None => get_remote_detectors_configuration(bc_dependency)
+            .with_context(|| "Failed to get remote detectors configuration")?,
     };
 
-    // Miscellaneous configurations
-    // If there is a need to exclude or filter by detector, the dylint tool needs to be recompiled.
-    // TODO: improve detector system so that doing this isn't necessary.
-    /*if opts.exclude.is_some() || opts.filter.is_some() {
-        remove_target_dylint(&opts.manifest_path)?;
-    }*/
-
     // Instantiate detectors
-    let detectors = Detectors::new(
-        cargo_config,
-        detectors_config,
-        metadata.clone(),
-        opts.verbose,
-    );
+    let detectors = Detectors::new(cargo_config, detectors_config, &metadata, opts.verbose);
+
     let mut detectors_names = detectors
         .get_detector_names()
-        .context("Failed to build detectors")?;
+        .with_context(|| "Failed to get detector names")?;
 
     if opts.list_detectors {
-        list_detectors(detectors_names);
+        list_detectors(&detectors_names);
         return Ok(());
     }
 
     detectors_names = if let Some(profile) = &opts.profile {
         let config = open_config_or_default(bc_dependency, detectors_names.clone())
-            .context("Failed to load or generate config")?;
+            .with_context(|| "Failed to load or generate config")?;
 
         profile_enabled_detectors(config, profile.clone())?
     } else {
@@ -232,16 +222,21 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     let used_detectors = if let Some(filter) = &opts.filter {
-        get_filtered_detectors(filter.to_string(), detectors_names)?
+        get_filtered_detectors(filter, &detectors_names)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded.to_string(), detectors_names)?
+        get_excluded_detectors(excluded, &detectors_names)
     } else {
         detectors_names
     };
 
     let detectors_paths = detectors
-        .build(bc_dependency, used_detectors)
-        .context("Failed to build detectors bis")?;
+        .build(bc_dependency, &used_detectors)
+        .map_err(|e| {
+            anyhow!(
+                "Failed to build detectors.\n\n     → Caused by: {}",
+                e.to_string()
+            )
+        })?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
@@ -251,189 +246,152 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let root = metadata.root_package().unwrap();
-
-    let mut hasher = std::hash::DefaultHasher::new();
-
-    root.id.hash(&mut hasher);
-    let info = ProjectInfo {
-        name: root.name.clone(),
-        description: root.description.clone().unwrap_or_default(),
-        hash: hasher.finish().to_string(),
-        workspace_root: metadata.workspace_root.clone().into(),
-    };
+    let project_info =
+        ProjectInfo::get_project_info(&metadata).with_context(|| "Failed to get project info")?;
 
     // Run dylint
-    run_dylint(detectors_paths, opts, bc_dependency, info, detectors_info)
-        .context("Failed to run dylint")?;
+    let stdout_temp_file = run_dylint(detectors_paths, &opts, bc_dependency)
+        .with_context(|| "Failed to run dylint")?;
+
+    // Generate report
+    if let Some(output_format) = opts.output_format {
+        generate_report(
+            &stdout_temp_file,
+            project_info,
+            detectors_info,
+            opts.output_path,
+            output_format,
+        )?;
+    }
+
+    stdout_temp_file.close()?;
 
     Ok(())
 }
 
-fn run_scout_in_nightly() -> Result<Option<Child>> {
-    #[cfg(target_os = "linux")]
-    let var_name = "LD_LIBRARY_PATH";
-    #[cfg(target_os = "macos")]
-    let var_name = "DYLD_FALLBACK_LIBRARY_PATH";
-    let toolchain = std::env::var(var_name)?;
-    if !toolchain.contains("nightly-2023-12-16") {
-        let current_platform = CURRENT_PLATFORM;
-        let rustup_home = env::var("RUSTUP_HOME")?;
-
-        let lib_path =
-            rustup_home.clone() + "/toolchains/nightly-2023-12-16-" + current_platform + "/lib";
-
-        let args: Vec<String> = env::args().collect();
-        let program = args[0].clone();
-
-        let mut command = Command::new(program);
-        for arg in args.iter().skip(1) {
-            command.arg(arg);
-        }
-
-        command.env(var_name, lib_path);
-        let child = command.spawn()?;
-        Ok(Some(child))
-    } else {
-        Ok(None)
-    }
-}
-
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
-    mut opts: Scout,
+    opts: &Scout,
     _bc_dependency: BlockChain,
-    info: ProjectInfo,
-    detectors_info: HashMap<String, LintInfo>,
-) -> Result<()> {
+) -> Result<NamedTempFile> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
-        .map(|path| path.to_string_lossy().to_string())
+        .map(|path| path.to_string_lossy().into_owned())
         .collect();
 
-    // Initialize options
-    let stderr_temp_file = tempfile::NamedTempFile::new()?;
-    let stdout_temp_file = tempfile::NamedTempFile::new()?;
+    // Initialize temporary file for stdout
+    let stdout_temp_file =
+        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
+    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
-    let is_output_stdout = opts.output_format == OutputFormat::Text && opts.output_path.is_none();
-    let is_output_stdout_json = opts.args.contains(&"--message-format=json".to_string());
-
-    let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().to_string());
-    let pipe_stderr = if is_output_stdout && !is_output_stdout_json {
-        None
-    } else {
-        Some(stderr_temp_file.path().to_string_lossy().to_string())
-    };
-
-    if opts.output_format != OutputFormat::Text {
-        opts.args.push("--message-format=json".to_string());
-    }
+    // Get the manifest path
+    let manifest_path = opts
+        .manifest_path
+        .as_ref()
+        .map(|p| p.to_string_lossy().into_owned());
 
     let options = Dylint {
         paths: detectors_paths,
-        args: opts.args,
-        manifest_path: opts.manifest_path.map(|p| p.to_string_lossy().to_string()),
+        args: opts.args.clone(),
         pipe_stdout,
-        pipe_stderr,
+        manifest_path,
         quiet: !opts.verbose,
         ..Default::default()
     };
 
-    dylint::run(&options)?;
-
-    // Format output and write to file (if necessary)
-    if is_output_stdout && !is_output_stdout_json {
-        return Ok(());
+    if dylint::run(&options).is_err() {
+        print_error("Failed to run dylint, most likely due to an issue in the code.");
+        if opts.output_format.is_some() {
+            print_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.");
+        }
     }
 
-    let mut stderr_file = fs::File::open(stderr_temp_file.path())?;
+    if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
+        let stdout_content = fs::read(stdout_temp_file.path())
+            .with_context(|| ("Failed to read stdout temporary file"))?;
+        std::io::stdout()
+            .lock()
+            .write_all(&stdout_content)
+            .with_context(|| ("Failed to write stdout content"))?;
+    }
+
+    Ok(stdout_temp_file)
+}
+
+#[tracing::instrument(name = "GENERATE REPORT", skip_all)]
+fn generate_report(
+    stdout_temp_file: &NamedTempFile,
+    project_info: ProjectInfo,
+    detectors_info: HashMap<String, LintInfo>,
+    output_path: Option<PathBuf>,
+    output_format: OutputFormat,
+) -> Result<()> {
+    // Read the stdout temporary file
     let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
 
-    // Generate output from report
-    match opts.output_format {
+    // Generate report
+    let mut content = String::new();
+    std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
+    let report = RawReport::generate_report(&content, &project_info, &detectors_info)?;
+
+    tracing::trace!(?output_format, "Output format");
+    tracing::trace!(?report, "Report");
+
+    // Save the report
+    match output_format {
         OutputFormat::Html => {
-            //read json_file to a string
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
-            // Generate HTML
+            // Generate HTML report
             let html = report.generate_html()?;
 
-            let html_path = match opts.output_path {
-                Some(path) => path,
-                None => PathBuf::from("report.html"),
-            };
-            let mut html_file = fs::File::create(&html_path)?;
-            std::io::Write::write_all(&mut html_file, html.as_bytes())?;
+            // Save to file
+            let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
+            report.save_to_file(&html_path, html)?;
 
             // Open the HTML report in the default web browser
-            webbrowser::open(html_path.to_str().unwrap()).context("Failed to open HTML report")?;
+            webbrowser::open(
+                html_path
+                    .to_str()
+                    .with_context(|| "Path conversion to string failed")?,
+            )
+            .with_context(|| "Failed to open HTML report")?;
         }
+
         OutputFormat::Json => {
-            //read json_file to a string
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
+            // Generate JSON report
             let json = report.generate_json()?;
 
-            let mut json_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.json")?,
-            };
-
-            std::io::Write::write_all(&mut json_file, json.as_bytes())?;
+            // Save to file
+            let json_path = output_path.unwrap_or_else(|| PathBuf::from("report.json"));
+            report.save_to_file(&json_path, json)?;
         }
         OutputFormat::RawJson => {
-            let mut json_file = match &opts.output_path {
+            let mut json_file = match &output_path {
                 Some(path) => fs::File::create(path)?,
                 None => fs::File::create("raw-report.json")?,
             };
 
-            let mut cts = String::new();
-
-            std::io::Read::read_to_string(&mut stdout_file, &mut cts)?;
-
-            std::io::Write::write(&mut json_file, cts.as_bytes())?;
+            std::io::Write::write(&mut json_file, content.as_bytes())?;
         }
         OutputFormat::Markdown => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
             // Generate Markdown
-            let md_text = report.generate_markdown(true)?;
+            let markdown = report.generate_markdown(true)?;
 
-            let mut md_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.md")?,
-            };
-
-            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
+            // Save to file
+            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+            report.save_to_file(&md_path, markdown)?;
         }
         OutputFormat::MarkdownGithub => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
             // Generate Markdown
-            let md_text = report.generate_markdown(false)?;
+            let markdown = report.generate_markdown(false)?;
 
-            let mut md_file = match &opts.output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("report.md")?,
-            };
-
-            std::io::Write::write_all(&mut md_file, md_text.as_bytes())?;
+            // Save to file
+            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+            report.save_to_file(&md_path, markdown)?;
         }
         OutputFormat::Sarif => {
-            let path = if let Some(path) = opts.output_path {
+            let path = if let Some(path) = output_path {
                 path
             } else {
                 PathBuf::from("report.sarif")
@@ -453,25 +411,8 @@ fn run_dylint(
 
             std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
         }
-        OutputFormat::Text => {
-            // If the output path is not set, dylint prints the report to stdout
-            if let Some(output_file) = opts.output_path {
-                let mut txt_file = fs::File::create(output_file)?;
-                std::io::copy(&mut stderr_file, &mut txt_file)?;
-            } else {
-                let stdout = std::io::stdout();
-                let mut handle = stdout.lock();
-                std::io::copy(&mut stdout_file, &mut handle)
-                    .expect("Error writing dylint result to stdout");
-            }
-        }
         OutputFormat::Pdf => {
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let report = generate_report(content, info, detectors_info);
-
-            let path = if let Some(path) = opts.output_path {
+            let path = if let Some(path) = output_path {
                 path
             } else {
                 PathBuf::from("report.pdf")
@@ -479,9 +420,6 @@ fn run_dylint(
             report.generate_pdf(&path)?;
         }
     }
-
-    stderr_temp_file.close()?;
-    stdout_temp_file.close()?;
 
     Ok(())
 }

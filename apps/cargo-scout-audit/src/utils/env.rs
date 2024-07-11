@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 macro_rules! declare_const {
     ($var: ident) => {
         pub const $var: &str = stringify!($var);
