@@ -157,17 +157,15 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
     if let Some(manifest_path) = manifest_path {
         if !manifest_path.ends_with("Cargo.toml") {
             bail!(
-                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\nManifest path: {:?}",
+                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\n     → Manifest path: {:?}",
                 manifest_path
             );
         }
 
-        fs::metadata(manifest_path).with_context(|| {
-            format!(
-                "Cargo.toml file not found, ensure the path is a valid file path.\nManifest path: {:?}",
-                manifest_path
-            )
-        })?;
+        fs::metadata(manifest_path).context(format!(
+            "Cargo.toml file not found, ensure the path is a valid file path.\n     → Manifest path: {:?}",
+            manifest_path
+        ))?;
 
         metadata_command.manifest_path(manifest_path);
     }
@@ -175,7 +173,7 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
     metadata_command
         .exec()
         .map_err(|e| {
-            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\nCaused by: {}", e.to_string())})
+            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -233,14 +231,19 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let used_detectors = if let Some(filter) = &opts.filter {
         get_filtered_detectors(filter, &detectors_names)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded, &detectors_names)?
+        get_excluded_detectors(excluded, &detectors_names)
     } else {
         detectors_names
     };
 
     let detectors_paths = detectors
         .build(bc_dependency, &used_detectors)
-        .with_context(|| "Failed to build detectors")?;
+        .map_err(|e| {
+            anyhow!(
+                "Failed to build detectors.\n\n     → Caused by: {}",
+                e.to_string()
+            )
+        })?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 

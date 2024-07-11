@@ -23,19 +23,19 @@ pub fn get_filtered_detectors(filter: &str, detectors_names: &[String]) -> Resul
                 acc.push(detector.clone());
                 Ok(acc)
             } else {
-                bail!("The detector '{}' doesn't exist", detector)
+                bail!("The detector '{}' does not exist. Use the `--list` flag to see available detectors.", detector)
             }
         })
 }
 
-pub fn get_excluded_detectors(excluded: &str, detectors_names: &[String]) -> Result<Vec<String>> {
+pub fn get_excluded_detectors(excluded: &str, detectors_names: &[String]) -> Vec<String> {
     let excluded_set: HashSet<_> = parse_detectors(excluded).into_iter().collect();
 
-    Ok(detectors_names
+    detectors_names
         .iter()
         .filter(|&name| !excluded_set.contains(name))
         .cloned()
-        .collect())
+        .collect()
 }
 
 pub fn list_detectors(detectors_names: &[String]) {
