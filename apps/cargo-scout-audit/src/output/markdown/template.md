@@ -1,29 +1,11 @@
 {% if render_styles == true %}
-
 <style>
-  .markdown-body table {
-    min-width: 100%;
-    width: 100%;
-    display: table;
-  }
-  thead {
-    min-width: 100%;
-    width: 100%;
-  }
-  th {
-    min-width: 60%;
-    width: 60%;
-  }
-  th:last-child {
-    min-width: 20%;
-    width: 20%;
-  }
-  th:first-child {
-    min-width: 20%;
-    width: 20%;
-  }
+.markdown-body table {min-width: 100%;width: 100%;display: table;}
+thead {min-width: 100%;width: 100%;}
+th {min-width: 60%;width: 60%;}
+th:last-child {min-width: 20%;width: 20%;}
+th:first-child {min-width: 20%;width: 20%;}
 </style>
-
 {% endif %}
 
 # Scout Report - {{ report.name }} - {{ report.date }}
@@ -33,18 +15,12 @@
 Executed on:
 
 {% for package in report.summary.executed_on %}
-
-- [{{ package.name }}]({{ package.relative_path }})
-
-{% endfor %}
+- [{{ package.name }}]({{ package.relative_path }}){% endfor %}
 
 Issues found:
 
 {% for category in summary.categories %}
-
-- [{{ category.name }}](#{{ category.link }}) ({{ category.results_count }} results) ({{ category.severity }})
-
-{% endfor %}
+- [{{ category.name }}](#{{ category.link }}) ({{ category.results_count }} results) ({{ category.severity }}){% endfor %}
 
 {% for category in report.categories %}
 
