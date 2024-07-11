@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -66,7 +66,7 @@ pub struct Finding {
     pub span: String,
     pub code_snippet: String,
     pub package: String,
-    pub file: String,
+    pub file_path: String,
 }
 
 impl From<&LintInfo> for Vulnerability {
@@ -128,7 +128,7 @@ impl Report {
         std::process::Command::new("which")
             .arg("wkhtmltopdf")
             .output()
-            .expect("Please, install wkhtmltopdf to generate pdf reports.");
+            .with_context(|| "Please, install wkhtmltopdf to generate pdf reports.")?;
 
         let mut child = std::process::Command::new("wkhtmltopdf")
             .arg(temp_html)

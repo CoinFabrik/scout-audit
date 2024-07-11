@@ -1,47 +1,44 @@
+use std::collections::HashSet;
+
 use anyhow::bail;
 use anyhow::Result;
 
-fn get_parsed_detectors(detectors: String) -> Vec<String> {
+fn parse_detectors(detectors: &str) -> Vec<String> {
     detectors
         .to_lowercase()
-        .trim()
-        .replace('_', "-")
         .split(',')
-        .map(|detector| detector.trim().to_string())
-        .collect::<Vec<String>>()
+        .map(|detector| detector.trim().replace('_', "-"))
+        .filter(|s| !s.is_empty())
+        .collect()
 }
 
-pub fn get_filtered_detectors(filter: String, detectors_names: Vec<String>) -> Result<Vec<String>> {
-    let mut used_detectors: Vec<String> = Vec::new();
-    let parsed_detectors = get_parsed_detectors(filter);
-    for detector in parsed_detectors {
-        if detectors_names.contains(&detector.to_string()) {
-            used_detectors.push(detector.to_string());
-        } else {
-            bail!("The detector '{}' doesn't exist", detector);
-        }
-    }
-    Ok(used_detectors)
+pub fn get_filtered_detectors(filter: &str, detectors_names: &[String]) -> Result<Vec<String>> {
+    let detectors_set: HashSet<_> = detectors_names.iter().collect();
+    let parsed_detectors = parse_detectors(filter);
+
+    parsed_detectors
+        .iter()
+        .try_fold(Vec::new(), |mut acc, detector| {
+            if detectors_set.contains(detector) {
+                acc.push(detector.clone());
+                Ok(acc)
+            } else {
+                bail!("The detector '{}' does not exist. Use the `--list` flag to see available detectors.", detector)
+            }
+        })
 }
 
-pub fn get_excluded_detectors(
-    excluded: String,
-    detectors_names: Vec<String>,
-) -> Result<Vec<String>> {
-    let mut used_detectors = detectors_names.clone();
-    let parsed_detectors = get_parsed_detectors(excluded);
-    for detector in parsed_detectors {
-        if detectors_names.contains(&detector.to_string()) {
-            let index = used_detectors.iter().position(|x| x == &detector).unwrap();
-            used_detectors.remove(index);
-        } else {
-            bail!("The detector '{}' doesn't exist", detector);
-        }
-    }
-    Ok(used_detectors)
+pub fn get_excluded_detectors(excluded: &str, detectors_names: &[String]) -> Vec<String> {
+    let excluded_set: HashSet<_> = parse_detectors(excluded).into_iter().collect();
+
+    detectors_names
+        .iter()
+        .filter(|&name| !excluded_set.contains(name))
+        .cloned()
+        .collect()
 }
 
-pub fn list_detectors(detectors_names: Vec<String>) {
+pub fn list_detectors(detectors_names: &[String]) {
     let separator = "─".repeat(48);
     let upper_border = format!("┌{}┐", separator);
     let lower_border = format!("└{}┘", separator);

@@ -68,7 +68,7 @@ Issues found:
 | --- | ------- | ------------- |
 {% for finding in report.findings -%}
 {% if finding.category_id == category.id and finding.vulnerability_id == vulnerability.id -%}
-| {{ finding.id }} | {{ finding.package }} | [{{ finding.span }}]({{ finding.file }}) |
+| {{ finding.id }} | {{ finding.package }} | [{{ finding.span }}]({{ finding.file_path }}) |
 {% endif -%}
 {% endfor -%}
 

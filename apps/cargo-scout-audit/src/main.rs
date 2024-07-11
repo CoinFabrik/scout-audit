@@ -13,7 +13,7 @@ fn main() {
     match cli.subcmd {
         CargoSubCommand::ScoutAudit(opts) => {
             if let Err(e) = run_scout(opts) {
-                print_error(&e.to_string());
+                print_error(e.to_string().trim());
                 std::process::exit(1);
             }
         }

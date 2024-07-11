@@ -1,30 +1,23 @@
-use core::panic;
-use current_platform::CURRENT_PLATFORM;
-use lazy_static::lazy_static;
-use regex::Regex;
-use std::{
-    collections::HashMap,
-    env, fs,
-    io::Write,
-    path::{Path, PathBuf},
-    process::{Child, Command},
-};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
-use anyhow::{bail, Context, Ok, Result};
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::Config;
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::Dylint;
 
 use crate::{
-    detectors::{get_detectors_configuration, get_local_detectors_configuration, Detectors},
-    output::{raw_report::RawReport, report::Package},
+    detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
+    output::raw_report::RawReport,
+    scout::{
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+    },
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{pretty_error, print_error, print_warning},
+        print::{print_error, print_warning},
     },
 };
 
@@ -120,101 +113,108 @@ pub struct Scout {
     pub detectors_metadata: bool,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum BlockChain {
-    Ink,
-    Soroban,
-}
+impl Scout {
+    fn prepare_args(&mut self) {
+        if !self.args.iter().any(|x| x.contains("--target=")) {
+            self.args.extend([
+                "--target=wasm32-unknown-unknown".to_string(),
+                "--no-default-features".to_string(),
+                "-Zbuild-std=std,core,alloc".to_string(),
+            ]);
+        }
 
-#[derive(Debug)]
-pub struct ProjectInfo {
-    pub name: String,
-    pub date: String,
-    pub workspace_root: PathBuf,
-    pub packages: Vec<Package>,
-}
-
-pub fn run_scout(mut opts: Scout) -> Result<()> {
-    let opt_child = run_scout_in_nightly()?;
-    if let Some(mut child) = opt_child {
-        child.wait()?;
-        return Ok(());
-    }
-
-    // If the target is not set to wasm32-unknown-unknown, set it
-    let target_args_flag = "--target=wasm32-unknown-unknown".to_string();
-    let no_default = "--no-default-features".to_string();
-    let z_build_std = "-Zbuild-std=std,core,alloc".to_string();
-
-    if !opts.args.iter().any(|x| x.contains("--target=")) {
-        opts.args
-            .extend([target_args_flag, no_default, z_build_std])
-    }
-
-    // Validations
-    if opts.filter.is_some() && opts.exclude.is_some() {
-        panic!("You can't use `--exclude` and `--filter` at the same time.");
-    }
-
-    if opts.filter.is_some() && opts.profile.is_some() {
-        panic!("You can't use `--exclude` and `--profile` at the same time.");
-    }
-
-    if let Some(path) = &opts.output_path {
-        if path.is_dir() {
-            bail!("The output path can't be a directory.");
+        if self.output_format.is_some() {
+            self.args.push("--message-format=json".to_string());
         }
     }
 
-    // Prepare configurations
-    let mut metadata = MetadataCommand::new();
-    if let Some(manifest_path) = &opts.manifest_path {
-        metadata.manifest_path(manifest_path);
+    fn validate(&self) -> Result<()> {
+        if self.filter.is_some() && self.exclude.is_some() {
+            bail!("The flags `--filter` and `--exclude` can't be used together");
+        }
+        if self.filter.is_some() && self.profile.is_some() {
+            bail!("The flags `--filter` and `--profile` can't be used together");
+        }
+        if let Some(path) = &self.output_path {
+            if path.is_dir() {
+                bail!("The output path can't be a directory");
+            }
+        }
+        Ok(())
     }
-    let metadata = metadata.exec().context("Failed to get metadata")?;
+}
 
-    let bc_dependency = metadata
-        .packages
-        .iter()
-        .find_map(|p| match p.name.as_str() {
-            "soroban-sdk" => Some(BlockChain::Soroban),
-            "ink" => Some(BlockChain::Ink),
-            _ => None,
-        })
-        .expect("Blockchain dependency not found");
+fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
+    let mut metadata_command = MetadataCommand::new();
 
-    let cargo_config = Config::default().context("Failed to get config")?;
+    if let Some(manifest_path) = manifest_path {
+        if !manifest_path.ends_with("Cargo.toml") {
+            bail!(
+                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\n     → Manifest path: {:?}",
+                manifest_path
+            );
+        }
+
+        fs::metadata(manifest_path).context(format!(
+            "Cargo.toml file not found, ensure the path is a valid file path.\n     → Manifest path: {:?}",
+            manifest_path
+        ))?;
+
+        metadata_command.manifest_path(manifest_path);
+    }
+
+    metadata_command
+        .exec()
+        .map_err(|e| {
+            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
+}
+
+#[tracing::instrument(name = "RUN SCOUT", skip_all)]
+pub fn run_scout(mut opts: Scout) -> Result<()> {
+    opts.validate()?;
+    opts.prepare_args();
+
+    if let Some(mut child) = run_scout_in_nightly()? {
+        child
+            .wait()
+            .with_context(|| "Failed to wait for nightly child process")?;
+        return Ok(());
+    }
+
+    let metadata = get_project_metadata(&opts.manifest_path)?;
+
+    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+
+    let cargo_config =
+        Config::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
         cargo::core::Verbosity::Quiet
     });
+
     let detectors_config = match &opts.local_detectors {
         Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
-            .context("Failed to get local detectors configuration")?,
-        None => get_detectors_configuration(bc_dependency)
-            .context("Failed to get detectors configuration")?,
+            .with_context(|| "Failed to get local detectors configuration")?,
+        None => get_remote_detectors_configuration(bc_dependency)
+            .with_context(|| "Failed to get remote detectors configuration")?,
     };
 
     // Instantiate detectors
-    let detectors = Detectors::new(
-        cargo_config,
-        detectors_config,
-        metadata.clone(),
-        opts.verbose,
-    );
+    let detectors = Detectors::new(cargo_config, detectors_config, &metadata, opts.verbose);
+
     let mut detectors_names = detectors
         .get_detector_names()
-        .context("Failed to build detectors")?;
+        .with_context(|| "Failed to get detector names")?;
 
     if opts.list_detectors {
-        list_detectors(detectors_names);
+        list_detectors(&detectors_names);
         return Ok(());
     }
 
     detectors_names = if let Some(profile) = &opts.profile {
         let config = open_config_or_default(bc_dependency, detectors_names.clone())
-            .context("Failed to load or generate config")?;
+            .with_context(|| "Failed to load or generate config")?;
 
         profile_enabled_detectors(config, profile.clone())?
     } else {
@@ -222,16 +222,21 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     let used_detectors = if let Some(filter) = &opts.filter {
-        get_filtered_detectors(filter.to_string(), detectors_names)?
+        get_filtered_detectors(filter, &detectors_names)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded.to_string(), detectors_names)?
+        get_excluded_detectors(excluded, &detectors_names)
     } else {
         detectors_names
     };
 
     let detectors_paths = detectors
-        .build(bc_dependency, used_detectors)
-        .context("Failed to build detectors bis")?;
+        .build(bc_dependency, &used_detectors)
+        .map_err(|e| {
+            anyhow!(
+                "Failed to build detectors.\n\n     → Caused by: {}",
+                e.to_string()
+            )
+        })?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
@@ -241,12 +246,12 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let project_info = get_project_info(&metadata).context("Failed to get project info")?;
+    let project_info =
+        ProjectInfo::get_project_info(&metadata).with_context(|| "Failed to get project info")?;
 
     // Run dylint
-    // let (stdout_temp_file, stderr_temp_file) =
-    let stdout_temp_file =
-        run_dylint(detectors_paths, &opts, bc_dependency).context("Failed to run dylint")?;
+    let stdout_temp_file = run_dylint(detectors_paths, &opts, bc_dependency)
+        .with_context(|| "Failed to run dylint")?;
 
     // Generate report
     if let Some(output_format) = opts.output_format {
@@ -264,103 +269,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     Ok(())
 }
 
-#[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
-fn get_project_info(metadata: &Metadata) -> Result<ProjectInfo> {
-    let mut packages = Vec::new();
-    let workspace_root = &metadata.workspace_root;
-    if let Some(root_package) = metadata.root_package() {
-        // Scout is executed on a single project
-        let root = &root_package.manifest_path;
-        packages.push(Package {
-            name: root_package.name.clone(),
-            absolute_path: root.into(),
-            relative_path: root
-                .strip_prefix(workspace_root)
-                .with_context(|| "Failed to strip prefix")?
-                .into(),
-        });
-    } else if !metadata.workspace_default_members.is_empty() {
-        // Scout is executed on a workspace
-        for package_id in metadata.workspace_default_members.iter() {
-            let package = metadata
-                .packages
-                .iter()
-                .find(|p| p.id == *package_id)
-                .with_context(|| {
-                    format!("Package ID '{}' not found in the workspace", package_id)
-                })?;
-            let root = &package.manifest_path;
-            packages.push(Package {
-                name: package.name.clone(),
-                absolute_path: root.into(),
-                relative_path: root
-                    .strip_prefix(workspace_root)
-                    .with_context(|| "Failed to strip prefix")?
-                    .into(),
-            });
-        }
-    } else {
-        bail!("No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package.");
-    }
-
-    let mut project_name = String::new();
-    if let Some(name) = metadata.workspace_root.file_name() {
-        project_name = name.replace('-', " ");
-        let re = Regex::new(r"(^|\s)\w").unwrap();
-        project_name = re
-            .replace_all(&project_name, |caps: &regex::Captures| {
-                caps.get(0).unwrap().as_str().to_uppercase()
-            })
-            .to_string();
-    }
-
-    let project_info = ProjectInfo {
-        name: project_name,
-        date: chrono::Local::now().format("%Y-%m-%d").to_string(),
-        workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
-        packages,
-    };
-    tracing::trace!(?project_info, "Project info");
-    Ok(project_info)
-}
-
-const NIGHTLY_VERSION: &str = "nightly-2023-12-16";
-
-lazy_static! {
-    static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
-        "linux" => "LD_LIBRARY_PATH",
-        "macos" => "DYLD_FALLBACK_LIBRARY_PATH",
-        _ => panic!("Unsupported operating system: {}", env::consts::OS),
-    };
-}
-
-#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-fn run_scout_in_nightly() -> Result<Option<Child>> {
-    let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
-    if current_lib_path.contains(NIGHTLY_VERSION) {
-        return Ok(None);
-    }
-
-    let rustup_home = env::var("RUSTUP_HOME").unwrap_or_else(|_| {
-        print_warning("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'");
-        "~/.rustup".to_string()
-    });
-
-    let nightly_lib_path = Path::new(&rustup_home)
-        .join("toolchains")
-        .join(format!("{}-{}", NIGHTLY_VERSION, CURRENT_PLATFORM))
-        .join("lib");
-    let mut command = Command::new(env::args().next().context("No program name found")?);
-    command
-        .args(env::args().skip(1))
-        .env(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
-
-    let child = command
-        .spawn()
-        .context("Failed to spawn scout with nightly toolchain")?;
-    Ok(Some(child))
-}
-
 #[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
@@ -374,8 +282,8 @@ fn run_dylint(
         .collect();
 
     // Initialize temporary file for stdout
-    let stdout_temp_file = NamedTempFile::new()
-        .with_context(|| pretty_error("Failed to create stdout temporary file"))?;
+    let stdout_temp_file =
+        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
@@ -384,15 +292,9 @@ fn run_dylint(
         .as_ref()
         .map(|p| p.to_string_lossy().into_owned());
 
-    // Prepare arguments
-    let mut args = opts.args.clone();
-    if opts.output_format.is_some() {
-        args.push("--message-format=json".to_string());
-    }
-
     let options = Dylint {
         paths: detectors_paths,
-        args,
+        args: opts.args.clone(),
         pipe_stdout,
         manifest_path,
         quiet: !opts.verbose,
@@ -408,11 +310,11 @@ fn run_dylint(
 
     if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
         let stdout_content = fs::read(stdout_temp_file.path())
-            .with_context(|| pretty_error("Failed to read stdout temporary file"))?;
+            .with_context(|| ("Failed to read stdout temporary file"))?;
         std::io::stdout()
             .lock()
             .write_all(&stdout_content)
-            .with_context(|| pretty_error("Failed to write stdout content"))?;
+            .with_context(|| ("Failed to write stdout content"))?;
     }
 
     Ok(stdout_temp_file)
@@ -451,9 +353,9 @@ fn generate_report(
             webbrowser::open(
                 html_path
                     .to_str()
-                    .expect("Path conversion to string failed"),
+                    .with_context(|| "Path conversion to string failed")?,
             )
-            .context("Failed to open HTML report")?;
+            .with_context(|| "Failed to open HTML report")?;
         }
 
         OutputFormat::Json => {
