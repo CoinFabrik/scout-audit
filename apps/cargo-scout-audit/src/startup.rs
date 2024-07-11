@@ -1,13 +1,4 @@
-use core::panic;
-use current_platform::CURRENT_PLATFORM;
-use lazy_static::lazy_static;
-use std::{
-    collections::HashMap,
-    env, fs,
-    io::Write,
-    path::{Path, PathBuf},
-    process::{Child, Command},
-};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
 use anyhow::{anyhow, bail, Context, Ok, Result};
@@ -19,7 +10,9 @@ use dylint::Dylint;
 use crate::{
     detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
     output::raw_report::RawReport,
-    scout::{blockchain::BlockChain, project_info::ProjectInfo},
+    scout::{
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+    },
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -274,47 +267,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     stdout_temp_file.close()?;
 
     Ok(())
-}
-
-const NIGHTLY_VERSION: &str = "nightly-2023-12-16";
-
-lazy_static! {
-    static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
-        "linux" => "LD_LIBRARY_PATH",
-        "macos" => "DYLD_FALLBACK_LIBRARY_PATH",
-        _ => panic!("Unsupported operating system: {}", env::consts::OS),
-    };
-}
-
-#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-fn run_scout_in_nightly() -> Result<Option<Child>> {
-    let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
-    if current_lib_path.contains(NIGHTLY_VERSION) {
-        return Ok(None);
-    }
-
-    let rustup_home = env::var("RUSTUP_HOME").unwrap_or_else(|_| {
-        print_error("Failed to get RUSTUP_HOME, defaulting to '~/.rustup'");
-        "~/.rustup".to_string()
-    });
-
-    let nightly_lib_path = Path::new(&rustup_home)
-        .join("toolchains")
-        .join(format!("{}-{}", NIGHTLY_VERSION, CURRENT_PLATFORM))
-        .join("lib");
-
-    let program_name =
-        env::current_exe().with_context(|| "Failed to get current executable path")?;
-
-    let mut command = Command::new(program_name);
-    command
-        .args(env::args().skip(1))
-        .env(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
-
-    let child = command
-        .spawn()
-        .with_context(|| "Failed to spawn scout with nightly toolchain")?;
-    Ok(Some(child))
 }
 
 #[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
