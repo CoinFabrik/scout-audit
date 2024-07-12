@@ -66,6 +66,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests toml
 
+      - name: Install rust nightly toolchain
+        run: |
+          rustup toolchain install nightly-2024-07-11
+
       - name: Test Scout Audit
         id: scout-audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
@@ -84,7 +88,7 @@ jobs:
         id: clippy-utils
         if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
         run: |
-          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
+          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-utils --dry-run
           echo "result=success" >> $GITHUB_OUTPUT
 
       - name: Test Clippy Config
