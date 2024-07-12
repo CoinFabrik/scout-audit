@@ -66,9 +66,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests toml
 
-      - name: Install rust nightly toolchain
+      - name: Install rust nightly toolchain and dependencies
         run: |
           rustup toolchain install nightly-2024-07-11
+          rustup component add rust-src rustc-dev llvm-tools-preview
 
       - name: Test Scout Audit
         id: scout-audit
