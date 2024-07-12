@@ -69,7 +69,7 @@ jobs:
       - name: Install rust nightly toolchain and dependencies
         run: |
           rustup toolchain install nightly-2024-07-11
-          rustup component add rust-src rustc-dev llvm-tools-preview
+          rustup component add rust-src rustc-dev llvm-tools-preview --toolchain nightly-2024-07-11
 
       - name: Test Scout Audit
         id: scout-audit
