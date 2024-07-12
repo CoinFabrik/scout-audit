@@ -1,8 +1,10 @@
 use crate::msrvs::Msrv;
-use crate::types::{DisallowedPath, MacroMatcher, MatchLintBehaviour, Rename};
+use crate::types::{DisallowedPath, MacroMatcher, MatchLintBehaviour, PubUnderscoreFieldsBehaviour, Rename};
 use crate::ClippyConfiguration;
 use rustc_data_structures::fx::FxHashSet;
+use rustc_errors::Applicability;
 use rustc_session::Session;
+use rustc_span::edit_distance::edit_distance;
 use rustc_span::{BytePos, Pos, SourceFile, Span, SyntaxContext};
 use serde::de::{IgnoredAny, IntoDeserializer, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -16,6 +18,7 @@ use std::{cmp, env, fmt, fs, io};
 #[rustfmt::skip]
 const DEFAULT_DOC_VALID_IDENTS: &[&str] = &[
     "KiB", "MiB", "GiB", "TiB", "PiB", "EiB",
+    "DevOps",
     "DirectX",
     "ECMAScript",
     "GPLv2", "GPLv3",
@@ -26,8 +29,9 @@ const DEFAULT_DOC_VALID_IDENTS: &[&str] = &[
     "NaN", "NaNs",
     "OAuth", "GraphQL",
     "OCaml",
-    "OpenGL", "OpenMP", "OpenSSH", "OpenSSL", "OpenStreetMap", "OpenDNS",
-    "WebGL",
+    "OpenDNS", "OpenGL", "OpenMP", "OpenSSH", "OpenSSL", "OpenStreetMap", "OpenTelemetry",
+    "WebGL", "WebGL2", "WebGPU",
+    "WebP", "OpenExr", "YCbCr", "sRGB",
     "TensorFlow",
     "TrueType",
     "iOS", "macOS", "FreeBSD",
@@ -37,6 +41,9 @@ const DEFAULT_DOC_VALID_IDENTS: &[&str] = &[
 ];
 const DEFAULT_DISALLOWED_NAMES: &[&str] = &["foo", "baz", "quux"];
 const DEFAULT_ALLOWED_IDENTS_BELOW_MIN_CHARS: &[&str] = &["i", "j", "x", "y", "z", "w", "n"];
+const DEFAULT_ALLOWED_PREFIXES: &[&str] = &["to", "as", "into", "from", "try_into", "try_from"];
+const DEFAULT_ALLOWED_TRAITS_WITH_RENAMED_PARAMS: &[&str] =
+    &["core::convert::From", "core::convert::TryFrom", "core::str::FromStr"];
 
 /// Conf with parse errors
 #[derive(Default)]
@@ -59,18 +66,25 @@ impl TryConf {
 #[derive(Debug)]
 struct ConfError {
     message: String,
+    suggestion: Option<Suggestion>,
     span: Span,
 }
 
 impl ConfError {
     fn from_toml(file: &SourceFile, error: &toml::de::Error) -> Self {
         let span = error.span().unwrap_or(0..file.source_len.0 as usize);
-        Self::spanned(file, error.message(), span)
+        Self::spanned(file, error.message(), None, span)
     }
 
-    fn spanned(file: &SourceFile, message: impl Into<String>, span: Range<usize>) -> Self {
+    fn spanned(
+        file: &SourceFile,
+        message: impl Into<String>,
+        suggestion: Option<Suggestion>,
+        span: Range<usize>,
+    ) -> Self {
         Self {
             message: message.into(),
+            suggestion,
             span: Span::new(
                 file.start_pos + BytePos::from_usize(span.start),
                 file.start_pos + BytePos::from_usize(span.end),
@@ -147,16 +161,18 @@ macro_rules! define_Conf {
                     match Field::deserialize(name.get_ref().as_str().into_deserializer()) {
                         Err(e) => {
                             let e: FieldError = e;
-                            errors.push(ConfError::spanned(self.0, e.0, name.span()));
+                            errors.push(ConfError::spanned(self.0, e.error, e.suggestion, name.span()));
                         }
                         $(Ok(Field::$name) => {
-                            $(warnings.push(ConfError::spanned(self.0, format!("deprecated field `{}`. {}", name.get_ref(), $dep), name.span()));)?
+                            $(warnings.push(ConfError::spanned(self.0, format!("deprecated field `{}`. {}", name.get_ref(), $dep), None, name.span()));)?
                             let raw_value = map.next_value::<toml::Spanned<toml::Value>>()?;
                             let value_span = raw_value.span();
                             match <$ty>::deserialize(raw_value.into_inner()) {
-                                Err(e) => errors.push(ConfError::spanned(self.0, e.to_string().replace('\n', " ").trim(), value_span)),
+                                Err(e) => errors.push(ConfError::spanned(self.0, e.to_string().replace('\n', " ").trim(), None, value_span)),
                                 Ok(value) => match $name {
-                                    Some(_) => errors.push(ConfError::spanned(self.0, format!("duplicate field `{}`", name.get_ref()), name.span())),
+                                    Some(_) => {
+                                        errors.push(ConfError::spanned(self.0, format!("duplicate field `{}`", name.get_ref()), None, name.span()));
+                                    }
                                     None => {
                                         $name = Some(value);
                                         // $new_conf is the same as one of the defined `$name`s, so
@@ -165,7 +181,7 @@ macro_rules! define_Conf {
                                             Some(_) => errors.push(ConfError::spanned(self.0, concat!(
                                                 "duplicate field `", stringify!($new_conf),
                                                 "` (provided as `", stringify!($name), "`)"
-                                            ), name.span())),
+                                            ), None, name.span())),
                                             None => $new_conf = $name.clone(),
                                         })?
                                     },
@@ -182,7 +198,7 @@ macro_rules! define_Conf {
         }
 
         pub fn get_configuration_metadata() -> Vec<ClippyConfiguration> {
-            vec![
+            let mut sorted = vec![
                 $(
                     {
                         let deprecation_reason = wrap_option!($($dep)?);
@@ -195,7 +211,9 @@ macro_rules! define_Conf {
                         )
                     },
                 )+
-            ]
+            ];
+            sorted.sort_by(|a, b| a.name.cmp(&b.name));
+            sorted
         }
     };
 }
@@ -245,11 +263,11 @@ define_Conf! {
     /// arithmetic-side-effects-allowed-unary = ["SomeType", "AnotherType"]
     /// ```
     (arithmetic_side_effects_allowed_unary: FxHashSet<String> = <_>::default()),
-    /// Lint: ENUM_VARIANT_NAMES, LARGE_TYPES_PASSED_BY_VALUE, TRIVIALLY_COPY_PASS_BY_REF, UNNECESSARY_WRAPS, UNUSED_SELF, UPPER_CASE_ACRONYMS, WRONG_SELF_CONVENTION, BOX_COLLECTION, REDUNDANT_ALLOCATION, RC_BUFFER, VEC_BOX, OPTION_OPTION, LINKEDLIST, RC_MUTEX, UNNECESSARY_BOX_RETURNS, SINGLE_CALL_FN.
+    /// Lint: ENUM_VARIANT_NAMES, LARGE_TYPES_PASSED_BY_VALUE, TRIVIALLY_COPY_PASS_BY_REF, UNNECESSARY_WRAPS, UNUSED_SELF, UPPER_CASE_ACRONYMS, WRONG_SELF_CONVENTION, BOX_COLLECTION, REDUNDANT_ALLOCATION, RC_BUFFER, VEC_BOX, OPTION_OPTION, LINKEDLIST, RC_MUTEX, UNNECESSARY_BOX_RETURNS, SINGLE_CALL_FN, NEEDLESS_PASS_BY_REF_MUT.
     ///
     /// Suppress lints whenever the suggested change would cause breakage for other crates.
     (avoid_breaking_exported_api: bool = true),
-    /// Lint: MANUAL_SPLIT_ONCE, MANUAL_STR_REPEAT, CLONED_INSTEAD_OF_COPIED, REDUNDANT_FIELD_NAMES, OPTION_MAP_UNWRAP_OR, REDUNDANT_STATIC_LIFETIMES, FILTER_MAP_NEXT, CHECKED_CONVERSIONS, MANUAL_RANGE_CONTAINS, USE_SELF, MEM_REPLACE_WITH_DEFAULT, MANUAL_NON_EXHAUSTIVE, OPTION_AS_REF_DEREF, MAP_UNWRAP_OR, MATCH_LIKE_MATCHES_MACRO, MANUAL_STRIP, MISSING_CONST_FOR_FN, UNNESTED_OR_PATTERNS, FROM_OVER_INTO, PTR_AS_PTR, IF_THEN_SOME_ELSE_NONE, APPROX_CONSTANT, DEPRECATED_CFG_ATTR, INDEX_REFUTABLE_SLICE, MAP_CLONE, BORROW_AS_PTR, MANUAL_BITS, ERR_EXPECT, CAST_ABS_TO_UNSIGNED, UNINLINED_FORMAT_ARGS, MANUAL_CLAMP, MANUAL_LET_ELSE, UNCHECKED_DURATION_SUBTRACTION, COLLAPSIBLE_STR_REPLACE, SEEK_FROM_CURRENT, SEEK_REWIND, UNNECESSARY_LAZY_EVALUATIONS, TRANSMUTE_PTR_TO_REF, ALMOST_COMPLETE_RANGE, NEEDLESS_BORROW, DERIVABLE_IMPLS, MANUAL_IS_ASCII_CHECK, MANUAL_REM_EUCLID, MANUAL_RETAIN, TYPE_REPETITION_IN_BOUNDS, TUPLE_ARRAY_CONVERSIONS, MANUAL_TRY_FOLD, MANUAL_HASH_ONE, ITER_KV_MAP.
+    /// Lint: MANUAL_SPLIT_ONCE, MANUAL_STR_REPEAT, CLONED_INSTEAD_OF_COPIED, REDUNDANT_FIELD_NAMES, OPTION_MAP_UNWRAP_OR, REDUNDANT_STATIC_LIFETIMES, FILTER_MAP_NEXT, CHECKED_CONVERSIONS, MANUAL_RANGE_CONTAINS, USE_SELF, MEM_REPLACE_WITH_DEFAULT, MANUAL_NON_EXHAUSTIVE, OPTION_AS_REF_DEREF, MAP_UNWRAP_OR, MATCH_LIKE_MATCHES_MACRO, MANUAL_STRIP, MISSING_CONST_FOR_FN, UNNESTED_OR_PATTERNS, FROM_OVER_INTO, PTR_AS_PTR, IF_THEN_SOME_ELSE_NONE, APPROX_CONSTANT, DEPRECATED_CFG_ATTR, INDEX_REFUTABLE_SLICE, MAP_CLONE, BORROW_AS_PTR, MANUAL_BITS, ERR_EXPECT, CAST_ABS_TO_UNSIGNED, UNINLINED_FORMAT_ARGS, MANUAL_CLAMP, MANUAL_LET_ELSE, UNCHECKED_DURATION_SUBTRACTION, COLLAPSIBLE_STR_REPLACE, SEEK_FROM_CURRENT, SEEK_REWIND, UNNECESSARY_LAZY_EVALUATIONS, TRANSMUTE_PTR_TO_REF, ALMOST_COMPLETE_RANGE, NEEDLESS_BORROW, DERIVABLE_IMPLS, MANUAL_IS_ASCII_CHECK, MANUAL_REM_EUCLID, MANUAL_RETAIN, TYPE_REPETITION_IN_BOUNDS, TUPLE_ARRAY_CONVERSIONS, MANUAL_TRY_FOLD, MANUAL_HASH_ONE, ITER_KV_MAP, MANUAL_C_STR_LITERALS, ASSIGNING_CLONES, LEGACY_NUMERIC_CONSTANTS, MANUAL_PATTERN_CHAR_COMPARISON, ALLOW_ATTRIBUTES, ALLOW_ATTRIBUTES_WITHOUT_REASON.
     ///
     /// The minimum rust version that the project supports. Defaults to the `rust-version` field in `Cargo.toml`
     #[default_text = ""]
@@ -314,7 +332,7 @@ define_Conf! {
     ///
     /// The minimum number of enum variants for the lints about variant names to trigger
     (enum_variant_name_threshold: u64 = 3),
-    /// Lint: STRUCT_VARIANT_NAMES.
+    /// Lint: STRUCT_FIELD_NAMES.
     ///
     /// The minimum number of struct fields for the lints about field names to trigger
     (struct_field_name_threshold: u64 = 3),
@@ -441,6 +459,10 @@ define_Conf! {
     ///
     /// Whether `unwrap` should be allowed in test functions or `#[cfg(test)]`
     (allow_unwrap_in_tests: bool = false),
+    /// Lint: PANIC.
+    ///
+    /// Whether `panic` should be allowed in test functions or `#[cfg(test)]`
+    (allow_panic_in_tests: bool = false),
     /// Lint: DBG_MACRO.
     ///
     /// Whether `dbg!` should be allowed in test functions or `#[cfg(test)]`
@@ -449,14 +471,17 @@ define_Conf! {
     ///
     /// Whether print macros (ex. `println!`) should be allowed in test functions or `#[cfg(test)]`
     (allow_print_in_tests: bool = false),
+    /// Lint: USELESS_VEC.
+    ///
+    /// Whether `useless_vec` should ignore test functions or `#[cfg(test)]`
+    (allow_useless_vec_in_tests: bool = false),
     /// Lint: RESULT_LARGE_ERR.
     ///
     /// The maximum size of the `Err`-variant in a `Result` returned from a function
     (large_error_threshold: u64 = 128),
-    /// Lint: MUTABLE_KEY_TYPE, IFS_SAME_COND.
+    /// Lint: MUTABLE_KEY_TYPE, IFS_SAME_COND, BORROW_INTERIOR_MUTABLE_CONST, DECLARE_INTERIOR_MUTABLE_CONST.
     ///
-    /// A list of paths to types that should be treated like `Arc`, i.e. ignored but
-    /// for the generic parameters for determining interior mutability
+    /// A list of paths to types that should be treated as if they do not contain interior mutability
     (ignore_interior_mutability: Vec<String> = Vec::from(["bytes::Bytes".into()])),
     /// Lint: UNINLINED_FORMAT_ARGS.
     ///
@@ -523,7 +548,11 @@ define_Conf! {
     ///
     /// Additional dotfiles (files or directories starting with a dot) to allow
     (allowed_dotfiles: FxHashSet<String> = FxHashSet::default()),
-    /// Lint: EXPLICIT_ITER_LOOP
+    /// Lint: MULTIPLE_CRATE_VERSIONS.
+    ///
+    /// A list of crate names to allow duplicates of
+    (allowed_duplicate_crates: FxHashSet<String> = FxHashSet::default()),
+    /// Lint: EXPLICIT_ITER_LOOP.
     ///
     /// Whether to recommend using implicit into iter for reborrowed values.
     ///
@@ -543,10 +572,76 @@ define_Conf! {
     /// for _ in &mut *rmvec {}
     /// ```
     (enforce_iter_loop_reborrow: bool = false),
-    /// Lint: MISSING_SAFETY_DOC, UNNECESSARY_SAFETY_DOC, MISSING_PANICS_DOC, MISSING_ERRORS_DOC
+    /// Lint: MISSING_SAFETY_DOC, UNNECESSARY_SAFETY_DOC, MISSING_PANICS_DOC, MISSING_ERRORS_DOC.
     ///
     /// Whether to also run the listed lints on private items.
     (check_private_items: bool = false),
+    /// Lint: PUB_UNDERSCORE_FIELDS.
+    ///
+    /// Lint "public" fields in a struct that are prefixed with an underscore based on their
+    /// exported visibility, or whether they are marked as "pub".
+    (pub_underscore_fields_behavior: PubUnderscoreFieldsBehaviour = PubUnderscoreFieldsBehaviour::PubliclyExported),
+    /// Lint: MODULO_ARITHMETIC.
+    ///
+    /// Don't lint when comparing the result of a modulo operation to zero.
+    (allow_comparison_to_zero: bool = true),
+    /// Lint: WILDCARD_IMPORTS.
+    ///
+    /// List of path segments allowed to have wildcard imports.
+    ///
+    /// #### Example
+    ///
+    /// ```toml
+    /// allowed-wildcard-imports = [ "utils", "common" ]
+    /// ```
+    ///
+    /// #### Noteworthy
+    ///
+    /// 1. This configuration has no effects if used with `warn_on_all_wildcard_imports = true`.
+    /// 2. Paths with any segment that containing the word 'prelude'
+    /// are already allowed by default.
+    (allowed_wildcard_imports: FxHashSet<String> = FxHashSet::default()),
+    /// Lint: MODULE_NAME_REPETITIONS.
+    ///
+    /// List of prefixes to allow when determining whether an item's name ends with the module's name.
+    /// If the rest of an item's name is an allowed prefix (e.g. item `ToFoo` or `to_foo` in module `foo`),
+    /// then don't emit a warning.
+    ///
+    /// #### Example
+    ///
+    /// ```toml
+    /// allowed-prefixes = [ "to", "from" ]
+    /// ```
+    ///
+    /// #### Noteworthy
+    ///
+    /// - By default, the following prefixes are allowed: `to`, `as`, `into`, `from`, `try_into` and `try_from`
+    /// - PascalCase variant is included automatically for each snake_case variant (e.g. if `try_into` is included,
+    ///   `TryInto` will also be included)
+    /// - Use `".."` as part of the list to indicate that the configured values should be appended to the
+    /// default configuration of Clippy. By default, any configuration will replace the default value
+    (allowed_prefixes: Vec<String> = DEFAULT_ALLOWED_PREFIXES.iter().map(ToString::to_string).collect()),
+    /// Lint: RENAMED_FUNCTION_PARAMS.
+    ///
+    /// List of trait paths to ignore when checking renamed function parameters.
+    ///
+    /// #### Example
+    ///
+    /// ```toml
+    /// allow-renamed-params-for = [ "std::convert::From" ]
+    /// ```
+    ///
+    /// #### Noteworthy
+    ///
+    /// - By default, the following traits are ignored: `From`, `TryFrom`, `FromStr`
+    /// - `".."` can be used as part of the list to indicate that the configured values should be appended to the
+    /// default configuration of Clippy. By default, any configuration will replace the default value.
+    (allow_renamed_params_for: Vec<String> =
+        DEFAULT_ALLOWED_TRAITS_WITH_RENAMED_PARAMS.iter().map(ToString::to_string).collect()),
+    /// Lint: MACRO_METAVARS_IN_UNSAFE.
+    ///
+    /// Whether to also emit warnings for unsafe blocks with metavariable expansions in **private** macros.
+    (warn_unsafe_macro_metavars_in_private_macros: bool = false),
 }
 
 /// Search for the configuration file.
@@ -607,8 +702,13 @@ fn deserialize(file: &SourceFile) -> TryConf {
         Ok(mut conf) => {
             extend_vec_if_indicator_present(&mut conf.conf.doc_valid_idents, DEFAULT_DOC_VALID_IDENTS);
             extend_vec_if_indicator_present(&mut conf.conf.disallowed_names, DEFAULT_DISALLOWED_NAMES);
+            extend_vec_if_indicator_present(&mut conf.conf.allowed_prefixes, DEFAULT_ALLOWED_PREFIXES);
+            extend_vec_if_indicator_present(
+                &mut conf.conf.allow_renamed_params_for,
+                DEFAULT_ALLOWED_TRAITS_WITH_RENAMED_PARAMS,
+            );
             // TODO: THIS SHOULD BE TESTED, this comment will be gone soon
-            if conf.conf.allowed_idents_below_min_chars.contains(&"..".to_owned()) {
+            if conf.conf.allowed_idents_below_min_chars.contains("..") {
                 conf.conf
                     .allowed_idents_below_min_chars
                     .extend(DEFAULT_ALLOWED_IDENTS_BELOW_MIN_CHARS.iter().map(ToString::to_string));
@@ -636,11 +736,12 @@ impl Conf {
         match path {
             Ok((_, warnings)) => {
                 for warning in warnings {
-                    sess.warn(warning.clone());
+                    sess.dcx().warn(warning.clone());
                 }
             },
             Err(error) => {
-                sess.err(format!("error finding Clippy's configuration file: {error}"));
+                sess.dcx()
+                    .err(format!("error finding Clippy's configuration file: {error}"));
             },
         }
 
@@ -652,7 +753,7 @@ impl Conf {
             Ok((Some(path), _)) => match sess.source_map().load_file(path) {
                 Ok(file) => deserialize(&file),
                 Err(error) => {
-                    sess.err(format!("failed to read `{}`: {error}", path.display()));
+                    sess.dcx().err(format!("failed to read `{}`: {error}", path.display()));
                     TryConf::default()
                 },
             },
@@ -663,14 +764,20 @@ impl Conf {
 
         // all conf errors are non-fatal, we just use the default conf in case of error
         for error in errors {
-            sess.span_err(
+            let mut diag = sess.dcx().struct_span_err(
                 error.span,
                 format!("error reading Clippy's configuration file: {}", error.message),
             );
+
+            if let Some(sugg) = error.suggestion {
+                diag.span_suggestion(error.span, sugg.message, sugg.suggestion, Applicability::MaybeIncorrect);
+            }
+
+            diag.emit();
         }
 
         for warning in warnings {
-            sess.span_warn(
+            sess.dcx().span_warn(
                 warning.span,
                 format!("error reading Clippy's configuration file: {}", warning.message),
             );
@@ -683,19 +790,31 @@ impl Conf {
 const SEPARATOR_WIDTH: usize = 4;
 
 #[derive(Debug)]
-struct FieldError(String);
+struct FieldError {
+    error: String,
+    suggestion: Option<Suggestion>,
+}
+
+#[derive(Debug)]
+struct Suggestion {
+    message: &'static str,
+    suggestion: &'static str,
+}
 
 impl std::error::Error for FieldError {}
 
 impl Display for FieldError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&self.0)
+        f.pad(&self.error)
     }
 }
 
 impl serde::de::Error for FieldError {
     fn custom<T: Display>(msg: T) -> Self {
-        Self(msg.to_string())
+        Self {
+            error: msg.to_string(),
+            suggestion: None,
+        }
     }
 
     fn unknown_field(field: &str, expected: &'static [&'static str]) -> Self {
@@ -717,7 +836,20 @@ impl serde::de::Error for FieldError {
                 write!(msg, "{:SEPARATOR_WIDTH$}{field:column_width$}", " ").unwrap();
             }
         }
-        Self(msg)
+
+        let suggestion = expected
+            .iter()
+            .filter_map(|expected| {
+                let dist = edit_distance(field, expected, 4)?;
+                Some((dist, expected))
+            })
+            .min_by_key(|&(dist, _)| dist)
+            .map(|(_, suggestion)| Suggestion {
+                message: "perhaps you meant",
+                suggestion,
+            });
+
+        Self { error: msg, suggestion }
     }
 }
 
@@ -781,11 +913,6 @@ mod tests {
                 }
             }
         }
-
-        assert!(
-            names.remove("allow-one-hash-in-raw-strings"),
-            "remove this when #11481 is fixed"
-        );
 
         assert!(
             names.is_empty(),

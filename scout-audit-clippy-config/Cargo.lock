@@ -65,7 +65,7 @@ dependencies = [
 
 [[package]]
 name = "scout-audit-clippy-config"
-version = "0.1.76"
+version = "0.1.81"
 dependencies = [
  "rustc-semver",
  "serde",

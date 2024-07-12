@@ -26,8 +26,10 @@ impl ClippyConfiguration {
         doc_comment: &'static str,
         deprecation_reason: Option<&'static str>,
     ) -> Self {
-        let (lints, doc) = parse_config_field_doc(doc_comment)
+        let (mut lints, doc) = parse_config_field_doc(doc_comment)
             .unwrap_or_else(|| (vec![], "[ERROR] MALFORMED DOC COMMENT".to_string()));
+
+        lints.sort();
 
         Self {
             name: to_kebab(name),
@@ -96,6 +98,9 @@ fn parse_config_field_doc(doc_comment: &str) -> Option<(Vec<String>, String)> {
         doc_comment.make_ascii_lowercase();
         let lints: Vec<String> = doc_comment
             .split_off(DOC_START.len())
+            .lines()
+            .next()
+            .unwrap()
             .split(", ")
             .map(str::to_string)
             .collect();
