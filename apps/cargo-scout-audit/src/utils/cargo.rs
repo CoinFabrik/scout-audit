@@ -8,6 +8,9 @@ use std::{
 
 use crate::scout::blockchain::BlockChain;
 
+const INK_TOOLCHAIN: &str = "+nightly-2023-12-16";
+const SOROBAN_TOOLCHAIN: &str = "+nightly-2024-07-11";
+
 use super::command::Command;
 #[must_use]
 pub fn build(description: &str, bc: BlockChain, quiet: bool) -> Command {
@@ -54,7 +57,7 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: Block
 
 fn get_toolchain(bc: BlockChain) -> &'static str {
     match bc {
-        BlockChain::Ink => "+nightly-2023-12-16",
-        BlockChain::Soroban => "+nightly-2023-12-16",
+        BlockChain::Ink => INK_TOOLCHAIN,
+        BlockChain::Soroban => SOROBAN_TOOLCHAIN,
     }
 }
