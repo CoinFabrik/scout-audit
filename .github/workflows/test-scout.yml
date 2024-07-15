@@ -42,19 +42,14 @@ jobs:
             sudo apt-get install -y wkhtmltopdf
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             brew install wkhtmltopdf
-          fi
-
-      - name: Install Rust nightly and add rust-src
-        run: |
-          rustup install nightly-2023-12-16
-          rustup component add rust-src --toolchain nightly-2023-12-16
-
-      - name: Install dylint, dylint-link
-        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
+            fi
 
       - name: Install local scout
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
+
+      - name: Install dylint, dylint-link
+        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
 
       - name: Run tests and set output
         id: run-tests
