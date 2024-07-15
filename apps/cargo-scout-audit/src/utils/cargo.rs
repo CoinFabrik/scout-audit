@@ -9,7 +9,7 @@ use std::{
 use crate::scout::blockchain::BlockChain;
 
 const INK_TOOLCHAIN: &str = "+nightly-2023-12-16";
-const SOROBAN_TOOLCHAIN: &str = "+nightly-2024-07-11";
+const SOROBAN_TOOLCHAIN: &str = "+nightly-2023-12-16";
 
 use super::command::Command;
 #[must_use]
