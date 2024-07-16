@@ -8,16 +8,13 @@ use std::{
 
 use crate::scout::blockchain::BlockChain;
 
-const INK_TOOLCHAIN: &str = "+nightly-2023-12-16";
-const SOROBAN_TOOLCHAIN: &str = "+nightly-2023-12-16";
-
 use super::command::Command;
 #[must_use]
 pub fn build(description: &str, bc: BlockChain, quiet: bool) -> Command {
     cargo("build", "Building", description, quiet, bc)
 }
 fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: BlockChain) -> Command {
-    let toolchain = get_toolchain(bc);
+    let toolchain = &format!("+{}", bc.get_toolchain());
 
     if !quiet {
         // smoelius: Writing directly to `stderr` avoids capture by `libtest`.
@@ -53,11 +50,4 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: Block
         command.stderr(Stdio::null());
     }
     command
-}
-
-fn get_toolchain(bc: BlockChain) -> &'static str {
-    match bc {
-        BlockChain::Ink => INK_TOOLCHAIN,
-        BlockChain::Soroban => SOROBAN_TOOLCHAIN,
-    }
 }

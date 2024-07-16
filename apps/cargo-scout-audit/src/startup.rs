@@ -174,16 +174,15 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     opts.validate()?;
     opts.prepare_args();
 
-    if let Some(mut child) = run_scout_in_nightly()? {
+    let metadata = get_project_metadata(&opts.manifest_path)?;
+    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+
+    if let Some(mut child) = run_scout_in_nightly(bc_dependency.get_toolchain())? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(());
     }
-
-    let metadata = get_project_metadata(&opts.manifest_path)?;
-
-    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
     let cargo_config =
         Config::default().with_context(|| "Failed to create default cargo configuration")?;

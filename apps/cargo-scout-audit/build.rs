@@ -1,27 +1,29 @@
 use std::process::Command;
 
 mod build_config;
-use build_config::TOOLCHAIN;
+use build_config::TOOLCHAINS;
 
 fn main() {
-    match ensure_toolchain() {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+    for toolchain in TOOLCHAINS.iter() {
+        match ensure_toolchain(toolchain) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
-    }
 
-    match ensure_rust_src() {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+        match ensure_rust_src(toolchain) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
     }
 }
 
-fn ensure_toolchain() -> Result<(), String> {
+fn ensure_toolchain(toolchain: &str) -> Result<(), String> {
     let output = Command::new("rustup")
         .arg("toolchain")
         .arg("list")
@@ -37,19 +39,19 @@ fn ensure_toolchain() -> Result<(), String> {
 
     let toolchain_list = String::from_utf8_lossy(&output.stdout);
 
-    if !toolchain_list.contains(TOOLCHAIN) {
-        println!("cargo:warning=Installing toolchain '{}'...", TOOLCHAIN);
+    if !toolchain_list.contains(toolchain) {
+        println!("cargo:warning=Installing toolchain '{}'...", toolchain);
         let status = Command::new("rustup")
             .arg("toolchain")
             .arg("install")
-            .arg(TOOLCHAIN)
+            .arg(toolchain)
             .status()
             .map_err(|e| format!("Failed to execute rustup toolchain install: {}", e))?;
 
         if !status.success() {
             return Err(format!(
                 "Failed to install toolchain '{}'. Please install it manually.",
-                TOOLCHAIN
+                toolchain
             ));
         }
     }
@@ -57,12 +59,12 @@ fn ensure_toolchain() -> Result<(), String> {
     Ok(())
 }
 
-fn ensure_rust_src() -> Result<(), String> {
+fn ensure_rust_src(toolchain: &str) -> Result<(), String> {
     let output = Command::new("rustup")
         .arg("component")
         .arg("list")
         .arg("--toolchain")
-        .arg(TOOLCHAIN)
+        .arg(toolchain)
         .output()
         .map_err(|e| format!("Failed to execute rustup: {}", e))?;
 
@@ -82,7 +84,7 @@ fn ensure_rust_src() -> Result<(), String> {
             .arg("add")
             .arg("rust-src")
             .arg("--toolchain")
-            .arg(TOOLCHAIN)
+            .arg(toolchain)
             .status()
             .map_err(|e| format!("Failed to execute rustup component add: {}", e))?;
 

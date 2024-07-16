@@ -1,3 +1,4 @@
+use crate::build_config::{INK_TOOLCHAIN, SOROBAN_TOOLCHAIN};
 use anyhow::{Context, Result};
 use cargo_metadata::Metadata;
 use strum::IntoEnumIterator;
@@ -14,10 +15,17 @@ impl BlockChain {
         Self::iter().map(|e| e.to_string()).collect()
     }
 
-    pub fn get_detectors_url(&self) -> &'static str {
+    pub fn get_detectors_url(&self) -> &str {
         match self {
             BlockChain::Ink => "https://github.com/CoinFabrik/scout",
             BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
+        }
+    }
+
+    pub fn get_toolchain(&self) -> &str {
+        match self {
+            BlockChain::Ink => INK_TOOLCHAIN,
+            BlockChain::Soroban => SOROBAN_TOOLCHAIN,
         }
     }
 
