@@ -4,8 +4,6 @@ mod build_config;
 use build_config::TOOLCHAIN;
 
 fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
-
     match ensure_toolchain() {
         Ok(_) => {}
         Err(e) => {
