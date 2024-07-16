@@ -48,14 +48,16 @@ jobs:
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
 
-      - name: Install dylint, dylint-link
-        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
+      - name: Install dylint, dylint-link and default to nightly toolchain
+        run: |
+          cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif cargo-nextest --locked
+          rustup default nightly-2023-12-16
 
       - name: Run tests and set output
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
-          if cargo test --all --all-features; then
+          if cargo nextest run --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
