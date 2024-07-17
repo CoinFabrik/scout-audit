@@ -105,6 +105,14 @@ pub struct Scout {
     pub verbose: bool,
 
     #[clap(
+        name = "toolchain",
+        long,
+        help = "Prints the detectors current toolchain.",
+        default_value_t = false
+    )]
+    pub toolchain: bool,
+
+    #[clap(
         name = "metadata",
         long,
         help = "Prints metadata information.",
@@ -176,6 +184,11 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let metadata = get_project_metadata(&opts.manifest_path)?;
     let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+
+    if opts.toolchain {
+        println!("{}", bc_dependency.get_toolchain());
+        return Ok(());
+    }
 
     if let Some(mut child) = run_scout_in_nightly(bc_dependency.get_toolchain())? {
         child

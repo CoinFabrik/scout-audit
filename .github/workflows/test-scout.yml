@@ -22,6 +22,7 @@ jobs:
     outputs:
       linux_status: ${{ steps.run-tests.outputs.linux_status }}
       macos_status: ${{ steps.run-tests.outputs.macos_status }}
+      toolchain: ${{ steps.get-toolchain.outputs.toolchain }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -42,16 +43,23 @@ jobs:
             sudo apt-get install -y wkhtmltopdf
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             brew install wkhtmltopdf
-            fi
+          fi
 
       - name: Install local scout
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
 
-      - name: Install dylint, dylint-link and default to nightly toolchain
+      - name: Get the toolchain for this test suite
+        id: get-toolchain
+        working-directory: apps/cargo-scout-audit/tests/contract
         run: |
-          cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif cargo-nextest --locked
-          rustup default nightly-2023-12-16
+          TOOLCHAIN=$(cargo scout-audit --toolchain)
+          echo "toolchain=$TOOLCHAIN" >> $GITHUB_OUTPUT
+
+      - name: Install dylint, dylint-link and set default toolchain
+        run: |
+          cargo +${{ steps.get-toolchain.outputs.toolchain }} install cargo-dylint dylint-link clippy-sarif cargo-nextest --locked
+          rustup default ${{ steps.get-toolchain.outputs.toolchain }}
 
       - name: Run tests and set output
         id: run-tests
