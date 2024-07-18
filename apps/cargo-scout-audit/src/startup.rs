@@ -105,6 +105,14 @@ pub struct Scout {
     pub verbose: bool,
 
     #[clap(
+        name = "toolchain",
+        long,
+        help = "Prints the detectors current toolchain.",
+        default_value_t = false
+    )]
+    pub toolchain: bool,
+
+    #[clap(
         name = "metadata",
         long,
         help = "Prints metadata information.",
@@ -174,16 +182,20 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     opts.validate()?;
     opts.prepare_args();
 
-    if let Some(mut child) = run_scout_in_nightly()? {
+    let metadata = get_project_metadata(&opts.manifest_path)?;
+    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+
+    if opts.toolchain {
+        println!("{}", bc_dependency.get_toolchain());
+        return Ok(());
+    }
+
+    if let Some(mut child) = run_scout_in_nightly(bc_dependency.get_toolchain())? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(());
     }
-
-    let metadata = get_project_metadata(&opts.manifest_path)?;
-
-    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
 
     let cargo_config =
         Config::default().with_context(|| "Failed to create default cargo configuration")?;
