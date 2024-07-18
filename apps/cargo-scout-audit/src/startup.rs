@@ -213,10 +213,20 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     detectors_names = if let Some(profile) = &opts.profile {
-        let config = open_config_or_default(bc_dependency, detectors_names.clone())
-            .with_context(|| "Failed to load or generate config")?;
+        let (config, config_path) = open_config_or_default(bc_dependency, &detectors_names)
+            .map_err(|err| {
+                anyhow!(
+                    "Failed to open configuration file.\n\n     → Caused by: {}",
+                    err.to_string()
+                )
+            })?;
 
-        profile_enabled_detectors(config, profile.clone())?
+        print_warning(&format!(
+                "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
+                profile,
+                config_path.display()
+            ));
+        profile_enabled_detectors(&config, profile, &config_path)?
     } else {
         detectors_names
     };

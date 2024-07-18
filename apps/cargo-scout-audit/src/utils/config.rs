@@ -10,7 +10,7 @@ use crate::scout::blockchain::BlockChain;
 
 use super::print::print_warning;
 
-pub fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<Value> {
+pub fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<(Value, PathBuf)> {
     let config_path = get_config_path()?;
 
     let file_path = config_path.join(match bc {
@@ -20,13 +20,16 @@ pub fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<Va
 
     if !file_path.exists() {
         create_default_config(&file_path, detectors)
-            .with_context(|| "Failed to create default config file")?;
+            .with_context(|| format!("Failed to create default config file: {:?}", file_path))?;
     }
 
-    let config_str =
-        read_file_to_string(&file_path).with_context(|| "Failed to read config file")?;
+    let config_str = read_file_to_string(&file_path)
+        .with_context(|| format!("Failed to read config file: {:?}", file_path))?;
 
-    serde_json::from_str(&config_str).with_context(|| "Failed to parse JSON config")
+    let config = serde_json::from_str(&config_str)
+        .with_context(|| format!("Failed to parse JSON config: {:?}", file_path))?;
+
+    Ok((config, file_path))
 }
 
 fn get_config_path() -> Result<PathBuf> {
@@ -77,26 +80,30 @@ pub fn profile_enabled_detectors(
     profile: &str,
     config_path: &Path,
 ) -> Result<Vec<String>> {
-    let default_detectors = config
+    let default_detectors: HashSet<String> = config
         .get("default")
         .and_then(Value::as_array)
         .with_context(|| "Default profile is missing or not an array")?
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
-        .collect::<HashSet<String>>();
+        .collect();
 
-    // If profile detectors does not exist, then set the profile to default and log warningn
-    let profile_detectors = config
-        .get(profile)
-        .and_then(Value::as_array)
-        .unwrap_or_else(|| {
+    let profile_detectors = match config.get(profile).and_then(Value::as_array) {
+        Some(detectors) => detectors,
+        None => {
             print_warning(&format!(
-                "Profile '{}' does not exist, using default profile",
+                "Profile '{}' does not exist, creating it with default detectors",
                 profile
             ));
-            // we Should create the profile here
+            create_profile(
+                config_path,
+                &default_detectors.iter().cloned().collect::<Vec<_>>(),
+                profile,
+            )
+            .with_context(|| format!("Failed to create profile '{}'", profile))?;
             config.get("default").and_then(Value::as_array).unwrap()
-        });
+        }
+    };
 
     let enabled_detectors: Vec<String> = profile_detectors
         .iter()
@@ -114,7 +121,7 @@ pub fn profile_enabled_detectors(
     }
 }
 
-fn create_profile(file_path: &PathBuf, detectors: &[String], profile: &str) -> Result<()> {
+fn create_profile(file_path: &Path, detectors: &[String], profile: &str) -> Result<()> {
     let existing_profiles = read_file_to_string(file_path)
         .with_context(|| "Failed to read config file")?
         .parse::<Value>()
