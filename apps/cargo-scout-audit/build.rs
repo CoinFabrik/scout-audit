@@ -107,17 +107,20 @@ fn ensure_rust_src(toolchain: &str) -> Result<(), String> {
 }
 
 fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
-    println!("cargo:warning=Installing dylint-link...");
+    let toolchain_arg = format!("+{}", toolchain);
+
     let status = Command::new("cargo")
-        .arg("+")
-        .arg(toolchain)
+        .arg(&toolchain_arg)
         .arg("install")
         .arg("dylint-link")
         .status()
         .map_err(|e| format!("Failed to execute cargo install dylint-link: {}", e))?;
 
     if !status.success() {
-        return Err("Failed to install dylint-link. Please install it manually.".to_string());
+        return Err(format!(
+            "Failed to install dylint-link for toolchain '{}'. Please install it manually.",
+            toolchain
+        ));
     }
 
     Ok(())
