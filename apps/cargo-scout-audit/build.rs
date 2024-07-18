@@ -20,6 +20,14 @@ fn main() {
                 std::process::exit(1);
             }
         }
+
+        match ensure_dylint_link(toolchain) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
+        }
     }
 }
 
@@ -93,6 +101,23 @@ fn ensure_rust_src(toolchain: &str) -> Result<(), String> {
                 "Failed to install rust-src component. Please install it manually.".to_string(),
             );
         }
+    }
+
+    Ok(())
+}
+
+fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
+    println!("cargo:warning=Installing dylint-link...");
+    let status = Command::new("cargo")
+        .arg("+")
+        .arg(toolchain)
+        .arg("install")
+        .arg("dylint-link")
+        .status()
+        .map_err(|e| format!("Failed to execute cargo install dylint-link: {}", e))?;
+
+    if !status.success() {
+        return Err("Failed to install dylint-link. Please install it manually.".to_string());
     }
 
     Ok(())

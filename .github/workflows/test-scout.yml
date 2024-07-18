@@ -58,7 +58,7 @@ jobs:
 
       - name: Install dylint, dylint-link and set default toolchain
         run: |
-          cargo +${{ steps.get-toolchain.outputs.toolchain }} install cargo-dylint dylint-link clippy-sarif cargo-nextest --locked
+          cargo install clippy-sarif cargo-nextest --locked
           rustup default ${{ steps.get-toolchain.outputs.toolchain }}
 
       - name: Run tests and set output
