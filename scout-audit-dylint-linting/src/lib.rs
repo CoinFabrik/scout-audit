@@ -299,7 +299,7 @@ macro_rules! __raw_lint_info {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __declare_and_register_lint {
-    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $register_pass_method:ident, $pass:expr) => {
+    ($(#[$attr:meta])* $vis:vis $NAME:ident, $Level:ident, $desc:expr, $register_pass_method:ident, $pass:expr, $info: tt) => {
         $crate::__maybe_exclude! {
             $crate::dylint_library!();
         }
