@@ -9,8 +9,6 @@ use std::{
 
 use crate::utils::print::print_error;
 
-const NIGHTLY_VERSION: &str = "nightly-2023-12-16";
-
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
         "linux" => "LD_LIBRARY_PATH",
@@ -20,9 +18,9 @@ lazy_static! {
 }
 
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-pub fn run_scout_in_nightly() -> Result<Option<Child>> {
+pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
-    if current_lib_path.contains(NIGHTLY_VERSION) {
+    if current_lib_path.contains(toolchain) {
         return Ok(None);
     }
 
@@ -33,7 +31,7 @@ pub fn run_scout_in_nightly() -> Result<Option<Child>> {
 
     let nightly_lib_path = Path::new(&rustup_home)
         .join("toolchains")
-        .join(format!("{}-{}", NIGHTLY_VERSION, CURRENT_PLATFORM))
+        .join(format!("{}-{}", toolchain, CURRENT_PLATFORM))
         .join("lib");
 
     let program_name =
