@@ -59,10 +59,14 @@ jobs:
           echo "result=success" >> $GITHUB_OUTPUT
 
   test-docker-release:
-    name: Test docker release
-    runs-on: ubuntu-latest
+    name: Release to Docker Hub
+    runs-on: ${{ matrix.os }}
     needs: filter-paths
     if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        platform: [linux/amd64, linux/arm64]
     permissions:
       packages: write
       contents: read
@@ -90,6 +94,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha
           push: false
