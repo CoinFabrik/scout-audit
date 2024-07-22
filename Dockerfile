@@ -28,7 +28,6 @@ ENV PATH="/usr/local/rustup/bin:$PATH"
 # Copy necessary binaries from the builder stage
 COPY --from=builder /usr/local/cargo/bin/cargo-scout-audit /usr/local/cargo/bin/
 COPY --from=builder /usr/local/cargo/bin/dylint-link /usr/local/cargo/bin/
-COPY --from=builder /usr/local/cargo/bin/cargo-dylint /usr/local/cargo/bin/
 COPY --from=builder /usr/src/scout/entrypoint.sh /usr/local/bin/
 
 # Ensure the script and binaries are executable
