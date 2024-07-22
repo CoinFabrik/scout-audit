@@ -217,7 +217,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let mut detectors_names = detectors
         .get_detector_names()
-        .with_context(|| "Failed to get detector names")?;
+        .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
 
     if opts.list_detectors {
         list_detectors(&detectors_names);

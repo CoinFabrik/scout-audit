@@ -56,7 +56,7 @@ jobs:
           TOOLCHAIN=$(cargo scout-audit --toolchain)
           echo "toolchain=$TOOLCHAIN" >> $GITHUB_OUTPUT
 
-      - name: Install dylint, dylint-link and set default toolchain
+      - name: Install clippy-sarif and cargo-nextest, and set the toolchain
         run: |
           cargo install clippy-sarif cargo-nextest --locked
           rustup default ${{ steps.get-toolchain.outputs.toolchain }}
