@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, ensure, Context, Ok, Result};
-use cargo::Config;
+use cargo::GlobalContext;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
@@ -12,7 +12,7 @@ use crate::{
 };
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
-    cargo_config: &'a Config,
+    cargo_config: &'a GlobalContext,
     detectors_config: &'a DetectorConfiguration,
     root_metadata: &'a Metadata,
     verbose: bool,
@@ -21,7 +21,7 @@ pub struct DetectorBuilder<'a> {
 impl<'a> DetectorBuilder<'a> {
     /// Creates a new instance of `DetectorsBuilder`.
     pub fn new(
-        cargo_config: &'a Config,
+        cargo_config: &'a GlobalContext,
         detectors_config: &'a DetectorConfiguration,
         root_metadata: &'a Metadata,
         verbose: bool,

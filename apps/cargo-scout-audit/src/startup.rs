@@ -1,11 +1,11 @@
+use cargo::GlobalContext;
+use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
 use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo::Config;
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
-use dylint::Dylint;
 
 use crate::{
     detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
@@ -198,7 +198,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     let cargo_config =
-        Config::default().with_context(|| "Failed to create default cargo configuration")?;
+        GlobalContext::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         cargo::core::Verbosity::Verbose
     } else {
@@ -217,7 +217,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let mut detectors_names = detectors
         .get_detector_names()
-        .with_context(|| "Failed to get detector names")?;
+        .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
 
     if opts.list_detectors {
         list_detectors(&detectors_names);
@@ -304,12 +304,20 @@ fn run_dylint(
         .as_ref()
         .map(|p| p.to_string_lossy().into_owned());
 
+    let check_opts = Check {
+        lib_sel: LibrarySelection {
+            manifest_path,
+            lib_paths: detectors_paths,
+            ..Default::default()
+        },
+        args: opts.args.to_owned(),
+        ..Default::default()
+    };
+
     let options = Dylint {
-        paths: detectors_paths,
-        args: opts.args.clone(),
         pipe_stdout,
-        manifest_path,
-        quiet: !opts.verbose,
+        quiet: opts.verbose,
+        operation: Operation::Check(check_opts.clone()),
         ..Default::default()
     };
 
@@ -320,7 +328,11 @@ fn run_dylint(
         }
     }
 
-    if options.args.contains(&"--message-format=json".to_string()) && opts.output_format.is_none() {
+    if check_opts
+        .args
+        .contains(&"--message-format=json".to_string())
+        && opts.output_format.is_none()
+    {
         let stdout_content = fs::read(stdout_temp_file.path())
             .with_context(|| ("Failed to read stdout temporary file"))?;
         std::io::stdout()

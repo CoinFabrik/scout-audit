@@ -27,34 +27,30 @@ name = "cargo-scout-audit"
 path = "src/main.rs"
 
 [dependencies]
-ansi_term = "0.12.1"
-anyhow = "1"
-cargo = "0.76.0"
-cargo-credential-libsecret = "=0.4.4"
-cargo-credential-macos-keychain = "=0.4.4"
-cargo-credential-wincred = "=0.4.4"
-cargo-util = "=0.2.11"
-cargo_metadata = "0.18.1"
-chrono = { version = "0.4.34", features = ["serde"] }
-clap = { version = "4.3.0", features = ["derive"] }
-colored = "2"
-current_platform = "0.2.0"
-dunce = "1.0.4"
-dylint = { version = "2.3.0" }
-home = { version = "0.5.5" }
-itertools = "0.12.1"
-lazy_static = "=1.4.0"
-libloading = "0.8"
-regex = { version = "1.5", features = ["unicode"] }
-serde = { version = "1.0.163", features = ["derive"] }
-serde_json = "1.0"
-strum = "0.26"
-strum_macros = "0.26"
-tempfile = "3.8"
+ansi_term = "=0.12.1"
+anyhow = "=1.0.86"
+cargo = "=0.80.0"
+cargo_metadata = "=0.18.1"
+chrono = { version = "=0.4.38", features = ["serde"] }
+clap = { version = "=4.5.9", features = ["derive"] }
+colored = "=2.1.0"
+current_platform = "=0.2.0"
+dunce = "=1.0.4"
+dylint = "=3.1.2"
+home = "=0.5.9"
+itertools = "=0.13.0"
+lazy_static = "=1.5.0"
+libloading = "=0.8.4"
+regex = { version = "=1.10.5", features = ["unicode"] }
+serde = { version = "=1.0.204", features = ["derive"] }
+serde_json = "=1.0.120"
+strum = "=0.26.3"
+strum_macros = "=0.26.4"
+tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
-toml = { version = "0.8.0" }
-tracing = "0.1.37"
-tracing-bunyan-formatter = "0.3"
-tracing-log = "0.2"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
-webbrowser = "1"
+toml = "=0.8.15"
+tracing = "=0.1.40"
+tracing-bunyan-formatter = "=0.3.9"
+tracing-log = "=0.2.0"
+tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
+webbrowser = "=1.0.1"
