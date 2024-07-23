@@ -22,6 +22,7 @@ jobs:
     outputs:
       linux_status: ${{ steps.run-tests.outputs.linux_status }}
       macos_status: ${{ steps.run-tests.outputs.macos_status }}
+      toolchain: ${{ steps.get-toolchain.outputs.toolchain }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,23 +45,27 @@ jobs:
             brew install wkhtmltopdf
           fi
 
-      - name: Install Rust nightly and add rust-src
-        run: |
-          rustup install nightly-2023-12-16
-          rustup component add rust-src --toolchain nightly-2023-12-16
-
-      - name: Install dylint, dylint-link
-        run: cargo +nightly-2023-12-16 install cargo-dylint dylint-link clippy-sarif --locked
-
       - name: Install local scout
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
+
+      - name: Get the toolchain for this test suite
+        id: get-toolchain
+        working-directory: apps/cargo-scout-audit/tests/contract
+        run: |
+          TOOLCHAIN=$(cargo scout-audit --toolchain)
+          echo "toolchain=$TOOLCHAIN" >> $GITHUB_OUTPUT
+
+      - name: Install clippy-sarif and cargo-nextest, and set the toolchain
+        run: |
+          cargo install clippy-sarif cargo-nextest --locked
+          rustup default ${{ steps.get-toolchain.outputs.toolchain }}
 
       - name: Run tests and set output
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
-          if cargo test --all --all-features; then
+          if cargo nextest run --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT

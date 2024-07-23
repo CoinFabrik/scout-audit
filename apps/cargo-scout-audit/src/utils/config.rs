@@ -16,7 +16,7 @@ fn create_default_config(
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
-        .create(true)
+        .truncate(true)
         .open(file_path)?;
     let str = match bc {
         BlockChain::Ink => INK_DEFAULT_CONFIG.to_string(),

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use cargo::Config;
+use cargo::GlobalContext;
 use itertools::Itertools;
 
 use crate::scout::blockchain::BlockChain;
@@ -20,7 +20,7 @@ pub use configuration::{get_local_detectors_configuration, get_remote_detectors_
 
 #[derive(Debug)]
 pub struct Detectors<'a> {
-    cargo_config: Config,
+    cargo_config: GlobalContext,
     detectors_configs: DetectorsConfigurationList,
     metadata: &'a Metadata,
     verbose: bool,
@@ -29,7 +29,7 @@ pub struct Detectors<'a> {
 impl<'a> Detectors<'a> {
     /// Creates a new instance of `Detectors`
     pub fn new(
-        cargo_config: Config,
+        cargo_config: GlobalContext,
         detectors_configs: DetectorsConfigurationList,
         metadata: &'a Metadata,
         verbose: bool,
