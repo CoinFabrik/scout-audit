@@ -12,7 +12,8 @@ use rustc_errors::{Applicability, Diagnostic, MultiSpan};
 use rustc_hir::HirId;
 use rustc_lint::{LateContext, Lint, LintContext};
 use rustc_span::Span;
-use std::env;
+use std::{env, io::BufRead};
+use capture_stdio::Capture;
 
 fn docs_link(diag: &mut Diagnostic, lint: &'static Lint) {
     if env::var("CLIPPY_DISABLE_DOCS_LINKS").is_err() {
@@ -28,29 +29,59 @@ fn docs_link(diag: &mut Diagnostic, lint: &'static Lint) {
     }
 }
 
-/// Emit a basic lint message with a `msg` and a `span`.
-///
-/// This is the most primitive of our lint emission methods and can
-/// be a good way to get a new lint started.
-///
-/// Usually it's nicer to provide more context for lint messages.
-/// Be sure the output is understandable when you use this method.
-///
-/// # Example
-///
-/// ```ignore
-/// error: usage of mem::forget on Drop type
-///   --> $DIR/mem_forget.rs:17:5
-///    |
-/// 17 |     std::mem::forget(seven);
-///    |     ^^^^^^^^^^^^^^^^^^^^^^^
-/// ```
-pub fn span_lint<T: LintContext>(cx: &T, lint: &'static Lint, sp: impl Into<MultiSpan>, msg: &str) {
-    #[expect(clippy::disallowed_methods)]
-    cx.struct_span_lint(lint, sp, msg.to_string(), |diag| {
-        docs_link(diag, lint);
-        diag
-    });
+fn print_error<F: FnOnce() -> ()>(cb: F){
+    let old = std::io::set_output_capture(None);
+    let mut piped_stderr = capture_stdio::PipedStderr::capture().unwrap();
+
+    let port = std::env::var("SCOUT_PORT_NUMBER");
+
+    if port.is_err(){
+        cb();
+        return;
+    }
+
+    let port = port.unwrap();
+
+    //let _ = reqwest::blocking::Client::new()
+    //    .post(format!("http://127.0.0.1:{port}/print"))
+    //    .body("A")
+    //    .send();
+
+    cb();
+
+    //let _ = reqwest::blocking::Client::new()
+    //    .post(format!("http://127.0.0.1:{port}/print"))
+    //    .body("B")
+    //    .send();
+
+    let _ = std::io::set_output_capture(old);
+    let mut captured = String::new();
+    let mut buf_reader = std::io::BufReader::new(piped_stderr.get_reader());
+    let _ = buf_reader.read_line(&mut captured);
+
+    let krate = std::env::var("CARGO_PKG_NAME");
+    let krate = if let Ok(krate2) = krate{
+        krate2
+    }else{
+        String::new()
+    };
+
+    let body = {
+        let json = serde_json::from_str::<serde_json::Value>(&captured);
+        if let Ok(json) = json{
+            serde_json::json!({
+                "crate": krate,
+                "message": json,
+            }).to_string()
+        }else{
+            captured
+        }
+    };
+
+    let _ = reqwest::blocking::Client::new()
+        .post(format!("http://127.0.0.1:{port}/vuln"))
+        .body(body)
+        .send();
 }
 
 /// Same as `span_lint` but with an extra `help` message.
@@ -81,17 +112,47 @@ pub fn span_lint_and_help<T: LintContext>(
     help_span: Option<Span>,
     help: &str,
 ) {
-    #[expect(clippy::disallowed_methods)]
-    cx.struct_span_lint(lint, span, msg.to_string(), |diag| {
-        let help = help.to_string();
-        if let Some(help_span) = help_span {
-            diag.span_help(help_span, help);
-        } else {
-            diag.help(help);
-        }
-        docs_link(diag, lint);
-        diag
+    print_error(||{
+        #[expect(clippy::disallowed_methods)]
+        cx.struct_span_lint(lint, span, msg.to_string(), |diag| {
+            let help = help.to_string();
+            if let Some(help_span) = help_span {
+                diag.span_help(help_span, help);
+            } else {
+                diag.help(help);
+            }
+            docs_link(diag, lint);
+            diag
+        });
     });
+}
+
+/// Emit a basic lint message with a `msg` and a `span`.
+///
+/// This is the most primitive of our lint emission methods and can
+/// be a good way to get a new lint started.
+///
+/// Usually it's nicer to provide more context for lint messages.
+/// Be sure the output is understandable when you use this method.
+///
+/// # Example
+///
+/// ```ignore
+/// error: usage of mem::forget on Drop type
+///   --> $DIR/mem_forget.rs:17:5
+///    |
+/// 17 |     std::mem::forget(seven);
+///    |     ^^^^^^^^^^^^^^^^^^^^^^^
+/// ```
+pub fn span_lint<T: LintContext>(cx: &T, lint: &'static Lint, sp: impl Into<MultiSpan>, msg: &str) {
+    print_error(||{
+        #[expect(clippy::disallowed_methods)]
+        cx.struct_span_lint(lint, sp, msg.to_string(), |diag| {
+            docs_link(diag, lint);
+            diag
+        });
+    });
+    
 }
 
 /// Like `span_lint` but with a `note` section instead of a `help` message.

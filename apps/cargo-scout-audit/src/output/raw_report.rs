@@ -18,12 +18,11 @@ struct FileDetails {
 impl RawReport {
     #[tracing::instrument(name = "GENERATE FROM RAW REPORT", level = "debug", skip_all, fields(project = %info.name))]
     pub fn generate_report(
-        scout_output: &str,
+        vulns: &Vec<Value>,
         info: &ProjectInfo,
         detector_info: &HashMap<String, LintInfo>,
     ) -> Result<Report> {
-        let scout_findings =
-            parse_scout_findings(scout_output).context("Failed to parse scout findings")?;
+        let scout_findings = vulns;
         let findings = process_findings(&scout_findings, info, detector_info)
             .context("Failed to process findings")?;
         let categories = generate_categories(detector_info, &findings)
@@ -39,26 +38,12 @@ impl RawReport {
     }
 }
 
-fn parse_scout_findings(scout_output: &str) -> Result<Vec<Value>> {
-    let mut results = Vec::new();
-    for (line_number, line) in scout_output.lines().enumerate() {
-        let value = serde_json::from_str::<Value>(line).with_context(|| {
-            format!(
-                "Failed to parse JSON from line {}: '{}'",
-                line_number + 1,
-                line
-            )
-        })?;
-        let has_code = value
-            .get("message")
-            .and_then(|message| message.get("code"))
-            .and_then(|code| code.get("code"))
-            .is_some();
-        if has_code {
-            results.push(value);
-        }
+pub(crate) fn json_to_string(s: &Value) -> String{
+    if let Value::String(s) = s{
+        s.clone()
+    }else{
+        s.to_string().trim_matches('"').to_string()
     }
-    Ok(results)
 }
 
 fn process_findings(
@@ -120,27 +105,21 @@ fn process_findings(
 }
 
 fn parse_category(finding: &Value) -> Result<String> {
-    let category = finding
-        .get("message")
-        .and_then(|message| message.get("code"))
+    let category = json_to_string(finding
+        .get("code")
         .and_then(|code| code.get("code"))
-        .and_then(Value::as_str)
         .with_context(|| "Category not found in finding structure")?
-        .trim_matches('"')
-        .to_string();
+    );
     Ok(category)
 }
 
 fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<FileDetails> {
-    let relative_path = finding
-        .get("message")
-        .and_then(|message| message.get("spans"))
+    let relative_path = json_to_string(finding
+        .get("spans")
         .and_then(|spans| spans.get(0))
         .and_then(|span| span.get("file_name"))
-        .and_then(Value::as_str)
         .with_context(|| "File name not found in finding structure")?
-        .trim_matches('"')
-        .to_string();
+    );
 
     let absolute_path = workspace_root.join(&relative_path);
 
@@ -161,16 +140,15 @@ fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<FileDeta
 
 fn parse_span(finding: &Value, file_name: &str) -> String {
     finding
-        .get("message")
-        .and_then(|message| message.get("spans"))
+        .get("spans")
         .map(|spans| {
             format!(
                 "{}:{}:{} - {}:{}",
                 file_name,
-                spans[0].get("line_start").unwrap_or(&Value::default()),
-                spans[0].get("column_start").unwrap_or(&Value::default()),
-                spans[0].get("line_end").unwrap_or(&Value::default()),
-                spans[0].get("column_end").unwrap_or(&Value::default())
+                spans.get("line_start").unwrap_or(&Value::default()),
+                spans.get("column_start").unwrap_or(&Value::default()),
+                spans.get("line_end").unwrap_or(&Value::default()),
+                spans.get("column_end").unwrap_or(&Value::default()),
             )
         })
         .unwrap_or_else(|| "Span information not available".to_string())
@@ -178,8 +156,7 @@ fn parse_span(finding: &Value, file_name: &str) -> String {
 
 fn extract_code_snippet(file_path: &Path, finding: &Value) -> Result<String> {
     let sp = finding
-        .get("message")
-        .and_then(|message| message.get("spans"))
+        .get("spans")
         .and_then(|spans| spans.get(0))
         .with_context(|| "Span information not found in finding structure")?;
 
@@ -206,7 +183,6 @@ fn extract_code_snippet(file_path: &Path, finding: &Value) -> Result<String> {
 fn parse_error_message(finding: &Value) -> String {
     finding
         .get("message")
-        .and_then(|message| message.get("message"))
         .and_then(Value::as_str)
         .unwrap_or("Error message not available")
         .to_string()

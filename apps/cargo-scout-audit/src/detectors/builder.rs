@@ -101,6 +101,8 @@ impl<'a> DetectorBuilder<'a> {
 
     /// Parse workspace path into library.
     fn get_library(&self, workspace_path: PathBuf) -> Result<Library> {
+
+        println!("workspace_path: {}", workspace_path.display());
         // Dylint annotation
         // smoelius: Collecting the package ids before building reveals missing/unparsable `Cargo.toml`
         // files sooner.
