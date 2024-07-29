@@ -193,14 +193,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     let metadata = get_project_metadata(&opts.manifest_path)?;
-    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+    let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
 
     if opts.toolchain {
-        println!("{}", bc_dependency.get_toolchain());
+        println!("{}", blockchain.get_toolchain());
         return Ok(());
     }
 
-    if let Some(mut child) = run_scout_in_nightly(bc_dependency.get_toolchain())? {
+    if let Some(mut child) = run_scout_in_nightly(blockchain.get_toolchain())? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
@@ -222,7 +222,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
                 e
             )
         })?,
-        None => get_remote_detectors_configuration(bc_dependency).map_err(|e| {
+        None => get_remote_detectors_configuration(blockchain).map_err(|e| {
             anyhow!(
                 "Failed to get remote detectors configuration.\n\n     → Caused by: {}",
                 e
@@ -244,13 +244,12 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     detectors_names = if let Some(profile) = &opts.profile {
-        let config =
-            open_config_or_default(bc_dependency, detectors_names.clone()).map_err(|e| {
-                anyhow!(
-                    "Failed to load or generate profile.\n\n     → Caused by: {}",
-                    e
-                )
-            })?;
+        let config = open_config_or_default(blockchain, detectors_names.clone()).map_err(|e| {
+            anyhow!(
+                "Failed to load or generate profile.\n\n     → Caused by: {}",
+                e
+            )
+        })?;
 
         profile_enabled_detectors(config, profile.clone())?
     } else {
@@ -266,7 +265,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     let detectors_paths = detector_builder
-        .build(bc_dependency, used_detectors)
+        .build(&blockchain, &used_detectors)
         .map_err(|e| {
             anyhow!(
                 "Failed to build detectors.\n\n     → Caused by: {}",
@@ -286,7 +285,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
 
     // Run dylint
-    let stdout_temp_file = run_dylint(detectors_paths, &opts, bc_dependency)
+    let stdout_temp_file = run_dylint(detectors_paths, &opts, blockchain)
         .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
 
     // Generate report
