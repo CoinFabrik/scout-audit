@@ -5,7 +5,7 @@ use cargo::GlobalContext;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
 
-use super::{configuration::DetectorConfiguration, library::Library, source::download_git_repo};
+use super::{configuration::DetectorsConfiguration, library::Library, source::download_git_repo};
 use crate::{
     scout::blockchain::BlockChain,
     utils::{cargo_package, rustup},
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a GlobalContext,
-    detectors_config: &'a DetectorConfiguration,
+    detectors_config: &'a DetectorsConfiguration,
     root_metadata: &'a Metadata,
     verbose: bool,
 }
@@ -22,7 +22,7 @@ impl<'a> DetectorBuilder<'a> {
     /// Creates a new instance of `DetectorsBuilder`.
     pub fn new(
         cargo_config: &'a GlobalContext,
-        detectors_config: &'a DetectorConfiguration,
+        detectors_config: &'a DetectorsConfiguration,
         root_metadata: &'a Metadata,
         verbose: bool,
     ) -> Self {
@@ -35,7 +35,7 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     /// Compiles detector library and returns its path.
-    pub fn build(self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
+    pub fn build(&self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
         let detector_root = self.download_detector()?;
         let workspace_path = self.parse_library_path(&detector_root)?;
         let library = self.get_library(workspace_path)?;
@@ -46,7 +46,7 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     /// Returns list of detector names.
-    pub fn get_detector_names(self) -> Result<Vec<String>> {
+    pub fn get_detector_names(&self) -> Result<Vec<String>> {
         let detector_root = self.download_detector()?;
         let workspace_path = self.parse_library_path(&detector_root)?;
         let library = self.get_library(workspace_path)?;

@@ -1,48 +1,89 @@
 use std::path::Path;
 
-use anyhow::{Context, Result};
+use crate::scout::blockchain::BlockChain;
+use anyhow::{anyhow, Context, Result};
 use cargo::{
     core::{Dependency, GitReference, SourceId},
     util::IntoUrl,
 };
-
-use crate::scout::blockchain::BlockChain;
+use reqwest::blocking::Client;
 
 #[derive(Debug, Clone)]
-pub struct DetectorConfiguration {
+pub struct DetectorsConfiguration {
     pub dependency: Dependency,
     pub path: Option<String>,
 }
 
-pub type DetectorsConfigurationList = Vec<DetectorConfiguration>;
+fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
+    // Extract owner and repo from the URL
+    let parts: Vec<&str> = url.trim_end_matches(".git").split('/').collect();
+    let owner = parts[parts.len() - 2];
+    let repo = parts[parts.len() - 1];
 
-/// Returns list of detectors.
-pub fn get_remote_detectors_configuration(
-    blockchain: BlockChain,
-) -> Result<DetectorsConfigurationList> {
-    let dependency = Dependency::parse(
+    let client = Client::new();
+    let response = client
+        .get(format!(
+            "https://api.github.com/repos/{}/{}/branches/{}",
+            owner, repo, branch
+        ))
+        .header("User-Agent", "scout")
+        .send()?;
+
+    Ok(response.status().is_success())
+}
+
+fn create_git_dependency(blockchain: &BlockChain, branch: &str) -> Result<Dependency> {
+    let url = blockchain
+        .get_detectors_url()
+        .into_url()
+        .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?;
+
+    Dependency::parse(
         "library",
         None,
-        SourceId::for_git(
-            &blockchain
-                .get_detectors_url()
-                .into_url()
-                .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?,
-            GitReference::DefaultBranch,
-        )?,
-    )?;
+        SourceId::for_git(&url, GitReference::Branch(branch.to_string()))?,
+    )
+    .with_context(|| "Failed to create git dependency")
+}
 
-    let detectors = vec![DetectorConfiguration {
+/// Returns list of detectors.
+#[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
+pub fn get_remote_detectors_configuration(
+    blockchain: BlockChain,
+) -> Result<DetectorsConfiguration> {
+    let toolchain = blockchain.get_toolchain();
+    let scout_version = env!("CARGO_PKG_VERSION");
+    // TODO: switch to release/{} when deploying
+    let default_branch = format!("main");
+    let fallback_branch = format!("release/{}-{}", scout_version, toolchain);
+
+    let url = blockchain
+        .get_detectors_url()
+        .into_url()
+        .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?;
+
+    let branch = if check_branch_exists(url.as_str(), &default_branch)? {
+        default_branch
+    } else if check_branch_exists(url.as_str(), &fallback_branch)? {
+        fallback_branch
+    } else {
+        return Err(anyhow!("Could not find any suitable branch for detectors"));
+    };
+
+    let dependency = create_git_dependency(&blockchain, &branch)?;
+
+    let detectors = DetectorsConfiguration {
         dependency,
         path: Some("detectors".to_string()),
-    }];
+    };
 
     Ok(detectors)
 }
 
 /// Returns local detectors configuration from custom path.
-pub fn get_local_detectors_configuration(path: &Path) -> Result<DetectorsConfigurationList> {
-    let detectors = vec![DetectorConfiguration {
+#[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
+pub fn get_local_detectors_configuration(path: &Path) -> Result<DetectorsConfiguration> {
+    let detectors = DetectorsConfiguration {
         dependency: Dependency::parse(
             "library",
             None,
@@ -51,6 +92,6 @@ pub fn get_local_detectors_configuration(path: &Path) -> Result<DetectorsConfigu
         )
         .with_context(|| "Failed to parse local detector dependency")?,
         path: None,
-    }];
+    };
     Ok(detectors)
 }
