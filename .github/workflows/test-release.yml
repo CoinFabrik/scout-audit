@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "apps/cargo-scout-audit/**"
+  workflow_dispatch: 
 
 env:
   PYTHONUNBUFFERED: 1
