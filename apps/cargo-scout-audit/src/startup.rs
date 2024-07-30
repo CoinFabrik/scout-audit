@@ -1,4 +1,7 @@
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::GlobalContext;
+use cargo_metadata::{Metadata, MetadataCommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use std::{
     collections::HashMap,
@@ -6,9 +9,6 @@ use std::{
     path::PathBuf,
 };
 use tempfile::NamedTempFile;
-use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo_metadata::{Metadata, MetadataCommand};
-use clap::{Parser, Subcommand, ValueEnum};
 use crate::server::capture_output;
 use crate::output::raw_report::json_to_string;
 use serde_json::{
@@ -16,12 +16,15 @@ use serde_json::{
     to_string_pretty,
     from_str,
 };
-
 use crate::{
-    detectors::{get_local_detectors_configuration, get_remote_detectors_configuration, Detectors},
+    detectors::{
+        builder::DetectorBuilder,
+        configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
+    },
     output::raw_report::RawReport,
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+        version_checker::VersionChecker,
     },
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
@@ -105,6 +108,13 @@ pub struct Scout {
 
     #[clap(long, value_name = "path", help = "Path to detectors workspace.")]
     pub local_detectors: Option<PathBuf>,
+
+    #[clap(
+        long,
+        help = "Force fallback to secondary detectors branch.",
+        default_value_t = false
+    )]
+    pub force_fallback: bool,
 
     #[clap(
         short,
@@ -260,18 +270,26 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     opts.prepare_args();
 
     let metadata = get_project_metadata(&opts.manifest_path)?;
-    let bc_dependency = BlockChain::get_blockchain_dependency(&metadata)?;
+    let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
+    let toolchain = blockchain.get_toolchain();
 
     if opts.toolchain {
-        println!("{}", bc_dependency.get_toolchain());
+        println!("{}", toolchain);
         return Ok(());
     }
 
-    if let Some(mut child) = run_scout_in_nightly(bc_dependency.get_toolchain())? {
+    if let Some(mut child) = run_scout_in_nightly(toolchain)? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(());
+    }
+
+    if let Err(e) = VersionChecker::new().check_for_updates() {
+        print_error(&format!(
+            "Failed to check for updates.\n\n     → Caused by: {}",
+            e
+        ));
     }
 
     let cargo_config =
@@ -283,16 +301,32 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     });
 
     let detectors_config = match &opts.local_detectors {
-        Some(path) => get_local_detectors_configuration(&PathBuf::from(path))
-            .with_context(|| "Failed to get local detectors configuration")?,
-        None => get_remote_detectors_configuration(bc_dependency)
-            .with_context(|| "Failed to get remote detectors configuration")?,
+        Some(path) => get_local_detectors_configuration(&PathBuf::from(path)).map_err(|e| {
+            anyhow!(
+                "Failed to get local detectors configuration.\n\n     → Caused by: {}",
+                e
+            )
+        })?,
+        None => {
+            get_remote_detectors_configuration(blockchain, opts.force_fallback).map_err(|e| {
+                anyhow!(
+                    "Failed to get remote detectors configuration.\n\n     → Caused by: {}",
+                    e
+                )
+            })?
+        }
     };
 
     // Instantiate detectors
-    let detectors = Detectors::new(cargo_config, detectors_config, &metadata, opts.verbose);
+    let detector_builder = DetectorBuilder::new(
+        &cargo_config,
+        &detectors_config,
+        &metadata,
+        opts.verbose,
+        toolchain,
+    );
 
-    let mut detectors_names = detectors
+    let mut detectors_names = detector_builder
         .get_detector_names()
         .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
 
@@ -302,8 +336,12 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     }
 
     detectors_names = if let Some(profile) = &opts.profile {
-        let config = open_config_or_default(bc_dependency, detectors_names.clone())
-            .with_context(|| "Failed to load or generate config")?;
+        let config = open_config_or_default(blockchain, detectors_names.clone()).map_err(|e| {
+            anyhow!(
+                "Failed to load or generate profile.\n\n     → Caused by: {}",
+                e
+            )
+        })?;
 
         profile_enabled_detectors(config, profile.clone())?
     } else {
@@ -318,8 +356,8 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         detectors_names
     };
 
-    let detectors_paths = detectors
-        .build(bc_dependency, &used_detectors)
+    let detectors_paths = detector_builder
+        .build(&blockchain, &used_detectors)
         .map_err(|e| {
             anyhow!(
                 "Failed to build detectors.\n\n     → Caused by: {}",
@@ -335,13 +373,13 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         return Ok(());
     }
 
-    let project_info =
-        ProjectInfo::get_project_info(&metadata).with_context(|| "Failed to get project info")?;
+    let project_info = ProjectInfo::get_project_info(&metadata)
+        .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
     
     let (vulns, (_successful_build, stdout)) = capture_output(||{
         // Run dylint
-        run_dylint(detectors_paths, &opts, bc_dependency)
-            .with_context(|| "Failed to run dylint")
+        run_dylint(detectors_paths, &opts, blockchain)
+            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
     })?;
 
     let output = output_to_json(temp_file_to_string(stdout)?);
