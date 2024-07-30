@@ -85,6 +85,15 @@ jobs:
           echo "Version extracted: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
+      - name: Set platform-specific tag prefix
+        id: set-tag-prefix
+        run: |
+          if [[ "${{ matrix.platform }}" == "linux/arm64" ]]; then
+            echo "tag_prefix=arm-" >> $GITHUB_OUTPUT
+          else
+            echo "tag_prefix=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -105,5 +114,5 @@ jobs:
           cache-to: type=gha
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ steps.scout-version.outputs.version }},
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}-${{ steps.set-tag-prefix.outputs.tag_prefix }}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}-${{ steps.set-tag-prefix.outputs.tag_prefix }}:latest
