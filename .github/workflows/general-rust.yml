@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "apps/cargo-scout-audit/**"
+  workflow_dispatch:
 
 jobs:
   format:
