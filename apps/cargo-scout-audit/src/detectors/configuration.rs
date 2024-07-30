@@ -50,6 +50,7 @@ fn create_git_dependency(blockchain: &BlockChain, branch: &str) -> Result<Depend
 #[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
 pub fn get_remote_detectors_configuration(
     blockchain: BlockChain,
+    force_fallback: bool,
 ) -> Result<DetectorsConfiguration> {
     let toolchain = blockchain.get_toolchain();
     let scout_version = env!("CARGO_PKG_VERSION");
@@ -61,13 +62,15 @@ pub fn get_remote_detectors_configuration(
         .into_url()
         .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?;
 
-    let branch = if check_branch_exists(url.as_str(), &default_branch)? {
+    let branch = if !force_fallback && check_branch_exists(url.as_str(), &default_branch)? {
         default_branch
     } else if check_branch_exists(url.as_str(), &fallback_branch)? {
-        print_warning(&format!(
-            "Could not find branch {} for detectors, falling back to {}",
-            default_branch, fallback_branch
-        ));
+        if !force_fallback {
+            print_warning(&format!(
+                "Could not find branch {} for detectors, falling back to {}",
+                default_branch, fallback_branch
+            ));
+        }
         fallback_branch
     } else {
         return Err(anyhow!("Could not find any suitable branch for detectors"));
