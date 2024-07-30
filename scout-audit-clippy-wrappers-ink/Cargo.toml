@@ -1,5 +1,5 @@
 [package]
-name = "scout-audit-clippy-wrappers"
+name = "scout-audit-clippy-wrappers-ink"
 version = "0.1.0"
 edition = "2021"
 
