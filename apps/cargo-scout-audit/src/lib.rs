@@ -6,9 +6,6 @@ extern crate prettytable;
 #[path = "../build_config/mod.rs"]
 pub mod build_config;
 
-#[path = "../build_config/mod.rs"]
-pub mod build_config;
-
 pub mod detectors;
 pub mod output;
 pub mod scout;

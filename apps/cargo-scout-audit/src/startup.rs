@@ -30,7 +30,7 @@ use crate::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        //print::{print_error, print_warning},
+        print::{print_error, print_warning},
     },
 };
 
@@ -379,7 +379,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let (vulns, (_successful_build, stdout)) = capture_output(||{
         // Run dylint
         run_dylint(detectors_paths, &opts, blockchain)
-            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
+            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output = output_to_json(temp_file_to_string(stdout)?);
