@@ -95,7 +95,7 @@ pub fn span_lint_and_note<T: LintContext>(
     note: impl Into<SubdiagMessage>,
 ) {
     print_error(||{
-        span_lint_and_note(cx, lint, span, msg, note_span, note);
+        clippy_utils::diagnostics::span_lint_and_note(cx, lint, span, msg, note_span, note);
     });
 }
 
@@ -107,13 +107,13 @@ where
     F: FnOnce(&mut Diag<'_, ()>),
 {
     print_error(||{
-        span_lint_and_then(cx, lint, sp, msg, f);
+        clippy_utils::diagnostics::span_lint_and_then(cx, lint, sp, msg, f);
     });
 }
 
 pub fn span_lint_hir(cx: &LateContext<'_>, lint: &'static Lint, hir_id: HirId, sp: Span, msg: impl Into<DiagMessage>) {
     print_error(||{
-        span_lint_hir(cx, lint, hir_id, sp, msg);
+        clippy_utils::diagnostics::span_lint_hir(cx, lint, hir_id, sp, msg);
     });
 }
 
@@ -126,7 +126,7 @@ pub fn span_lint_hir_and_then(
     f: impl FnOnce(&mut Diag<'_, ()>),
 ) {
     print_error(||{
-        span_lint_hir_and_then(cx, lint, hir_id, sp, msg, f);
+        clippy_utils::diagnostics::span_lint_hir_and_then(cx, lint, hir_id, sp, msg, f);
     });
 }
 
@@ -140,7 +140,7 @@ pub fn span_lint_and_sugg<T: LintContext>(
     applicability: Applicability,
 ) {
     print_error(||{
-        span_lint_and_sugg(cx, lint, sp, msg, help, sugg, applicability);
+        clippy_utils::diagnostics::span_lint_and_sugg(cx, lint, sp, msg, help, sugg, applicability);
     });
 }
 
@@ -149,7 +149,7 @@ where
     I: IntoIterator<Item = (Span, String)>,
 {
     print_error(||{
-        multispan_sugg(diag, help_msg, sugg);
+        clippy_utils::diagnostics::multispan_sugg(diag, help_msg, sugg);
     });
 }
 
@@ -162,6 +162,6 @@ pub fn multispan_sugg_with_applicability<I>(
     I: IntoIterator<Item = (Span, String)>,
 {
     print_error(||{
-        multispan_sugg_with_applicability(diag, help_msg, applicability, sugg);
+        clippy_utils::diagnostics::multispan_sugg_with_applicability(diag, help_msg, applicability, sugg);
     });
 }
