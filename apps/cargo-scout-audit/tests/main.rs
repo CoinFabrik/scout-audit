@@ -30,6 +30,22 @@ mod tests {
     }
 
     #[test]
+    fn test_scout_with_forced_fallback() {
+        // Given
+        let scout_opts = Scout {
+            manifest_path: Some(CONTRACT_PATH.clone()),
+            force_fallback: true,
+            ..Scout::default()
+        };
+
+        // When
+        let result = run_scout(scout_opts);
+
+        // Then
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_scout_with_exclude() {
         // Given
         let scout_opts = Scout {
