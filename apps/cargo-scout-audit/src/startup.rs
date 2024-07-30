@@ -185,13 +185,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     opts.validate()?;
     opts.prepare_args();
 
-    if let Err(e) = VersionChecker::new().check_for_updates() {
-        print_error(&format!(
-            "Failed to check for updates.\n\n     → Caused by: {}",
-            e
-        ));
-    }
-
     let metadata = get_project_metadata(&opts.manifest_path)?;
     let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
     let toolchain = blockchain.get_toolchain();
@@ -206,6 +199,13 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(());
+    }
+
+    if let Err(e) = VersionChecker::new().check_for_updates() {
+        print_error(&format!(
+            "Failed to check for updates.\n\n     → Caused by: {}",
+            e
+        ));
     }
 
     let cargo_config =
