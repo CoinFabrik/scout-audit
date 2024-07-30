@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::scout::blockchain::BlockChain;
+use crate::{scout::blockchain::BlockChain, utils::print::print_warning};
 use anyhow::{anyhow, Context, Result};
 use cargo::{
     core::{Dependency, GitReference, SourceId},
@@ -53,8 +53,7 @@ pub fn get_remote_detectors_configuration(
 ) -> Result<DetectorsConfiguration> {
     let toolchain = blockchain.get_toolchain();
     let scout_version = env!("CARGO_PKG_VERSION");
-    // TODO: switch to release/{} when deploying
-    let default_branch = format!("main");
+    let default_branch = format!("release/{}", scout_version);
     let fallback_branch = format!("release/{}-{}", scout_version, toolchain);
 
     let url = blockchain
@@ -65,6 +64,10 @@ pub fn get_remote_detectors_configuration(
     let branch = if check_branch_exists(url.as_str(), &default_branch)? {
         default_branch
     } else if check_branch_exists(url.as_str(), &fallback_branch)? {
+        print_warning(&format!(
+            "Could not find branch {} for detectors, falling back to {}",
+            default_branch, fallback_branch
+        ));
         fallback_branch
     } else {
         return Err(anyhow!("Could not find any suitable branch for detectors"));
