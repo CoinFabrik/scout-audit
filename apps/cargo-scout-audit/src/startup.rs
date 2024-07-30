@@ -194,13 +194,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let metadata = get_project_metadata(&opts.manifest_path)?;
     let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
+    let toolchain = blockchain.get_toolchain();
 
     if opts.toolchain {
-        println!("{}", blockchain.get_toolchain());
+        println!("{}", toolchain);
         return Ok(());
     }
 
-    if let Some(mut child) = run_scout_in_nightly(blockchain.get_toolchain())? {
+    if let Some(mut child) = run_scout_in_nightly(toolchain)? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
@@ -231,8 +232,13 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
 
     // Instantiate detectors
-    let detector_builder =
-        DetectorBuilder::new(&cargo_config, &detectors_config, &metadata, opts.verbose);
+    let detector_builder = DetectorBuilder::new(
+        &cargo_config,
+        &detectors_config,
+        &metadata,
+        opts.verbose,
+        toolchain,
+    );
 
     let mut detectors_names = detector_builder
         .get_detector_names()
