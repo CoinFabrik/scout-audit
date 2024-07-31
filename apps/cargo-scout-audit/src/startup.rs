@@ -14,7 +14,7 @@ use crate::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{print_error, print_warning},
+        print::print_error,
     },
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
@@ -223,11 +223,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
             continue;
         }
         let level = message.get("level");
-        let ok = if level.is_none() || level.unwrap() != "error" {
-            true
-        } else {
-            false
-        };
+        let ok = level.is_none() || level.unwrap() != "error";
         ret.insert(json_to_string(name.unwrap()), ok);
     }
 

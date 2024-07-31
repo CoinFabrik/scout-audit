@@ -12,7 +12,7 @@ use rustc_lint::{LateContext, Lint, LintContext};
 use rustc_span::Span;
 use std::io::BufRead;
 
-fn print_error<F: FnOnce() -> ()>(cb: F) {
+fn print_error<F: FnOnce()>(cb: F) {
     let old = std::io::set_output_capture(None);
     let mut piped_stderr = capture_stdio::PipedStderr::capture().unwrap();
 
@@ -43,11 +43,7 @@ fn print_error<F: FnOnce() -> ()>(cb: F) {
     let _ = buf_reader.read_line(&mut captured);
 
     let krate = std::env::var("CARGO_PKG_NAME");
-    let krate = if let Ok(krate2) = krate {
-        krate2
-    } else {
-        String::new()
-    };
+    let krate = krate.unwrap_or_default();
 
     let body = {
         let json = serde_json::from_str::<serde_json::Value>(&captured);

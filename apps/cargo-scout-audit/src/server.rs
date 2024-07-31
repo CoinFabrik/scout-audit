@@ -5,7 +5,7 @@ use std::{
 };
 
 fn port_is_available_on_localhost(port: u16) -> bool {
-    !std::net::TcpListener::bind(("127.0.0.1", port)).is_err()
+    std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
 }
 
 fn find_available_port() -> Option<u16> {
@@ -27,7 +27,7 @@ impl AppState {
 }
 
 async fn vuln_handler(state: Arc<AppState>, body: String) {
-    (*state).vulns.lock().unwrap().push(body);
+    state.vulns.lock().unwrap().push(body);
 }
 
 async fn print_handler(body: String) {
@@ -40,7 +40,7 @@ async fn test_handler2(body: String) -> Result<(), (StatusCode, String)> {
 }
 
 async fn wait_for_termination(state: Arc<AppState>) {
-    let running = || *(*state).running_state.lock().unwrap() < 2;
+    let running = || *state.running_state.lock().unwrap() < 2;
     while running() {
         std::thread::sleep(Duration::from_millis(100));
     }
@@ -90,7 +90,7 @@ async fn server_thread(state: Arc<AppState>) {
 fn start_server(state: Arc<AppState>) -> std::thread::JoinHandle<()> {
     let state2 = state.clone();
     let ret = std::thread::spawn(|| server_thread(state2));
-    let not_running = || *(*state).running_state.lock().unwrap() < 1;
+    let not_running = || *state.running_state.lock().unwrap() < 1;
     //let not_running = || true;
     while not_running() {
         std::thread::sleep(Duration::from_millis(100));
@@ -106,12 +106,12 @@ pub(crate) fn capture_output<T, E, F: FnOnce() -> Result<T, E>>(
 
     let result = cb();
 
-    *(*state).running_state.lock().unwrap() = 2;
+    *state.running_state.lock().unwrap() = 2;
     let _ = handle.join();
 
     match result {
         Ok(r) => {
-            let ret = (*state).vulns.lock().unwrap().clone();
+            let ret = state.vulns.lock().unwrap().clone();
             Ok((ret, r))
         }
         Err(e) => Err(e),
