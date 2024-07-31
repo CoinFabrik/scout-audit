@@ -18,11 +18,11 @@ struct FileDetails {
 impl RawReport {
     #[tracing::instrument(name = "GENERATE FROM RAW REPORT", level = "debug", skip_all, fields(project = %info.name))]
     pub fn generate_report(
-        vulns: &[Value],
+        findings: &[Value],
         info: &ProjectInfo,
         detector_info: &HashMap<String, LintInfo>,
     ) -> Result<Report> {
-        let scout_findings = vulns;
+        let scout_findings = findings;
         let findings = process_findings(scout_findings, info, detector_info)
             .context("Failed to process findings")?;
         let categories = generate_categories(detector_info, &findings)

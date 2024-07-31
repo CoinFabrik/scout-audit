@@ -13,21 +13,21 @@ fn find_available_port() -> Option<u16> {
 }
 
 pub(crate) struct AppState {
-    pub vulns: Mutex<Vec<String>>,
+    pub findings: Mutex<Vec<String>>,
     pub running_state: Mutex<u32>,
 }
 
 impl AppState {
     pub fn new() -> AppState {
         AppState {
-            vulns: Mutex::new(Vec::<String>::new()),
+            findings: Mutex::new(Vec::<String>::new()),
             running_state: Mutex::new(0),
         }
     }
 }
 
 async fn vuln_handler(state: Arc<AppState>, body: String) {
-    state.vulns.lock().unwrap().push(body);
+    state.findings.lock().unwrap().push(body);
 }
 
 async fn print_handler(body: String) {
@@ -111,7 +111,7 @@ pub(crate) fn capture_output<T, E, F: FnOnce() -> Result<T, E>>(
 
     match result {
         Ok(r) => {
-            let ret = state.vulns.lock().unwrap().clone();
+            let ret = state.findings.lock().unwrap().clone();
             Ok((ret, r))
         }
         Err(e) => Err(e),

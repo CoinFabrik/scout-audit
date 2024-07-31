@@ -230,31 +230,31 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     ret
 }
 
-fn split_vulns(raw_vulns: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<Value>, Vec<Value>) {
-    let vulns = raw_vulns
+fn split_findings(raw_findings: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<Value>, Vec<Value>) {
+    let findings = raw_findings
         .iter()
         .map(|s| from_str::<Value>(s).unwrap())
         .collect::<Vec<Value>>();
-    let mut successful_vulns = Vec::<Value>::new();
-    let mut failed_vulns = Vec::<Value>::new();
+    let mut successful_findings = Vec::<Value>::new();
+    let mut failed_findings = Vec::<Value>::new();
 
-    for vuln in vulns.iter() {
-        let krate = vuln.get("crate");
-        let message = vuln.get("message");
+    for finding in findings.iter() {
+        let krate = finding.get("crate");
+        let message = finding.get("message");
         if krate.is_none() || message.is_none() {
             continue;
         }
         let krate = json_to_string(krate.unwrap());
         let message = message.unwrap();
         if *crates.get(&krate).unwrap_or(&true) {
-            &mut successful_vulns
+            &mut successful_findings
         } else {
-            &mut failed_vulns
+            &mut failed_findings
         }
         .push(message.clone());
     }
 
-    (successful_vulns, failed_vulns)
+    (successful_findings, failed_findings)
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -369,7 +369,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let project_info = ProjectInfo::get_project_info(&metadata)
         .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
 
-    let (vulns, (_successful_build, stdout)) = capture_output(|| {
+    let (findings, (_successful_build, stdout)) = capture_output(|| {
         // Run dylint
         run_dylint(detectors_paths, &opts, blockchain)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
@@ -377,14 +377,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let output = output_to_json(temp_file_to_string(stdout)?);
     let crates = get_crates(output);
-    let (successful_vulns, failed_vulns) = split_vulns(vulns, &crates);
+    let (successful_findings, failed_findings) = split_findings(findings, &crates);
 
     // Generate report
-    do_report(successful_vulns, crates, project_info, detectors_info, opts)
+    do_report(successful_findings, crates, project_info, detectors_info, opts)
 }
 
 fn do_report(
-    vulns: Vec<Value>,
+    findings: Vec<Value>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
@@ -392,15 +392,15 @@ fn do_report(
 ) -> Result<()> {
     if let Some(output_format) = opts.output_format {
         generate_report(
-            vulns,
+            findings,
             project_info,
             detectors_info,
             opts.output_path,
             output_format,
         )?;
     } else {
-        for vuln in vulns {
-            let rendered = json_to_string(vuln.get("rendered").unwrap_or(&Value::default()));
+        for finding in findings {
+            let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
             print!("{rendered}");
         }
 
@@ -477,13 +477,13 @@ fn run_dylint(
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    vulns: Vec<Value>,
+    findings: Vec<Value>,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
     output_format: OutputFormat,
 ) -> Result<()> {
-    let report = RawReport::generate_report(&vulns, &project_info, &detectors_info)?;
+    let report = RawReport::generate_report(&findings, &project_info, &detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
     tracing::trace!(?report, "Report");
@@ -521,8 +521,8 @@ fn generate_report(
                 None => fs::File::create("raw-report.json")?,
             };
 
-            for vuln in vulns {
-                std::io::Write::write(&mut json_file, vuln.to_string().as_bytes())?;
+            for finding in findings {
+                std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
                 std::io::Write::write(&mut json_file, b"\n")?;
             }
         }
@@ -556,8 +556,8 @@ fn generate_report(
                 .stdout(std::process::Stdio::piped())
                 .spawn()?;
 
-            for vuln in vulns {
-                let rendered = json_to_string(vuln.get("rendered").unwrap_or(&Value::default()));
+            for finding in findings {
+                let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
                 std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), rendered.as_bytes())?;
             }
 
