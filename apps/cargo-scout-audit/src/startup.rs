@@ -379,9 +379,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let crates = get_crates(output);
     let (successful_vulns, failed_vulns) = split_vulns(vulns, &crates);
 
-    println!("failed: {}", failed_vulns.len());
-    println!("succeeded: {}", successful_vulns.len());
-
     // Generate report
     do_report(successful_vulns, crates, project_info, detectors_info, opts)
 }
