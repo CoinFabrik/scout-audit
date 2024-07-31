@@ -1,24 +1,24 @@
 #![feature(internal_output_capture)]
 #![feature(rustc_private)]
-extern crate rustc_span;
-extern crate rustc_lint;
 extern crate rustc_errors;
 extern crate rustc_hir;
+extern crate rustc_lint;
+extern crate rustc_span;
 
-use rustc_errors::{Applicability, Diagnostic, MultiSpan};
 use capture_stdio::Capture;
-use std::io::BufRead;
+use rustc_errors::{Applicability, Diagnostic, MultiSpan};
+use rustc_hir::HirId;
 use rustc_lint::{LateContext, Lint, LintContext};
 use rustc_span::Span;
-use rustc_hir::HirId;
+use std::io::BufRead;
 
-fn print_error<F: FnOnce() -> ()>(cb: F){
+fn print_error<F: FnOnce()>(cb: F) {
     let old = std::io::set_output_capture(None);
     let mut piped_stderr = capture_stdio::PipedStderr::capture().unwrap();
 
     let port = std::env::var("SCOUT_PORT_NUMBER");
 
-    if port.is_err(){
+    if port.is_err() {
         cb();
         return;
     }
@@ -43,20 +43,21 @@ fn print_error<F: FnOnce() -> ()>(cb: F){
     let _ = buf_reader.read_line(&mut captured);
 
     let krate = std::env::var("CARGO_PKG_NAME");
-    let krate = if let Ok(krate2) = krate{
+    let krate = if let Ok(krate2) = krate {
         krate2
-    }else{
+    } else {
         String::new()
     };
 
     let body = {
         let json = serde_json::from_str::<serde_json::Value>(&captured);
-        if let Ok(json) = json{
+        if let Ok(json) = json {
             serde_json::json!({
                 "crate": krate,
                 "message": json,
-            }).to_string()
-        }else{
+            })
+            .to_string()
+        } else {
             captured
         }
     };
@@ -68,7 +69,7 @@ fn print_error<F: FnOnce() -> ()>(cb: F){
 }
 
 pub fn span_lint<T: LintContext>(cx: &T, lint: &'static Lint, sp: impl Into<MultiSpan>, msg: &str) {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint(cx, lint, sp, msg);
     });
 }
@@ -81,7 +82,7 @@ pub fn span_lint_and_help<T: LintContext>(
     help_span: Option<Span>,
     help: &str,
 ) {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_and_help(cx, lint, span, msg, help_span, help);
     });
 }
@@ -94,7 +95,7 @@ pub fn span_lint_and_note<T: LintContext>(
     note_span: Option<Span>,
     note: &str,
 ) {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_and_note(cx, lint, span, msg, note_span, note);
     });
 }
@@ -105,13 +106,19 @@ where
     S: Into<MultiSpan>,
     F: FnOnce(&mut Diagnostic),
 {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_and_then(cx, lint, sp, msg, f);
     });
 }
 
-pub fn span_lint_hir(cx: &LateContext<'_>, lint: &'static Lint, hir_id: HirId, sp: Span, msg: &str) {
-    print_error(||{
+pub fn span_lint_hir(
+    cx: &LateContext<'_>,
+    lint: &'static Lint,
+    hir_id: HirId,
+    sp: Span,
+    msg: &str,
+) {
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_hir(cx, lint, hir_id, sp, msg);
     });
 }
@@ -124,7 +131,7 @@ pub fn span_lint_hir_and_then(
     msg: &str,
     f: impl FnOnce(&mut Diagnostic),
 ) {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_hir_and_then(cx, lint, hir_id, sp, msg, f);
     });
 }
@@ -138,7 +145,7 @@ pub fn span_lint_and_sugg<T: LintContext>(
     sugg: String,
     applicability: Applicability,
 ) {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::span_lint_and_sugg(cx, lint, sp, msg, help, sugg, applicability);
     });
 }
@@ -147,7 +154,7 @@ pub fn multispan_sugg<I>(diag: &mut Diagnostic, help_msg: &str, sugg: I)
 where
     I: IntoIterator<Item = (Span, String)>,
 {
-    print_error(||{
+    print_error(|| {
         clippy_utils::diagnostics::multispan_sugg(diag, help_msg, sugg);
     });
 }
@@ -160,7 +167,12 @@ pub fn multispan_sugg_with_applicability<I>(
 ) where
     I: IntoIterator<Item = (Span, String)>,
 {
-    print_error(||{
-        clippy_utils::diagnostics::multispan_sugg_with_applicability(diag, help_msg, applicability, sugg);
+    print_error(|| {
+        clippy_utils::diagnostics::multispan_sugg_with_applicability(
+            diag,
+            help_msg,
+            applicability,
+            sugg,
+        );
     });
 }
