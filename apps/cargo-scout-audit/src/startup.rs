@@ -1,21 +1,5 @@
-use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo::GlobalContext;
-use cargo_metadata::{Metadata, MetadataCommand};
-use clap::{Parser, Subcommand, ValueEnum};
-use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
-use std::{
-    collections::HashMap,
-    fs,
-    path::PathBuf,
-};
-use tempfile::NamedTempFile;
-use crate::server::capture_output;
 use crate::output::raw_report::json_to_string;
-use serde_json::{
-    Value,
-    to_string_pretty,
-    from_str,
-};
+use crate::server::capture_output;
 use crate::{
     detectors::{
         builder::DetectorBuilder,
@@ -33,6 +17,14 @@ use crate::{
         print::{print_error, print_warning},
     },
 };
+use anyhow::{anyhow, bail, Context, Ok, Result};
+use cargo::GlobalContext;
+use cargo_metadata::{Metadata, MetadataCommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
+use serde_json::{from_str, to_string_pretty, Value};
+use std::{collections::HashMap, fs, path::PathBuf};
+use tempfile::NamedTempFile;
 
 #[derive(Debug, Parser)]
 #[clap(display_name = "cargo")]
@@ -195,41 +187,45 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
             anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
 }
 
-fn temp_file_to_string(mut file: NamedTempFile) -> Result<String>{
+fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
     let mut ret = String::new();
     std::io::Read::read_to_string(&mut file, &mut ret)?;
     let _ = file.close();
     Ok(ret)
 }
 
-fn output_to_json(output: String) -> Vec<Value>{
+fn output_to_json(output: String) -> Vec<Value> {
     output
         .lines()
         .map(|line| from_str::<Value>(line).unwrap())
         .collect::<Vec<Value>>()
 }
 
-fn get_crates(output: Vec<Value>) -> HashMap<String, bool>{
+fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
-    for val in output{
+    for val in output {
         let reason = val.get("reason");
         let message = val.get("message");
         let target = val.get("target");
-        if reason.is_none() || message.is_none() || target.is_none() || reason.unwrap() != "compiler-message"{
+        if reason.is_none()
+            || message.is_none()
+            || target.is_none()
+            || reason.unwrap() != "compiler-message"
+        {
             continue;
         }
         let message = message.unwrap();
         let target = target.unwrap();
 
         let name = target.get("name");
-        if name.is_none(){
+        if name.is_none() {
             continue;
         }
         let level = message.get("level");
-        let ok = if level.is_none() || level.unwrap() != "error"{
+        let ok = if level.is_none() || level.unwrap() != "error" {
             true
-        }else{
+        } else {
             false
         };
         ret.insert(json_to_string(name.unwrap()), ok);
@@ -238,7 +234,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool>{
     ret
 }
 
-fn split_vulns(raw_vulns: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<Value>, Vec<Value>){
+fn split_vulns(raw_vulns: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<Value>, Vec<Value>) {
     let vulns = raw_vulns
         .iter()
         .map(|s| from_str::<Value>(s).unwrap())
@@ -246,19 +242,20 @@ fn split_vulns(raw_vulns: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<V
     let mut successful_vulns = Vec::<Value>::new();
     let mut failed_vulns = Vec::<Value>::new();
 
-    for vuln in vulns.iter(){
+    for vuln in vulns.iter() {
         let krate = vuln.get("crate");
         let message = vuln.get("message");
-        if krate.is_none() || message.is_none(){
+        if krate.is_none() || message.is_none() {
             continue;
         }
         let krate = json_to_string(krate.unwrap());
         let message = message.unwrap();
-        if *crates.get(&krate).unwrap_or(&true){
+        if *crates.get(&krate).unwrap_or(&true) {
             &mut successful_vulns
-        }else{
+        } else {
             &mut failed_vulns
-        }.push(message.clone());
+        }
+        .push(message.clone());
     }
 
     (successful_vulns, failed_vulns)
@@ -375,8 +372,8 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let project_info = ProjectInfo::get_project_info(&metadata)
         .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
-    
-    let (vulns, (_successful_build, stdout)) = capture_output(||{
+
+    let (vulns, (_successful_build, stdout)) = capture_output(|| {
         // Run dylint
         run_dylint(detectors_paths, &opts, blockchain)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
@@ -390,13 +387,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     println!("succeeded: {}", successful_vulns.len());
 
     // Generate report
-    do_report(
-        successful_vulns,
-        crates,
-        project_info,
-        detectors_info,
-        opts,
-    )
+    do_report(successful_vulns, crates, project_info, detectors_info, opts)
 }
 
 fn do_report(
@@ -405,7 +396,7 @@ fn do_report(
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
     opts: Scout,
-) -> Result<()>{
+) -> Result<()> {
     if let Some(output_format) = opts.output_format {
         generate_report(
             vulns,
@@ -414,8 +405,8 @@ fn do_report(
             opts.output_path,
             output_format,
         )?;
-    }else{
-        for vuln in vulns{
+    } else {
+        for vuln in vulns {
             let rendered = json_to_string(vuln.get("rendered").unwrap_or(&Value::default()));
             print!("{rendered}");
         }
@@ -423,8 +414,8 @@ fn do_report(
         println!("Summary:");
         let mut table = prettytable::Table::new();
         table.add_row(row!["Crate", "Status"]);
-        for (krate, success) in crates.iter(){
-            let success_string = if *success{ "Executed" }else{ "Failed" };
+        for (krate, success) in crates.iter() {
+            let success_string = if *success { "Executed" } else { "Failed" };
             table.add_row(row![krate, success_string]);
         }
         table.printstd();
@@ -446,7 +437,8 @@ fn run_dylint(
         .collect();
 
     // Initialize temporary file for stdout
-    let stdout_temp_file = NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
+    let stdout_temp_file =
+        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
@@ -536,7 +528,7 @@ fn generate_report(
                 None => fs::File::create("raw-report.json")?,
             };
 
-            for vuln in vulns{
+            for vuln in vulns {
                 std::io::Write::write(&mut json_file, vuln.to_string().as_bytes())?;
                 std::io::Write::write(&mut json_file, b"\n")?;
             }
@@ -571,7 +563,7 @@ fn generate_report(
                 .stdout(std::process::Stdio::piped())
                 .spawn()?;
 
-            for vuln in vulns{
+            for vuln in vulns {
                 let rendered = json_to_string(vuln.get("rendered").unwrap_or(&Value::default()));
                 std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), rendered.as_bytes())?;
             }

@@ -91,7 +91,6 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     fn create_library(&self, workspace_path: PathBuf) -> Result<Library> {
-
         println!("workspace_path: {}", workspace_path.display());
         ensure!(
             workspace_path.is_dir(),

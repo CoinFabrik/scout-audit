@@ -38,10 +38,10 @@ impl RawReport {
     }
 }
 
-pub(crate) fn json_to_string(s: &Value) -> String{
-    if let Value::String(s) = s{
+pub(crate) fn json_to_string(s: &Value) -> String {
+    if let Value::String(s) = s {
         s.clone()
-    }else{
+    } else {
         s.to_string().trim_matches('"').to_string()
     }
 }
@@ -105,20 +105,22 @@ fn process_findings(
 }
 
 fn parse_category(finding: &Value) -> Result<String> {
-    let category = json_to_string(finding
-        .get("code")
-        .and_then(|code| code.get("code"))
-        .with_context(|| "Category not found in finding structure")?
+    let category = json_to_string(
+        finding
+            .get("code")
+            .and_then(|code| code.get("code"))
+            .with_context(|| "Category not found in finding structure")?,
     );
     Ok(category)
 }
 
 fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<FileDetails> {
-    let relative_path = json_to_string(finding
-        .get("spans")
-        .and_then(|spans| spans.get(0))
-        .and_then(|span| span.get("file_name"))
-        .with_context(|| "File name not found in finding structure")?
+    let relative_path = json_to_string(
+        finding
+            .get("spans")
+            .and_then(|spans| spans.get(0))
+            .and_then(|span| span.get("file_name"))
+            .with_context(|| "File name not found in finding structure")?,
     );
 
     let absolute_path = workspace_root.join(&relative_path);

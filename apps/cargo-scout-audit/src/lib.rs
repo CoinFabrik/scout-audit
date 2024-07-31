@@ -9,6 +9,6 @@ pub mod build_config;
 pub mod detectors;
 pub mod output;
 pub mod scout;
+pub mod server;
 pub mod startup;
 pub mod utils;
-pub mod server;
