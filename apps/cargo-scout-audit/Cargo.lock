@@ -468,7 +468,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.14"
+version = "0.2.15"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -481,6 +481,7 @@ dependencies = [
  "current_platform",
  "dunce",
  "dylint",
+ "git2",
  "home",
  "itertools 0.13.0",
  "lazy_static",
