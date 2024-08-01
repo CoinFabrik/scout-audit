@@ -1,95 +1,86 @@
+use anyhow::{bail, ensure, Context, Result};
+use cargo::GlobalContext;
+use cargo_metadata::{Metadata, MetadataCommand};
+use current_platform::CURRENT_PLATFORM;
 use std::path::PathBuf;
 
-use anyhow::{bail, ensure, Context, Ok, Result};
-use cargo::GlobalContext;
-use cargo_metadata::Metadata;
-use itertools::Itertools;
+use super::{configuration::DetectorsConfiguration, library::Library, source::download_git_repo};
+use crate::scout::blockchain::BlockChain;
 
-use super::{configuration::DetectorConfiguration, library::Library, source::download_git_repo};
-use crate::{
-    scout::blockchain::BlockChain,
-    utils::{cargo_package, rustup},
-};
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
     cargo_config: &'a GlobalContext,
-    detectors_config: &'a DetectorConfiguration,
+    detectors_config: &'a DetectorsConfiguration,
     root_metadata: &'a Metadata,
     verbose: bool,
+    toolchain: &'a str,
 }
 
 impl<'a> DetectorBuilder<'a> {
-    /// Creates a new instance of `DetectorsBuilder`.
     pub fn new(
         cargo_config: &'a GlobalContext,
-        detectors_config: &'a DetectorConfiguration,
+        detectors_config: &'a DetectorsConfiguration,
         root_metadata: &'a Metadata,
         verbose: bool,
+        toolchain: &'a str,
     ) -> Self {
         Self {
             cargo_config,
             detectors_config,
             root_metadata,
             verbose,
+            toolchain,
         }
     }
 
-    /// Compiles detector library and returns its path.
-    pub fn build(self, bc: BlockChain, used_detectors: Vec<String>) -> Result<Vec<PathBuf>> {
-        let detector_root = self.download_detector()?;
-        let workspace_path = self.parse_library_path(&detector_root)?;
-        let library = self.get_library(workspace_path)?;
-        let library_paths = self.build_detectors(bc, library)?;
-        let filtered_paths = self.filter_detectors(library_paths, used_detectors)?;
-
-        Ok(filtered_paths)
+    pub fn build(&self, bc: &BlockChain, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
+        let library = self.get_library()?;
+        let library_paths = library.build(bc, self.verbose)?;
+        self.filter_detectors(&library_paths, used_detectors)
     }
 
-    /// Returns list of detector names.
-    pub fn get_detector_names(self) -> Result<Vec<String>> {
-        let detector_root = self.download_detector()?;
-        let workspace_path = self.parse_library_path(&detector_root)?;
-        let library = self.get_library(workspace_path)?;
-        let detector_names = library
+    pub fn get_detector_names(&self) -> Result<Vec<String>> {
+        let library = self.get_library()?;
+        Ok(library
             .metadata
             .packages
             .into_iter()
             .map(|p| p.name)
-            .collect_vec();
-        Ok(detector_names)
+            .collect())
     }
 
-    /// Downloads and returns detector root from supported sources.
-    fn download_detector(&self) -> Result<PathBuf> {
-        if self.detectors_config.dependency.source_id().is_git() {
+    fn get_library(&self) -> Result<Library> {
+        let detector_root = self.get_detector()?;
+        let workspace_path = self.parse_library_path(&detector_root)?;
+        self.create_library(workspace_path)
+    }
+
+    fn get_detector(&self) -> Result<PathBuf> {
+        let source_id = self.detectors_config.dependency.source_id();
+        if source_id.is_git() {
             download_git_repo(&self.detectors_config.dependency, self.cargo_config)
-        } else if self.detectors_config.dependency.source_id().is_path() {
-            if let Some(path) = self.detectors_config.dependency.source_id().local_path() {
-                Ok(path)
-            } else {
-                bail!(
-                    "Path source should have a local path: {}",
-                    self.detectors_config.dependency.source_id()
-                )
-            }
+        } else if source_id.is_path() {
+            source_id.local_path().map(PathBuf::from).ok_or_else(|| {
+                anyhow::anyhow!("Path source should have a local path: {}", source_id)
+            })
         } else {
-            bail!(format!(
-                "Unsupported source id: {}",
-                self.detectors_config.dependency.source_id()
-            ));
+            bail!("Unsupported source id: {}", source_id)
         }
     }
 
-    /// Parse dependency root with given library path.
     fn parse_library_path(&self, dependency_root: &PathBuf) -> Result<PathBuf> {
-        let path = match &self.detectors_config.path {
-            Some(path) => dependency_root.join(path),
-            None => dependency_root.clone(),
-        };
+        let path = self
+            .detectors_config
+            .path
+            .as_ref()
+            .map(|p| dependency_root.join(p))
+            .unwrap_or_else(|| dependency_root.clone());
+
         let path = dunce::canonicalize(&path)
             .with_context(|| format!("Could not canonicalize {path:?}"))?;
         let dependency_root = dunce::canonicalize(dependency_root)
             .with_context(|| format!("Could not canonicalize {dependency_root:?}"))?;
+
         ensure!(
             path.starts_with(&dependency_root),
             "Path could refer to `{}`, which is outside of `{}`",
@@ -99,26 +90,27 @@ impl<'a> DetectorBuilder<'a> {
         Ok(path)
     }
 
-    /// Parse workspace path into library.
-    fn get_library(&self, workspace_path: PathBuf) -> Result<Library> {
-        // Dylint annotation
-        // smoelius: Collecting the package ids before building reveals missing/unparsable `Cargo.toml`
-        // files sooner.
-
-        // smoelius: Why are we doing this complicated dance at all? Because we want to leverage Cargo's
-        // download cache. But we also want to support git repositories with libraries that use
-        // different compiler versions. And we have to work around the fact that "all projects within a
-        // workspace are intended to be built with the same version of the compiler"
-        // (https://github.com/rust-lang/rustup/issues/1399#issuecomment-383376082).
+    fn create_library(&self, workspace_path: PathBuf) -> Result<Library> {
         ensure!(
             workspace_path.is_dir(),
             "Not a directory: {}",
             workspace_path.to_string_lossy()
         );
 
-        let package_metadata = cargo_package::package_metadata(&workspace_path)?;
-        let toolchain = rustup::active_toolchain(&workspace_path)?;
-        let library = Library::new(
+        let package_metadata = MetadataCommand::new()
+            .current_dir(&workspace_path)
+            .no_deps()
+            .exec()
+            .with_context(|| {
+                format!(
+                    "Could not get metadata for the workspace at {}",
+                    workspace_path.to_string_lossy()
+                )
+            })?;
+
+        let toolchain = format!("{}-{}", self.toolchain, CURRENT_PLATFORM);
+
+        Ok(Library::new(
             workspace_path,
             toolchain,
             self.root_metadata
@@ -126,37 +118,29 @@ impl<'a> DetectorBuilder<'a> {
                 .clone()
                 .into_std_path_buf(),
             package_metadata,
-        );
-        Ok(library)
-    }
-
-    /// Builds detectors returning their compiled paths.
-    fn build_detectors(&self, bc: BlockChain, library: Library) -> Result<Vec<PathBuf>> {
-        let library_paths = library.build(bc, self.verbose)?;
-        Ok(library_paths)
+        ))
     }
 
     fn filter_detectors(
         &self,
-        detector_paths: Vec<PathBuf>,
-        used_detectors: Vec<String>,
+        detector_paths: &[PathBuf],
+        used_detectors: &[String],
     ) -> Result<Vec<PathBuf>> {
-        let mut filtered_paths = Vec::new();
-
-        for path in detector_paths {
-            let detector_name = path.file_name().unwrap().to_str().unwrap().to_string();
-
-            #[cfg(not(windows))]
-            let detector_name = detector_name.split("lib").collect::<Vec<_>>()[1];
-
-            let detector_name = detector_name.split('@').collect::<Vec<_>>()[0]
-                .to_string()
-                .replace('_', "-");
-            if used_detectors.contains(&detector_name) {
-                filtered_paths.push(path)
-            }
-        }
-
-        Ok(filtered_paths)
+        Ok(detector_paths
+            .iter()
+            .filter(|path| {
+                let detector_name = path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .map(|name| {
+                        #[cfg(not(windows))]
+                        let name = name.strip_prefix("lib").unwrap_or(name);
+                        name.split('@').next().unwrap_or(name).replace('_', "-")
+                    })
+                    .unwrap_or_default();
+                used_detectors.contains(&detector_name)
+            })
+            .cloned()
+            .collect())
     }
 }

@@ -85,6 +85,15 @@ jobs:
           echo "Version extracted: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
+      - name: Set platform-specific tag prefix
+        id: set-tag-prefix
+        run: |
+          if [[ "${{ matrix.platform }}" == "linux/arm64" ]]; then
+            echo "tag_prefix=-arm64" >> $GITHUB_OUTPUT
+          else
+            echo "tag_prefix=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -96,7 +105,7 @@ jobs:
 
       - name: Build Docker image
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -105,12 +114,5 @@ jobs:
           cache-to: type=gha
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ steps.scout-version.outputs.version }},
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:latest
