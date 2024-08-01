@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{env, path::Path};
 
 use crate::{scout::blockchain::BlockChain, utils::print::print_warning};
 use anyhow::{anyhow, Context, Result};
@@ -6,7 +6,8 @@ use cargo::{
     core::{Dependency, GitReference, SourceId},
     util::IntoUrl,
 };
-use reqwest::blocking::Client;
+use git2::{RemoteCallbacks, Repository};
+use tempfile::TempDir;
 
 #[derive(Debug, Clone)]
 pub struct DetectorsConfiguration {
@@ -14,22 +15,23 @@ pub struct DetectorsConfiguration {
     pub path: Option<String>,
 }
 
-fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
-    // Extract owner and repo from the URL
-    let parts: Vec<&str> = url.trim_end_matches(".git").split('/').collect();
-    let owner = parts[parts.len() - 2];
-    let repo = parts[parts.len() - 1];
+pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
+    // Set up temporary repository and remote
+    let temp_dir = TempDir::new()?;
+    let repo = Repository::init_bare(temp_dir.path())?;
+    let mut remote = repo.remote_anonymous(url)?;
 
-    let client = Client::new();
-    let response = client
-        .get(format!(
-            "https://api.github.com/repos/{}/{}/branches/{}",
-            owner, repo, branch
-        ))
-        .header("User-Agent", "scout")
-        .send()?;
+    // Connect to the remote repository
+    let callbacks = RemoteCallbacks::new();
+    remote.connect_auth(git2::Direction::Fetch, Some(callbacks), None)?;
 
-    Ok(response.status().is_success())
+    // Check if the specified branch exists
+    let references = remote.list()?;
+    let branch_ref = format!("refs/heads/{}", branch);
+    let branch_exists = references.iter().any(|r| r.name() == branch_ref);
+
+    remote.disconnect()?;
+    Ok(branch_exists)
 }
 
 fn create_git_dependency(blockchain: &BlockChain, branch: &str) -> Result<Dependency> {
