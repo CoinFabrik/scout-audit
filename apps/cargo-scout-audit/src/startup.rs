@@ -230,7 +230,10 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     ret
 }
 
-fn split_findings(raw_findings: Vec<String>, crates: &HashMap<String, bool>) -> (Vec<Value>, Vec<Value>) {
+fn split_findings(
+    raw_findings: Vec<String>,
+    crates: &HashMap<String, bool>,
+) -> (Vec<Value>, Vec<Value>) {
     let findings = raw_findings
         .iter()
         .map(|s| from_str::<Value>(s).unwrap())
@@ -377,10 +380,16 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let output = output_to_json(temp_file_to_string(stdout)?);
     let crates = get_crates(output);
-    let (successful_findings, failed_findings) = split_findings(findings, &crates);
+    let (successful_findings, _failed_findings) = split_findings(findings, &crates);
 
     // Generate report
-    do_report(successful_findings, crates, project_info, detectors_info, opts)
+    do_report(
+        successful_findings,
+        crates,
+        project_info,
+        detectors_info,
+        opts,
+    )
 }
 
 fn do_report(
