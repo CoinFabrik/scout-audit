@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use crate::{scout::blockchain::BlockChain, utils::print::print_warning};
+use crate::scout::blockchain::BlockChain;
 use anyhow::{anyhow, Context, Result};
 use cargo::{
     core::{Dependency, GitReference, SourceId},
