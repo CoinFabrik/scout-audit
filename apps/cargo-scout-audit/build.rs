@@ -13,7 +13,7 @@ fn main() {
             }
         }
 
-        match ensure_rust_src(toolchain) {
+        match ensure_components(toolchain, &["rust-src", "llvm-tools", "rustc-dev"]) {
             Ok(_) => {}
             Err(e) => {
                 println!("cargo:warning={}", e);
@@ -67,7 +67,8 @@ fn ensure_toolchain(toolchain: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn ensure_rust_src(toolchain: &str) -> Result<(), String> {
+
+fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String> {
     let output = Command::new("rustup")
         .arg("component")
         .arg("list")
@@ -85,21 +86,32 @@ fn ensure_rust_src(toolchain: &str) -> Result<(), String> {
 
     let component_list = String::from_utf8_lossy(&output.stdout);
 
-    if !component_list.contains("rust-src (installed)") {
-        println!("cargo:warning=Installing rust-src component...");
-        let status = Command::new("rustup")
-            .arg("component")
-            .arg("add")
-            .arg("rust-src")
-            .arg("--toolchain")
-            .arg(toolchain)
-            .status()
-            .map_err(|e| format!("Failed to execute rustup component add: {}", e))?;
+    for component in components {
+        let is_installed = match *component {
+            "rust-src" => component_list.contains("rust-src (installed)"),
+            "llvm-tools" | "rustc-dev" => component_list.lines().any(|line|
+                line.starts_with(component) && line.ends_with("(installed)")
+            ),
+            _ => false,
+        };
 
-        if !status.success() {
-            return Err(
-                "Failed to install rust-src component. Please install it manually.".to_string(),
-            );
+        if !is_installed {
+            println!("cargo:warning=Installing {} component...", component);
+            let status = Command::new("rustup")
+                .arg("component")
+                .arg("add")
+                .arg(component)
+                .arg("--toolchain")
+                .arg(toolchain)
+                .status()
+                .map_err(|e| format!("Failed to execute rustup component add: {}", e))?;
+
+            if !status.success() {
+                return Err(format!(
+                    "Failed to install {} component. Please install it manually.",
+                    component
+                ));
+            }
         }
     }
 
