@@ -67,7 +67,6 @@ fn ensure_toolchain(toolchain: &str) -> Result<(), String> {
     Ok(())
 }
 
-
 fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String> {
     let output = Command::new("rustup")
         .arg("component")
@@ -89,9 +88,9 @@ fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String>
     for component in components {
         let is_installed = match *component {
             "rust-src" => component_list.contains("rust-src (installed)"),
-            "llvm-tools" | "rustc-dev" => component_list.lines().any(|line|
-                line.starts_with(component) && line.ends_with("(installed)")
-            ),
+            "llvm-tools" | "rustc-dev" => component_list
+                .lines()
+                .any(|line| line.starts_with(component) && line.ends_with("(installed)")),
             _ => false,
         };
 
