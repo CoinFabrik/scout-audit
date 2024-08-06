@@ -14,29 +14,21 @@ Our interest in this project comes from our experience in manual auditing and ou
 
 ## Quick Start
 
-For a quick start, make sure that Cargo is installed on your computer. Then, install Scout dependencies by running the following command:
-
-```bash
-cargo install cargo-dylint dylint-link
-```
-
-Afterwards, install Scout with the following command:
+Make sure that [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) is installed on your computer. Then, install Scout with the following command:
 
 ```bash
 cargo install cargo-scout-audit
 ```
 
-Finally, install additional Rust components required by Scout.
-
-```bash
-rustup component add rust-src --toolchain nightly-2023-12-16
-```
-
-To run Scout on your project, navigate to the root directory of your smart contract (where the `Cargo.toml` file is) and execute the following command:
+To run Scout on your project execute the following command:
 
 ```bash
 cargo scout-audit
 ```
+
+:bulb: Scout supports [Cargo Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html). When run on a workspace, Scout will be executed on all packages specified as members of the workspace.
+
+:warning: Make sure that your smart contracts compile properly. Scout won't run if any compilation errors exist.
 
 For more information on Scout's installation and usage, please refer to Scout's documentation for [ink!](https://github.com/CoinFabrik/scout) or [Soroban](https://github.com/CoinFabrik/scout-soroban).
 
@@ -45,7 +37,7 @@ For more information on Scout's installation and usage, please refer to Scout's 
 You can choose the output format that best suit your needs (html or markdown). To specify the desired output run the following command:
 
 ```
-cargo scout-audit --output-format [html|md]
+cargo scout-audit --output-format [html|md|pdf|json|sarif]
 ```
 
 **Example HTML report**
@@ -57,8 +49,6 @@ cargo scout-audit --output-format [html|md]
 Add Scout to your development workspace with Scout's VS Code extension to run Scout automatically upon saving your file.
 
 ![Scout VS Code extension.](img/vscode-extension.png)
-
-:warning: To ensure the extension runs properly, make sure that you open the directory containing your smart contract, rather than the entire project. For example, if your smart contracts are located in `myproject/contracts`, and you want to work on the `token` contract while using the Scout VS Code Extension, open `myproject/contracts/token`.
 
 :bulb: Tip: To see the errors highlighted in your code, we recommend installing the [Error Lens Extension](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens).
 
