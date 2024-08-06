@@ -8,8 +8,8 @@ fn port_is_available_on_localhost(port: u16) -> bool {
     std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
 }
 
-fn find_available_port() -> Option<u16> {
-    (49152..65535).find(|port| port_is_available_on_localhost(*port))
+fn find_available_port(first: Option<u16>) -> Option<u16> {
+    (first.unwrap_or(49152)..65535).find(|port| port_is_available_on_localhost(*port))
 }
 
 pub(crate) struct AppState {
@@ -56,35 +56,44 @@ async fn graceful_shutdown(state: Arc<AppState>) {
 
 #[tokio::main]
 async fn server_thread(state: Arc<AppState>) {
-    let port = find_available_port();
-    if port.is_none() {
-        return;
+    let mut first: Option<u16> = None;
+    loop{
+        let port = find_available_port(first);
+        if port.is_none() {
+            return;
+        }
+        let port = port.unwrap();
+        std::env::set_var("SCOUT_PORT_NUMBER", port.to_string());
+        // build our application with a route
+        let app = Router::new()
+            .route(
+                "/vuln",
+                post({
+                    let state2 = state.clone();
+                    move |body| vuln_handler(state2, body)
+                }),
+            )
+            .route("/print", post(print_handler))
+            .route("/vuln2", post(test_handler2));
+
+        let address = "127.0.0.1:".to_string() + port.to_string().as_str();
+
+        // run it
+        let result = tokio::net::TcpListener::bind(address).await;
+        if result.is_err(){
+            first = Some(port + 1);
+            continue;
+        }
+        let listener = result.unwrap();
+
+        let future =
+            axum::serve(listener, app).with_graceful_shutdown(graceful_shutdown(state.clone()));
+
+        *state.running_state.lock().unwrap() = 1;
+
+        future.await.unwrap();
+        break;
     }
-    let port = port.unwrap();
-    std::env::set_var("SCOUT_PORT_NUMBER", port.to_string());
-    // build our application with a route
-    let app = Router::new()
-        .route(
-            "/vuln",
-            post({
-                let state2 = state.clone();
-                move |body| vuln_handler(state2, body)
-            }),
-        )
-        .route("/print", post(print_handler))
-        .route("/vuln2", post(test_handler2));
-
-    let address = "127.0.0.1:".to_string() + port.to_string().as_str();
-
-    // run it
-    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
-
-    let future =
-        axum::serve(listener, app).with_graceful_shutdown(graceful_shutdown(state.clone()));
-
-    *state.running_state.lock().unwrap() = 1;
-
-    future.await.unwrap();
 }
 
 fn start_server(state: Arc<AppState>) -> std::thread::JoinHandle<()> {

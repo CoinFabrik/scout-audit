@@ -103,7 +103,8 @@ mod tests {
         let formats = vec![
             ("report.html", OutputFormat::Html),
             ("report.json", OutputFormat::Json),
-            ("report.json", OutputFormat::RawJson),
+            ("raw-report.json", OutputFormat::RawJson),
+            ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::MarkdownGithub),
             ("report.sarif", OutputFormat::Sarif),
