@@ -57,7 +57,7 @@ async fn graceful_shutdown(state: Arc<AppState>) {
 #[tokio::main]
 async fn server_thread(state: Arc<AppState>) {
     let mut first: Option<u16> = None;
-    loop{
+    loop {
         let port = find_available_port(first);
         if port.is_none() {
             return;
@@ -80,7 +80,7 @@ async fn server_thread(state: Arc<AppState>) {
 
         // run it
         let result = tokio::net::TcpListener::bind(address).await;
-        if result.is_err(){
+        if result.is_err() {
             first = Some(port + 1);
             continue;
         }

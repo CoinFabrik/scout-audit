@@ -24,7 +24,6 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::collections::HashSet;
-use std::fs::{read_dir, DirEntry};
 use std::{collections::HashMap, fs, path::PathBuf};
 use tempfile::NamedTempFile;
 
@@ -590,44 +589,44 @@ fn generate_report(
     Ok(())
 }
 
-fn clean_up_after_run(metadata: &Metadata){
+fn clean_up_after_run(metadata: &Metadata) {
     let mut dylint_target = metadata.target_directory.clone();
     dylint_target.push("dylint");
     dylint_target.push("target");
     let result = fs::read_dir(dylint_target);
-    if result.is_err(){
+    if result.is_err() {
         return;
     }
     let result = result.unwrap();
-    for path in result{
-        if path.is_err(){
+    for path in result {
+        if path.is_err() {
             continue;
         }
         let entry = path.unwrap();
         let entry_metadata = entry.metadata();
-        if entry_metadata.is_err() || !entry_metadata.unwrap().is_dir(){
+        if entry_metadata.is_err() || !entry_metadata.unwrap().is_dir() {
             continue;
         }
         let mut deps = entry.path();
         deps.push("wasm32-unknown-unknown");
         deps.push("debug");
         deps.push("deps");
-        clean_up_deps(deps, &metadata);
+        clean_up_deps(deps, metadata);
     }
 }
 
-fn get_targets_for_workspace(metadata: &Metadata) -> Vec<regex::Regex>{
+fn get_targets_for_workspace(metadata: &Metadata) -> Vec<regex::Regex> {
     let mut ret = Vec::<regex::Regex>::new();
     let members = HashSet::<&PackageId>::from_iter(metadata.workspace_members.iter());
-    for package in metadata.packages.iter(){
-        if !members.contains(&package.id){
+    for package in metadata.packages.iter() {
+        if !members.contains(&package.id) {
             continue;
         }
-        for target in package.targets.iter(){
+        for target in package.targets.iter() {
             let target_name = regex::escape(&target.name);
             let pattern = format!("^lib{target_name}-[0-9A-Fa-f]{{16}}\\.rmeta$");
             let regex = regex::Regex::new(&pattern);
-            if regex.is_err(){
+            if regex.is_err() {
                 continue;
             }
             ret.push(regex.unwrap());
@@ -636,33 +635,33 @@ fn get_targets_for_workspace(metadata: &Metadata) -> Vec<regex::Regex>{
     ret
 }
 
-fn needs_cleanup(name: String, targets: &Vec<regex::Regex>) -> bool{
-    for target in targets.iter(){
-        if target.is_match(&name){
+fn needs_cleanup(name: String, targets: &[regex::Regex]) -> bool {
+    for target in targets.iter() {
+        if target.is_match(&name) {
             return true;
         }
     }
     false
 }
 
-fn clean_up_deps(deps: PathBuf, metadata: &Metadata){
+fn clean_up_deps(deps: PathBuf, metadata: &Metadata) {
     let targets = get_targets_for_workspace(metadata);
     let result = fs::read_dir(deps);
-    if result.is_err(){
+    if result.is_err() {
         return;
     }
     let result = result.unwrap();
-    for path in result{
-        if path.is_err(){
+    for path in result {
+        if path.is_err() {
             continue;
         }
         let entry = path.unwrap();
         let name = entry.file_name();
         let name = name.to_str();
-        if name.is_none(){
+        if name.is_none() {
             continue;
         }
-        if needs_cleanup(name.unwrap().into(), &targets){
+        if needs_cleanup(name.unwrap().into(), &targets) {
             let _ = fs::remove_file(entry.path());
         }
     }
