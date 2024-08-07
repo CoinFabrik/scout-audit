@@ -17,7 +17,7 @@ license = "MIT"
 name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.2.15"
+version = "0.2.16"
 
 [lib]
 path = "src/lib.rs"
@@ -52,8 +52,11 @@ strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
 toml = "=0.8.15"
+tokio = { version = "=1.39.2", features = ["full"] }
+axum = "=0.7.4"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"
 tracing-log = "=0.2.0"
 tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
 webbrowser = "=1.0.1"
+prettytable-rs = "0.10.0"
