@@ -1,68 +1,14 @@
-#![feature(internal_output_capture)]
 #![feature(rustc_private)]
 extern crate rustc_errors;
 extern crate rustc_hir;
 extern crate rustc_lint;
 extern crate rustc_span;
 
-use capture_stdio::Capture;
 use rustc_errors::{Applicability, Diag, DiagMessage, MultiSpan, SubdiagMessage};
 use rustc_hir::HirId;
 use rustc_lint::{LateContext, Lint, LintContext};
 use rustc_span::Span;
-use std::io::BufRead;
-
-fn print_error<F: FnOnce()>(cb: F) {
-    let old = std::io::set_output_capture(None);
-    let mut piped_stderr = capture_stdio::PipedStderr::capture().unwrap();
-
-    let port = std::env::var("SCOUT_PORT_NUMBER");
-
-    if port.is_err() {
-        cb();
-        return;
-    }
-
-    let port = port.unwrap();
-
-    //let _ = reqwest::blocking::Client::new()
-    //    .post(format!("http://127.0.0.1:{port}/print"))
-    //    .body("A")
-    //    .send();
-
-    cb();
-
-    //let _ = reqwest::blocking::Client::new()
-    //    .post(format!("http://127.0.0.1:{port}/print"))
-    //    .body("B")
-    //    .send();
-
-    let _ = std::io::set_output_capture(old);
-    let mut captured = String::new();
-    let mut buf_reader = std::io::BufReader::new(piped_stderr.get_reader());
-    let _ = buf_reader.read_line(&mut captured);
-
-    let krate = std::env::var("CARGO_PKG_NAME");
-    let krate = krate.unwrap_or_default();
-
-    let body = {
-        let json = serde_json::from_str::<serde_json::Value>(&captured);
-        if let Ok(json) = json {
-            serde_json::json!({
-                "crate": krate,
-                "message": json,
-            })
-            .to_string()
-        } else {
-            captured
-        }
-    };
-
-    let _ = reqwest::blocking::Client::new()
-        .post(format!("http://127.0.0.1:{port}/vuln"))
-        .body(body)
-        .send();
-}
+use clippy_wrapper_print_error::print_error;
 
 pub fn span_lint<T: LintContext>(
     cx: &T,

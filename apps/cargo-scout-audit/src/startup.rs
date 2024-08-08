@@ -24,6 +24,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::collections::HashSet;
+use std::io::Write;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tempfile::NamedTempFile;
 
@@ -51,6 +52,8 @@ pub enum OutputFormat {
     MarkdownGithub,
     Sarif,
     Pdf,
+    #[clap(name = "vscode")]
+    VsCode,
 }
 
 #[derive(Clone, Debug, Default, Parser)]
@@ -143,8 +146,6 @@ impl Scout {
                 "-Zbuild-std=std,core,alloc".to_string(),
             ]);
         }
-
-        self.args.push("--message-format=json".to_string());
     }
 
     fn validate(&self) -> Result<()> {
@@ -195,7 +196,7 @@ fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
     Ok(ret)
 }
 
-fn output_to_json(output: String) -> Vec<Value> {
+fn output_to_json(output: &String) -> Vec<Value> {
     output
         .lines()
         .map(|line| from_str::<Value>(line).unwrap())
@@ -259,6 +260,16 @@ fn split_findings(
     }
 
     (successful_findings, failed_findings)
+}
+
+fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(
+    cb: F,
+) -> Result<(Vec<String>, T), E> {
+    use std::result::Result::Ok;
+    match cb() {
+        Ok(r) => Ok((Vec::<String>::new(), r)),
+        Err(e) => Err(e),
+    }
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -373,13 +384,22 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let project_info = ProjectInfo::get_project_info(&metadata)
         .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
 
-    let (findings, (_successful_build, stdout)) = capture_output(|| {
+    let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
+
+    let wrapper_function = if inside_vscode{
+        capture_noop
+    }else{
+        capture_output
+    };
+
+    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
         // Run dylint
         run_dylint(detectors_paths, &opts, blockchain, &metadata)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
-    let output = output_to_json(temp_file_to_string(stdout)?);
+    let output_string = temp_file_to_string(stdout)?;
+    let output = output_to_json(&output_string);
     let crates = get_crates(output);
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
 
@@ -389,7 +409,9 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         crates,
         project_info,
         detectors_info,
+        output_string,
         opts,
+        inside_vscode,
     )
 }
 
@@ -398,7 +420,9 @@ fn do_report(
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
+    output_string: String,
     opts: Scout,
+    inside_vscode: bool,
 ) -> Result<()> {
     if let Some(output_format) = opts.output_format {
         generate_report(
@@ -407,21 +431,17 @@ fn do_report(
             detectors_info,
             opts.output_path,
             output_format,
+            output_string,
         )?;
     } else {
-        for finding in findings {
-            let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
-            print!("{rendered}");
+        if inside_vscode {
+            std::io::stdout()
+                .lock()
+                .write_all(&output_string.as_bytes())
+                .with_context(|| ("Failed to write stdout content"))?;
+        }else{
+            regular_output(findings, crates);
         }
-
-        println!("Summary:");
-        let mut table = prettytable::Table::new();
-        table.add_row(row!["Crate", "Status"]);
-        for (krate, success) in crates.iter() {
-            let success_string = if *success { "Executed" } else { "Failed" };
-            table.add_row(row![krate, success_string]);
-        }
-        table.printstd();
     }
 
     Ok(())
@@ -468,22 +488,9 @@ fn run_dylint(
         ..Default::default()
     };
 
+    clean_up_before_run(metadata);
+
     let success = dylint::run(&options).is_err();
-
-    clean_up_after_run(metadata);
-
-    /*if check_opts
-        .args
-        .contains(&"--message-format=json".to_string())
-        && opts.output_format.is_none()
-    {
-        let stdout_content = fs::read(stdout_temp_file.path())
-            .with_context(|| ("Failed to read stdout temporary file"))?;
-        std::io::stdout()
-            .lock()
-            .write_all(&stdout_content)
-            .with_context(|| ("Failed to write stdout content"))?;
-    }*/
 
     Ok((success, stdout_temp_file))
 }
@@ -495,7 +502,9 @@ fn generate_report(
     detectors_info: HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
     output_format: OutputFormat,
+    output_string: String,
 ) -> Result<()> {
+    
     let report = RawReport::generate_report(&findings, &project_info, &detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
@@ -538,6 +547,12 @@ fn generate_report(
                 std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
                 std::io::Write::write(&mut json_file, b"\n")?;
             }
+        }
+        OutputFormat::VsCode => {
+            std::io::stdout()
+                .lock()
+                .write_all(output_string.as_bytes())
+                .with_context(|| "Failed to write content to stdout")?;
         }
         OutputFormat::Markdown => {
             // Generate Markdown
@@ -589,7 +604,26 @@ fn generate_report(
     Ok(())
 }
 
-fn clean_up_after_run(metadata: &Metadata) {
+fn regular_output(
+    findings: Vec<Value>,
+    crates: HashMap<String, bool>,
+){
+    for finding in findings {
+        let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
+        print!("{rendered}");
+    }
+
+    println!("Summary:");
+    let mut table = prettytable::Table::new();
+    table.add_row(row!["Crate", "Status"]);
+    for (krate, success) in crates.iter() {
+        let success_string = if *success { "Executed" } else { "Failed" };
+        table.add_row(row![krate, success_string]);
+    }
+    table.printstd();
+}
+
+fn clean_up_before_run(metadata: &Metadata) {
     let mut dylint_target = metadata.target_directory.clone();
     dylint_target.push("dylint");
     dylint_target.push("target");
@@ -615,6 +649,19 @@ fn clean_up_after_run(metadata: &Metadata) {
     }
 }
 
+fn special_escape(string: &String) -> String{
+    let mut ret = String::new();
+    for c in string.chars(){
+        let c2 = if c.is_alphanumeric(){
+            c
+        }else{
+            '.'
+        };
+        ret.push(c2);
+    }
+    ret
+}
+
 fn get_targets_for_workspace(metadata: &Metadata) -> Vec<regex::Regex> {
     let mut ret = Vec::<regex::Regex>::new();
     let members = HashSet::<&PackageId>::from_iter(metadata.workspace_members.iter());
@@ -623,7 +670,7 @@ fn get_targets_for_workspace(metadata: &Metadata) -> Vec<regex::Regex> {
             continue;
         }
         for target in package.targets.iter() {
-            let target_name = regex::escape(&target.name);
+            let target_name = special_escape(&target.name);
             let pattern = format!("^lib{target_name}-[0-9A-Fa-f]{{16}}\\.rmeta$");
             let regex = regex::Regex::new(&pattern);
             if regex.is_err() {
