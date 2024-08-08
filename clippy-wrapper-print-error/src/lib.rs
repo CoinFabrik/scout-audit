@@ -1,6 +1,6 @@
 #![feature(internal_output_capture)]
-use std::io::BufRead;
 use capture_stdio::Capture;
+use std::io::BufRead;
 
 pub fn print_error<F: FnOnce()>(cb: F) {
     let port = std::env::var("SCOUT_PORT_NUMBER");
@@ -11,7 +11,7 @@ pub fn print_error<F: FnOnce()>(cb: F) {
     }
 
     let pipe_result = capture_stdio::PipedStderr::capture();
-    if pipe_result.is_err(){
+    if pipe_result.is_err() {
         cb();
         return;
     }

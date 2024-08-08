@@ -196,7 +196,7 @@ fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
     Ok(ret)
 }
 
-fn output_to_json(output: &String) -> Vec<Value> {
+fn output_to_json(output: &str) -> Vec<Value> {
     output
         .lines()
         .map(|line| from_str::<Value>(line).unwrap())
@@ -262,9 +262,7 @@ fn split_findings(
     (successful_findings, failed_findings)
 }
 
-fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(
-    cb: F,
-) -> Result<(Vec<String>, T), E> {
+fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>, T), E> {
     use std::result::Result::Ok;
     match cb() {
         Ok(r) => Ok((Vec::<String>::new(), r)),
@@ -386,9 +384,9 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
-    let wrapper_function = if inside_vscode{
+    let wrapper_function = if inside_vscode {
         capture_noop
-    }else{
+    } else {
         capture_output
     };
 
@@ -433,15 +431,13 @@ fn do_report(
             output_format,
             output_string,
         )?;
+    } else if inside_vscode {
+        std::io::stdout()
+            .lock()
+            .write_all(output_string.as_bytes())
+            .with_context(|| ("Failed to write stdout content"))?;
     } else {
-        if inside_vscode {
-            std::io::stdout()
-                .lock()
-                .write_all(&output_string.as_bytes())
-                .with_context(|| ("Failed to write stdout content"))?;
-        }else{
-            regular_output(findings, crates);
-        }
+        regular_output(findings, crates);
     }
 
     Ok(())
@@ -504,7 +500,6 @@ fn generate_report(
     output_format: OutputFormat,
     output_string: String,
 ) -> Result<()> {
-    
     let report = RawReport::generate_report(&findings, &project_info, &detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
@@ -604,10 +599,7 @@ fn generate_report(
     Ok(())
 }
 
-fn regular_output(
-    findings: Vec<Value>,
-    crates: HashMap<String, bool>,
-){
+fn regular_output(findings: Vec<Value>, crates: HashMap<String, bool>) {
     for finding in findings {
         let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
         print!("{rendered}");
@@ -649,14 +641,10 @@ fn clean_up_before_run(metadata: &Metadata) {
     }
 }
 
-fn special_escape(string: &String) -> String{
+fn special_escape(string: &str) -> String {
     let mut ret = String::new();
-    for c in string.chars(){
-        let c2 = if c.is_alphanumeric(){
-            c
-        }else{
-            '.'
-        };
+    for c in string.chars() {
+        let c2 = if c.is_alphanumeric() { c } else { '.' };
         ret.push(c2);
     }
     ret
