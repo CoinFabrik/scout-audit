@@ -1,0 +1,17 @@
+[package]
+categories = ["developer-utilities", "macros"]
+description = "Macro utilities for the Scout project."
+edition = "2021"
+keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
+license = "MIT"
+name = "scout-utils"
+repository = "https://github.com/coinfabrik/scout-audit"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
