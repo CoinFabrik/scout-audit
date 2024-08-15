@@ -29,6 +29,7 @@ path = "src/main.rs"
 [dependencies]
 ansi_term = "=0.12.1"
 anyhow = "=1.0.86"
+axum = "=0.7.4"
 cargo = "=0.80.0"
 cargo_metadata = "=0.18.1"
 chrono = { version = "=0.4.38", features = ["serde"] }
@@ -42,6 +43,7 @@ home = "=0.5.9"
 itertools = "=0.13.0"
 lazy_static = "=1.5.0"
 libloading = "=0.8.4"
+prettytable-rs = "0.10.0"
 regex = { version = "=1.10.5", features = ["unicode"] }
 reqwest = { version = "=0.12.5", features = ["blocking", "json"] }
 semver = "=1.0.23"
@@ -51,12 +53,10 @@ strum = "=0.26.3"
 strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
-toml = "=0.8.15"
 tokio = { version = "=1.39.2", features = ["full"] }
-axum = "=0.7.4"
+toml = "=0.8.15"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"
 tracing-log = "=0.2.0"
 tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
 webbrowser = "=1.0.1"
-prettytable-rs = "0.10.0"

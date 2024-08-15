@@ -1,4 +1,5 @@
 use crate::output::raw_report::json_to_string;
+use crate::scout::post_processing;
 use crate::server::capture_output;
 use crate::{
     detectors::{
@@ -392,22 +393,54 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let (findings, (_successful_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths, &opts, blockchain, &metadata)
+        run_dylint(detectors_paths.clone(), &opts, blockchain, &metadata)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
-    let crates = get_crates(output);
+    let crates = get_crates(output.clone());
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
+
+    // Get the path of the 'unnecessary_lint_allow' detector
+    let unnecessary_lint_allow_path = detectors_paths.iter().find_map(|path| {
+        path.to_str()
+            .filter(|s| s.contains("unnecessary_lint_allow"))
+            .map(|_| path)
+    });
+    let unnecessary_lint_allow_path = match unnecessary_lint_allow_path {
+        Some(path) => path,
+        None => {
+            return Err(anyhow!(
+                "Error: 'unnecessary_lint_allow' not found in paths."
+            ))
+        }
+    };
+
+    // Create `post_processor`
+    let post_processor = post_processing::PostProcessing::new(
+        unnecessary_lint_allow_path.as_path(),
+    )
+    .map_err(|e| {
+        print_error(&format!("Error creating PostProcessing: {}", e));
+        e
+    })?;
+
+    // Run `doit` and handle errors, if any
+    let (console_findings, output_string_vscode) = post_processor
+        .process(successful_findings, output, inside_vscode)
+        .map_err(|e| {
+            print_error(&format!("Error running doit: {}", e));
+            e
+        })?;
 
     // Generate report
     do_report(
-        successful_findings,
+        console_findings,
         crates,
         project_info,
         detectors_info,
-        output_string,
+        output_string_vscode,
         opts,
         inside_vscode,
     )
