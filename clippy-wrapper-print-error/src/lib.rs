@@ -28,7 +28,7 @@ pub fn print_error<F: FnOnce()>(cb: F) {
     let mut buf_reader = std::io::BufReader::new(piped_stderr.get_reader());
     let _ = buf_reader.read_line(&mut captured);
 
-    let krate = std::env::var("CARGO_PKG_NAME");
+    let krate = std::env::var("CARGO_CRATE_NAME");
     let krate = krate.unwrap_or_default();
 
     let body = {

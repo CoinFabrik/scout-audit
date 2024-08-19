@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::utils::detectors_info::LintInfo;
+use crate::output::table::Table;
 
 use super::{html, markdown, pdf, utils};
 
@@ -30,6 +31,7 @@ pub struct Summary {
     pub executed_on: Vec<Package>,
     pub total_vulnerabilities: u32,
     pub by_severity: HashMap<Severity, u32>,
+    pub table: Table,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

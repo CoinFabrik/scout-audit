@@ -3,7 +3,6 @@ use serde_json::Value;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
-
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
 use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 
@@ -18,16 +17,17 @@ struct FileDetails {
 impl RawReport {
     #[tracing::instrument(name = "GENERATE FROM RAW REPORT", level = "debug", skip_all, fields(project = %info.name))]
     pub fn generate_report(
-        findings: &[Value],
+        json_findings: &[Value],
+        crates: &HashMap<String, bool>,
         info: &ProjectInfo,
         detector_info: &HashMap<String, LintInfo>,
     ) -> Result<Report> {
-        let scout_findings = findings;
+        let scout_findings = json_findings;
         let findings = process_findings(scout_findings, info, detector_info)
             .context("Failed to process findings")?;
         let categories = generate_categories(detector_info, &findings)
             .context("Failed to generate categories")?;
-        let summary = create_summary(detector_info, info, &findings);
+        let summary = create_summary(detector_info, info, &findings, json_findings, crates);
         Ok(Report::new(
             info.name.clone(),
             info.date.clone(),
@@ -44,6 +44,20 @@ pub(crate) fn json_to_string(s: &Value) -> String {
     } else {
         s.to_string().trim_matches('"').to_string()
     }
+}
+
+pub(crate) fn json_to_string_opt(s: Option<&Value>) -> Option<String> {
+    match s{
+        None => None,
+        Some(s) => {
+            Some(if let Value::String(s) = s {
+                s.clone()
+            } else {
+                s.to_string().trim_matches('"').to_string()
+            })
+        }
+    }
+    
 }
 
 fn process_findings(
@@ -144,15 +158,26 @@ fn parse_span(finding: &Value, file_name: &str) -> String {
     finding
         .get("spans")
         .map(|spans| {
-            format!(
-                "{}:{}:{} - {}:{}",
-                file_name,
-                spans.get("line_start").unwrap_or(&Value::default()),
-                spans.get("column_start").unwrap_or(&Value::default()),
-                spans.get("line_end").unwrap_or(&Value::default()),
-                spans.get("column_end").unwrap_or(&Value::default()),
-            )
+            match spans{
+                Value::Array(spans) => {
+                    if spans.len() == 0{
+                        None
+                    }else{
+                        let span = &spans[0];
+                        Some(format!(
+                            "{}:{}:{} - {}:{}",
+                            file_name,
+                            span.get("line_start").unwrap_or(&Value::default()),
+                            span.get("column_start").unwrap_or(&Value::default()),
+                            span.get("line_end").unwrap_or(&Value::default()),
+                            span.get("column_end").unwrap_or(&Value::default()),
+                        ))
+                    }
+                },
+                _ => None
+            }
         })
+        .unwrap_or_else(|| None)
         .unwrap_or_else(|| "Span information not available".to_string())
 }
 
@@ -225,6 +250,8 @@ fn create_summary(
     detector_info: &HashMap<String, LintInfo>,
     info: &ProjectInfo,
     findings: &[Finding],
+    json_findings: &[Value],
+    crates: &HashMap<String, bool>,
 ) -> Summary {
     let total_vulnerabilities = findings.len() as u32;
 
@@ -250,9 +277,12 @@ fn create_summary(
         }
     }
 
+    let table = crate::output::table::construct_table(json_findings, crates, detector_info);
+
     Summary {
         executed_on: info.packages.clone(),
         total_vulnerabilities,
         by_severity,
+        table,
     }
 }

@@ -4,3 +4,5 @@ pub mod pdf;
 pub mod raw_report;
 pub mod report;
 pub mod utils;
+pub mod table;
+pub mod console;
