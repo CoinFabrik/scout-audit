@@ -1,5 +1,5 @@
 use crate::output::raw_report::json_to_string;
-use crate::scout::post_processing;
+use crate::scout::post_processing::{self, PostProcessing};
 use crate::server::capture_output;
 use crate::{
     detectors::{
@@ -417,16 +417,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         }
     };
 
-    // Create `post_processor`
-    let post_processor = post_processing::PostProcessing::new(
-        unnecessary_lint_allow_path.as_path(),
-    )
-    .map_err(|e| {
-        print_error(&format!("Error creating PostProcessing: {}", e));
-        e
-    })?;
+    // Create post processor
+    let post_processor =
+        PostProcessing::new(unnecessary_lint_allow_path.as_path()).map_err(|e| {
+            print_error(&format!("Error creating PostProcessing: {}", e));
+            e
+        })?;
 
-    // Run `doit` and handle errors, if any
+    // Run post processor
     let (console_findings, output_string_vscode) = post_processor
         .process(successful_findings, output, inside_vscode)
         .map_err(|e| {
