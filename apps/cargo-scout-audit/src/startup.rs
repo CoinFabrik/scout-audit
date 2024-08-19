@@ -428,7 +428,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let (console_findings, output_string_vscode) = post_processor
         .process(successful_findings, output, inside_vscode)
         .map_err(|e| {
-            print_error(&format!("Error running doit: {}", e));
+            print_error(&format!("Error running post process: {}", e));
             e
         })?;
 
