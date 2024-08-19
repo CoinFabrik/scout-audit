@@ -4,11 +4,7 @@ use crate::{
         builder::DetectorBuilder,
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
-    output::raw_report::{
-        RawReport,
-        json_to_string,
-        json_to_string_opt,
-    },
+    output::raw_report::{json_to_string, json_to_string_opt, RawReport},
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
         version_checker::VersionChecker,
@@ -26,12 +22,7 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
-use std::{
-    io::Write,
-    collections::HashMap,
-    fs,
-    path::PathBuf,
-};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
 #[derive(Debug, Parser)]
@@ -207,12 +198,8 @@ fn output_to_json(output: &str) -> Vec<Value> {
         .collect::<Vec<Value>>()
 }
 
-fn get_crate_from_finding(finding: &Value) -> Option<String>{
-    json_to_string_opt(
-        finding
-            .get("target")
-            .and_then(|x| x.get("name"))
-    )
+fn get_crate_from_finding(finding: &Value) -> Option<String> {
+    json_to_string_opt(finding.get("target").and_then(|x| x.get("name")))
 }
 
 fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
@@ -221,10 +208,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     for val in output {
         let reason = val.get("reason");
         let message = val.get("message");
-        if reason.is_none()
-            || message.is_none()
-            || reason.unwrap() != "compiler-message"
-        {
+        if reason.is_none() || message.is_none() || reason.unwrap() != "compiler-message" {
             continue;
         }
         let message = message.unwrap();

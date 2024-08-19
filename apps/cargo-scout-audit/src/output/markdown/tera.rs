@@ -4,8 +4,11 @@ use tera::{Context, Result, Tera};
 
 const TEMPLATE_STR: &str = include_str!("./template.md");
 
-fn get_template_path() -> (String, String){
-    (env!("PATH").to_string() + "/.scout-audit/templates", "md.txt".to_string())
+fn get_template_path() -> (String, String) {
+    (
+        env!("PATH").to_string() + "/.scout-audit/templates",
+        "md.txt".to_string(),
+    )
 }
 
 #[derive(Debug)]
@@ -39,7 +42,7 @@ impl MdEngine {
         })
     }
 
-    pub fn get_tera_mut<'a>(&'a mut self) -> &'a mut Tera{
+    pub fn get_tera_mut(&mut self) -> &mut Tera {
         &mut self.tera
     }
 }

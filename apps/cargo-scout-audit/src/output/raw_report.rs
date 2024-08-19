@@ -1,10 +1,10 @@
+use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
+use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
-use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
-use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 
 pub struct RawReport;
 
@@ -47,17 +47,13 @@ pub(crate) fn json_to_string(s: &Value) -> String {
 }
 
 pub(crate) fn json_to_string_opt(s: Option<&Value>) -> Option<String> {
-    match s{
-        None => None,
-        Some(s) => {
-            Some(if let Value::String(s) = s {
-                s.clone()
-            } else {
-                s.to_string().trim_matches('"').to_string()
-            })
+    s.map(|s| {
+        if let Value::String(s) = s {
+            s.clone()
+        } else {
+            s.to_string().trim_matches('"').to_string()
         }
-    }
-    
+    })
 }
 
 fn process_findings(
@@ -157,25 +153,23 @@ fn parse_file_details(finding: &Value, workspace_root: &Path) -> Result<FileDeta
 fn parse_span(finding: &Value, file_name: &str) -> String {
     finding
         .get("spans")
-        .map(|spans| {
-            match spans{
-                Value::Array(spans) => {
-                    if spans.len() == 0{
-                        None
-                    }else{
-                        let span = &spans[0];
-                        Some(format!(
-                            "{}:{}:{} - {}:{}",
-                            file_name,
-                            span.get("line_start").unwrap_or(&Value::default()),
-                            span.get("column_start").unwrap_or(&Value::default()),
-                            span.get("line_end").unwrap_or(&Value::default()),
-                            span.get("column_end").unwrap_or(&Value::default()),
-                        ))
-                    }
-                },
-                _ => None
+        .map(|spans| match spans {
+            Value::Array(spans) => {
+                if spans.is_empty() {
+                    None
+                } else {
+                    let span = &spans[0];
+                    Some(format!(
+                        "{}:{}:{} - {}:{}",
+                        file_name,
+                        span.get("line_start").unwrap_or(&Value::default()),
+                        span.get("column_start").unwrap_or(&Value::default()),
+                        span.get("line_end").unwrap_or(&Value::default()),
+                        span.get("column_end").unwrap_or(&Value::default()),
+                    ))
+                }
             }
+            _ => None,
         })
         .unwrap_or_else(|| None)
         .unwrap_or_else(|| "Span information not available".to_string())

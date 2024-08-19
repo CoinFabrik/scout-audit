@@ -1,9 +1,5 @@
 use cargo_metadata::{Metadata, PackageId};
-use std::{
-    collections::HashSet,
-    fs,
-    path::PathBuf,
-};
+use std::{collections::HashSet, fs, path::PathBuf};
 
 pub(crate) fn clean_up_before_run(metadata: &Metadata) {
     let mut dylint_target = metadata.target_directory.clone();

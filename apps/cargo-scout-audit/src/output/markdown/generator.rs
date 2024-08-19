@@ -41,10 +41,8 @@ pub fn generate_summary_context(report: &Report) -> (SummaryContext, serde_json:
     let table = report.summary.table.to_json_map();
 
     (
-        SummaryContext{
-            categories
-        },
-        serde_json::Value::Object(table)
+        SummaryContext { categories },
+        serde_json::Value::Object(table),
     )
 }
 

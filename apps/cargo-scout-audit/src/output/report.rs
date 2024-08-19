@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::utils::detectors_info::LintInfo;
 use crate::output::table::Table;
+use crate::utils::detectors_info::LintInfo;
 
 use super::{html, markdown, pdf, utils};
 
