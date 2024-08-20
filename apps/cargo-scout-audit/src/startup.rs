@@ -217,9 +217,15 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         if name.is_none() {
             continue;
         }
+        let name = name.unwrap();
+        if let Some(previous) = ret.get(&name){
+            if !previous{
+                continue;
+            }
+        }
         let level = message.get("level");
         let ok = level.is_none() || level.unwrap() != "error";
-        ret.insert(name.unwrap(), ok);
+        ret.insert(name, ok);
     }
 
     ret
@@ -387,7 +393,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let (findings, (_successful_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths, &opts, blockchain, &metadata)
+        run_dylint(detectors_paths, &opts, &metadata, inside_vscode)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
@@ -438,12 +444,12 @@ fn do_report(
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
-    _bc_dependency: BlockChain,
     metadata: &Metadata,
+    inside_vscode: bool,
 ) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -463,7 +469,9 @@ fn run_dylint(
         .map(|p| p.to_string_lossy().into_owned());
 
     let mut args = opts.args.to_owned();
-    args.push("--message-format=json".to_string());
+    if !inside_vscode{
+        args.push("--message-format=json".to_string());
+    }
 
     let check_opts = Check {
         lib_sel: LibrarySelection {

@@ -677,17 +677,28 @@ pub(crate) fn construct_table(
             "Compilation errors"
         }
         .to_string();
-        let mut row = Row::from_strings(&[
-            krate.clone(),
-            success_string,
-            format!("{crit}"),
-            format!("{med}"),
-            format!("{min}"),
-            format!("{enhan}"),
-        ]);
-        if !success {
+        
+        let row = if !success {
+            let mut row = Row::from_strings(&[
+                krate.clone(),
+                success_string,
+                "N/A".to_string(),
+                "N/A".to_string(),
+                "N/A".to_string(),
+                "N/A".to_string(),
+            ]);
             row.get_mut(1).color = SemanticColor::Importance(Importance::Error);
-        }
+            row
+        }else{
+            Row::from_strings(&[
+                krate.clone(),
+                success_string,
+                format!("{crit}"),
+                format!("{med}"),
+                format!("{min}"),
+                format!("{enhan}"),
+            ])
+        };
         ret.add_row(row);
     }
 
