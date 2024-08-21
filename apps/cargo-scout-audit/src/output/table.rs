@@ -434,6 +434,10 @@ fn process_object_md(o: &serde_json::Map<String, Value>, pad: bool) -> String {
     padded
 }
 
+fn process_object_html(o: &serde_json::Map<String, Value>, pad: bool) -> String {
+    process_object_md(o, pad)
+}
+
 fn filter_cell_wrapper<F: FnOnce(&serde_json::Map<String, Value>) -> String>(
     values: &HashMap<String, Value>,
     cb: F,
@@ -468,6 +472,14 @@ fn filter_cell_md(values: &HashMap<String, Value>) -> Result<Value, tera::Error>
 
 fn filter_cell_with_padding_md(values: &HashMap<String, Value>) -> Result<Value, tera::Error> {
     filter_cell_wrapper(values, |o| process_object_md(o, true))
+}
+
+fn filter_cell_html(values: &HashMap<String, Value>) -> Result<Value, tera::Error> {
+    filter_cell_wrapper(values, |o| process_object_html(o, false))
+}
+
+fn filter_cell_with_padding_html(values: &HashMap<String, Value>) -> Result<Value, tera::Error> {
+    filter_cell_wrapper(values, |o| process_object_html(o, true))
 }
 
 fn set_color_maps(values: &HashMap<String, Value>) -> Result<Value, tera::Error> {
@@ -606,6 +618,12 @@ pub(crate) fn register_functions_for_tera_md(tera: &mut Tera) {
     tera.register_function("filter_cell_with_padding", filter_cell_with_padding_md);
 }
 
+pub(crate) fn register_functions_for_tera_html(tera: &mut Tera) {
+    register_functions_for_tera_base(tera);
+    tera.register_function("filter_cell", filter_cell_html);
+    tera.register_function("filter_cell_with_padding", filter_cell_with_padding_html);
+}
+
 pub(crate) fn prepare_tera_for_table_render_console(
     tera: &mut Tera,
     context: &mut Context,
@@ -613,6 +631,16 @@ pub(crate) fn prepare_tera_for_table_render_console(
     name: &str,
 ) {
     register_functions_for_tera_console(tera);
+    context.insert(name, table);
+}
+
+pub(crate) fn prepare_tera_for_table_render_html(
+    tera: &mut Tera,
+    context: &mut Context,
+    table: &Value,
+    name: &str,
+) {
+    register_functions_for_tera_html(tera);
     context.insert(name, table);
 }
 
