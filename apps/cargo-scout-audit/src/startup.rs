@@ -93,7 +93,7 @@ pub struct Scout {
     pub args: Vec<String>,
 
     #[clap(short, long, value_name = "type", help = "Sets the output type")]
-    pub output_format: Option<OutputFormat>,
+    pub output_formats: Vec<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -431,16 +431,14 @@ fn do_report(
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
         crate::output::console::render_report(&findings, &crates, &detectors_info)?;
-        if let Some(output_format) = opts.output_format {
-            generate_report(
-                &findings,
-                &crates,
-                project_info,
-                &detectors_info,
-                opts.output_path,
-                output_format,
-            )?;
-        }
+        generate_report(
+            &findings,
+            &crates,
+            project_info,
+            &detectors_info,
+            opts.output_path,
+            &opts.output_formats,
+        )?;
     }
 
     Ok(())
@@ -506,25 +504,27 @@ fn generate_report(
     project_info: ProjectInfo,
     detectors_info: &HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
-    output_format: OutputFormat,
+    output_format: &[OutputFormat],
 ) -> Result<()> {
     let report = RawReport::generate_report(findings, crates, &project_info, detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
     tracing::trace!(?report, "Report");
 
-    let path = report.write_out(findings, output_path.clone(), &output_format)?;
+    for format in output_format.iter() {
+        let path = report.write_out(findings, output_path.clone(), format)?;
 
-    if let Some(path) = path {
-        let path = path
-            .to_str()
-            .with_context(|| "Path conversion to string failed")?;
-        let string = OutputFormatter::new()
-            .fg()
-            .green()
-            .text_str(format!("{path} successfully generated.").as_str())
-            .print();
-        println!("{string}");
+        if let Some(path) = path {
+            let path = path
+                .to_str()
+                .with_context(|| "Path conversion to string failed")?;
+            let string = OutputFormatter::new()
+                .fg()
+                .green()
+                .text_str(format!("{path} successfully generated.").as_str())
+                .print();
+            println!("{string}");
+        }
     }
 
     Ok(())
