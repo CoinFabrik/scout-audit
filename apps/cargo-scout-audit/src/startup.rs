@@ -24,6 +24,7 @@ use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
+use terminal_color_builder::OutputFormatter;
 
 #[derive(Debug, Parser)]
 #[clap(display_name = "cargo")]
@@ -218,8 +219,8 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
             continue;
         }
         let name = name.unwrap();
-        if let Some(previous) = ret.get(&name){
-            if !previous{
+        if let Some(previous) = ret.get(&name) {
+            if !previous {
                 continue;
             }
         }
@@ -423,22 +424,23 @@ fn do_report(
     opts: Scout,
     inside_vscode: bool,
 ) -> Result<()> {
-    if let Some(output_format) = opts.output_format {
-        generate_report(
-            findings,
-            crates,
-            project_info,
-            detectors_info,
-            opts.output_path,
-            output_format,
-        )?;
-    } else if inside_vscode {
+    if inside_vscode {
         std::io::stdout()
             .lock()
             .write_all(output_string.as_bytes())
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
-        crate::output::console::render_report(findings, crates, detectors_info)?;
+        crate::output::console::render_report(&findings, &crates, &detectors_info)?;
+        if let Some(output_format) = opts.output_format {
+            generate_report(
+                &findings,
+                &crates,
+                project_info,
+                &detectors_info,
+                opts.output_path,
+                output_format,
+            )?;
+        }
     }
 
     Ok(())
@@ -469,7 +471,7 @@ fn run_dylint(
         .map(|p| p.to_string_lossy().into_owned());
 
     let mut args = opts.args.to_owned();
-    if !inside_vscode{
+    if !inside_vscode {
         args.push("--message-format=json".to_string());
     }
 
@@ -499,101 +501,30 @@ fn run_dylint(
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    findings: Vec<Value>,
-    crates: HashMap<String, bool>,
+    findings: &Vec<Value>,
+    crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: HashMap<String, LintInfo>,
+    detectors_info: &HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
     output_format: OutputFormat,
 ) -> Result<()> {
-    let report = RawReport::generate_report(&findings, &crates, &project_info, &detectors_info)?;
+    let report = RawReport::generate_report(findings, crates, &project_info, detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
     tracing::trace!(?report, "Report");
 
-    // Save the report
-    match output_format {
-        OutputFormat::Html => {
-            // Generate HTML report
-            let html = report.generate_html()?;
+    let path = report.write_out(findings, output_path.clone(), &output_format)?;
 
-            // Save to file
-            let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
-            report.save_to_file(&html_path, html)?;
-
-            // Open the HTML report in the default web browser
-            webbrowser::open(
-                html_path
-                    .to_str()
-                    .with_context(|| "Path conversion to string failed")?,
-            )
-            .with_context(|| "Failed to open HTML report")?;
-        }
-
-        OutputFormat::Json => {
-            // Generate JSON report
-            let json = report.generate_json()?;
-
-            // Save to file
-            let json_path = output_path.unwrap_or_else(|| PathBuf::from("report.json"));
-            report.save_to_file(&json_path, json)?;
-        }
-        OutputFormat::RawJson => {
-            let mut json_file = match &output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("raw-report.json")?,
-            };
-
-            for finding in findings {
-                std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
-                std::io::Write::write(&mut json_file, b"\n")?;
-            }
-        }
-        OutputFormat::Markdown => {
-            // Generate Markdown
-            let markdown = report.generate_markdown(true)?;
-
-            // Save to file
-            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
-            report.save_to_file(&md_path, markdown)?;
-        }
-        OutputFormat::MarkdownGithub => {
-            // Generate Markdown
-            let markdown = report.generate_markdown(false)?;
-
-            // Save to file
-            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
-            report.save_to_file(&md_path, markdown)?;
-        }
-        OutputFormat::Sarif => {
-            let path = if let Some(path) = output_path {
-                path
-            } else {
-                PathBuf::from("report.sarif")
-            };
-
-            let mut sarif_file = fs::File::create(path)?;
-
-            let child = std::process::Command::new("clippy-sarif")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn()?;
-
-            for finding in findings {
-                let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
-                std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), rendered.as_bytes())?;
-            }
-
-            std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
-        }
-        OutputFormat::Pdf => {
-            let path = if let Some(path) = output_path {
-                path
-            } else {
-                PathBuf::from("report.pdf")
-            };
-            report.generate_pdf(&path)?;
-        }
+    if let Some(path) = path {
+        let path = path
+            .to_str()
+            .with_context(|| "Path conversion to string failed")?;
+        let string = OutputFormatter::new()
+            .fg()
+            .green()
+            .text_str(format!("{path} successfully generated.").as_str())
+            .print();
+        println!("{string}");
     }
 
     Ok(())

@@ -8,6 +8,7 @@ use crate::{
 use serde_json::Value;
 use std::collections::HashMap;
 use tera::{Context, Tera};
+use terminal_color_builder::OutputFormatter;
 
 const CONSOLE_TEMPLATE: &str = include_str!("./template.txt");
 
@@ -19,16 +20,16 @@ fn get_template_path() -> (String, String) {
 }
 
 pub(crate) fn render_report(
-    findings: Vec<Value>,
-    crates: HashMap<String, bool>,
-    detectors_info: HashMap<String, LintInfo>,
+    findings: &[Value],
+    crates: &HashMap<String, bool>,
+    detectors_info: &HashMap<String, LintInfo>,
 ) -> Result<(), tera::Error> {
     for finding in findings.iter() {
         let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
         print!("{rendered}");
     }
 
-    let table = construct_table(&findings, &crates, &detectors_info).to_json_table();
+    let table = construct_table(findings, crates, detectors_info).to_json_table();
 
     let mut tera = Tera::default();
     let mut context = Context::new();
@@ -41,6 +42,15 @@ pub(crate) fn render_report(
     let result = tera.render("base_template", &context)?;
 
     println!("{}", result);
+
+    if crates.iter().any(|(_, success)| !success) {
+        let string = OutputFormatter::new()
+            .fg()
+            .red()
+            .text_str("This report is incomplete because some crates failed to compile. Please resolve the errors and try again.")
+            .print();
+        println!("{}", string);
+    }
 
     Ok(())
 }

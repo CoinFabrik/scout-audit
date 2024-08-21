@@ -677,7 +677,7 @@ pub(crate) fn construct_table(
             "Compilation errors"
         }
         .to_string();
-        
+
         let row = if !success {
             let mut row = Row::from_strings(&[
                 krate.clone(),
@@ -689,7 +689,7 @@ pub(crate) fn construct_table(
             ]);
             row.get_mut(1).color = SemanticColor::Importance(Importance::Error);
             row
-        }else{
+        } else {
             Row::from_strings(&[
                 krate.clone(),
                 success_string,

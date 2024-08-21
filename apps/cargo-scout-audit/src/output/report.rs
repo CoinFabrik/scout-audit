@@ -1,12 +1,14 @@
+use super::{html, markdown, pdf, utils};
+use crate::output::raw_report::json_to_string;
+use crate::output::table::Table;
+use crate::startup::OutputFormat;
+use crate::utils::detectors_info::LintInfo;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
+use std::fs::File;
 use std::path::{Path, PathBuf};
-
-use crate::output::table::Table;
-use crate::utils::detectors_info::LintInfo;
-
-use super::{html, markdown, pdf, utils};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -142,5 +144,101 @@ impl Report {
         std::fs::remove_file(temp_html)?;
 
         Ok(())
+    }
+    pub fn write_out(
+        &self,
+        findings: &Vec<Value>,
+        output_path: Option<PathBuf>,
+        output_format: &OutputFormat,
+    ) -> Result<Option<PathBuf>> {
+        match output_format {
+            OutputFormat::Html => {
+                // Generate HTML report
+                let html = self.generate_html()?;
+
+                // Save to file
+                let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
+                self.save_to_file(&html_path, html)?;
+
+                // Open the HTML report in the default web browser
+                webbrowser::open(
+                    html_path
+                        .to_str()
+                        .with_context(|| "Path conversion to string failed")?,
+                )
+                .with_context(|| "Failed to open HTML report")?;
+
+                Ok(Some(html_path))
+            }
+            OutputFormat::Json => {
+                // Generate JSON report
+                let json = self.generate_json()?;
+
+                // Save to file
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("report.json"));
+                self.save_to_file(&json_path, json)?;
+
+                Ok(Some(json_path))
+            }
+            OutputFormat::RawJson => {
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("raw-report.json"));
+                let mut json_file = File::create(&json_path)?;
+
+                for finding in findings.iter() {
+                    std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
+                    std::io::Write::write(&mut json_file, b"\n")?;
+                }
+
+                Ok(Some(json_path))
+            }
+            OutputFormat::Markdown => {
+                // Generate Markdown
+                let markdown = self.generate_markdown(true)?;
+
+                // Save to file
+                let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+                self.save_to_file(&md_path, markdown)?;
+
+                Ok(Some(md_path))
+            }
+            OutputFormat::MarkdownGithub => {
+                // Generate Markdown
+                let markdown = self.generate_markdown(false)?;
+
+                // Save to file
+                let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
+                self.save_to_file(&md_path, markdown)?;
+
+                Ok(Some(md_path))
+            }
+            OutputFormat::Sarif => {
+                let sarif_path = output_path.unwrap_or_else(|| PathBuf::from("report.sarif"));
+
+                let mut sarif_file = File::create(&sarif_path)?;
+
+                let child = std::process::Command::new("clippy-sarif")
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .spawn()?;
+
+                for finding in findings {
+                    let rendered =
+                        json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
+                    std::io::Write::write_all(
+                        &mut child.stdin.as_ref().unwrap(),
+                        rendered.as_bytes(),
+                    )?;
+                }
+
+                std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
+
+                Ok(Some(sarif_path))
+            }
+            OutputFormat::Pdf => {
+                let pdf_path = output_path.unwrap_or_else(|| PathBuf::from("report.pdf"));
+                self.generate_pdf(&pdf_path)?;
+                Ok(Some(pdf_path))
+            }
+        }
     }
 }
