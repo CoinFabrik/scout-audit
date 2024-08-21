@@ -1,17 +1,10 @@
-use std::collections::HashMap;
 use crate::output::{
-    report::{
-        Category,
-        Finding,
-        Report,
-    },
+    report::{Category, Finding, Report},
     table::prepare_tera_for_table_render_html,
     utils,
 };
-use tera::{
-    Tera,
-    Context,
-};
+use std::collections::HashMap;
+use tera::{Context, Tera};
 
 // Generate the header for the report
 pub fn generate_header(date: String) -> String {
@@ -35,14 +28,15 @@ pub fn generate_header(date: String) -> String {
     )
 }
 
-const PDF_TEMPLATE: &str = include_str!("./template.html"); 
+const PDF_TEMPLATE: &str = include_str!("./template.html");
 
-fn generate_table(report: &Report) -> Result<String, ()>{
+fn generate_table(report: &Report) -> Result<String, ()> {
     let table = report.summary.table.to_json_table();
 
     let mut tera = Tera::default();
     let mut context = Context::new();
-    tera.add_raw_template("base_template", PDF_TEMPLATE).map_err(|_| ())?;
+    tera.add_raw_template("base_template", PDF_TEMPLATE)
+        .map_err(|_| ())?;
     prepare_tera_for_table_render_html(&mut tera, &mut context, &table, "summary_table");
 
     tera.render("base_template", &context).map_err(|_| ())
@@ -52,11 +46,12 @@ fn generate_table(report: &Report) -> Result<String, ()>{
 pub fn generate_summary(report: &Report) -> String {
     let mut summary_html = String::from("<h2>Summary</h2>");
 
-    summary_html.push_str(generate_table(report)
-        .unwrap_or_else(|_| "".to_string())
-        .as_str()
+    summary_html.push_str(
+        generate_table(report)
+            .unwrap_or_else(|_| "".to_string())
+            .as_str(),
     );
-    
+
     // Add "Issues found" section
     summary_html.push_str("<h3>Issues found:</h3><ul>");
     let findings_summary = summarize_findings(&report.categories, &report.findings);
