@@ -410,30 +410,32 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             .filter(|s| s.contains("unnecessary_lint_allow"))
             .map(|_| path)
     });
-    let unnecessary_lint_allow_path = match unnecessary_lint_allow_path {
-        Some(path) => path,
-        None => {
-            return Err(anyhow!(
-                "Error: 'unnecessary_lint_allow' not found in paths."
-            ))
+
+    // Create and run post processor if the path is found, otherwise use default values
+    let (console_findings, output_string_vscode) = if let Some(path) = unnecessary_lint_allow_path {
+        match PostProcessing::new(path) {
+            std::result::Result::Ok(post_processor) => {
+                match post_processor.process(
+                    successful_findings.clone(),
+                    output.clone(),
+                    inside_vscode,
+                ) {
+                    std::result::Result::Ok(result) => result,
+                    Err(e) => {
+                        print_error(&format!("Error running post process: {}", e));
+                        (successful_findings, output_string)
+                    }
+                }
+            }
+            Err(e) => {
+                print_error(&format!("Error creating PostProcessing: {}", e));
+                (successful_findings, output_string)
+            }
         }
+    } else {
+        print_error("'unnecessary_lint_allow' not found in paths. Using default values.");
+        (successful_findings, output_string)
     };
-
-    // Create post processor
-    let post_processor =
-        PostProcessing::new(unnecessary_lint_allow_path.as_path()).map_err(|e| {
-            print_error(&format!("Error creating PostProcessing: {}", e));
-            e
-        })?;
-
-    // Run post processor
-    let (console_findings, output_string_vscode) = post_processor
-        .process(successful_findings, output, inside_vscode)
-        .map_err(|e| {
-            print_error(&format!("Error running post process: {}", e));
-            e
-        })?;
-
     // Generate report
     do_report(
         console_findings,
