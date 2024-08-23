@@ -1,16 +1,15 @@
-use crate::output::raw_report::json_to_string;
-use crate::scout::post_processing::{self, PostProcessing};
-use crate::server::capture_output;
 use crate::{
     detectors::{
         builder::DetectorBuilder,
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
-    output::raw_report::RawReport,
+    output::raw_report::{json_to_string, RawReport},
     scout::{
-        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
+        post_processing::PostProcessing, project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
+    server::capture_output,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -24,9 +23,12 @@ use cargo_metadata::{Metadata, MetadataCommand, PackageId};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
-use std::collections::HashSet;
-use std::io::Write;
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    io::Write,
+    path::PathBuf,
+};
 use tempfile::NamedTempFile;
 
 #[derive(Debug, Parser)]
