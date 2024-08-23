@@ -43,8 +43,8 @@ pub fn sanitize_category_name(name: &str) -> String {
     name.to_lowercase().replace(' ', "-")
 }
 
-fn exists<T: std::convert::AsRef<std::path::Path>>(path: &T) -> bool {
-    fs::exists(path).unwrap_or_default()
+fn exists(path: &String) -> bool {
+    std::path::Path::new(path).exists()
 }
 
 pub fn get_template<F: FnOnce() -> (String, String)>(get_path: F, template: &str) -> String {
