@@ -1,10 +1,9 @@
 extern crate lazy_static;
-#[macro_use]
-extern crate prettytable;
 
 #[path = "../build_config/mod.rs"]
 pub mod build_config;
 
+pub mod cleanup;
 pub mod detectors;
 pub mod output;
 pub mod scout;
