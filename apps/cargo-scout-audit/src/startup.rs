@@ -433,7 +433,6 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             }
         }
     } else {
-        print_error("'unnecessary_lint_allow' not found in paths. Using default values.");
         (successful_findings, output_string)
     };
     // Generate report
