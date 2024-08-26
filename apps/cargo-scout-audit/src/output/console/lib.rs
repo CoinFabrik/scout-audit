@@ -14,7 +14,7 @@ const CONSOLE_TEMPLATE: &str = include_str!("./template.txt");
 
 fn get_template_path() -> (String, String) {
     (
-        env!("PATH").to_string() + "/.scout-audit/templates",
+        env!("HOME").to_string() + "/.scout-audit/templates",
         "console.txt".to_string(),
     )
 }

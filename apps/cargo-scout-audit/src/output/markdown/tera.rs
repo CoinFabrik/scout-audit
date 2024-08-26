@@ -6,7 +6,7 @@ const TEMPLATE_STR: &str = include_str!("./template.md");
 
 fn get_template_path() -> (String, String) {
     (
-        env!("PATH").to_string() + "/.scout-audit/templates",
+        env!("HOME").to_string() + "/.scout-audit/templates",
         "md.txt".to_string(),
     )
 }
