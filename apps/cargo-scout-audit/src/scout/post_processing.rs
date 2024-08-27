@@ -1,11 +1,11 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Context};
 use libloading::{Library, Symbol};
 use serde_json::Value;
-use std::ffi::CString;
+use std::ffi::{c_char, CStr, CString};
 use std::path::Path;
 
-type ShouldIncludeFindingFunc =
-    unsafe fn(*const std::os::raw::c_char, *const std::os::raw::c_char) -> bool;
+type ProcessFindingsFunc = unsafe fn(*const c_char, *const c_char, bool) -> *mut c_char;
+type FreeStringFunc = unsafe fn(*mut c_char);
 
 struct FindingProcessor {
     lib: Library,
@@ -14,34 +14,74 @@ struct FindingProcessor {
 impl FindingProcessor {
     pub fn new<P: AsRef<Path>>(library_path: P) -> Result<Self> {
         let lib = unsafe {
-            Library::new(library_path.as_ref()).map_err(|e| {
-                anyhow!(
-                    "Failed to load library {}: {}",
-                    library_path.as_ref().display(),
-                    e
-                )
+            Library::new(library_path.as_ref()).with_context(|| {
+                format!("Failed to load library {}", library_path.as_ref().display())
             })?
         };
 
         Ok(FindingProcessor { lib })
     }
 
-    pub fn should_include_finding(&self, finding: &Value, all_findings: &[Value]) -> Result<bool> {
-        let finding_json = serde_json::to_string(finding)?;
-        let all_findings_json = serde_json::to_string(all_findings)?;
+    pub fn process_findings(
+        &self,
+        successful_findings: &[Value],
+        output: &[Value],
+        inside_vscode: bool,
+    ) -> Result<(Vec<Value>, String)> {
+        let successful_findings_json = serde_json::to_string(successful_findings)
+            .with_context(|| "Failed to serialize successful_findings")?;
+        let output_json =
+            serde_json::to_string(output).with_context(|| "Failed to serialize output")?;
 
-        let finding_cstring = CString::new(finding_json)?;
-        let all_findings_cstring = CString::new(all_findings_json)?;
+        let successful_findings_cstring = CString::new(successful_findings_json)
+            .with_context(|| "Failed to create CString for successful_findings")?;
+        let output_cstring =
+            CString::new(output_json).with_context(|| "Failed to create CString for output")?;
 
-        let func: Symbol<ShouldIncludeFindingFunc> = unsafe {
+        let process_func: Symbol<ProcessFindingsFunc> = unsafe {
             self.lib
-                .get(b"should_include_finding")
-                .map_err(|e| anyhow!("Failed to get should_include_finding function: {}", e))?
+                .get(b"process_findings")
+                .with_context(|| "Failed to get process_findings function")?
         };
 
-        let result = unsafe { func(finding_cstring.as_ptr(), all_findings_cstring.as_ptr()) };
+        let free_func: Symbol<FreeStringFunc> = unsafe {
+            self.lib
+                .get(b"free_string")
+                .with_context(|| "Failed to get free_string function")?
+        };
 
-        Ok(result)
+        let result_ptr = unsafe {
+            process_func(
+                successful_findings_cstring.as_ptr(),
+                output_cstring.as_ptr(),
+                inside_vscode,
+            )
+        };
+
+        if result_ptr.is_null() {
+            return Err(anyhow!("process_findings returned null"));
+        }
+
+        let result_cstr = unsafe { CStr::from_ptr(result_ptr) };
+        let result_str = result_cstr
+            .to_str()
+            .with_context(|| "Failed to convert result to str")?;
+        let result: serde_json::Value =
+            serde_json::from_str(result_str).with_context(|| "Failed to parse result JSON")?;
+
+        // Ensure we free the memory allocated by the C function
+        unsafe { free_func(result_ptr) };
+
+        let console_findings = result["console_findings"]
+            .as_array()
+            .ok_or_else(|| anyhow!("Failed to parse console_findings"))?
+            .clone();
+        let output_string_vscode = result["output_string_vscode"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Failed to parse output_string_vscode"))?
+            .to_string();
+
+        Ok((console_findings, output_string_vscode))
     }
 }
 
@@ -61,61 +101,7 @@ impl PostProcessing {
         output: Vec<Value>,
         inside_vscode: bool,
     ) -> Result<(Vec<Value>, String)> {
-        // Console output
-        let console_findings: Vec<_> = successful_findings
-            .iter()
-            .filter_map(|finding| {
-                match self
-                    .processor
-                    .should_include_finding(finding, &successful_findings)
-                {
-                    Ok(true) => Some(finding.clone()),
-                    Ok(false) => None,
-                    Err(e) => {
-                        eprintln!("Error processing finding: {}", e);
-                        None
-                    }
-                }
-            })
-            .collect();
-
-        // Vscode output
-        let output_vscode: Vec<_> = if inside_vscode {
-            let all_findings: Vec<_> = output
-                .iter()
-                .filter_map(|val| val.get("message").cloned())
-                .collect();
-
-            output
-                .into_iter()
-                .filter_map(|val| match val.get("message") {
-                    Some(message) => {
-                        match self
-                            .processor
-                            .should_include_finding(message, &all_findings)
-                        {
-                            Ok(true) => Some(val),
-                            Ok(false) => None,
-                            Err(e) => {
-                                eprintln!("Error processing finding: {}", e);
-                                None
-                            }
-                        }
-                    }
-                    None => Some(val),
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
-
-        // Convert output_vscode to a string, but not only one json, each value of the array is a json
-        let output_string_vscode = output_vscode
-            .into_iter()
-            .map(|finding| serde_json::to_string(&finding).unwrap_or_default())
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        Ok((console_findings, output_string_vscode))
+        self.processor
+            .process_findings(&successful_findings, &output, inside_vscode)
     }
 }
