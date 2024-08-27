@@ -4,6 +4,13 @@ use tera::{Context, Result, Tera};
 
 const TEMPLATE_STR: &str = include_str!("./template.md");
 
+fn get_template_path() -> (String, String) {
+    (
+        env!("HOME").to_string() + "/.scout-audit/templates",
+        "md.txt".to_string(),
+    )
+}
+
 #[derive(Debug)]
 pub struct MdEngine {
     tera: Tera,
@@ -12,7 +19,8 @@ pub struct MdEngine {
 impl MdEngine {
     pub fn new() -> Result<Self> {
         let mut tera = Tera::default();
-        tera.add_raw_template("base_template", TEMPLATE_STR)?;
+        let template = crate::output::utils::get_template(get_template_path, TEMPLATE_STR);
+        tera.add_raw_template("base_template", template.as_str())?;
         Ok(MdEngine { tera })
     }
 
@@ -32,5 +40,9 @@ impl MdEngine {
             acc.extend(c);
             acc
         })
+    }
+
+    pub fn get_tera_mut(&mut self) -> &mut Tera {
+        &mut self.tera
     }
 }

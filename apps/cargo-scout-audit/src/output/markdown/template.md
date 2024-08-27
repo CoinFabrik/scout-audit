@@ -12,10 +12,11 @@ th:first-child {min-width: 20%;width: 20%;}
 
 ## Summary
 
-Executed on:
-
-{% for package in report.summary.executed_on %}
-- [{{ package.name }}]({{ package.relative_path }}){% endfor %}
+| {% for col in summary_table.header_order %}{{ filter_cell(cell=summary_table.header[col]) }} | {% endfor %}
+| {% for col in summary_table.header_order %}- | {% endfor %}
+{% for row in summary_table.rows -%}
+| {% for col in summary_table.header_order %}{{ filter_cell(cell=row[col]) }} | {% endfor %}
+{% endfor %}
 
 Issues found:
 

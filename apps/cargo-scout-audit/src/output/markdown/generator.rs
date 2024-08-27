@@ -20,10 +20,10 @@ pub struct SummaryCategory {
     pub severity: String,
 }
 
-pub fn generate_summary_context(report: &Report) -> SummaryContext {
+pub fn generate_summary_context(report: &Report) -> (SummaryContext, serde_json::Value) {
     let summary_map = summarize_findings(&report.categories, &report.findings);
 
-    let summary_categories = report
+    let categories = report
         .categories
         .iter()
         .filter_map(|category| {
@@ -38,9 +38,12 @@ pub fn generate_summary_context(report: &Report) -> SummaryContext {
         })
         .collect();
 
-    SummaryContext {
-        categories: summary_categories,
-    }
+    let table = report.summary.table.to_json_map();
+
+    (
+        SummaryContext { categories },
+        serde_json::Value::Object(table),
+    )
 }
 
 fn summarize_findings(
