@@ -1,4 +1,3 @@
-use crate::server::capture_output;
 use crate::{
     detectors::{
         builder::DetectorBuilder,
@@ -6,9 +5,11 @@ use crate::{
     },
     output::raw_report::{json_to_string, json_to_string_opt, RawReport},
     scout::{
-        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
+        post_processing::PostProcessing, project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
+    server::capture_output,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
@@ -394,22 +395,53 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let (findings, (_successful_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths, &opts, &metadata, inside_vscode)
+        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
-    let crates = get_crates(output);
+    let crates = get_crates(output.clone());
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
 
+    // Get the path of the 'unnecessary_lint_allow' detector
+    let unnecessary_lint_allow_path = detectors_paths.iter().find_map(|path| {
+        path.to_str()
+            .filter(|s| s.contains("unnecessary_lint_allow"))
+            .map(|_| path)
+    });
+
+    // Create and run post processor if the path is found, otherwise use default values
+    let (console_findings, output_string_vscode) = if let Some(path) = unnecessary_lint_allow_path {
+        match PostProcessing::new(path) {
+            std::result::Result::Ok(post_processor) => {
+                match post_processor.process(
+                    successful_findings.clone(),
+                    output.clone(),
+                    inside_vscode,
+                ) {
+                    std::result::Result::Ok(result) => result,
+                    Err(e) => {
+                        print_error(&format!("Error running post process: {}", e));
+                        (successful_findings, output_string)
+                    }
+                }
+            }
+            Err(e) => {
+                print_error(&format!("Error creating PostProcessing: {}", e));
+                (successful_findings, output_string)
+            }
+        }
+    } else {
+        (successful_findings, output_string)
+    };
     // Generate report
     do_report(
-        successful_findings,
+        console_findings,
         crates,
         project_info,
         detectors_info,
-        output_string,
+        output_string_vscode,
         opts,
         inside_vscode,
     )
