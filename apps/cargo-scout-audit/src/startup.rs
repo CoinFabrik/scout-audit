@@ -1,4 +1,3 @@
-use crate::server::capture_output;
 use crate::{
     detectors::{
         builder::DetectorBuilder,
@@ -24,12 +23,7 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    io::Write,
-    path::PathBuf,
-};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
 

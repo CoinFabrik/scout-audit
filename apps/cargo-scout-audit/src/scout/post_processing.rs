@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result, Context};
+use anyhow::{anyhow, Context, Result};
 use libloading::{Library, Symbol};
 use serde_json::Value;
 use std::ffi::{c_char, CStr, CString};
