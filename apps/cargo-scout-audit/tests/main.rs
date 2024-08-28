@@ -174,6 +174,19 @@ mod tests {
         Ok(())
     }
 
+    #[test] 
+    fn test_sarif_format() -> Result<()> {
+        let file = "report.sarif";
+        let format = OutputFormat::Sarif;
+
+        println!("Testing format: {:?}", format);
+
+        test_output_format(file, &format)
+            .with_context(|| format!("Failed to test {:?} format", &format))?;
+
+        Ok(())
+    }
+
     fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
         // For debugging purposes
         let output_format = format.clone();
