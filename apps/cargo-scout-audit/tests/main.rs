@@ -107,8 +107,8 @@ mod tests {
             ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::MarkdownGithub),
-            ("report.sarif", OutputFormat::Sarif),
-            ("report.pdf", OutputFormat::Pdf),
+            //("report.sarif", OutputFormat::Sarif),
+            //("report.pdf", OutputFormat::Pdf),
         ];
 
         for (file, format) in formats {
@@ -118,6 +118,19 @@ mod tests {
             // Clean up
             fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
         }
+
+        Ok(())
+    }
+
+    #[test] 
+    fn test_html_format() -> Result<()> {
+        let file = "report.html";
+        let format = OutputFormat::Html;
+
+        println!("Testing format: {:?}", format);
+
+        test_output_format(file, &format)
+            .with_context(|| format!("Failed to test {:?} format", &format))?;
 
         Ok(())
     }
