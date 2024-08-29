@@ -98,108 +98,52 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_all_output_formats() -> Result<()> {
-        let formats = vec![
-            ("report.html", OutputFormat::Html),
-            ("report.json", OutputFormat::Json),
-            ("raw-report.json", OutputFormat::RawJson),
-            ("report.md", OutputFormat::Markdown),
-            ("report.md", OutputFormat::Markdown),
-            ("report.md", OutputFormat::MarkdownGithub),
-            //("report.sarif", OutputFormat::Sarif),
-            //("report.pdf", OutputFormat::Pdf),
-        ];
 
-        for (file, format) in formats {
-            test_output_format(file, &format)
-                .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-            // Clean up
-            fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
-        }
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_html_format() -> Result<()> {
-        let file = "report.html";
-        let format = OutputFormat::Html;
-
-        println!("Testing format: {:?}", format);
-
+    fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
         test_output_format(file, &format)
             .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_json_format() -> Result<()> {
-        let file = "report.json";
-        let format = OutputFormat::Json;
-
-        println!("Testing format: {:?}", format);
-
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_markdown_format() -> Result<()> {
-        let file = "report.md";
-        let format = OutputFormat::Markdown;
-
-        println!("Testing format: {:?}", format);
-
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_markdownGithub_format() -> Result<()> {
-        let file = "report.md";
-        let format = OutputFormat::MarkdownGithub;
-
-        println!("Testing format: {:?}", format);
-
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_sarif_format() -> Result<()> {
-        let file = "report.sarif";
-        let format = OutputFormat::Sarif;
-
-        println!("Testing format: {:?}", format);
-
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-
-        Ok(())
-    }
-
-    #[test] 
-    fn test_pdf_format() -> Result<()> {
-        let file = "report.pdf";
-        let format = OutputFormat::Pdf;
-
-        println!("Testing format: {:?}", format);
-
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-
+        fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
+    
         Ok(())
     }
     
+    #[test]
+    fn test_html_format() -> Result<()> {
+        test_output_fn("report.html", OutputFormat::Html)
+    }
+
+    #[test]
+    fn test_json_format() -> Result<()> {
+        test_output_fn("report.json", OutputFormat::Json)
+    }
+
+    #[test]
+    fn test_rawJson_format() -> Result<()> {
+        test_output_fn("raw-report.json", OutputFormat::RawJson)
+    }
+
+    #[test]
+    fn test_markdown_format() -> Result<()> {
+        test_output_fn("report.md", OutputFormat::Markdown)
+    }
+
+    #[test]
+    fn test_markdownGithub_format() -> Result<()> {
+        test_output_fn("report.md", OutputFormat::MarkdownGithub)
+    }
+
+    #[test]
+    fn test_sarif_format() -> Result<()> {
+        test_output_fn("report.sarif", OutputFormat::Sarif)
+    }
+
+    #[test]
+    fn test_pdf_format() -> Result<()> {
+        test_output_fn("report.pdf", OutputFormat::Pdf)
+    }
+    
+   
+
     fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
         // For debugging purposes
         let output_format = format.clone();
