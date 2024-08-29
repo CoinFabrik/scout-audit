@@ -402,6 +402,17 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
     let crates = get_crates(output.clone());
+
+    if crates.is_empty() && !inside_vscode{
+        let string = OutputFormatter::new()
+            .fg()
+            .red()
+            .text_str("Nothing was analyzed. Check your build system for errors.")
+            .print();
+        println!("{}", string);
+        return Ok(());
+    }
+
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
 
     // Get the path of the 'unnecessary_lint_allow' detector
