@@ -403,7 +403,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let output = output_to_json(&output_string);
     let crates = get_crates(output.clone());
 
-    if crates.is_empty() && !inside_vscode{
+    if crates.is_empty() && !inside_vscode {
         let string = OutputFormatter::new()
             .fg()
             .red()
