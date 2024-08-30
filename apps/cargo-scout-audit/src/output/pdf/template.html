@@ -1,0 +1,10 @@
+<table style="width: 100%; table-layout: fixed;">
+    <thead><tr>
+        {% for col in summary_table.header_order %}<th>{{ filter_cell(cell=summary_table.header[col]) }}</th>{% endfor %}
+    </tr></thead>
+    <tbody>
+        {% for row in summary_table.rows -%}
+        <tr>{% for col in summary_table.header_order %}<td>{{ filter_cell(cell=row[col]) }}</td>{% endfor %}</tr>
+        {% endfor %}
+    </tbody>
+</table>

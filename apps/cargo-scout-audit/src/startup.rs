@@ -1,28 +1,31 @@
-use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo::GlobalContext;
-use cargo_metadata::{Metadata, MetadataCommand};
-use clap::{Parser, Subcommand, ValueEnum};
-use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
-use std::{collections::HashMap, fs, io::Write, path::PathBuf};
-use tempfile::NamedTempFile;
-
 use crate::{
     detectors::{
         builder::DetectorBuilder,
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
-    output::raw_report::RawReport,
+    output::raw_report::{json_to_string, json_to_string_opt, RawReport},
     scout::{
-        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
+        post_processing::PostProcessing, project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
+    server::capture_output,
     utils::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::{print_error, print_warning},
+        print::print_error,
     },
 };
+use anyhow::{anyhow, bail, Context, Ok, Result};
+use cargo::GlobalContext;
+use cargo_metadata::{Metadata, MetadataCommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
+use serde_json::{from_str, to_string_pretty, Value};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
+use tempfile::NamedTempFile;
+use terminal_color_builder::OutputFormatter;
 
 #[derive(Debug, Parser)]
 #[clap(display_name = "cargo")]
@@ -91,7 +94,7 @@ pub struct Scout {
     pub args: Vec<String>,
 
     #[clap(short, long, value_name = "type", help = "Sets the output type")]
-    pub output_format: Option<OutputFormat>,
+    pub output_formats: Vec<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -140,10 +143,6 @@ impl Scout {
                 "-Zbuild-std=std,core,alloc".to_string(),
             ]);
         }
-
-        if self.output_format.is_some() {
-            self.args.push("--message-format=json".to_string());
-        }
     }
 
     fn validate(&self) -> Result<()> {
@@ -185,6 +184,93 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
         .exec()
         .map_err(|e| {
             anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
+}
+
+fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
+    let mut ret = String::new();
+    std::io::Read::read_to_string(&mut file, &mut ret)?;
+    let _ = file.close();
+    Ok(ret)
+}
+
+fn output_to_json(output: &str) -> Vec<Value> {
+    output
+        .lines()
+        .map(|line| from_str::<Value>(line).unwrap())
+        .collect::<Vec<Value>>()
+}
+
+fn get_crate_from_finding(finding: &Value) -> Option<String> {
+    json_to_string_opt(finding.get("target").and_then(|x| x.get("name")))
+}
+
+fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
+    let mut ret = HashMap::<String, bool>::new();
+
+    for val in output {
+        let reason = val.get("reason");
+        let message = val.get("message");
+        if reason.is_none() || message.is_none() || reason.unwrap() != "compiler-message" {
+            continue;
+        }
+        let message = message.unwrap();
+
+        let name = get_crate_from_finding(&val);
+        if name.is_none() {
+            continue;
+        }
+        let name = name.unwrap();
+        if let Some(previous) = ret.get(&name) {
+            if !previous {
+                continue;
+            }
+        }
+        let level = message.get("level");
+        let ok = level.is_none() || level.unwrap() != "error";
+        ret.insert(name, ok);
+    }
+
+    ret
+}
+
+fn split_findings(
+    raw_findings: Vec<String>,
+    crates: &HashMap<String, bool>,
+) -> (Vec<Value>, Vec<Value>) {
+    let findings = raw_findings
+        .iter()
+        .map(|s| from_str::<Value>(s).unwrap())
+        .collect::<Vec<Value>>();
+    let mut successful_findings = Vec::<Value>::new();
+    let mut failed_findings = Vec::<Value>::new();
+
+    for finding in findings.iter() {
+        let krate = finding.get("crate");
+        let message = finding.get("message");
+        if krate.is_none() || message.is_none() {
+            continue;
+        }
+        let krate = json_to_string(krate.unwrap());
+        let message = message.unwrap();
+        let mut message = message.clone();
+        message["crate"] = Value::String(krate.clone());
+        if *crates.get(&krate).unwrap_or(&true) {
+            &mut successful_findings
+        } else {
+            &mut failed_findings
+        }
+        .push(message);
+    }
+
+    (successful_findings, failed_findings)
+}
+
+fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>, T), E> {
+    use std::result::Result::Ok;
+    match cb() {
+        Ok(r) => Ok((Vec::<String>::new(), r)),
+        Err(e) => Err(e),
+    }
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -291,7 +377,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
-        let json = serde_json::to_string_pretty(&detectors_info);
+        let json = to_string_pretty(&detectors_info);
         println!("{}", json.unwrap());
         return Ok(());
     }
@@ -299,32 +385,115 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let project_info = ProjectInfo::get_project_info(&metadata)
         .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
 
-    // Run dylint
-    let stdout_temp_file = run_dylint(detectors_paths, &opts, blockchain)
-        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
+    let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
-    // Generate report
-    if let Some(output_format) = opts.output_format {
-        generate_report(
-            &stdout_temp_file,
-            project_info,
-            detectors_info,
-            opts.output_path,
-            output_format,
-        )?;
+    let wrapper_function = if inside_vscode {
+        capture_noop
+    } else {
+        capture_output
+    };
+
+    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
+        // Run dylint
+        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
+            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
+    })?;
+
+    let output_string = temp_file_to_string(stdout)?;
+    let output = output_to_json(&output_string);
+    let crates = get_crates(output.clone());
+
+    if crates.is_empty() && !inside_vscode {
+        let string = OutputFormatter::new()
+            .fg()
+            .red()
+            .text_str("Nothing was analyzed. Check your build system for errors.")
+            .print();
+        println!("{}", string);
+        return Ok(());
     }
 
-    stdout_temp_file.close()?;
+    let (successful_findings, _failed_findings) = split_findings(findings, &crates);
+
+    // Get the path of the 'unnecessary_lint_allow' detector
+    let unnecessary_lint_allow_path = detectors_paths.iter().find_map(|path| {
+        path.to_str()
+            .filter(|s| s.contains("unnecessary_lint_allow"))
+            .map(|_| path)
+    });
+
+    // Create and run post processor if the path is found, otherwise use default values
+    let (console_findings, output_string_vscode) = if let Some(path) = unnecessary_lint_allow_path {
+        match PostProcessing::new(path) {
+            std::result::Result::Ok(post_processor) => {
+                match post_processor.process(
+                    successful_findings.clone(),
+                    output.clone(),
+                    inside_vscode,
+                ) {
+                    std::result::Result::Ok(result) => result,
+                    Err(e) => {
+                        print_error(&format!("Error running post process: {}", e));
+                        (successful_findings, output_string)
+                    }
+                }
+            }
+            Err(e) => {
+                print_error(&format!("Error creating PostProcessing: {}", e));
+                (successful_findings, output_string)
+            }
+        }
+    } else {
+        (successful_findings, output_string)
+    };
+    // Generate report
+    do_report(
+        console_findings,
+        crates,
+        project_info,
+        detectors_info,
+        output_string_vscode,
+        opts,
+        inside_vscode,
+    )
+}
+
+fn do_report(
+    findings: Vec<Value>,
+    crates: HashMap<String, bool>,
+    project_info: ProjectInfo,
+    detectors_info: HashMap<String, LintInfo>,
+    output_string: String,
+    opts: Scout,
+    inside_vscode: bool,
+) -> Result<()> {
+    if inside_vscode {
+        std::io::stdout()
+            .lock()
+            .write_all(output_string.as_bytes())
+            .with_context(|| ("Failed to write stdout content"))?;
+    } else {
+        crate::output::console::render_report(&findings, &crates, &detectors_info)?;
+        generate_report(
+            &findings,
+            &crates,
+            project_info,
+            &detectors_info,
+            opts.output_path,
+            &opts.output_formats,
+        )?;
+    }
 
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, _bc_dependency))]
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
-    _bc_dependency: BlockChain,
-) -> Result<NamedTempFile> {
+    metadata: &Metadata,
+    inside_vscode: bool,
+) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -342,13 +511,18 @@ fn run_dylint(
         .as_ref()
         .map(|p| p.to_string_lossy().into_owned());
 
+    let mut args = opts.args.to_owned();
+    if !inside_vscode {
+        args.push("--message-format=json".to_string());
+    }
+
     let check_opts = Check {
         lib_sel: LibrarySelection {
             manifest_path,
             lib_paths: detectors_paths,
             ..Default::default()
         },
-        args: opts.args.to_owned(),
+        args,
         ..Default::default()
     };
 
@@ -359,127 +533,40 @@ fn run_dylint(
         ..Default::default()
     };
 
-    if dylint::run(&options).is_err() {
-        print_error("Failed to run dylint, most likely due to an issue in the code.");
-        if opts.output_format.is_some() {
-            print_warning("This report is incomplete as some files could not be fully analyzed due to compilation errors. We strongly recommend to address all issues and executing Scout again.");
-        }
-    }
+    crate::cleanup::clean_up_before_run(metadata);
 
-    if check_opts
-        .args
-        .contains(&"--message-format=json".to_string())
-        && opts.output_format.is_none()
-    {
-        let stdout_content = fs::read(stdout_temp_file.path())
-            .with_context(|| ("Failed to read stdout temporary file"))?;
-        std::io::stdout()
-            .lock()
-            .write_all(&stdout_content)
-            .with_context(|| ("Failed to write stdout content"))?;
-    }
+    let success = dylint::run(&options).is_err();
 
-    Ok(stdout_temp_file)
+    Ok((success, stdout_temp_file))
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    stdout_temp_file: &NamedTempFile,
+    findings: &Vec<Value>,
+    crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: HashMap<String, LintInfo>,
+    detectors_info: &HashMap<String, LintInfo>,
     output_path: Option<PathBuf>,
-    output_format: OutputFormat,
+    output_format: &[OutputFormat],
 ) -> Result<()> {
-    // Read the stdout temporary file
-    let mut stdout_file = fs::File::open(stdout_temp_file.path())?;
-
-    // Generate report
-    let mut content = String::new();
-    std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-    let report = RawReport::generate_report(&content, &project_info, &detectors_info)?;
+    let report = RawReport::generate_report(findings, crates, &project_info, detectors_info)?;
 
     tracing::trace!(?output_format, "Output format");
     tracing::trace!(?report, "Report");
 
-    // Save the report
-    match output_format {
-        OutputFormat::Html => {
-            // Generate HTML report
-            let html = report.generate_html()?;
+    for format in output_format.iter() {
+        let path = report.write_out(findings, output_path.clone(), format)?;
 
-            // Save to file
-            let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
-            report.save_to_file(&html_path, html)?;
-
-            // Open the HTML report in the default web browser
-            webbrowser::open(
-                html_path
-                    .to_str()
-                    .with_context(|| "Path conversion to string failed")?,
-            )
-            .with_context(|| "Failed to open HTML report")?;
-        }
-
-        OutputFormat::Json => {
-            // Generate JSON report
-            let json = report.generate_json()?;
-
-            // Save to file
-            let json_path = output_path.unwrap_or_else(|| PathBuf::from("report.json"));
-            report.save_to_file(&json_path, json)?;
-        }
-        OutputFormat::RawJson => {
-            let mut json_file = match &output_path {
-                Some(path) => fs::File::create(path)?,
-                None => fs::File::create("raw-report.json")?,
-            };
-
-            std::io::Write::write(&mut json_file, content.as_bytes())?;
-        }
-        OutputFormat::Markdown => {
-            // Generate Markdown
-            let markdown = report.generate_markdown(true)?;
-
-            // Save to file
-            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
-            report.save_to_file(&md_path, markdown)?;
-        }
-        OutputFormat::MarkdownGithub => {
-            // Generate Markdown
-            let markdown = report.generate_markdown(false)?;
-
-            // Save to file
-            let md_path = output_path.unwrap_or_else(|| PathBuf::from("report.md"));
-            report.save_to_file(&md_path, markdown)?;
-        }
-        OutputFormat::Sarif => {
-            let path = if let Some(path) = output_path {
-                path
-            } else {
-                PathBuf::from("report.sarif")
-            };
-
-            let mut sarif_file = fs::File::create(path)?;
-
-            let mut content = String::new();
-            std::io::Read::read_to_string(&mut stdout_file, &mut content)?;
-
-            let child = std::process::Command::new("clippy-sarif")
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn()?;
-
-            std::io::Write::write_all(&mut child.stdin.as_ref().unwrap(), content.as_bytes())?;
-
-            std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
-        }
-        OutputFormat::Pdf => {
-            let path = if let Some(path) = output_path {
-                path
-            } else {
-                PathBuf::from("report.pdf")
-            };
-            report.generate_pdf(&path)?;
+        if let Some(path) = path {
+            let path = path
+                .to_str()
+                .with_context(|| "Path conversion to string failed")?;
+            let string = OutputFormatter::new()
+                .fg()
+                .green()
+                .text_str(format!("{path} successfully generated.").as_str())
+                .print();
+            println!("{string}");
         }
     }
 
