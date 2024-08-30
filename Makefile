@@ -27,7 +27,7 @@ lint-scout-audit-internal:
 
 test:
 	@echo "Running tests..."
-	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(test_default_scout)'
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(test_scout_soroban_coverage)'
 	
 test-e2e:
 	@echo "Running e2e test..."
