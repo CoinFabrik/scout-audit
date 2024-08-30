@@ -1,0 +1,16 @@
+[package]
+edition = "2021"
+name = "dos-unexpected-revert-with-vector-vulnerable-1"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev_dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]

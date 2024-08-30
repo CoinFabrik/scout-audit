@@ -1,0 +1,21 @@
+[workspace]
+exclude = [".cargo", "target"]
+members = ["iterators-over-indexing-*/*"]
+resolver = "2"
+
+[workspace.dependencies]
+soroban-sdk = { version = "=20.0.0" }
+
+[profile.release]
+codegen-units = 1
+debug = 0
+debug-assertions = false
+lto = true
+opt-level = "z"
+overflow-checks = true
+panic = "abort"
+strip = "symbols"
+
+[profile.release-with-logs]
+debug-assertions = true
+inherits = "release"

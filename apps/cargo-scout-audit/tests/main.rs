@@ -204,4 +204,25 @@ mod tests {
 
         Ok(())
     }
+
+
+    
+    
+    #[test]
+    fn test_scout_soroban_coverage() {
+        // Given
+
+        
+        let scout_opts = Scout {
+            manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
+            force_fallback: true,
+            ..Scout::default()
+        };
+
+        // When
+        let result = run_scout(scout_opts);
+
+        // Then
+        assert!(result.is_ok());
+    }
 }

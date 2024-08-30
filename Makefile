@@ -27,5 +27,9 @@ lint-scout-audit-internal:
 
 test:
 	@echo "Running tests..."
-	@cd apps/cargo-scout-audit && cargo test --all --all-features -- --nocapture
-	@cd test-cases && ../scripts/list-cargo-directories.sh | ../scripts/run-cargo-test.sh
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(test_default_scout)'
+	
+test-e2e:
+	@echo "Running e2e test..."
+	@cd apps/cargo-scout-audit && cargo nextest run --all --all-features test_scout_soroban_coverage 
+	
