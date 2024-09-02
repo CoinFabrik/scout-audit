@@ -129,7 +129,7 @@ mod tests {
         // Given
         let scout_opts = Scout {
             manifest_path: Some(CONTRACT_PATH.clone()),
-            output_formats: vec![format.clone()],
+            output_format: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
             ..Scout::default()
         };
