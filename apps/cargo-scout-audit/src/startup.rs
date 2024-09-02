@@ -93,8 +93,14 @@ pub struct Scout {
     #[clap(last = true, help = "Arguments for `cargo check`.")]
     pub args: Vec<String>,
 
-    #[clap(short, long, value_name = "type", help = "Sets the output type")]
-    pub output_formats: Vec<OutputFormat>,
+    #[clap(
+        short,
+        long,
+        value_name = "type",
+        help = "Sets the output type",
+        value_delimiter = ','
+    )]
+    pub output_format: Vec<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -480,7 +486,7 @@ fn do_report(
             project_info,
             &detectors_info,
             opts.output_path,
-            &opts.output_formats,
+            &opts.output_format,
         )?;
     }
 
