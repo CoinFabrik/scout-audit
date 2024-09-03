@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Scout Report - 2024-09-03</title>
+<style>
+body { font-family: 'Arial', sans-serif; line-height: 1.6; }
+img.banner { width: 100%; height: auto; }
+h1, h2, h3 { color: #333; }
+table { width: 100%; border-collapse: collapse; background-color: #f8f8f8; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f0f0f0; color: #333; }
+td { word-wrap: break-word; }
+ul.summary { list-style: none; padding: 0; }
+ul.summary li a { text-decoration: none; color: #333; }
+</style>
+</head>
+<body>
+<h1>Scout Report - 2024-09-03</h1>
+<h2>Summary</h2><table style="width: 100%; table-layout: fixed;">
+    <thead><tr>
+        <th><span style="color:green">Crate</span></th><th><span style="color:green">Status</span></th><th><span style="color:green">Critical</span></th><th><span style="color:green">Medium</span></th><th><span style="color:green">Minor</span></th><th><span style="color:green">Enhancement</span></th>
+    </tr></thead>
+    <tbody>
+        <tr><td>almost_empty_contract</td><td>Analyzed</td><td>2</td><td>1</td><td>0</td><td>1</td></tr>
+        
+    </tbody>
+</table><h3>Issues found:</h3><ul><li><a href="#check-soroban-version" style="text-decoration: none; color: inherit;">Check Soroban version (1 results) (Enhancement)</a></li><li><a href="#overflow-check" style="text-decoration: none; color: inherit;">Overflow Check (3 results) (Critical)</a></li></ul><h2>Best practices</h2>
+<h3>Check Soroban version</h3>
+<p><strong>Impact:</strong> Enhancement</p>
+<p><strong>Description:</strong> Use the latest version of Soroban</p>
+<p><strong>More about:</strong> <a href="https://coinfabrik.github.io/scout-soroban/docs/detectors/soroban-version">here</a></p>
+<table style="width: 100%; table-layout: fixed;">
+<thead>
+<tr><th style="width: 20%;">ID</th><th style="width: 30%;">Package</th><th style="width: 50%;">Detection</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>src</td>
+<td>lib.rs:1:1 - 1:1</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Arithmetic</h2>
+<h3>Overflow Check</h3>
+<p><strong>Impact:</strong> Critical</p>
+<p><strong>Description:</strong> Use `overflow-checks = true` in Cargo.toml profile</p>
+<p><strong>More about:</strong> <a href="https://coinfabrik.github.io/scout-soroban/docs/detectors/overflow-check">here</a></p>
+<h3>Integer Overflow/Underflow</h3>
+<p><strong>Impact:</strong> Critical</p>
+<p><strong>Description:</strong> Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.</p>
+<p><strong>More about:</strong> <a href="https://coinfabrik.github.io/scout-soroban/docs/vulnerabilities/integer-overflow-or-underflow">here</a></p>
+<h3>Divide Before Multiply</h3>
+<p><strong>Impact:</strong> Medium</p>
+<p><strong>Description:</strong> Division before multiplication might result in a loss of precision</p>
+<p><strong>More about:</strong> <a href="https://coinfabrik.github.io/scout-soroban/docs/detectors/divide-before-multiply">here</a></p>
+<table style="width: 100%; table-layout: fixed;">
+<thead>
+<tr><th style="width: 20%;">ID</th><th style="width: 30%;">Package</th><th style="width: 50%;">Detection</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>src</td>
+<td>lib.rs:1:1 - 1:1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>src</td>
+<td>lib.rs:11:9 - 11:42</td>
+</tr>
+<tr>
+<td>3</td>
+<td>src</td>
+<td>lib.rs:11:9 - 11:27</td>
+</tr>
+</tbody>
+</table>

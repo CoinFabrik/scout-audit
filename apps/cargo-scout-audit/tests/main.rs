@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use anyhow::{Context, Ok, Result};
+    use anyhow::{Context, Result};
     use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
     use lazy_static::lazy_static;
     use std::{fs, path::PathBuf};
@@ -10,7 +10,7 @@ mod tests {
             let mut path = PathBuf::from("tests");
             path.push("contract");
             path.push("Cargo.toml");
-            path
+            path  
         };
     }
 
@@ -21,8 +21,6 @@ mod tests {
             manifest_path: Some(CONTRACT_PATH.clone()),
             ..Scout::default()
         };
-
-        // When
         let result = run_scout(scout_opts);
 
         // Then
@@ -98,12 +96,11 @@ mod tests {
         assert!(result.is_ok());
     }
 
-
     fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
         test_output_format(file, &format)
             .with_context(|| format!("Failed to test {:?} format", &format))?;
-        fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
-    
+        fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file: {}", file));
+        
         Ok(())
     }
     
@@ -141,8 +138,6 @@ mod tests {
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
-    
-   
 
     fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
         // For debugging purposes
@@ -155,8 +150,6 @@ mod tests {
             output_path: Some(PathBuf::from(output_file)),
             ..Scout::default()
         };
-
-        // When
         let result = run_scout(scout_opts);
 
         // Then
@@ -205,14 +198,9 @@ mod tests {
         Ok(())
     }
 
-
-    
-    
     #[test]
     fn test_scout_soroban_coverage() {
         // Given
-
-        
         let scout_opts = Scout {
             manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
             force_fallback: true,
