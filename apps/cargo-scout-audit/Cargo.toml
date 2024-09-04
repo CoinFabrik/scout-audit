@@ -62,4 +62,3 @@ tracing-log = "=0.2.0"
 tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
 webbrowser = "=1.0.1"
 headless_chrome = {git = "https://github.com/rust-headless-chrome/rust-headless-chrome", tag = "1.0.14", features = ["fetch"]}
-failure = "0.1.8"
