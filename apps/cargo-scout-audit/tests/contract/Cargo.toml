@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "empty-contract"
+name = "almost-empty-contract"
 version = "0.1.0"
 
 [lib]
@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 soroban-sdk = { version = "=20.0.0" }
 
-[dev_dependencies]
+[dev-dependencies]
 soroban-sdk = { version = "=20.0.0", features = ["testutils"] }
 
 [features]

@@ -5,11 +5,11 @@ use cargo::{
     core::{Dependency, Package, PackageId},
     sources::source::{MaybePackage, QueryKind, Source},
     util::cache_lock::CacheLockMode,
-    Config,
+    GlobalContext,
 };
 
 /// Downloads git repo using cargo native cache and returns its path.
-pub fn download_git_repo(dependency: &Dependency, config: &Config) -> Result<PathBuf> {
+pub fn download_git_repo(dependency: &Dependency, config: &GlobalContext) -> Result<PathBuf> {
     let _lock = config.acquire_package_cache_lock(CacheLockMode::DownloadExclusive)?;
     let mut source = dependency.source_id().load(config, &Default::default())?;
     let package_id = sample_package_id(dependency, &mut *source)?;
@@ -25,7 +25,7 @@ fn sample_package_id(dep: &Dependency, source: &mut dyn Source) -> anyhow::Resul
     let mut package_id: Option<PackageId> = None;
 
     while {
-        let poll = source.query(dep, QueryKind::Fuzzy, &mut |summary| {
+        let poll = source.query(dep, QueryKind::Alternatives, &mut |summary| {
             if package_id.is_none() {
                 package_id = Some(summary.package_id());
             }
@@ -42,7 +42,7 @@ fn sample_package_id(dep: &Dependency, source: &mut dyn Source) -> anyhow::Resul
 }
 
 fn git_dependency_root_from_package<'a>(
-    config: &'a Config,
+    config: &'a GlobalContext,
     source: &(dyn Source + 'a),
     package: &Package,
 ) -> anyhow::Result<PathBuf> {

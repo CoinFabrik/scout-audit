@@ -29,7 +29,7 @@ impl Library {
     }
 
     /// Builds the library and returns its path.
-    pub fn build(&self, bc: BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
+    pub fn build(&self, bc: &BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
         // Build entire workspace
         cargo::build("detectors", bc, !verbose)
             .sanitize_environment()

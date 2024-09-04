@@ -30,6 +30,22 @@ mod tests {
     }
 
     #[test]
+    fn test_scout_with_forced_fallback() {
+        // Given
+        let scout_opts = Scout {
+            manifest_path: Some(CONTRACT_PATH.clone()),
+            force_fallback: true,
+            ..Scout::default()
+        };
+
+        // When
+        let result = run_scout(scout_opts);
+
+        // Then
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_scout_with_exclude() {
         // Given
         let scout_opts = Scout {
@@ -87,7 +103,8 @@ mod tests {
         let formats = vec![
             ("report.html", OutputFormat::Html),
             ("report.json", OutputFormat::Json),
-            ("report.json", OutputFormat::RawJson),
+            ("raw-report.json", OutputFormat::RawJson),
+            ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::Markdown),
             ("report.md", OutputFormat::MarkdownGithub),
             ("report.sarif", OutputFormat::Sarif),
@@ -112,7 +129,7 @@ mod tests {
         // Given
         let scout_opts = Scout {
             manifest_path: Some(CONTRACT_PATH.clone()),
-            output_format: Some(format.clone()),
+            output_formats: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
             ..Scout::default()
         };

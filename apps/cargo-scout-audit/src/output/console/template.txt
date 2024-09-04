@@ -1,0 +1,9 @@
+Summary:
+{{ set_color_maps(error="red", header="green") -}}
+{{ print_separator(summary=summary) }}
+| {% for col in summary.header_order %}{{ filter_cell_with_padding(cell=summary.header[col]) }} | {% endfor %}
+{{ print_separator(summary=summary) }}
+{% for row in summary.rows -%}
+| {% for col in summary.header_order %}{{ filter_cell_with_padding(cell=row[col]) }} | {% endfor %}
+{% endfor -%}
+{{ print_separator(summary=summary) }}

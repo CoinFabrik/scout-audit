@@ -1,11 +1,11 @@
 [package]
-name = "scout-audit-dylint-linting"
-version = "3.0.1"
 authors = ["Samuel E. Moelius III <sam@moeli.us>"]
 description = "Utilities for writing Dylint libraries"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+name = "scout-audit-dylint-linting"
 repository = "https://github.com/trailofbits/dylint"
+version = "3.1.2"
 
 [dependencies]
 cargo_metadata = "0.18"
@@ -15,22 +15,25 @@ serde = "1.0"
 thiserror = "1.0"
 toml = "0.8"
 
-dylint_internal = "=2.6.1"
+dylint_internal = { version = "=3.1.2", features = ["config"] }
 
 [build-dependencies]
 toml = "0.8"
 
 [dev-dependencies]
 assert_cmd = "2.0"
+rustc_version = "0.4"
+tempfile = "3.10"
 
 [features]
 constituent = []
+
+[lints.rust.unexpected_cfgs]
+check-cfg = ["cfg(dylint_lib, values(any()))"]
+level = "deny"
 
 [package.metadata.docs.rs]
 rustc-args = ["--cfg", "docsrs"]
 
 [package.metadata.rust-analyzer]
 rustc_private = true
-
-[workspace]
-

@@ -7,9 +7,7 @@ on:
       - main
     paths:
       - "apps/cargo-scout-audit/**"
-      - "scout-audit-dylint-linting/**"
-      - "scout-audit-clippy-utils/**"
-      - "scout-audit-clippy-config/**"
+  workflow_dispatch: 
 
 env:
   PYTHONUNBUFFERED: 1
@@ -22,9 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       scout-audit: ${{ steps.filter.outputs.scout_audit }}
-      dylint-linting: ${{ steps.filter.outputs.dylint_linting }}
-      clippy-utils: ${{ steps.filter.outputs.clippy_utils }}
-      clippy-config: ${{ steps.filter.outputs.clippy_config }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -36,12 +31,6 @@ jobs:
           filters: |
             scout_audit:
               - 'apps/cargo-scout-audit/**'
-            dylint_linting:
-              - 'scout-audit-dylint-linting/**'
-            clippy_utils:
-              - 'scout-audit-clippy-utils/**'
-            clippy_config:
-              - 'scout-audit-clippy-config/**'
 
   test-release:
     name: Test dry-run release
@@ -49,9 +38,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       scout-audit: ${{ steps.scout-audit.outputs.result }}
-      dylint-linting: ${{ steps.dylint-linting.outputs.result }}
-      clippy-utils: ${{ steps.clippy-utils.outputs.result }}
-      clippy-config: ${{ steps.clippy-config.outputs.result }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -73,32 +59,15 @@ jobs:
           python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
           echo "result=success" >> $GITHUB_OUTPUT
 
-      - name: Test Dylint Linting
-        id: dylint-linting
-        if: ${{ needs.filter-paths.outputs.dylint-linting == 'true' }}
-        run: |
-          python scripts/publish-to-crates-io.py --crate-path scout-audit-dylint-linting --dry-run
-          echo "result=success" >> $GITHUB_OUTPUT
-
-      - name: Test Clippy Utils
-        id: clippy-utils
-        if: ${{ needs.filter-paths.outputs.clippy-utils == 'true' }}
-        run: |
-          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-linting --dry-run
-          echo "result=success" >> $GITHUB_OUTPUT
-
-      - name: Test Clippy Config
-        id: clippy-config
-        if: ${{ needs.filter-paths.outputs.clippy-config == 'true' }}
-        run: |
-          python scripts/publish-to-crates-io.py --crate-path scout-audit-clippy-config --dry-run
-          echo "result=success" >> $GITHUB_OUTPUT
-
   test-docker-release:
-    name: Test docker release
-    runs-on: ubuntu-latest
+    name: Release to Docker Hub
+    runs-on: ${{ matrix.os }}
     needs: filter-paths
     if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        platform: [linux/amd64, linux/arm64]
     permissions:
       packages: write
       contents: read
@@ -117,21 +86,31 @@ jobs:
           echo "Version extracted: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
+      - name: Set platform-specific tag prefix
+        id: set-tag-prefix
+        run: |
+          if [[ "${{ matrix.platform }}" == "linux/arm64" ]]; then
+            echo "tag_prefix=-arm64" >> $GITHUB_OUTPUT
+          else
+            echo "tag_prefix=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha
           push: false
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ steps.scout-version.outputs.version }},
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:latest
 
       - name: Set Docker release status
         id: test-docker-release
@@ -162,7 +141,4 @@ jobs:
             | Crate | Release Status | Dry Run Status |
             | --- | --- | --- |
             | [cargo-scout-audit](https://crates.io/crates/cargo-scout-audit) | ${{ needs.filter-paths.outputs.scout-audit == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.scout-audit == 'true' && (needs.test-release.outputs.scout-audit == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
-            | [scout-audit-dylint-linting](https://crates.io/crates/scout-audit-dylint-linting) | ${{ needs.filter-paths.outputs.dylint-linting == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.dylint-linting == 'true' && (needs.test-release.outputs.dylint-linting == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
-            | [scout-audit-clippy-utils](https://crates.io/crates/scout-audit-clippy-utils) | ${{ needs.filter-paths.outputs.clippy-utils == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.clippy-utils == 'true' && (needs.test-release.outputs.clippy-utils == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
-            | [scout-audit-clippy-config](https://crates.io/crates/scout-audit-clippy-config) | ${{ needs.filter-paths.outputs.clippy-config == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.clippy-config == 'true' && (needs.test-release.outputs.clippy-config == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
             | [scout-docker](https://hub.docker.com/repository/docker/coinfabrik/scout/general) | ${{ needs.filter-paths.outputs.scout-audit == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.scout-audit == 'true' && (needs.test-docker-release.outputs.docker-release == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
