@@ -97,7 +97,7 @@ pub struct Scout {
         short,
         long,
         value_name = "type",
-        help = "Sets the output type",
+        help = "Set the output type",
         value_delimiter = ','
     )]
     pub output_format: Vec<OutputFormat>,
@@ -118,7 +118,7 @@ pub struct Scout {
     #[clap(
         short,
         long,
-        help = "Prints detectors metadata.",
+        help = "Print detectors metadata",
         default_value_t = false
     )]
     pub verbose: bool,
@@ -126,7 +126,7 @@ pub struct Scout {
     #[clap(
         name = "toolchain",
         long,
-        help = "Prints the detectors current toolchain.",
+        help = "Print the detectors current toolchain",
         default_value_t = false
     )]
     pub toolchain: bool,
@@ -134,10 +134,18 @@ pub struct Scout {
     #[clap(
         name = "metadata",
         long,
-        help = "Prints metadata information.",
+        help = "Print metadata information",
         default_value_t = false
     )]
     pub detectors_metadata: bool,
+
+    #[clap(
+        name = "debug",
+        long,
+        help = "Analyze the project in debug build",
+        default_value_t = false
+    )]
+    pub debug: bool,
 }
 
 impl Scout {
@@ -148,6 +156,9 @@ impl Scout {
                 "--no-default-features".to_string(),
                 "-Zbuild-std=std,core,alloc".to_string(),
             ]);
+        }
+        if !self.debug {
+            self.args.push("--release".to_string());
         }
     }
 
