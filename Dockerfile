@@ -18,7 +18,7 @@ RUN cargo install --path /usr/src/scout/cargo-scout-audit --locked
 FROM --platform=$TARGETPLATFORM rust:1.80-slim as final
 
 # Install only necessary runtime dependencies
-RUN apt-get update && apt-get install -y libcurl4 && \
+RUN apt-get update && apt-get install -y libcurl4 libssl-dev pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the .rustup directory from the builder stage
