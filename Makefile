@@ -27,9 +27,9 @@ lint-scout-audit-internal:
 
 test:
 	@echo "Running tests..."
-	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(test_scout_soroban_coverage)'
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(/tests::slow/)'
 	
 test-e2e:
 	@echo "Running e2e test..."
-	@cd apps/cargo-scout-audit && cargo nextest run --all --all-features test_scout_soroban_coverage 
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'test(/^tests::slow/)'
 	
