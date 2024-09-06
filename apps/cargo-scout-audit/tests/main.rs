@@ -98,15 +98,14 @@ mod tests {
         assert!(result.is_ok());
     }
 
-
     fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
         test_output_format(file, &format)
             .with_context(|| format!("Failed to test {:?} format", &format))?;
         fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
-    
+
         Ok(())
     }
-    
+
     #[test]
     fn test_html_format() -> Result<()> {
         test_output_fn("report.html", OutputFormat::Html)
@@ -118,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rawJson_format() -> Result<()> {
+    fn test_raw_json_format() -> Result<()> {
         test_output_fn("raw-report.json", OutputFormat::RawJson)
     }
 
@@ -128,7 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn test_markdownGithub_format() -> Result<()> {
+    fn test_markdown_github_format() -> Result<()> {
         test_output_fn("report.md", OutputFormat::MarkdownGithub)
     }
 
@@ -141,8 +140,6 @@ mod tests {
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
-    
-   
 
     fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
         // For debugging purposes
