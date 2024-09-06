@@ -14,11 +14,11 @@ use crate::{
         config::{open_config_or_default, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::print_error,
+        print::{print_error, print_warning},
     },
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo::GlobalContext;
+use cargo::{core::Verbosity, GlobalContext};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
@@ -93,8 +93,14 @@ pub struct Scout {
     #[clap(last = true, help = "Arguments for `cargo check`.")]
     pub args: Vec<String>,
 
-    #[clap(short, long, value_name = "type", help = "Sets the output type")]
-    pub output_formats: Vec<OutputFormat>,
+    #[clap(
+        short,
+        long,
+        value_name = "type",
+        help = "Sets the output type",
+        value_delimiter = ','
+    )]
+    pub output_format: Vec<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -304,9 +310,9 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let cargo_config =
         GlobalContext::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
-        cargo::core::Verbosity::Verbose
+        Verbosity::Verbose
     } else {
-        cargo::core::Verbosity::Quiet
+        Verbosity::Quiet
     });
 
     let detectors_config = match &opts.local_detectors {
@@ -335,38 +341,46 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         toolchain,
     );
 
-    let mut detectors_names = detector_builder
+    let detectors_names = detector_builder
         .get_detector_names()
         .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
 
+    let profile_detectors = match &opts.profile {
+        Some(profile) => {
+            let (config, config_path) = open_config_or_default(blockchain, &detectors_names)
+                .map_err(|err| {
+                    anyhow!(
+                        "Failed to open configuration file.\n\n     → Caused by: {}",
+                        err
+                    )
+                })?;
+
+            print_warning(&format!(
+                    "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
+                    profile,
+                    config_path.display()
+                ));
+
+            profile_enabled_detectors(&config, profile, &config_path)?
+        }
+        None => detectors_names,
+    };
+
     if opts.list_detectors {
-        list_detectors(&detectors_names);
+        list_detectors(&profile_detectors);
         return Ok(());
     }
 
-    detectors_names = if let Some(profile) = &opts.profile {
-        let config = open_config_or_default(blockchain, detectors_names.clone()).map_err(|e| {
-            anyhow!(
-                "Failed to load or generate profile.\n\n     → Caused by: {}",
-                e
-            )
-        })?;
-
-        profile_enabled_detectors(config, profile.clone())?
-    } else {
-        detectors_names
-    };
-
-    let used_detectors = if let Some(filter) = &opts.filter {
-        get_filtered_detectors(filter, &detectors_names)?
+    let filtered_detectors = if let Some(filter) = &opts.filter {
+        get_filtered_detectors(filter, &profile_detectors)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded, &detectors_names)
+        get_excluded_detectors(excluded, &profile_detectors)
     } else {
-        detectors_names
+        profile_detectors
     };
 
     let detectors_paths = detector_builder
-        .build(&blockchain, &used_detectors)
+        .build(&blockchain, &filtered_detectors)
         .map_err(|e| {
             anyhow!(
                 "Failed to build detectors.\n\n     → Caused by: {}",
@@ -402,6 +416,17 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
     let crates = get_crates(output.clone());
+
+    if crates.is_empty() && !inside_vscode {
+        let string = OutputFormatter::new()
+            .fg()
+            .red()
+            .text_str("Nothing was analyzed. Check your build system for errors.")
+            .print();
+        println!("{}", string);
+        return Ok(());
+    }
+
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
 
     // Get the path of the 'unnecessary_lint_allow' detector
@@ -469,7 +494,7 @@ fn do_report(
             project_info,
             &detectors_info,
             opts.output_path,
-            &opts.output_formats,
+            &opts.output_format,
         )?;
     }
 

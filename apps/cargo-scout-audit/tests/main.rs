@@ -146,14 +146,16 @@ mod tests {
             // For debugging purposes
             let output_format = format.clone();
 
-            // Given
-            let scout_opts = Scout {
-                manifest_path: Some(CONTRACT_PATH.clone()),
-                output_formats: vec![format.clone()],
-                output_path: Some(PathBuf::from(output_file)),
-                ..Scout::default()
-            };
-            let result = run_scout(scout_opts);
+        // Given
+        let scout_opts = Scout {
+            manifest_path: Some(CONTRACT_PATH.clone()),
+            output_format: vec![format.clone()],
+            output_path: Some(PathBuf::from(output_file)),
+            ..Scout::default()
+        };
+
+        // When
+        let result = run_scout(scout_opts);
 
             // Then
             assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
