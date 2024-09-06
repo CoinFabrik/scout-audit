@@ -77,7 +77,6 @@ fn sync_config_with_detectors(config: &mut Value, detector_names: &[String]) -> 
                 keep
             });
 
-            // Sort profile detectors
             sort_detectors(profile_detectors);
         }
     }
@@ -92,6 +91,7 @@ fn sort_detectors(detectors: &mut [Value]) {
         a_str.cmp(b_str)
     });
 }
+
 fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<(Value, PathBuf)> {
     let config_file_path = get_config_file_path(bc)?;
 
