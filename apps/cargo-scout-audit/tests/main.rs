@@ -3,6 +3,8 @@ mod tests {
     use anyhow::{Context, Ok, Result};
     use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
     use lazy_static::lazy_static;
+    use serde_json::Value;
+    use std::collections::HashMap;
     use std::{fs, path::PathBuf};
 
     lazy_static! {
@@ -181,5 +183,74 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn test_finding_presence() {
+        let scout_opts = Scout {
+            manifest_path: Some(CONTRACT_PATH.clone()),
+            ..Scout::default()
+        };
+
+        // When
+        let result = run_scout(scout_opts);
+
+        // Then
+        assert!(result.is_ok(), "Scout should run");
+        let result = result.unwrap();
+
+        for finding in result.iter() {
+            dbg!(finding);
+        }
+        let findings = result
+            .iter()
+            .map(|value| {
+                value
+                    .get("code")
+                    .and_then(|value| value.get("code"))
+                    .and_then(|value| match value {
+                        Value::String(s) => Some(s.clone()),
+                        _ => None,
+                    })
+            })
+            .collect::<Vec<Option<String>>>();
+        let counts = count_strings(&findings);
+        assert!(counts.is_some(), "Scout returned data in an invalid format");
+        let counts = counts.unwrap();
+        let expected = [
+            ("overflow_check", 1_usize),
+            ("soroban_version", 1_usize),
+            ("integer_overflow_underflow", 1_usize),
+            ("divide_before_multiply", 1_usize),
+        ];
+        check_counts(&counts, &expected);
+    }
+
+    fn count_strings(strings: &[Option<String>]) -> Option<HashMap<String, usize>> {
+        let mut ret = HashMap::<String, usize>::new();
+        for i in strings.iter() {
+            match i {
+                Some(s) => {
+                    let value = ret.get(s).unwrap_or(&0) + 1;
+                    ret.insert(s.clone(), value);
+                }
+                None => {
+                    return None;
+                }
+            }
+        }
+        Some(ret)
+    }
+
+    fn check_counts(counts: &HashMap<String, usize>, expected: &[(&str, usize)]) {
+        {
+            let expected = expected.len();
+            let actual = counts.len();
+            assert!(actual == expected, "Scout should return exactly {expected} findings for the test contract, but it returned {actual}");
+        }
+        for &(name, count) in expected.iter() {
+            let actual = *counts.get(name).unwrap_or(&0);
+            assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
+        }
     }
 }
