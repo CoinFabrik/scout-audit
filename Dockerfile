@@ -1,6 +1,6 @@
 # Stage 1: Builder
 # Using the latest Rust image to set up the build environment
-FROM --platform=$TARGETPLATFORM rust:1.80 as builder
+FROM rust:1.80 AS builder
 SHELL ["/bin/bash", "-c"]
 WORKDIR /usr/src/scout
 
@@ -15,7 +15,7 @@ RUN cargo install --path /usr/src/scout/cargo-scout-audit --locked
 
 # Stage 2: Final
 # Base image with Rust slim version for the runtime environment
-FROM --platform=$TARGETPLATFORM rust:1.80-slim as final
+FROM rust:1.80-slim AS final
 
 # Install only necessary runtime dependencies
 RUN apt-get update && apt-get install -y libcurl4 libssl-dev pkg-config && \

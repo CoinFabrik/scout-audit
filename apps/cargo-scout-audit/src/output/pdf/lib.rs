@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use std::io::Write;
 use std::path::Path;
-use tempfile::NamedTempFile;
+use tempfile::{Builder, NamedTempFile};
 
 // Generates a HTML report from a given `Report` object.
 fn generate_temp_html(report: &Report) -> Result<NamedTempFile> {
@@ -19,8 +19,10 @@ fn generate_temp_html(report: &Report) -> Result<NamedTempFile> {
     // Body
     report_html.push_str(&generate_body(&report.categories, &report.findings));
 
-    let mut file =
-        NamedTempFile::new().with_context(|| ("Failed to create temporary HTML file"))?;
+    let mut file = Builder::new()
+        .suffix(".html")
+        .tempfile()
+        .with_context(|| ("Failed to create temporary HTML file"))?;
     file.write(report_html.as_bytes())
         .with_context(|| "Failed to write temporary HTML file")?;
     Ok(file)
