@@ -11,7 +11,7 @@ use crate::{
     },
     server::capture_output,
     utils::{
-        config::{open_config_or_default, profile_enabled_detectors},
+        config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
         print::{print_error, print_warning},
@@ -291,7 +291,7 @@ fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
-pub fn run_scout(mut opts: Scout) -> Result<()> {
+pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
     opts.validate()?;
     opts.prepare_args();
 
@@ -301,14 +301,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     if opts.toolchain {
         println!("{}", toolchain);
-        return Ok(());
+        return Ok(vec![]);
     }
 
     if let Some(mut child) = run_scout_in_nightly(toolchain)? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
-        return Ok(());
+        return Ok(vec![]);
     }
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
@@ -358,28 +358,28 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     let profile_detectors = match &opts.profile {
         Some(profile) => {
-            let (config, config_path) = open_config_or_default(blockchain, &detectors_names)
-                .map_err(|err| {
+            let (config, config_path) =
+                open_config_and_sync_detectors(blockchain, &detectors_names).map_err(|err| {
                     anyhow!(
-                        "Failed to open configuration file.\n\n     → Caused by: {}",
-                        err
-                    )
+                    "Failed to open and synchronize configuration file.\n\n     → Caused by: {}",
+                    err
+                )
                 })?;
 
             print_warning(&format!(
-                    "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
-                    profile,
-                    config_path.display()
-                ));
+                "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
+                profile,
+                config_path.display()
+            ));
 
-            profile_enabled_detectors(&config, profile, &config_path)?
+            profile_enabled_detectors(&config, profile, &config_path, &detectors_names)?
         }
-        None => detectors_names,
+        None => detectors_names.clone(),
     };
 
     if opts.list_detectors {
         list_detectors(&profile_detectors);
-        return Ok(());
+        return Ok(vec![]);
     }
 
     let filtered_detectors = if let Some(filter) = &opts.filter {
@@ -404,7 +404,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     if opts.detectors_metadata {
         let json = to_string_pretty(&detectors_info);
         println!("{}", json.unwrap());
-        return Ok(());
+        return Ok(vec![]);
     }
 
     let project_info = ProjectInfo::get_project_info(&metadata)
@@ -435,7 +435,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             .text_str("Nothing was analyzed. Check your build system for errors.")
             .print();
         println!("{}", string);
-        return Ok(());
+        return Ok(vec![]);
     }
 
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
@@ -473,18 +473,20 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
     // Generate report
     do_report(
-        console_findings,
+        &console_findings,
         crates,
         project_info,
         detectors_info,
         output_string_vscode,
         opts,
         inside_vscode,
-    )
+    )?;
+
+    Ok(console_findings)
 }
 
 fn do_report(
-    findings: Vec<Value>,
+    findings: &Vec<Value>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
@@ -498,9 +500,9 @@ fn do_report(
             .write_all(output_string.as_bytes())
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
-        crate::output::console::render_report(&findings, &crates, &detectors_info)?;
+        crate::output::console::render_report(findings, &crates, &detectors_info)?;
         generate_report(
-            &findings,
+            findings,
             &crates,
             project_info,
             &detectors_info,
