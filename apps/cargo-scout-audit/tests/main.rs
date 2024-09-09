@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use anyhow::{Context, Ok, Result};
+    use anyhow::{Context, Result};
     use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
     use lazy_static::lazy_static;
     use serde_json::Value;
@@ -23,8 +23,6 @@ mod tests {
             manifest_path: Some(CONTRACT_PATH.clone()),
             ..Scout::default()
         };
-
-        // When
         let result = run_scout(scout_opts);
 
         // Then
@@ -103,7 +101,8 @@ mod tests {
     fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
         test_output_format(file, &format)
             .with_context(|| format!("Failed to test {:?} format", &format))?;
-        fs::remove_file(file).unwrap_or_else(|_| panic!("Should be able to delete the file"));
+        fs::remove_file(file)
+            .unwrap_or_else(|_| panic!("Should be able to delete the file: {}", file));
 
         Ok(())
     }
@@ -270,6 +269,28 @@ mod tests {
         for &(name, count) in expected.iter() {
             let actual = *counts.get(name).unwrap_or(&0);
             assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
+        }
+    }
+
+
+    // Slow tests module
+    mod slow {
+        use super::*;
+
+        #[test]
+        fn test_scout_soroban_coverage() {
+            // Given
+            let scout_opts = Scout {
+                manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
+                force_fallback: true,
+                ..Scout::default()
+            };
+
+            // When
+            let result = run_scout(scout_opts);
+
+            // Then
+            assert!(result.is_ok());
         }
     }
 }

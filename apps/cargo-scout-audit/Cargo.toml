@@ -1,3 +1,4 @@
+
 [package]
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -8,6 +9,9 @@ authors = [
     "Federico Pinho <federico.pinho@coinfabrik.com>",
     "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
 ]
+
+
+
 build = "build.rs"
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
