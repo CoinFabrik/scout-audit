@@ -221,6 +221,18 @@ fn get_crate_from_finding(finding: &Value) -> Option<String> {
     json_to_string_opt(finding.get("target").and_then(|x| x.get("name")))
 }
 
+//In some cases, rustc (or dylint, or clipply, or whoever) has returned the
+//package name where it should be returning the crate name. If you run into
+//problems in the future, try removing the call to this function.
+fn normalize_crate_name(s: String) -> String {
+    let mut ret = String::new();
+    ret.reserve(s.len());
+    for c in s.chars() {
+        ret.push(if c == '-' { '_' } else { c });
+    }
+    ret
+}
+
 fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
@@ -236,7 +248,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         if name.is_none() {
             continue;
         }
-        let name = name.unwrap();
+        let name = normalize_crate_name(name.unwrap());
         if let Some(previous) = ret.get(&name) {
             if !previous {
                 continue;
