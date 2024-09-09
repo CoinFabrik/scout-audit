@@ -1,55 +1,133 @@
+use super::print::print_warning;
+use crate::scout::blockchain::BlockChain;
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
-use std::collections::HashSet;
-use std::fs;
-use std::fs::File;
-use std::io::{self, Read, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashSet,
+    fs::{self, File},
+    io::{self, Read, Write},
+    path::{Path, PathBuf},
+};
 
-use crate::scout::blockchain::BlockChain;
+pub fn open_config_and_sync_detectors(
+    blockchain: BlockChain,
+    detector_names: &[String],
+) -> Result<(Value, PathBuf)> {
+    let (mut config, config_path) = open_config_or_default(blockchain, detector_names)?;
 
-use super::print::print_warning;
+    // Synchronize config with current detector names and sort
+    sync_config_with_detectors(&mut config, detector_names)?;
 
-pub fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<(Value, PathBuf)> {
-    let config_path = get_config_path()?;
+    // Save updated config
+    save_config(&config, &config_path)?;
+
+    Ok((config, config_path))
+}
+
+fn sync_config_with_detectors(config: &mut Value, detector_names: &[String]) -> Result<()> {
+    let default_detectors = config["default"]
+        .as_array_mut()
+        .with_context(|| "Default profile is missing or not an array")?;
+
+    let current_detectors: HashSet<String> = default_detectors
+        .iter()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
+
+    let available_detectors: HashSet<String> = detector_names.iter().cloned().collect();
+
+    // Add new detectors
+    for detector in available_detectors.difference(&current_detectors) {
+        default_detectors.push(json!(detector));
+        print_warning(
+            "Default profile synchronized with available detectors, do not edit default profile.",
+        );
+    }
+
+    // Remove obsolete detectors
+    default_detectors.retain(|d| {
+        let keep = available_detectors.contains(d.as_str().unwrap_or(""));
+        if !keep {
+            print_warning(&format!(
+                "Obsolete detector removed from default profile: {}",
+                d
+            ));
+        }
+        keep
+    });
+
+    // Sort default detectors
+    sort_detectors(default_detectors);
+
+    // Update and sort other profiles
+    for (profile, detectors) in config.as_object_mut().unwrap() {
+        if profile != "default" {
+            let profile_detectors = detectors
+                .as_array_mut()
+                .with_context(|| format!("Profile '{}' is not an array", profile))?;
+
+            profile_detectors.retain(|d| {
+                let keep = available_detectors.contains(d.as_str().unwrap_or(""));
+                if !keep {
+                    print_warning(&format!(
+                        "Obsolete detector removed from profile '{}': {}",
+                        profile, d,
+                    ));
+                }
+                keep
+            });
+
+            sort_detectors(profile_detectors);
+        }
+    }
+
+    Ok(())
+}
+
+fn sort_detectors(detectors: &mut [Value]) {
+    detectors.sort_by(|a, b| {
+        let a_str = a.as_str().unwrap_or("");
+        let b_str = b.as_str().unwrap_or("");
+        a_str.cmp(b_str)
+    });
+}
+
+fn open_config_or_default(bc: BlockChain, detectors: &[String]) -> Result<(Value, PathBuf)> {
+    let config_file_path = get_config_file_path(bc)?;
+
+    if !config_file_path.exists() {
+        create_default_config(&config_file_path, detectors).with_context(|| {
+            format!(
+                "Failed to create default config file: {:?}",
+                config_file_path
+            )
+        })?;
+    }
+
+    let config_str = read_file_to_string(&config_file_path)
+        .with_context(|| format!("Failed to read config file: {:?}", config_file_path))?;
+
+    let config = serde_json::from_str(&config_str)
+        .with_context(|| format!("Failed to parse JSON config: {:?}", config_file_path))?;
+
+    Ok((config, config_file_path))
+}
+
+fn get_config_file_path(bc: BlockChain) -> Result<PathBuf> {
+    let base_path =
+        std::env::var("HOME").with_context(|| "Failed to get HOME environment variable")?;
+
+    let config_path = PathBuf::from(base_path).join(".config/scout");
+
+    fs::create_dir_all(&config_path)
+        .with_context(|| format!("Failed to create config directory: {:?}", config_path))?;
 
     let file_path = config_path.join(match bc {
         BlockChain::Ink => "ink-config.json",
         BlockChain::Soroban => "soroban-config.json",
     });
 
-    if !file_path.exists() {
-        create_default_config(&file_path, detectors)
-            .with_context(|| format!("Failed to create default config file: {:?}", file_path))?;
-    }
-
-    let config_str = read_file_to_string(&file_path)
-        .with_context(|| format!("Failed to read config file: {:?}", file_path))?;
-
-    let config = serde_json::from_str(&config_str)
-        .with_context(|| format!("Failed to parse JSON config: {:?}", file_path))?;
-
-    Ok((config, file_path))
-}
-
-fn get_config_path() -> Result<PathBuf> {
-    let base_path = if cfg!(windows) {
-        std::env::var("USERPROFILE")
-            .with_context(|| "Failed to get USERPROFILE environment variable")?
-    } else {
-        std::env::var("HOME").with_context(|| "Failed to get HOME environment variable")?
-    };
-
-    let config_path = PathBuf::from(base_path).join(if cfg!(windows) {
-        "scout"
-    } else {
-        ".config/scout"
-    });
-
-    fs::create_dir_all(&config_path)
-        .with_context(|| format!("Failed to create config directory: {:?}", config_path))?;
-
-    Ok(config_path)
+    Ok(file_path)
 }
 
 fn create_default_config(file_path: &PathBuf, detectors: &[String]) -> Result<()> {
@@ -79,11 +157,11 @@ pub fn profile_enabled_detectors(
     config: &Value,
     profile: &str,
     config_path: &Path,
+    detector_names: &[String],
 ) -> Result<Vec<String>> {
-    let default_detectors: HashSet<String> = config
-        .get("default")
-        .and_then(Value::as_array)
-        .with_context(|| "Default profile is missing or not an array")?
+    let default_detectors: HashSet<String> = config["default"]
+        .as_array()
+        .context("Default profile is missing or not an array")?
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
         .collect();
@@ -108,7 +186,9 @@ pub fn profile_enabled_detectors(
     let enabled_detectors: Vec<String> = profile_detectors
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
-        .filter(|detector| default_detectors.contains(detector))
+        .filter(|detector| {
+            default_detectors.contains(detector) && detector_names.contains(detector)
+        })
         .collect();
 
     if enabled_detectors.is_empty() {
@@ -137,6 +217,15 @@ fn create_profile(file_path: &Path, detectors: &[String], profile: &str) -> Resu
         .with_context(|| format!("Failed to create file: {:?}", file_path))?
         .write_all(config_str.as_bytes())
         .with_context(|| "Failed to write config to file")?;
+
+    Ok(())
+}
+
+fn save_config(config: &Value, config_path: &Path) -> Result<()> {
+    let config_str = serde_json::to_string_pretty(config)
+        .context("Failed to serialize config to JSON string")?;
+
+    std::fs::write(config_path, config_str).context("Failed to write config to file")?;
 
     Ok(())
 }

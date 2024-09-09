@@ -11,7 +11,7 @@ use crate::{
     },
     server::capture_output,
     utils::{
-        config::{open_config_or_default, profile_enabled_detectors},
+        config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
         print::{print_error, print_warning},
@@ -358,23 +358,23 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
 
     let profile_detectors = match &opts.profile {
         Some(profile) => {
-            let (config, config_path) = open_config_or_default(blockchain, &detectors_names)
-                .map_err(|err| {
+            let (config, config_path) =
+                open_config_and_sync_detectors(blockchain, &detectors_names).map_err(|err| {
                     anyhow!(
-                        "Failed to open configuration file.\n\n     → Caused by: {}",
-                        err
-                    )
+                    "Failed to open and synchronize configuration file.\n\n     → Caused by: {}",
+                    err
+                )
                 })?;
 
             print_warning(&format!(
-                    "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
-                    profile,
-                    config_path.display()
-                ));
+                "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
+                profile,
+                config_path.display()
+            ));
 
-            profile_enabled_detectors(&config, profile, &config_path)?
+            profile_enabled_detectors(&config, profile, &config_path, &detectors_names)?
         }
-        None => detectors_names,
+        None => detectors_names.clone(),
     };
 
     if opts.list_detectors {
