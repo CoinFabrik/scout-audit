@@ -272,7 +272,6 @@ mod tests {
         }
     }
 
-
     // Slow tests module
     mod slow {
         use super::*;
