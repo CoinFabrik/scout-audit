@@ -43,7 +43,7 @@ current_platform = "=0.2.0"
 dunce = "=1.0.4"
 dylint = "=3.1.2"
 git2 = "=0.18.3"
-headless_chrome = "=1.0.14"
+headless_chrome = {version = "=1.0.14", features = ["fetch"]}
 home = "=0.5.9"
 itertools = "=0.13.0"
 lazy_static = "=1.5.0"
