@@ -266,10 +266,15 @@ fn split_findings(
     raw_findings: Vec<String>,
     crates: &HashMap<String, bool>,
 ) -> (Vec<Value>, Vec<Value>) {
-    let findings = raw_findings
-        .iter()
-        .map(|s| from_str::<Value>(s).unwrap())
-        .collect::<Vec<Value>>();
+    let mut findings = Vec::new();
+
+    for s in raw_findings.iter() {
+        if s.trim().is_empty() {
+            continue;
+        }
+        let value = from_str::<Value>(s).unwrap();
+        findings.push(value);
+    }
     let mut successful_findings = Vec::<Value>::new();
     let mut failed_findings = Vec::<Value>::new();
 

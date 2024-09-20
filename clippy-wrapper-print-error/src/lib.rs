@@ -26,7 +26,10 @@ pub fn print_error<F: FnOnce()>(cb: F) {
     let _ = std::io::set_output_capture(old);
     let mut captured = String::new();
     let mut buf_reader = std::io::BufReader::new(piped_stderr.get_reader());
+    eprintln!(""); // sometimes output contains new-line at end and sometimes not. nevertheless it
+                   // is required for us, here!
     let _ = buf_reader.read_line(&mut captured);
+    captured = captured.trim().to_string();
 
     let krate = std::env::var("CARGO_CRATE_NAME");
     let krate = krate.unwrap_or_default();
