@@ -269,7 +269,9 @@ fn split_findings(
     let mut findings = Vec::new();
 
     for s in raw_findings.iter() {
-        if s.trim().is_empty() { continue }
+        if s.trim().is_empty() {
+            continue;
+        }
         let value = from_str::<Value>(s).unwrap();
         findings.push(value);
     }
