@@ -11,14 +11,14 @@ use crate::{
     },
     server::capture_output,
     utils::{
-        config::{open_config_or_default, profile_enabled_detectors},
+        config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintInfo},
-        print::print_error,
+        print::{print_error, print_warning},
     },
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
-use cargo::GlobalContext;
+use cargo::{core::Verbosity, GlobalContext};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
@@ -93,8 +93,14 @@ pub struct Scout {
     #[clap(last = true, help = "Arguments for `cargo check`.")]
     pub args: Vec<String>,
 
-    #[clap(short, long, value_name = "type", help = "Sets the output type")]
-    pub output_formats: Vec<OutputFormat>,
+    #[clap(
+        short,
+        long,
+        value_name = "type",
+        help = "Set the output type",
+        value_delimiter = ','
+    )]
+    pub output_format: Vec<OutputFormat>,
 
     #[clap(long, value_name = "path", help = "Path to the output file.")]
     pub output_path: Option<PathBuf>,
@@ -112,7 +118,7 @@ pub struct Scout {
     #[clap(
         short,
         long,
-        help = "Prints detectors metadata.",
+        help = "Print detectors metadata",
         default_value_t = false
     )]
     pub verbose: bool,
@@ -120,7 +126,7 @@ pub struct Scout {
     #[clap(
         name = "toolchain",
         long,
-        help = "Prints the detectors current toolchain.",
+        help = "Print the detectors current toolchain",
         default_value_t = false
     )]
     pub toolchain: bool,
@@ -128,10 +134,18 @@ pub struct Scout {
     #[clap(
         name = "metadata",
         long,
-        help = "Prints metadata information.",
+        help = "Print metadata information",
         default_value_t = false
     )]
     pub detectors_metadata: bool,
+
+    #[clap(
+        name = "debug",
+        long,
+        help = "Analyze the project in debug build",
+        default_value_t = false
+    )]
+    pub debug: bool,
 }
 
 impl Scout {
@@ -142,6 +156,9 @@ impl Scout {
                 "--no-default-features".to_string(),
                 "-Zbuild-std=std,core,alloc".to_string(),
             ]);
+        }
+        if !self.debug {
+            self.args.push("--release".to_string());
         }
     }
 
@@ -204,6 +221,18 @@ fn get_crate_from_finding(finding: &Value) -> Option<String> {
     json_to_string_opt(finding.get("target").and_then(|x| x.get("name")))
 }
 
+//In some cases, rustc (or dylint, or clipply, or whoever) has returned the
+//package name where it should be returning the crate name. If you run into
+//problems in the future, try removing the call to this function.
+fn normalize_crate_name(s: String) -> String {
+    let mut ret = String::new();
+    ret.reserve(s.len());
+    for c in s.chars() {
+        ret.push(if c == '-' { '_' } else { c });
+    }
+    ret
+}
+
 fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
@@ -219,7 +248,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         if name.is_none() {
             continue;
         }
-        let name = name.unwrap();
+        let name = normalize_crate_name(name.unwrap());
         if let Some(previous) = ret.get(&name) {
             if !previous {
                 continue;
@@ -237,10 +266,15 @@ fn split_findings(
     raw_findings: Vec<String>,
     crates: &HashMap<String, bool>,
 ) -> (Vec<Value>, Vec<Value>) {
-    let findings = raw_findings
-        .iter()
-        .map(|s| from_str::<Value>(s).unwrap())
-        .collect::<Vec<Value>>();
+    let mut findings = Vec::new();
+
+    for s in raw_findings.iter() {
+        if s.trim().is_empty() {
+            continue;
+        }
+        let value = from_str::<Value>(s).unwrap();
+        findings.push(value);
+    }
     let mut successful_findings = Vec::<Value>::new();
     let mut failed_findings = Vec::<Value>::new();
 
@@ -274,7 +308,7 @@ fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
-pub fn run_scout(mut opts: Scout) -> Result<()> {
+pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
     opts.validate()?;
     opts.prepare_args();
 
@@ -284,14 +318,14 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
 
     if opts.toolchain {
         println!("{}", toolchain);
-        return Ok(());
+        return Ok(vec![]);
     }
 
     if let Some(mut child) = run_scout_in_nightly(toolchain)? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
-        return Ok(());
+        return Ok(vec![]);
     }
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
@@ -304,9 +338,9 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     let cargo_config =
         GlobalContext::default().with_context(|| "Failed to create default cargo configuration")?;
     cargo_config.shell().set_verbosity(if opts.verbose {
-        cargo::core::Verbosity::Verbose
+        Verbosity::Verbose
     } else {
-        cargo::core::Verbosity::Quiet
+        Verbosity::Quiet
     });
 
     let detectors_config = match &opts.local_detectors {
@@ -335,38 +369,46 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
         toolchain,
     );
 
-    let mut detectors_names = detector_builder
+    let detectors_names = detector_builder
         .get_detector_names()
         .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
 
-    if opts.list_detectors {
-        list_detectors(&detectors_names);
-        return Ok(());
-    }
+    let profile_detectors = match &opts.profile {
+        Some(profile) => {
+            let (config, config_path) =
+                open_config_and_sync_detectors(blockchain, &detectors_names).map_err(|err| {
+                    anyhow!(
+                    "Failed to open and synchronize configuration file.\n\n     → Caused by: {}",
+                    err
+                )
+                })?;
 
-    detectors_names = if let Some(profile) = &opts.profile {
-        let config = open_config_or_default(blockchain, detectors_names.clone()).map_err(|e| {
-            anyhow!(
-                "Failed to load or generate profile.\n\n     → Caused by: {}",
-                e
-            )
-        })?;
+            print_warning(&format!(
+                "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
+                profile,
+                config_path.display()
+            ));
 
-        profile_enabled_detectors(config, profile.clone())?
-    } else {
-        detectors_names
+            profile_enabled_detectors(&config, profile, &config_path, &detectors_names)?
+        }
+        None => detectors_names.clone(),
     };
 
-    let used_detectors = if let Some(filter) = &opts.filter {
-        get_filtered_detectors(filter, &detectors_names)?
+    if opts.list_detectors {
+        list_detectors(&profile_detectors);
+        return Ok(vec![]);
+    }
+
+    let filtered_detectors = if let Some(filter) = &opts.filter {
+        get_filtered_detectors(filter, &profile_detectors)?
     } else if let Some(excluded) = &opts.exclude {
-        get_excluded_detectors(excluded, &detectors_names)
+        get_excluded_detectors(excluded, &profile_detectors)
     } else {
-        detectors_names
+        profile_detectors
     };
 
     let detectors_paths = detector_builder
-        .build(&blockchain, &used_detectors)
+        .build(&blockchain, &filtered_detectors)
         .map_err(|e| {
             anyhow!(
                 "Failed to build detectors.\n\n     → Caused by: {}",
@@ -379,7 +421,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     if opts.detectors_metadata {
         let json = to_string_pretty(&detectors_info);
         println!("{}", json.unwrap());
-        return Ok(());
+        return Ok(vec![]);
     }
 
     let project_info = ProjectInfo::get_project_info(&metadata)
@@ -410,7 +452,7 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
             .text_str("Nothing was analyzed. Check your build system for errors.")
             .print();
         println!("{}", string);
-        return Ok(());
+        return Ok(vec![]);
     }
 
     let (successful_findings, _failed_findings) = split_findings(findings, &crates);
@@ -448,18 +490,20 @@ pub fn run_scout(mut opts: Scout) -> Result<()> {
     };
     // Generate report
     do_report(
-        console_findings,
+        &console_findings,
         crates,
         project_info,
         detectors_info,
         output_string_vscode,
         opts,
         inside_vscode,
-    )
+    )?;
+
+    Ok(console_findings)
 }
 
 fn do_report(
-    findings: Vec<Value>,
+    findings: &Vec<Value>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: HashMap<String, LintInfo>,
@@ -473,14 +517,14 @@ fn do_report(
             .write_all(output_string.as_bytes())
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
-        crate::output::console::render_report(&findings, &crates, &detectors_info)?;
+        crate::output::console::render_report(findings, &crates, &detectors_info)?;
         generate_report(
-            &findings,
+            findings,
             &crates,
             project_info,
             &detectors_info,
             opts.output_path,
-            &opts.output_formats,
+            &opts.output_format,
         )?;
     }
 

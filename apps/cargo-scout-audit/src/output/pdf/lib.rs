@@ -1,15 +1,13 @@
-use std::path::PathBuf;
-
-use anyhow::{Context, Result};
-
-use crate::output::{report::Report, utils::write_to_file};
-
 use super::generator::{generate_body, generate_header, generate_summary};
-
-const REPORT_PATH: &str = "temp_report.html";
+use crate::output::report::Report;
+use anyhow::{Context, Result};
+use headless_chrome::{Browser, LaunchOptionsBuilder};
+use std::io::Write;
+use std::path::Path;
+use tempfile::{Builder, NamedTempFile};
 
 // Generates a HTML report from a given `Report` object.
-pub fn generate_pdf(report: &Report) -> Result<&'static str> {
+fn generate_temp_html(report: &Report) -> Result<NamedTempFile> {
     let mut report_html = String::new();
 
     // Header
@@ -21,8 +19,23 @@ pub fn generate_pdf(report: &Report) -> Result<&'static str> {
     // Body
     report_html.push_str(&generate_body(&report.categories, &report.findings));
 
-    write_to_file(&PathBuf::from(REPORT_PATH), report_html.as_bytes())
-        .with_context(|| format!("Failed to write html for pdf to '{}'", REPORT_PATH))?;
+    let mut file = Builder::new()
+        .suffix(".html")
+        .tempfile()
+        .with_context(|| ("Failed to create temporary HTML file"))?;
+    file.write(report_html.as_bytes())
+        .with_context(|| "Failed to write temporary HTML file")?;
+    Ok(file)
+}
 
-    Ok(REPORT_PATH)
+pub fn generate_pdf(path: &Path, report: &Report) -> Result<()> {
+    let temp_html = generate_temp_html(report)?;
+    let browser = Browser::new(LaunchOptionsBuilder::default().headless(true).build()?)?;
+    let tab = browser.new_tab()?;
+    let url = "file:///".to_string() + temp_html.path().to_str().unwrap();
+    tab.navigate_to(url.as_str())?;
+    tab.wait_until_navigated()?;
+    std::fs::write(path, tab.print_to_pdf(None)?)?;
+    let _ = temp_html.close();
+    Ok(())
 }

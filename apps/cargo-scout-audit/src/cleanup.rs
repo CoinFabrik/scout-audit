@@ -21,9 +21,18 @@ pub(crate) fn clean_up_before_run(metadata: &Metadata) {
         }
         let mut deps = entry.path();
         deps.push("wasm32-unknown-unknown");
-        deps.push("debug");
-        deps.push("deps");
-        clean_up_deps(deps, metadata);
+        {
+            let mut deps = deps.clone();
+            deps.push("debug");
+            deps.push("deps");
+            clean_up_deps(deps, metadata);
+        }
+        {
+            let mut deps = deps.clone();
+            deps.push("release");
+            deps.push("deps");
+            clean_up_deps(deps, metadata);
+        }
     }
 }
 

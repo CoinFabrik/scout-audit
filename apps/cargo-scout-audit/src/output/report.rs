@@ -127,24 +127,9 @@ impl Report {
 
     #[tracing::instrument(name = "GENERATING PDF FROM REPORT", level = "debug", skip_all)]
     pub fn generate_pdf(&self, path: &Path) -> Result<()> {
-        let temp_html = pdf::generate_pdf(self)?;
-
-        std::process::Command::new("which")
-            .arg("wkhtmltopdf")
-            .output()
-            .with_context(|| "Please, install wkhtmltopdf to generate pdf reports.")?;
-
-        let mut child = std::process::Command::new("wkhtmltopdf")
-            .arg(temp_html)
-            .arg(path.to_str().unwrap())
-            .spawn()?;
-
-        child.wait()?;
-
-        std::fs::remove_file(temp_html)?;
-
-        Ok(())
+        pdf::generate_pdf(path, self)
     }
+
     pub fn write_out(
         &self,
         findings: &Vec<Value>,

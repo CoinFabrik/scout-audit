@@ -1,3 +1,4 @@
+
 [package]
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
@@ -8,6 +9,9 @@ authors = [
     "Federico Pinho <federico.pinho@coinfabrik.com>",
     "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
 ]
+
+
+
 build = "build.rs"
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
@@ -17,7 +21,7 @@ license = "MIT"
 name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.2.16"
+version = "0.2.17"
 
 [lib]
 path = "src/lib.rs"
@@ -39,6 +43,7 @@ current_platform = "=0.2.0"
 dunce = "=1.0.4"
 dylint = "=3.1.2"
 git2 = "=0.18.3"
+headless_chrome = {version = "=1.0.14", features = ["fetch"]}
 home = "=0.5.9"
 itertools = "=0.13.0"
 lazy_static = "=1.5.0"
