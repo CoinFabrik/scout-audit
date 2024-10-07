@@ -3,7 +3,7 @@
 ![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
-  <img src="/assets/scout-substrate.png" alt="Scout in a Dark Forest" width="300" center  />
+  <img src="/assets/scout.png" alt="Scout in a Dark Forest" width="300" center  />
 </p>
 
 Scout is an extensible open-source tool intended to assist Substrate developers and auditors detect common security issues and deviations from best practices.
