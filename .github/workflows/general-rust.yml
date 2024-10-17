@@ -1,0 +1,35 @@
+name: General Rust
+
+on: [push]
+
+env:
+  CARGO_TERM_COLOR: always
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  format:
+    name: Check Rust Format
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust nightly
+        run: rustup install nightly --profile minimal
+
+      - name: Install rustfmt
+        run: rustup component add rustfmt --toolchain nightly
+
+      - name: Check Format
+        run: python scripts/run-fmt.py --dir test-cases detectors
+
