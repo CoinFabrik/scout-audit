@@ -13,7 +13,7 @@ use crate::{
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, LintInfo},
+        detectors_info::{get_detectors_info, LintInfo, CustomLint},
         print::{print_error, print_warning},
     },
 };
@@ -416,7 +416,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
             )
         })?;
 
-    let detectors_info = get_detectors_info(&detectors_paths)?;
+    let (detectors_info, custom_detectors) = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
         let json = to_string_pretty(&detectors_info);
@@ -435,9 +435,9 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
         capture_output
     };
 
-    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
+    let (findings, (_failed_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
+        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode, &custom_detectors)
             .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
@@ -531,12 +531,13 @@ fn do_report(
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts))]
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, custom_detectors))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
     metadata: &Metadata,
     inside_vscode: bool,
+    custom_detectors: &HashMap<String, CustomLint<'_>>,
 ) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -579,9 +580,14 @@ fn run_dylint(
 
     crate::cleanup::clean_up_before_run(metadata);
 
-    let success = dylint::run(&options).is_err();
+    let failure = dylint::run(&options).is_err();
+    if !failure{
+        for (_, lint) in custom_detectors.iter(){
+            lint.call();
+        }
+    }
 
-    Ok((success, stdout_temp_file))
+    Ok((failure, stdout_temp_file))
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
