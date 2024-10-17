@@ -1,6 +1,6 @@
 [workspace]
 exclude = [".cargo", "target"]
-members = ["integer-overflow-or-underflow-*/*"]
+members = ["remediated/*", "vulnerable/*"]
 resolver = "2"
 
 [workspace.dependencies]
