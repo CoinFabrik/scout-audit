@@ -23,7 +23,15 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
-use std::{collections::HashMap, fs, io::Write, path::PathBuf};
+use std::{
+    collections::{
+        HashMap,
+        HashSet,
+    },
+    fs,
+    io::Write,
+    path::PathBuf
+};
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
 
@@ -233,7 +241,7 @@ fn normalize_crate_name(s: String) -> String {
     ret
 }
 
-fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
+fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool>{
     let mut ret = HashMap::<String, bool>::new();
 
     for val in output {
@@ -257,6 +265,30 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         let level = message.get("level");
         let ok = level.is_none() || level.unwrap() != "error";
         ret.insert(name, ok);
+    }
+
+    ret
+}
+
+fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String>{
+    let mut ret = HashSet::<String>::new();
+
+    for s in findings{
+        let value = from_str::<Value>(s).unwrap();
+        let krate = json_to_string(value.get("crate").unwrap());
+        ret.insert(krate);
+    }
+
+    ret
+}
+
+fn get_crates(output: &Vec<Value>, findings: &Vec<String>) -> HashMap<String, bool> {
+    let mut ret = get_crates_from_output(output);
+    let krates = get_crates_from_findings(findings);
+    for krate in krates{
+        if !ret.contains_key(&krate){
+            ret.insert(krate, true);
+        }
     }
 
     ret
@@ -443,7 +475,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
 
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
-    let crates = get_crates(output.clone());
+    let crates = get_crates(&output, &findings);
 
     if crates.is_empty() && !inside_vscode {
         let string = OutputFormatter::new()
