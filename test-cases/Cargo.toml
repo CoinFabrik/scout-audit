@@ -1,7 +1,6 @@
 [workspace]
 exclude = [".cargo", "target"]
-#members = ["remediated/*", "vulnerable/*"]
-members = ["remediated/remediated-*", "vulnerable/vulnerable-*"]
+members = ["*/remediated/remediated-*", "*/vulnerable/vulnerable-*"]
 
 [workspace.package]
 authors = [
@@ -11,10 +10,6 @@ authors = [
 edition = "2021"
 
 [workspace.dependencies]
-#ink = { version = "5.0.0", default-features = false }
-#scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
-#scale-info = { version = "2.6", default-features = false, features = ["derive"]}
-#ink_e2e = { version = "=5.0.0" }
 codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
 log = { version = "0.4.22", default-features = false }
 scale-info = { version = "2.11.1", default-features = false }
