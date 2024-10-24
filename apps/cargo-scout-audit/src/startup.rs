@@ -13,7 +13,7 @@ use crate::{
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, LintInfo, CustomLint},
+        detectors_info::{get_detectors_info, CustomLint, LintInfo},
         print::{print_error, print_warning},
     },
 };
@@ -24,13 +24,10 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::{
-    collections::{
-        HashMap,
-        HashSet,
-    },
+    collections::{HashMap, HashSet},
     fs,
     io::Write,
-    path::PathBuf
+    path::PathBuf,
 };
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
@@ -241,7 +238,7 @@ fn normalize_crate_name(s: String) -> String {
     ret
 }
 
-fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool>{
+fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
     for val in output {
@@ -252,7 +249,7 @@ fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool>{
         }
         let message = message.unwrap();
 
-        let name = get_crate_from_finding(&val);
+        let name = get_crate_from_finding(val);
         if name.is_none() {
             continue;
         }
@@ -270,10 +267,10 @@ fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool>{
     ret
 }
 
-fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String>{
+fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
     let mut ret = HashSet::<String>::new();
 
-    for s in findings{
+    for s in findings {
         let value = from_str::<Value>(s).unwrap();
         let krate = json_to_string(value.get("crate").unwrap());
         ret.insert(krate);
@@ -285,10 +282,8 @@ fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String>{
 fn get_crates(output: &Vec<Value>, findings: &Vec<String>) -> HashMap<String, bool> {
     let mut ret = get_crates_from_output(output);
     let krates = get_crates_from_findings(findings);
-    for krate in krates{
-        if !ret.contains_key(&krate){
-            ret.insert(krate, true);
-        }
+    for krate in krates {
+        ret.entry(krate).or_insert(true);
     }
 
     ret
@@ -469,8 +464,14 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
 
     let (findings, (_failed_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode, &custom_detectors)
-            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
+        run_dylint(
+            detectors_paths.clone(),
+            &opts,
+            &metadata,
+            inside_vscode,
+            &custom_detectors,
+        )
+        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
@@ -613,8 +614,8 @@ fn run_dylint(
     crate::cleanup::clean_up_before_run(metadata);
 
     let failure = dylint::run(&options).is_err();
-    if !failure{
-        for (_, lint) in custom_detectors.iter(){
+    if !failure {
+        for (_, lint) in custom_detectors.iter() {
             lint.call();
         }
     }
