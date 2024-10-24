@@ -1,5 +1,5 @@
 [package]
-name = "pallet-integer-overflow-or-underflow-remediated-2"
+name = "pallet-known-vulnerabilities-vulnerable-1"
 version = "27.0.0"
 authors.workspace = true
 edition.workspace = true
@@ -21,6 +21,7 @@ frame-system = { workspace = true }
 pallet-balances = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
+curve25519-dalek = "=4.1.2"
 
 [dev-dependencies]
 sp-core = { workspace = true }

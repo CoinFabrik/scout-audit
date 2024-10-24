@@ -1,0 +1,36 @@
+[workspace]
+exclude = [".cargo", "target"]
+members = ["*/remediated/remediated-*", "*/vulnerable/vulnerable-*"]
+
+[workspace.package]
+authors = [
+    "Parity Technologies <admin@parity.io>",
+    "Víctor M. González <victor.gonzalez@coinfabrik.com>"
+]
+edition = "2021"
+
+[workspace.dependencies]
+codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
+log = { version = "0.4.22", default-features = false }
+scale-info = { version = "2.11.1", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+sp-io = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
+
+[profile.release]
+codegen-units = 1
+debug = 0
+debug-assertions = false
+lto = true
+opt-level = "z"
+overflow-checks = false
+panic = "abort"
+strip = "symbols"
+
+[profile.release-with-logs]
+debug-assertions = true
+inherits = "release"

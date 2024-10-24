@@ -1,5 +1,5 @@
 [package]
-name = "pallet-integer-overflow-or-underflow-remediated-2"
+name = "pallet-known-vulnerabilities-remediated-1"
 version = "27.0.0"
 authors.workspace = true
 edition.workspace = true
