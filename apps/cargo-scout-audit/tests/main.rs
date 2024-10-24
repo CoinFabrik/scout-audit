@@ -286,7 +286,10 @@ mod tests {
             let result = run_scout(scout_opts);
 
             // Then
-            assert!(result.is_ok());
+            if result.is_err(){
+                dbg!(result.err());
+                assert!(false);
+            }
         }
     }
 }
