@@ -217,9 +217,6 @@ mod tests {
         assert!(result.is_ok(), "Scout should run");
         let result = result.unwrap();
 
-        for finding in result.iter() {
-            dbg!(finding);
-        }
         let findings = result
             .iter()
             .map(|value| {
@@ -289,7 +286,11 @@ mod tests {
             let result = run_scout(scout_opts);
 
             // Then
-            assert!(result.is_ok());
+            if result.is_err() {
+                let x = 0;
+                dbg!(result.err());
+                assert!(x == 1);
+            }
         }
     }
 }

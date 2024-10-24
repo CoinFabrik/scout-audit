@@ -8,6 +8,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 pub enum BlockChain {
     Ink,
     Soroban,
+    SubstratePallet,
 }
 
 impl BlockChain {
@@ -19,6 +20,7 @@ impl BlockChain {
         match self {
             BlockChain::Ink => "https://github.com/CoinFabrik/scout",
             BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
+            BlockChain::SubstratePallet => "https://github.com/CoinFabrik/scout-substrate",
         }
     }
 
@@ -26,6 +28,7 @@ impl BlockChain {
         match self {
             BlockChain::Ink => INK_TOOLCHAIN,
             BlockChain::Soroban => SOROBAN_TOOLCHAIN,
+            BlockChain::SubstratePallet => INK_TOOLCHAIN,
         }
     }
 
@@ -37,6 +40,7 @@ impl BlockChain {
             .find_map(|p| match p.name.as_str() {
                 "soroban-sdk" => Some(BlockChain::Soroban),
                 "ink" => Some(BlockChain::Ink),
+                "frame-system" => Some(BlockChain::SubstratePallet),
                 _ => None,
             })
             .with_context(|| {

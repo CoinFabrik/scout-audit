@@ -13,7 +13,7 @@ use crate::{
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, LintInfo},
+        detectors_info::{get_detectors_info, CustomLint, LintInfo},
         print::{print_error, print_warning},
     },
 };
@@ -23,7 +23,12 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
-use std::{collections::HashMap, fs, io::Write, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    io::Write,
+    path::PathBuf,
+};
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
 
@@ -233,7 +238,7 @@ fn normalize_crate_name(s: String) -> String {
     ret
 }
 
-fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
+fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
     for val in output {
@@ -244,7 +249,7 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         }
         let message = message.unwrap();
 
-        let name = get_crate_from_finding(&val);
+        let name = get_crate_from_finding(val);
         if name.is_none() {
             continue;
         }
@@ -257,6 +262,28 @@ fn get_crates(output: Vec<Value>) -> HashMap<String, bool> {
         let level = message.get("level");
         let ok = level.is_none() || level.unwrap() != "error";
         ret.insert(name, ok);
+    }
+
+    ret
+}
+
+fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
+    let mut ret = HashSet::<String>::new();
+
+    for s in findings {
+        let value = from_str::<Value>(s).unwrap();
+        let krate = json_to_string(value.get("crate").unwrap());
+        ret.insert(krate);
+    }
+
+    ret
+}
+
+fn get_crates(output: &Vec<Value>, findings: &Vec<String>) -> HashMap<String, bool> {
+    let mut ret = get_crates_from_output(output);
+    let krates = get_crates_from_findings(findings);
+    for krate in krates {
+        ret.entry(krate).or_insert(true);
     }
 
     ret
@@ -416,7 +443,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
             )
         })?;
 
-    let detectors_info = get_detectors_info(&detectors_paths)?;
+    let (detectors_info, custom_detectors) = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
         let json = to_string_pretty(&detectors_info);
@@ -435,15 +462,21 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
         capture_output
     };
 
-    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
+    let (findings, (_failed_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
-            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
+        run_dylint(
+            detectors_paths.clone(),
+            &opts,
+            &metadata,
+            inside_vscode,
+            &custom_detectors,
+        )
+        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
     let output = output_to_json(&output_string);
-    let crates = get_crates(output.clone());
+    let crates = get_crates(&output, &findings);
 
     if crates.is_empty() && !inside_vscode {
         let string = OutputFormatter::new()
@@ -531,12 +564,13 @@ fn do_report(
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts))]
+#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, custom_detectors))]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
     metadata: &Metadata,
     inside_vscode: bool,
+    custom_detectors: &HashMap<String, CustomLint<'_>>,
 ) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -579,9 +613,14 @@ fn run_dylint(
 
     crate::cleanup::clean_up_before_run(metadata);
 
-    let success = dylint::run(&options).is_err();
+    let failure = dylint::run(&options).is_err();
+    if !failure {
+        for (_, lint) in custom_detectors.iter() {
+            lint.call();
+        }
+    }
 
-    Ok((success, stdout_temp_file))
+    Ok((failure, stdout_temp_file))
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
