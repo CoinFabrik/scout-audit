@@ -59,15 +59,15 @@ jobs:
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Clone cargo-scout-audit
-        working-directory: ~
+        working-directory: /home/runner
         run: git clone https://github.com/CoinFabrik/scout-audit.git -b substrate-pallets scout-repo
 
       - name: Install cargo-scout-audit
-        working-directory: ~/scout-repo/apps/cargo-scout-audit
+        working-directory: /home/runner/scout-repo/apps/cargo-scout-audit
         run: cargo install --path .
 
       - name: Clean up after installation
-        run: rm -rf ~/scout-repo
+        run: rm -rf /home/runner/scout-repo
 
       - name: Determine build status and write to file
         run: echo "${{ job.status }}" > status-${{ matrix.os }}.txt
