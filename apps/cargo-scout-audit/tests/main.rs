@@ -286,9 +286,10 @@ mod tests {
             let result = run_scout(scout_opts);
 
             // Then
-            if result.is_err(){
+            if result.is_err() {
+                let x = 0;
                 dbg!(result.err());
-                assert!(false);
+                assert!(x == 1);
             }
         }
     }
