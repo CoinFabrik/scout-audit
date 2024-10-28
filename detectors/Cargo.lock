@@ -1588,6 +1588,7 @@ dependencies = [
  "if_chain",
  "scout-audit-clippy-wrappers-ink",
  "scout-audit-dylint-linting",
+ "utils",
 ]
 
 [[package]]
@@ -2916,6 +2917,14 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "if_chain",
 ]
 
 [[package]]
