@@ -38,3 +38,8 @@ strip = "symbols"
 [profile.release-with-logs]
 debug-assertions = true
 inherits = "release"
+
+[workspace.metadata.dylint]
+libraries = [
+    { path = "/Users/josegarcia/Desktop/coinfabrik/scout-substrate/detectors/unsafe-unwrap" },
+]
