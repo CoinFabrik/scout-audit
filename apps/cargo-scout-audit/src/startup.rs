@@ -229,7 +229,7 @@ fn get_crate_from_finding(finding: &Value) -> Option<String> {
 //In some cases, rustc (or dylint, or clipply, or whoever) has returned the
 //package name where it should be returning the crate name. If you run into
 //problems in the future, try removing the call to this function.
-fn normalize_crate_name(s: String) -> String {
+fn normalize_crate_name(s: &str) -> String {
     let mut ret = String::new();
     ret.reserve(s.len());
     for c in s.chars() {
@@ -253,7 +253,7 @@ fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool> {
         if name.is_none() {
             continue;
         }
-        let name = normalize_crate_name(name.unwrap());
+        let name = normalize_crate_name(&name.unwrap());
         if let Some(previous) = ret.get(&name) {
             if !previous {
                 continue;
@@ -279,11 +279,19 @@ fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
     ret
 }
 
-fn get_crates(output: &Vec<Value>, findings: &Vec<String>) -> HashMap<String, bool> {
+fn get_crates(
+    output: &Vec<Value>,
+    findings: &Vec<String>,
+    packages: &[crate::output::report::Package],
+) -> HashMap<String, bool> {
     let mut ret = get_crates_from_output(output);
     let krates = get_crates_from_findings(findings);
     for krate in krates {
         ret.entry(krate).or_insert(true);
+    }
+    for package in packages.iter() {
+        ret.entry(normalize_crate_name(&package.name))
+            .or_insert(true);
     }
 
     ret
@@ -475,8 +483,9 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
+    //println!("{}", output_string);
     let output = output_to_json(&output_string);
-    let crates = get_crates(&output, &findings);
+    let crates = get_crates(&output, &findings, &project_info.packages);
 
     if crates.is_empty() && !inside_vscode {
         let string = OutputFormatter::new()
