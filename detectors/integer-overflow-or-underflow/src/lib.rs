@@ -1,238 +1,234 @@
 #![feature(rustc_private)]
 
 extern crate rustc_hir;
+extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::consts::constant_simple;
-use clippy_utils::is_integer_literal;
-use rustc_hir::{self as hir, Body, Expr, ExprKind, UnOp};
-use rustc_lint::LateContext;
-use rustc_lint::LateLintPass;
-use rustc_span::Span;
+use clippy_utils::diagnostics::span_lint_and_help;
+use rustc_hir::{
+    intravisit::{walk_expr, FnKind, Visitor},
+    BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
+};
+use rustc_lint::{LateContext, LateLintPass};
+use rustc_middle::ty::Ty;
+use rustc_span::{def_id::LocalDefId, Span, Symbol};
+use std::collections::HashSet;
+use utils::{match_type_to_str, ConstantAnalyzer};
 
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
-scout_audit_dylint_linting::impl_late_lint! {
-    /// ### What it does
-    /// Checks for integer arithmetic operations which could overflow or panic.
-    ///
-    /// Specifically, checks for any operators (`+`, `-`, `*`, `<<`, etc) which are capable
-    /// of overflowing according to the [Rust
-    /// Reference](https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow),
-    /// or which can panic (`/`, `%`). No bounds analysis or sophisticated reasoning is
-    /// attempted.
-    ///
-    /// ### Why is this bad?
-    /// Integer overflow will trigger a panic in debug builds or will wrap in
-    /// release mode. Division by zero will cause a panic in either mode. In some applications one
-    /// wants explicitly checked, wrapping or saturating arithmetic.
-    ///
-    /// ### Example
-    /// ```rust
-    /// # let a = 0;
-    /// a + 1;
-    /// ```
+scout_audit_dylint_linting::declare_late_lint! {
     pub INTEGER_OVERFLOW_UNDERFLOW,
     Warn,
     LINT_MESSAGE,
-    IntegerOverflowUnderflow::default(),
     {
         name: "Integer Overflow/Underflow",
-        long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.\n In Ink! 5.0.0, using raw math operations will result in `cargo contract build` failing with an error message.",
+        long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
         severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/integer-overflow-or-underflow",
+        help: "https://coinfabrik.github.io/scout-substrate/docs/vulnerabilities/integer-overflow-or-underflow",
         vulnerability_class: "Arithmetic",
     }
 }
-
-#[derive(Default)]
-pub struct IntegerOverflowUnderflow {
-    arithmetic_context: ArithmeticContext,
+enum Type {
+    Overflow,
+    Underflow,
+    OverflowUnderflow,
 }
-impl IntegerOverflowUnderflow {
-    pub fn new() -> Self {
-        Self {
-            arithmetic_context: ArithmeticContext::default(),
+
+impl Type {
+    fn message(&self) -> &'static str {
+        match self {
+            Type::Overflow => "overflow",
+            Type::Underflow => "underflow",
+            Type::OverflowUnderflow => "overflow or underflow",
         }
+    }
+}
+
+enum Cause {
+    Add,
+    Sub,
+    Mul,
+    Pow,
+    Negate,
+    Multiple,
+}
+
+impl Cause {
+    fn message(&self) -> &'static str {
+        match self {
+            Cause::Add => "addition operation",
+            Cause::Sub => "subtraction operation",
+            Cause::Mul => "multiplication operation",
+            Cause::Pow => "exponentiation operation",
+            Cause::Negate => "negation operation",
+            Cause::Multiple => "operation",
+        }
+    }
+}
+
+pub struct Finding {
+    span: Span,
+    type_: Type,
+    cause: Cause,
+}
+
+impl Finding {
+    fn new(span: Span, type_: Type, cause: Cause) -> Self {
+        Finding { span, type_, cause }
+    }
+
+    fn generate_message(&self) -> String {
+        format!(
+            "This {} could {}.",
+            self.cause.message(),
+            self.type_.message()
+        )
+    }
+}
+pub struct IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+    cx: &'a LateContext<'tcx>,
+    findings: Vec<Finding>,
+    is_complex_operation: bool,
+    constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+}
+
+impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
+    pub fn check_pow(&mut self, expr: &Expr<'tcx>, base: &Expr<'tcx>, exponent: &Expr<'tcx>) {
+        if self.constant_analyzer.is_constant(base) && self.constant_analyzer.is_constant(exponent)
+        {
+            return;
+        }
+
+        let base_type = self.cx.typeck_results().expr_ty(base);
+        if self.is_overflow_susceptible_type(base_type) {
+            self.findings
+                .push(Finding::new(expr.span, Type::Overflow, Cause::Pow));
+        }
+    }
+
+    pub fn check_negate(&mut self, expr: &Expr<'tcx>, operand: &Expr<'tcx>) {
+        if self.constant_analyzer.is_constant(operand) {
+            return;
+        }
+
+        let operand_type = self.cx.typeck_results().expr_ty(operand);
+        if self.is_overflow_susceptible_type(operand_type) && operand_type.is_signed() {
+            self.findings
+                .push(Finding::new(expr.span, Type::Overflow, Cause::Negate));
+        }
+    }
+
+    pub fn check_binary(
+        &mut self,
+        expr: &Expr<'tcx>,
+        op: BinOpKind,
+        left: &Expr<'tcx>,
+        right: &Expr<'tcx>,
+    ) {
+        if self.constant_analyzer.is_constant(left) && self.constant_analyzer.is_constant(right) {
+            return;
+        }
+
+        let (left_type, right_type) = (
+            self.cx.typeck_results().expr_ty(left),
+            self.cx.typeck_results().expr_ty(right),
+        );
+
+        if !self.is_overflow_susceptible_type(left_type)
+            || !self.is_overflow_susceptible_type(right_type)
+        {
+            return;
+        }
+
+        let (finding_type, cause) = if self.is_complex_operation {
+            (Type::OverflowUnderflow, Cause::Multiple)
+        } else {
+            match op {
+                BinOpKind::Add => (Type::Overflow, Cause::Add),
+                BinOpKind::Sub => (Type::Underflow, Cause::Sub),
+                BinOpKind::Mul => (Type::Overflow, Cause::Mul),
+                _ => return,
+            }
+        };
+
+        self.findings
+            .push(Finding::new(expr.span, finding_type, cause));
+    }
+
+    fn is_overflow_susceptible_type(&self, ty: Ty<'_>) -> bool {
+        let ty = ty.peel_refs();
+        ty.is_integral() || match_type_to_str(self.cx, ty, "Balance")
+    }
+}
+
+impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+        match expr.kind {
+            ExprKind::Binary(op, lhs, rhs) | ExprKind::AssignOp(op, lhs, rhs) => {
+                self.is_complex_operation = matches!(lhs.kind, ExprKind::Binary(..))
+                    || matches!(rhs.kind, ExprKind::Binary(..));
+                self.check_binary(expr, op.node, lhs, rhs);
+                if self.is_complex_operation {
+                    return;
+                }
+            }
+            ExprKind::Unary(UnOp::Neg, arg) => {
+                self.check_negate(expr, arg);
+            }
+            ExprKind::MethodCall(method_name, receiver, args, ..) => {
+                if method_name.ident.name == Symbol::intern("pow") {
+                    self.check_pow(expr, receiver, &args[0]);
+                }
+            }
+            _ => {}
+        }
+
+        walk_expr(self, expr);
     }
 }
 
 impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
-    fn check_expr(&mut self, cx: &LateContext<'tcx>, e: &'tcx Expr<'_>) {
-        match e.kind {
-            ExprKind::Binary(op, lhs, rhs) => {
-                self.arithmetic_context
-                    .check_binary(cx, e, op.node, lhs, rhs);
-            }
-            ExprKind::AssignOp(op, lhs, rhs) => {
-                self.arithmetic_context
-                    .check_binary(cx, e, op.node, lhs, rhs);
-            }
-            ExprKind::Unary(op, arg) => {
-                if op == UnOp::Neg {
-                    self.arithmetic_context.check_negate(cx, e, arg);
-                }
-            }
-            _ => (),
-        }
-    }
-
-    fn check_expr_post(&mut self, _: &LateContext<'_>, e: &Expr<'_>) {
-        self.arithmetic_context.expr_post(e.hir_id);
-    }
-
-    fn check_body(&mut self, cx: &LateContext<'tcx>, b: &'tcx Body<'_>) {
-        self.arithmetic_context.enter_body(cx, b);
-    }
-
-    fn check_body_post(&mut self, cx: &LateContext<'tcx>, b: &'tcx Body<'_>) {
-        self.arithmetic_context.body_post(cx, b);
-    }
-}
-
-#[derive(Default)]
-pub struct ArithmeticContext {
-    expr_id: Option<hir::HirId>,
-    /// This field is used to check whether expressions are constants, such as in enum discriminants
-    /// and consts
-    const_span: Option<Span>,
-}
-impl ArithmeticContext {
-    fn skip_expr(&mut self, e: &hir::Expr<'_>) -> bool {
-        self.expr_id.is_some() || self.const_span.map_or(false, |span| span.contains(e.span))
-    }
-
-    pub fn check_binary<'tcx>(
+    fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
-        expr: &'tcx hir::Expr<'_>,
-        op: hir::BinOpKind,
-        l: &'tcx hir::Expr<'_>,
-        r: &'tcx hir::Expr<'_>,
+        _: FnKind<'tcx>,
+        _: &'tcx FnDecl<'tcx>,
+        body: &'tcx Body<'tcx>,
+        span: Span,
+        _: LocalDefId,
     ) {
-        if self.skip_expr(expr) {
+        // If the function comes from a macro expansion, we ignore it
+        if span.from_expansion() {
             return;
         }
-        match op {
-            hir::BinOpKind::And
-            | hir::BinOpKind::Or
-            | hir::BinOpKind::BitAnd
-            | hir::BinOpKind::BitOr
-            | hir::BinOpKind::BitXor
-            | hir::BinOpKind::Eq
-            | hir::BinOpKind::Lt
-            | hir::BinOpKind::Le
-            | hir::BinOpKind::Ne
-            | hir::BinOpKind::Ge
-            | hir::BinOpKind::Gt => return,
-            _ => (),
-        }
 
-        let (l_ty, r_ty) = (
-            cx.typeck_results().expr_ty(l),
-            cx.typeck_results().expr_ty(r),
-        );
-        if l_ty.peel_refs().is_integral() && r_ty.peel_refs().is_integral() {
-            match op {
-                hir::BinOpKind::Div | hir::BinOpKind::Rem => match &r.kind {
-                    hir::ExprKind::Lit(_lit) => (),
-                    hir::ExprKind::Unary(hir::UnOp::Neg, expr) => {
-                        if is_integer_literal(expr, 1) {
-                            clippy_wrappers::span_lint_and_help(
-                                cx,
-                                INTEGER_OVERFLOW_UNDERFLOW,
-                                expr.span,
-                                LINT_MESSAGE,
-                                None,
-                                "Potential for integer arithmetic overflow/underflow in unary operation with negative expression. Consider checked, wrapping or saturating arithmetic."
-                            );
-                            self.expr_id = Some(expr.hir_id);
-                        }
-                    }
-                    _ => {
-                        clippy_wrappers::span_lint_and_help(
-                            cx,
-                            INTEGER_OVERFLOW_UNDERFLOW,
-                            expr.span,
-                            LINT_MESSAGE,
-                            None,
-                            &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
-                        );
-                        self.expr_id = Some(expr.hir_id);
-                    }
-                },
-                _ => {
-                    clippy_wrappers::span_lint_and_help(
-                        cx,
-                        INTEGER_OVERFLOW_UNDERFLOW,
-                        expr.span,
-                        LINT_MESSAGE,
-                        None,
-                        &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
-                    );
-                    self.expr_id = Some(expr.hir_id);
-                }
-            }
-        }
-    }
+        // Gather all compile-time variables in the function
+        let mut constant_analyzer = ConstantAnalyzer {
+            cx,
+            constants: HashSet::new(),
+        };
+        constant_analyzer.visit_body(body);
 
-    pub fn check_negate<'tcx>(
-        &mut self,
-        cx: &LateContext<'tcx>,
-        expr: &'tcx hir::Expr<'_>,
-        arg: &'tcx hir::Expr<'_>,
-    ) {
-        if self.skip_expr(expr) {
-            return;
-        }
-        let ty = cx.typeck_results().expr_ty(arg);
-        if constant_simple(cx, cx.typeck_results(), expr).is_none() && ty.is_integral() {
-            clippy_wrappers::span_lint_and_help(
+        // Analyze the function for integer overflow/underflow
+        let mut visitor = IntegerOverflowUnderflowVisitor {
+            cx,
+            findings: Vec::new(),
+            is_complex_operation: false,
+            constant_analyzer,
+        };
+        visitor.visit_body(body);
+
+        // Report any findings
+        for finding in visitor.findings {
+            span_lint_and_help(
                 cx,
                 INTEGER_OVERFLOW_UNDERFLOW,
-                expr.span,
-                LINT_MESSAGE,
+                finding.span,
+                &finding.generate_message(),
                 None,
-                "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.",
-            );
-            self.expr_id = Some(expr.hir_id);
+                "Consider using the checked version of this operation/s",
+            )
         }
-    }
-
-    pub fn expr_post(&mut self, id: hir::HirId) {
-        if Some(id) == self.expr_id {
-            self.expr_id = None;
-        }
-    }
-
-    pub fn enter_body(&mut self, cx: &LateContext<'_>, body: &hir::Body<'_>) {
-        let body_owner = cx.tcx.hir().body_owner(body.id());
-        let body_owner_def_id = cx.tcx.hir().body_owner_def_id(body.id());
-
-        match cx.tcx.hir().body_owner_kind(body_owner_def_id) {
-            hir::BodyOwnerKind::Static(_) | hir::BodyOwnerKind::Const { .. } => {
-                let body_span = cx.tcx.hir().span_with_body(body_owner);
-
-                if let Some(span) = self.const_span {
-                    if span.contains(body_span) {
-                        return;
-                    }
-                }
-                self.const_span = Some(body_span);
-            }
-            hir::BodyOwnerKind::Fn | hir::BodyOwnerKind::Closure => (),
-        }
-    }
-
-    pub fn body_post(&mut self, cx: &LateContext<'_>, body: &hir::Body<'_>) {
-        let body_owner = cx.tcx.hir().body_owner(body.id());
-        let body_span = cx.tcx.hir().span_with_body(body_owner);
-
-        if let Some(span) = self.const_span {
-            if span.contains(body_span) {
-                return;
-            }
-        }
-        self.const_span = None;
     }
 }
