@@ -1,3 +1,4 @@
+use crate as pallet_example_basic;
 use crate::*;
 use frame_support::{
     assert_ok, derive_impl,
@@ -9,7 +10,6 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     BuildStorage,
 };
-use crate as pallet_example_basic;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -75,7 +75,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 #[test]
-fn test_large_value(){
+fn test_large_value() {
     new_test_ext().execute_with(|| {
         assert!(Example::accumulate_dummy(RuntimeOrigin::signed(1), 1001_u64).is_err());
     });

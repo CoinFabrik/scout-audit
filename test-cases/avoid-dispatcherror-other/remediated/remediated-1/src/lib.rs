@@ -76,7 +76,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::error]
-    pub enum Error<T>{
+    pub enum Error<T> {
         IncreaseByTooLarge,
     }
 
@@ -86,18 +86,16 @@ pub mod pallet {
             Weight::zero()
         }
 
-        fn on_finalize(_n: BlockNumberFor<T>) {
-        }
+        fn on_finalize(_n: BlockNumberFor<T>) {}
 
-        fn offchain_worker(_n: BlockNumberFor<T>) {
-        }
+        fn offchain_worker(_n: BlockNumberFor<T>) {}
     }
 
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         pub fn accumulate_dummy(origin: OriginFor<T>, increase_by: T::Balance) -> DispatchResult {
-            if increase_by > T::Balance::from(1000u32){
+            if increase_by > T::Balance::from(1000u32) {
                 return Err(Error::<T>::IncreaseByTooLarge.into());
             }
 
