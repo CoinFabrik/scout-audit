@@ -1,0 +1,10 @@
+Warning: `--pipe-stdout` is experimental
+Checking with toolchain `nightly-2023-12-16-x86_64-unknown-linux-gnu`
+warning: virtual workspace defaulting to `resolver = "1"` despite one or more workspace members being on edition 2021 which implies `resolver = "2"`
+note: to keep the current resolver, specify `workspace.resolver = "1"` in the workspace root's manifest
+note: to use the edition 2021 resolver, specify `workspace.resolver = "2"` in the workspace root's manifest
+note: for more details see https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+    Checking pallet-inconsistent-weight-name-vulnerable-1 v27.0.0 (/home/victor/sokoban/scout-substrate/test-cases/avoid-dispatcherror-other/vulnerable/vulnerable-1)
+[avoid-dispatcherror-other/src/lib.rs:107] first.ident = DispatchError#0
+[avoid-dispatcherror-other/src/lib.rs:108] second.ident = Other#0
+    Finished release [optimized] target(s) in 0.35s
