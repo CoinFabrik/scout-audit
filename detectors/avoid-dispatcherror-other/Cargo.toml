@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "inconsistent-weight-name"
+name = "avoid-dispatcherror-other"
 version = "0.1.0"
 
 [lib]
