@@ -4,7 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+use clippy_wrappers::span_lint_and_help;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
@@ -18,7 +18,7 @@ use utils::{match_type_to_str, ConstantAnalyzer};
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
 scout_audit_dylint_linting::declare_late_lint! {
-    pub INTEGER_OVERFLOW_UNDERFLOW,
+    pub INTEGER_OVERFLOW_OR_UNDERFLOW,
     Warn,
     LINT_MESSAGE,
     {
@@ -86,14 +86,14 @@ impl Finding {
         )
     }
 }
-pub struct IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+pub struct IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     findings: Vec<Finding>,
     is_complex_operation: bool,
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
 }
 
-impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
+impl<'tcx> IntegerOverflowOrUnderflowVisitor<'_, 'tcx> {
     pub fn check_pow(&mut self, expr: &Expr<'tcx>, base: &Expr<'tcx>, exponent: &Expr<'tcx>) {
         if self.constant_analyzer.is_constant(base) && self.constant_analyzer.is_constant(exponent)
         {
@@ -162,7 +162,7 @@ impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         match expr.kind {
             ExprKind::Binary(op, lhs, rhs) | ExprKind::AssignOp(op, lhs, rhs) => {
@@ -188,7 +188,7 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowUnderflowVisitor<'a, 'tcx> {
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
+impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -211,7 +211,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
         constant_analyzer.visit_body(body);
 
         // Analyze the function for integer overflow/underflow
-        let mut visitor = IntegerOverflowUnderflowVisitor {
+        let mut visitor = IntegerOverflowOrUnderflowVisitor {
             cx,
             findings: Vec::new(),
             is_complex_operation: false,
@@ -223,7 +223,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
         for finding in visitor.findings {
             span_lint_and_help(
                 cx,
-                INTEGER_OVERFLOW_UNDERFLOW,
+                INTEGER_OVERFLOW_OR_UNDERFLOW,
                 finding.span,
                 &finding.generate_message(),
                 None,
