@@ -5,7 +5,8 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint_and_help, higher};
+use clippy_utils::higher;
+use clippy_wrappers::span_lint_and_help;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
