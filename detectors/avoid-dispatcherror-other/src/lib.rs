@@ -16,10 +16,10 @@ use rustc_span::{def_id::DefId, Span};
 pub const LINT_MESSAGE: &str = "Avoid using DispatchError::Other for error codes.";
 
 scout_audit_dylint_linting::impl_late_lint! {
-    pub AVOID_DISPATCH_ERROR_OTHER,
+    pub AVOID_DISPATCHERROR_OTHER,
     Warn,
     LINT_MESSAGE,
-    AvoidDispatchErrorOther::default(),
+    AvoidDispatcherrorOther::default(),
     {
         name: "Avoid DispatchError::Other",
         long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
@@ -30,8 +30,8 @@ scout_audit_dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct AvoidDispatchErrorOther {}
-impl AvoidDispatchErrorOther {
+pub struct AvoidDispatcherrorOther {}
+impl AvoidDispatcherrorOther {
     pub fn new() -> Self {
         Self {}
     }
@@ -98,12 +98,12 @@ fn check_expr<'a>(cx: &rustc_lint::LateContext<'a>, expr: &'a ExprKind<'a>) -> R
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for AvoidDispatchErrorOther {
+impl<'tcx> LateLintPass<'tcx> for AvoidDispatcherrorOther {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if let Ok(span) = check_expr(cx, &expr.kind) {
             span_lint_and_help(
                 cx,
-                AVOID_DISPATCH_ERROR_OTHER,
+                AVOID_DISPATCHERROR_OTHER,
                 span,
                 LINT_MESSAGE,
                 None,

@@ -1655,6 +1655,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
+name = "pallet-avoid-dispatcherror-other-remediated-1"
+version = "27.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-avoid-dispatcherror-other-vulnerable-1"
+version = "27.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-balances"
 version = "39.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?rev=87971b3e92721bdf10bf40b410eaae779d494ca0#87971b3e92721bdf10bf40b410eaae779d494ca0"
