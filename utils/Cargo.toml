@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "utils"
+version = "0.1.0"
+
+[dependencies]
+if_chain = "=1.0.2"
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "99c7838" }
+
+[package.metadata.rust-analyzer]
+rustc_private = true

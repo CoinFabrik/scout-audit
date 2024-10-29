@@ -1,5 +1,9 @@
 [workspace]
-exclude = [".cargo", "target"]
+exclude = [
+    ".cargo",
+    "target",
+    "known-vulnerabilities",
+]
 members = ["*/remediated/remediated-*", "*/vulnerable/vulnerable-*"]
 
 [workspace.package]

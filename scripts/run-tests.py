@@ -1,6 +1,8 @@
 import os
 import argparse
 import time
+import tempfile
+import json
 
 from utils import (
     parse_json_from_string,
@@ -14,7 +16,6 @@ RED = "\033[91m"
 GREEN = "\033[92m"
 ENDC = "\033[0m"
 
-
 def run_tests(detector):
     errors = []
     directory = os.path.join("test-cases", detector)
@@ -27,10 +28,12 @@ def run_tests(detector):
         if is_rust_project(root):
             if run_unit_tests(root):
                 errors.append(root)
-            if run_integration_tests(detector, root):
+            if not run_integration_tests(detector, root):
                 errors.append(root)
     return errors
 
+def convert_code(s):
+    return s.replace('_', '-')
 
 def run_unit_tests(root):
     start_time = time.time()
@@ -76,6 +79,8 @@ def run_integration_tests(detector, root):
     detector_key = detector.replace("-", "_")
     short_message = detector_metadata.get(detector_key, {}).get("short_message")
 
+    _, tempPath = tempfile.mkstemp(None, f'scout_{os.getpid()}_')
+
     returncode, _, stderr = run_subprocess(
         [
             "cargo",
@@ -84,13 +89,21 @@ def run_integration_tests(detector, root):
             detector,
             "--local-detectors",
             os.path.join(os.getcwd(), "detectors"),
+            "--output-format",
+            "raw-json",
+            "--output-path",
+            tempPath,
         ],
         root,
     )
 
-    should_lint = root.endswith("vulnerable-example")
-    if should_lint and short_message and short_message not in stderr:
-        returncode = 1
+    if returncode != 0:
+        return False
+    
+    with open(tempPath) as file:
+        detectors_triggered = {convert_code(json.loads(line.rstrip())['code']['code']) for line in file}
+        if ("vulnerable" in root) != (detector in detectors_triggered):
+            return False
 
     print_results(
         returncode,
@@ -99,7 +112,7 @@ def run_integration_tests(detector, root):
         root,
         time.time() - start_time,
     )
-    return returncode != 0
+    return True
 
 
 if __name__ == "__main__":
