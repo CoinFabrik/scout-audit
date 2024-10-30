@@ -12,7 +12,6 @@ edition = "2021"
 
 [workspace.dependencies]
 codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
-frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 log = { version = "0.4.22", default-features = false }
