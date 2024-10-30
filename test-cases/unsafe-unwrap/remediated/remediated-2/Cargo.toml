@@ -1,5 +1,5 @@
 [package]
-name = "pallet-example-basic-remediated-2"
+name = "unsafe-unwrap-remediated-2"
 version = "27.0.0"
 authors.workspace = true
 edition.workspace = true
