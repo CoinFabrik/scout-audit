@@ -1,6 +1,7 @@
 [workspace]
 exclude = [".cargo", ".vscode", "target"]
 members = ["*"]
+resolver = "2"
 
 [workspace.dependencies]
 cargo_metadata = "=0.18.1"
