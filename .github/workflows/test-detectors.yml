@@ -128,6 +128,12 @@ jobs:
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
+      - name: "Show git status"
+        run: git status
+
+      - name: Check that no files need to be committed
+        run: test -z "$(git status --porcelain)"
+
   comment-on-pr:
     name: Comment on PR
     runs-on: ubuntu-latest
