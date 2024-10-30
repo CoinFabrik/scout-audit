@@ -1,10 +1,7 @@
 [workspace]
-exclude = [
-    ".cargo",
-    "target",
-    "known-vulnerabilities",
-]
+exclude = [".cargo", "known-vulnerabilities", "target"]
 members = ["*/remediated/remediated-*", "*/vulnerable/vulnerable-*"]
+resolver = "2"
 
 [workspace.package]
 authors = [
@@ -38,8 +35,3 @@ strip = "symbols"
 [profile.release-with-logs]
 debug-assertions = true
 inherits = "release"
-
-[workspace.metadata.dylint]
-libraries = [
-    { path = "/Users/josegarcia/Desktop/coinfabrik/scout-substrate/detectors/unsafe-unwrap" },
-]
