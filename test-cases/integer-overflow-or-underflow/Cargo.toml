@@ -4,7 +4,7 @@ members = ["integer-overflow-or-underflow-*/*"]
 resolver = "2"
 
 [workspace.dependencies]
-soroban-sdk = { version = "=21.4.0" }
+soroban-sdk = { version = "=21.7.6" }
 
 [profile.release]
 codegen-units = 1
