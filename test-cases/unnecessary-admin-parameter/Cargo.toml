@@ -4,7 +4,7 @@ members = ["unnecessary-admin-parameter-*/*"]
 resolver = "2"
 
 [workspace.dependencies]
-soroban-sdk = { version = "=21.6.0" }
+soroban-sdk = { version = "=21.7.6" }
 
 [profile.release]
 codegen-units = 1
