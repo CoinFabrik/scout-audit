@@ -4,7 +4,8 @@ members = ["front-running-*/*"]
 resolver = "2"
 
 [workspace.dependencies]
-soroban-sdk = { version = "=20.0.0" }
+soroban-sdk = { version = "=21.7.6" }
+soroban-token-sdk = { version = "=21.7.6" }
 
 [profile.release]
 codegen-units = 1
