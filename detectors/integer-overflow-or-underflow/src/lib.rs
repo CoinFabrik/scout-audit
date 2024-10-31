@@ -16,7 +16,7 @@ use utils::ConstantAnalyzer;
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
 dylint_linting::declare_late_lint! {
-    pub INTEGER_OVERFLOW_UNDERFLOW,
+    pub INTEGER_OVERFLOW_OR_UNDERFLOW,
     Warn,
     LINT_MESSAGE,
     {
@@ -30,7 +30,7 @@ dylint_linting::declare_late_lint! {
 enum Type {
     Overflow,
     Underflow,
-    OverflowUnderflow,
+    OverflowAndUnderflow,
 }
 
 impl Type {
@@ -38,7 +38,7 @@ impl Type {
         match self {
             Type::Overflow => "overflow",
             Type::Underflow => "underflow",
-            Type::OverflowUnderflow => "overflow or underflow",
+            Type::OverflowAndUnderflow => "overflow or underflow",
         }
     }
 }
@@ -84,14 +84,14 @@ impl Finding {
         )
     }
 }
-pub struct IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+pub struct IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     findings: Vec<Finding>,
     is_complex_operation: bool,
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
 }
 
-impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
+impl<'tcx> IntegerOverflowOrUnderflowVisitor<'_, 'tcx> {
     pub fn check_pow(&mut self, expr: &Expr<'tcx>, base: &Expr<'tcx>, exponent: &Expr<'tcx>) {
         if self.constant_analyzer.is_constant(base) && self.constant_analyzer.is_constant(exponent)
         {
@@ -137,7 +137,7 @@ impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
         }
 
         let (finding_type, cause) = if self.is_complex_operation {
-            (Type::OverflowUnderflow, Cause::Multiple)
+            (Type::OverflowAndUnderflow, Cause::Multiple)
         } else {
             match op {
                 BinOpKind::Add => (Type::Overflow, Cause::Add),
@@ -152,7 +152,7 @@ impl<'tcx> IntegerOverflowUnderflowVisitor<'_, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowUnderflowVisitor<'a, 'tcx> {
+impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         match expr.kind {
             ExprKind::Binary(op, lhs, rhs) | ExprKind::AssignOp(op, lhs, rhs) => {
@@ -178,7 +178,7 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowUnderflowVisitor<'a, 'tcx> {
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
+impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -201,7 +201,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
         constant_analyzer.visit_body(body);
 
         // Analyze the function for integer overflow/underflow
-        let mut visitor = IntegerOverflowUnderflowVisitor {
+        let mut visitor = IntegerOverflowOrUnderflowVisitor {
             cx,
             findings: Vec::new(),
             is_complex_operation: false,
@@ -213,7 +213,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
         for finding in visitor.findings {
             span_lint_and_help(
                 cx,
-                INTEGER_OVERFLOW_UNDERFLOW,
+                INTEGER_OVERFLOW_OR_UNDERFLOW,
                 finding.span,
                 finding.generate_message(),
                 None,
