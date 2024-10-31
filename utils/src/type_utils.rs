@@ -6,7 +6,7 @@ extern crate rustc_span;
 use rustc_hir::{FnDecl, FnRetTy, HirId, QPath};
 use rustc_lint::LateContext;
 use rustc_middle::ty::{Ty, TyKind};
-use rustc_span::Symbol;
+use rustc_span::{Span, Symbol};
 
 /// Get the type of a node, if it exists.
 pub fn get_node_type_opt<'tcx>(cx: &LateContext<'tcx>, hir_id: &HirId) -> Option<Ty<'tcx>> {
@@ -33,4 +33,12 @@ pub fn fn_returns(decl: &FnDecl<'_>, type_symbol: Symbol) -> bool {
     } else {
         false
     }
+}
+
+/// Check if a span comes from a macro expansion
+pub fn is_macro_expansion(span: Span) -> bool {
+    span.from_expansion()
+        || span.in_derive_expansion()
+        || span.in_macro_expansion_with_collapse_debuginfo()
+        || span.ctxt().outer_expn_data().macro_def_id.is_some()
 }
