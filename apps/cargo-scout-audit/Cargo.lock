@@ -523,7 +523,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.2.17"
+version = "0.2.19"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -543,6 +543,7 @@ dependencies = [
  "lazy_static",
  "libloading",
  "once_cell",
+ "orion",
  "regex",
  "reqwest",
  "semver",
@@ -2328,7 +2329,8 @@ dependencies = [
 [[package]]
 name = "headless_chrome"
 version = "1.0.14"
-source = "git+https://github.com/rust-headless-chrome/rust-headless-chrome?tag=1.0.14#ae057fe4c3c67c4db7752bfda1c00cf543f0eeac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1eb54284cb4be609bae1375e08e7737752fd5f919f918345359b51b38b7b9ce"
 dependencies = [
  "anyhow",
  "auto_generate_cdp",
@@ -3168,7 +3170,9 @@ version = "0.17.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abdb10181903c8c4b016ba45d6d6d5af1a1e2a461aa4763a83b87f5df4695e5"
 dependencies = [
+ "ct-codecs",
  "fiat-crypto",
+ "getrandom",
  "subtle",
  "zeroize",
 ]
