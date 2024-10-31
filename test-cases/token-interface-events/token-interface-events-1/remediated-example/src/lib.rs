@@ -78,7 +78,8 @@ impl TokenInterfaceEvents {
     }
 
     pub fn mint(env: Env, to: Address, amount: i128) {
-        Self::get_metadata(env.clone()).admin.require_auth();
+        let admin = Self::get_metadata(env.clone()).admin;
+        admin.require_auth();
         let previous_balance: i128 = env
             .clone()
             .storage()
@@ -87,7 +88,8 @@ impl TokenInterfaceEvents {
             .unwrap_or(0);
         env.storage()
             .instance()
-            .set(&DataKey::Balance(to), &(previous_balance + amount));
+            .set(&DataKey::Balance(to.clone()), &(previous_balance + amount));
+        TokenUtils::new(&env).events().mint(admin, to, amount);
     }
 
     fn get_allowance(env: Env, from: Address, spender: Address) -> AllowanceFromSpender {
