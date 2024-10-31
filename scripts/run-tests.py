@@ -48,8 +48,11 @@ def run_unit_tests(root):
     return returncode != 0
 
 
+
 def run_integration_tests(detector, root):
     start_time = time.time()
+
+    local_detectors = os.path.join(os.getcwd(), "detectors")
 
     returncode, stdout, _ = run_subprocess(
         [
@@ -59,7 +62,7 @@ def run_integration_tests(detector, root):
             detector,
             "--metadata",
             "--local-detectors",
-            os.path.join(os.getcwd(), "detectors"),
+            local_detectors,
         ],
         root,
     )
@@ -81,21 +84,41 @@ def run_integration_tests(detector, root):
 
     _, tempPath = tempfile.mkstemp(None, f'scout_{os.getpid()}_')
 
-    returncode, _, stderr = run_subprocess(
-        [
-            "cargo",
-            "scout-audit",
-            "--filter",
-            detector,
-            "--local-detectors",
-            os.path.join(os.getcwd(), "detectors"),
-            "--output-format",
-            "raw-json",
-            "--output-path",
-            tempPath,
-        ],
-        root,
-    )
+    returncode = None
+    stderr = None
+
+    if detector != "unnecessary-lint-allow":
+        returncode, _, stderr = run_subprocess(
+            [
+                "cargo",
+                "scout-audit",
+                "--filter",
+                detector,
+                "--local-detectors",
+                local_detectors,
+                "--output-format",
+                "raw-json",
+                "--output-path",
+                tempPath,
+            ],
+            root,
+        )
+    else:
+        #We need to handle this case differently, because using filter will
+        #cause other detectors to not run, making the test case invalid.
+        returncode, _, stderr = run_subprocess(
+            [
+                "cargo",
+                "scout-audit",
+                "--local-detectors",
+                local_detectors,
+                "--output-format",
+                "raw-json",
+                "--output-path",
+                tempPath,
+            ],
+            root,
+        )
 
     if returncode != 0:
         print(f"{RED}Scout failed to run.{ENDC}")
