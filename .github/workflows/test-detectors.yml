@@ -59,7 +59,7 @@ jobs:
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Clone cargo-scout-audit
-        run: git clone https://github.com/CoinFabrik/scout-audit.git -b substrate-pallets scout-repo
+        run: git clone https://github.com/CoinFabrik/scout-audit.git -b main scout-repo
 
       - name: Install cargo-scout-audit
         working-directory: scout-repo/apps/cargo-scout-audit
