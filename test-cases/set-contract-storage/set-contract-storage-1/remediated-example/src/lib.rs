@@ -295,7 +295,34 @@ mod erc20 {
         /// Imports all the definitions from the outer scope so we can use them here.
         use super::*;
 
-        type Event = <Erc20 as ::ink::reflect::ContractEventBase>::Type;
+        fn encoded_into_hash<T>(entity: T) -> Hash
+        where
+            T: ink::scale::Encode,
+        {
+            use ink::{
+                env::hash::{
+                    Blake2x256,
+                    CryptoHash,
+                    HashOutput,
+                },
+                primitives::Clear,
+            };
+
+            let mut result = Hash::CLEAR_HASH;
+            let len_result = result.as_ref().len();
+            let encoded = entity.encode();
+            let len_encoded = encoded.len();
+            if len_encoded <= len_result {
+                result.as_mut()[..len_encoded].copy_from_slice(&encoded);
+                return result
+            }
+            let mut hash_output =
+                <<Blake2x256 as HashOutput>::Type as Default>::default();
+            <Blake2x256 as CryptoHash>::hash(&encoded, &mut hash_output);
+            let copy_len = core::cmp::min(hash_output.len(), len_result);
+            result.as_mut()[0..copy_len].copy_from_slice(&hash_output[0..copy_len]);
+            result
+        }
 
         fn assert_transfer_event(
             event: &ink::env::test::EmittedEvent,
@@ -303,59 +330,43 @@ mod erc20 {
             expected_to: Option<AccountId>,
             expected_value: Balance,
         ) {
-            let decoded_event = <Event as scale::Decode>::decode(&mut &event.data[..])
-                .expect("encountered invalid contract event data buffer");
-            if let Event::Transfer(Transfer { from, to, value }) = decoded_event {
-                assert_eq!(from, expected_from, "encountered invalid Transfer.from");
-                assert_eq!(to, expected_to, "encountered invalid Transfer.to");
-                assert_eq!(value, expected_value, "encountered invalid Trasfer.value");
+            let decoded_event =
+                <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
+                    .expect("encountered invalid contract event data buffer");
+            let Transfer { from, to, value } = decoded_event;
+            assert_eq!(from, expected_from, "encountered invalid Transfer.from");
+            assert_eq!(to, expected_to, "encountered invalid Transfer.to");
+            assert_eq!(value, expected_value, "encountered invalid Trasfer.value");
+
+            let mut expected_topics = Vec::new();
+            expected_topics.push(
+                ink::blake2x256!("Transfer(Option<AccountId>,Option<AccountId>,Balance)")
+                    .into(),
+            );
+            if let Some(from) = expected_from {
+                expected_topics.push(encoded_into_hash(from));
             } else {
-                panic!("encountered unexpected event kind: expected a Transfer event")
+                expected_topics.push(Hash::CLEAR_HASH);
             }
-
-            fn encoded_into_hash<T>(entity: &T) -> Hash
-            where
-                T: scale::Encode,
-            {
-                let mut result = Hash::CLEAR_HASH;
-                let len_result = result.as_ref().len();
-                let encoded = entity.encode();
-                let len_encoded = encoded.len();
-                if len_encoded <= len_result {
-                    result.as_mut()[..len_encoded].copy_from_slice(&encoded);
-                    return result;
-                }
-                let mut hash_output = <<Blake2x256 as HashOutput>::Type as Default>::default();
-                <Blake2x256 as CryptoHash>::hash(&encoded, &mut hash_output);
-                let copy_len = core::cmp::min(hash_output.len(), len_result);
-                result.as_mut()[0..copy_len].copy_from_slice(&hash_output[0..copy_len]);
-                result
+            if let Some(to) = expected_to {
+                expected_topics.push(encoded_into_hash(to));
+            } else {
+                expected_topics.push(Hash::CLEAR_HASH);
             }
+            expected_topics.push(encoded_into_hash(value));
 
-            let expected_topics = [
-                encoded_into_hash(&PrefixedValue {
-                    prefix: b"",
-                    value: b"Erc20::Transfer",
-                }),
-                encoded_into_hash(&PrefixedValue {
-                    prefix: b"Erc20::Transfer::from",
-                    value: &expected_from,
-                }),
-                encoded_into_hash(&PrefixedValue {
-                    prefix: b"Erc20::Transfer::to",
-                    value: &expected_to,
-                }),
-                encoded_into_hash(&PrefixedValue {
-                    prefix: b"Erc20::Transfer::value",
-                    value: &expected_value,
-                }),
-            ];
+            let topics = event.topics.clone();
             for (n, (actual_topic, expected_topic)) in
-                event.topics.iter().zip(expected_topics).enumerate()
+                topics.iter().zip(expected_topics).enumerate()
             {
-                let topic = <Hash as scale::Decode>::decode(&mut &actual_topic[..])
-                    .expect("encountered invalid topic encoding");
-                assert_eq!(topic, expected_topic, "encountered invalid topic at {n}");
+                let mut topic_hash = Hash::CLEAR_HASH;
+                let len = actual_topic.len();
+                topic_hash.as_mut()[0..len].copy_from_slice(&actual_topic[0..len]);
+
+                assert_eq!(
+                    topic_hash, expected_topic,
+                    "encountered invalid topic at {n}"
+                );
             }
         }
 
