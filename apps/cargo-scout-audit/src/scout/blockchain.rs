@@ -52,7 +52,6 @@ impl BlockChain {
     #[tracing::instrument(name = "GET BLOCKCHAIN DEPENDENCY", level = "debug", skip_all)]
     pub fn get_blockchain_dependency(metadata: &Metadata) -> Result<Self> {
         let immediate_dependencies = Self::get_immediate_dependencies(metadata);
-        dbg!(&immediate_dependencies);
         if immediate_dependencies.contains("soroban-sdk"){
             Ok(BlockChain::Soroban)
         }else if immediate_dependencies.contains("ink"){
