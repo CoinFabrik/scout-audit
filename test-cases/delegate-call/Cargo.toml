@@ -9,7 +9,6 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2.6", default-features = false, features = ["derive"]}
 ink_e2e = { version = "=5.0.0" }
 delegate-call-divider = { path = "delegate-call-1/divider-example" }
-delegate-call-exploiter-1 = { path = "delegate-call-1/exploiter-example" }
 
 [profile.release]
 codegen-units = 1

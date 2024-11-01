@@ -26,4 +26,3 @@ scale-info = { workspace = true }
 [dev-dependencies]
 ink_e2e = { workspace = true }
 delegate-call-divider = { workspace = true }
-delegate-call-exploiter-1 = { workspace = true }
