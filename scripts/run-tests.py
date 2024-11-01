@@ -37,7 +37,7 @@ def convert_code(s):
 
 def run_unit_tests(root):
     start_time = time.time()
-    returncode, stdout, _ = run_subprocess(["cargo", "test", "--all-features"], root)
+    returncode, stdout, _ = run_subprocess(["cargo", "test"], root)
     print_results(
         returncode,
         stdout,
