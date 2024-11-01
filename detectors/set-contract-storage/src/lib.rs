@@ -52,7 +52,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     ///     }
     /// }
     /// ```
-    pub SET_STORAGE_WARN,
+    pub SET_CONTRACT_STORAGE,
     Warn,
     LINT_MESSAGE,
     {
@@ -81,7 +81,7 @@ fn expr_check_caller(expr: &Expr) -> bool {
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for SetStorageWarn {
+impl<'tcx> LateLintPass<'tcx> for SetContractStorage {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -146,7 +146,7 @@ impl<'tcx> LateLintPass<'tcx> for SetStorageWarn {
         if reentrant_storage.has_set_contract && reentrant_storage.unprotected {
             clippy_wrappers::span_lint_and_help(
                 cx,
-                SET_STORAGE_WARN,
+                SET_CONTRACT_STORAGE,
                 reentrant_storage.span.unwrap(),
                 LINT_MESSAGE,
                 None,
