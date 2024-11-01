@@ -284,14 +284,17 @@ fn get_crates(
     findings: &Vec<String>,
     packages: &[crate::output::report::Package],
 ) -> HashMap<String, bool> {
-    let mut ret = get_crates_from_output(output);
-    let krates = get_crates_from_findings(findings);
-    for krate in krates {
-        ret.entry(krate).or_insert(true);
-    }
+    let mut ret = HashMap::<String, bool>::new();
     for package in packages.iter() {
-        ret.entry(normalize_crate_name(&package.name))
-            .or_insert(true);
+        ret.insert(normalize_crate_name(&package.name), true);
+    }
+    for (name, ok) in get_crates_from_output(output).iter() {
+        if ret.contains_key(name){
+            ret.insert(name.clone(), ok.clone());
+        }
+    }
+    for krate in get_crates_from_findings(findings) {
+        ret.entry(krate).or_insert(true);
     }
 
     ret
