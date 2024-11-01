@@ -60,8 +60,18 @@ jobs:
       - name: Install Rust nightly
         run: rustup install nightly --profile minimal
 
-      - name: Install dylint, dylint-link and cargo-scout-audit
-        run: cargo +nightly install cargo-dylint dylint-link cargo-scout-audit
+      - name: Install dylint, dylint-link
+        run: cargo +nightly install cargo-dylint dylint-link
+
+      - name: Clone cargo-scout-audit
+        run: git clone https://github.com/CoinFabrik/scout-audit.git -b blockchain-detection-fix scout-repo
+
+      - name: Install cargo-scout-audit
+        working-directory: scout-repo/apps/cargo-scout-audit
+        run: cargo install --path .
+
+      - name: Clean up after installation
+        run: rm -rf scout-repo
 
       - name: Determine build status and write to file
         run: echo "${{ job.status }}" > status-${{ matrix.os }}.txt
