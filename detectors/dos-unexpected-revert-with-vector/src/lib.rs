@@ -51,10 +51,10 @@ scout_audit_dylint_linting::impl_late_lint! {
     ///     Ok(())
     /// }
     /// ```
-    pub UNEXPECTED_REVERT_WARN,
+    pub DOS_UNEXPECTED_REVERT_WITH_VECTOR,
     Warn,
     LINT_MESSAGE,
-    UnexpectedRevertWarn::default(),
+    DosUnexpectedRevertWithVector::default(),
     {
         name: "Unexpected Revert Inserting to Storage",
         long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
@@ -65,14 +65,14 @@ scout_audit_dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct UnexpectedRevertWarn {}
-impl UnexpectedRevertWarn {
+pub struct DosUnexpectedRevertWithVector {}
+impl DosUnexpectedRevertWithVector {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for UnexpectedRevertWarn {
+impl<'tcx> LateLintPass<'tcx> for DosUnexpectedRevertWithVector {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -216,7 +216,7 @@ impl<'tcx> LateLintPass<'tcx> for UnexpectedRevertWarn {
                 &mut HashSet::<BasicBlock>::default(),
             );
             for place in unchecked_places {
-                clippy_wrappers::span_lint(cx, UNEXPECTED_REVERT_WARN, place.1, LINT_MESSAGE);
+                clippy_wrappers::span_lint(cx, DOS_UNEXPECTED_REVERT_WITH_VECTOR, place.1, LINT_MESSAGE);
             }
         }
 
