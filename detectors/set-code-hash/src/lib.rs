@@ -24,10 +24,10 @@ use rustc_span::Span;
 const LINT_MESSAGE: &str = "This set_code_hash is called without access control";
 
 scout_audit_dylint_linting::impl_late_lint! {
-    pub UNPROTECTED_SET_CODE_HASH,
+    pub SET_CODE_HASH,
     Warn,
     LINT_MESSAGE,
-    UnprotectedSetCodeHash::default(),
+    SetCodeHash::default(),
     {
         name: "Unprotected Set Code Hash",
         long_message: "If users are allowed to call set_code_hash, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
@@ -38,14 +38,14 @@ scout_audit_dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct UnprotectedSetCodeHash {}
-impl UnprotectedSetCodeHash {
+pub struct SetCodeHash {}
+impl SetCodeHash {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for UnprotectedSetCodeHash {
+impl<'tcx> LateLintPass<'tcx> for SetCodeHash {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -55,14 +55,14 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSetCodeHash {
         _: Span,
         localdef: rustc_span::def_id::LocalDefId,
     ) {
-        struct UnprotectedSetCodeHashFinder<'tcx, 'tcx_ref> {
+        struct SetCodeHashFinder<'tcx, 'tcx_ref> {
             cx: &'tcx_ref LateContext<'tcx>,
             terminate_contract_span: Option<Span>,
             terminate_contract_def_id: Option<DefId>,
             caller_def_id: Option<DefId>,
         }
 
-        impl<'tcx> Visitor<'tcx> for UnprotectedSetCodeHashFinder<'tcx, '_> {
+        impl<'tcx> Visitor<'tcx> for SetCodeHashFinder<'tcx, '_> {
             fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
                 if let ExprKind::MethodCall(path, receiver, ..) = expr.kind {
                     if let ExprKind::MethodCall(rec_path, reciever2, ..) = receiver.kind
@@ -114,7 +114,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSetCodeHash {
             }
         }
 
-        let mut utf_storage = UnprotectedSetCodeHashFinder {
+        let mut utf_storage = SetCodeHashFinder {
             cx,
             terminate_contract_def_id: None,
             terminate_contract_span: None,
@@ -175,7 +175,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSetCodeHash {
                     if let TerminatorKind::Call { fn_span, .. } = terminate.0.terminator().kind {
                         clippy_wrappers::span_lint(
                             cx,
-                            UNPROTECTED_SET_CODE_HASH,
+                            SET_CODE_HASH,
                             fn_span,
                             LINT_MESSAGE,
                         );
@@ -192,7 +192,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSetCodeHash {
                 for place in unchecked_places {
                     clippy_wrappers::span_lint(
                         cx,
-                        UNPROTECTED_SET_CODE_HASH,
+                        SET_CODE_HASH,
                         place.1,
                         LINT_MESSAGE,
                     );
