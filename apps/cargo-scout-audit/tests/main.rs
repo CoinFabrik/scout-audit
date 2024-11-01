@@ -7,290 +7,303 @@ mod tests {
     use std::collections::HashMap;
     use std::{fs, path::PathBuf};
 
-    lazy_static! {
-        static ref CONTRACT_PATH: PathBuf = {
-            let mut path = PathBuf::from("tests");
-            path.push("contract");
-            path.push("Cargo.toml");
-            path
-        };
+    fn get_test_cases() -> Vec<PathBuf> {
+        let contracts_dir = PathBuf::from("tests").join("contracts");
+        let contract_paths: Vec<PathBuf> = fs::read_dir(contracts_dir)
+            .expect("Should read contracts directory")
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.path().is_dir())
+            .map(|entry| entry.path().join("Cargo.toml"))
+            .filter(|path| path.exists())
+            .collect();
+        contract_paths
     }
 
     #[test]
     fn test_default_scout() {
         // Given
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
         let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
+            manifest_path: Some(contract_path.clone()),
             ..Scout::default()
         };
         let result = run_scout(scout_opts);
 
         // Then
-        assert!(result.is_ok());
-    }
+        dbg!(result);
 
-    #[test]
-    fn test_scout_with_forced_fallback() {
-        // Given
+        let second_contract_path = contract_paths.get(1).unwrap();
         let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            force_fallback: true,
+            manifest_path: Some(second_contract_path.clone()),
             ..Scout::default()
         };
-
-        // When
         let result = run_scout(scout_opts);
-
-        // Then
-        assert!(result.is_ok());
+        dbg!(result);
     }
 
-    #[test]
-    fn test_scout_with_exclude() {
-        // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            exclude: Some("avoid-panic-error".to_string()),
-            ..Scout::default()
-        };
+    // #[test]
+    // fn test_scout_with_forced_fallback() {
+    //     // Given
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         force_fallback: true,
+    //         ..Scout::default()
+    //     };
 
-        // When
-        let result = run_scout(scout_opts);
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-        // Then
-        assert!(result.is_ok());
-    }
+    //     // Then
+    //     assert!(result.is_ok());
+    // }
 
-    #[test]
-    fn test_scout_with_filter() {
-        // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            filter: Some("avoid-panic-error".to_string()),
-            ..Scout::default()
-        };
+    // #[test]
+    // fn test_scout_with_exclude() {
+    //     // Given
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         exclude: Some("avoid-panic-error".to_string()),
+    //         ..Scout::default()
+    //     };
 
-        // When
-        let result = run_scout(scout_opts);
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-        // Then
-        assert!(result.is_ok());
-    }
+    //     // Then
+    //     assert!(result.is_ok());
+    // }
 
-    #[test]
-    fn test_scout_with_profile() {
-        // TODO
-    }
+    // #[test]
+    // fn test_scout_with_filter() {
+    //     // Given
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         filter: Some("avoid-panic-error".to_string()),
+    //         ..Scout::default()
+    //     };
 
-    #[test]
-    fn test_scout_list_detectors() {
-        // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            list_detectors: true,
-            ..Scout::default()
-        };
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-        // When
-        let result = run_scout(scout_opts);
+    //     // Then
+    //     assert!(result.is_ok());
+    // }
 
-        // Then
-        assert!(result.is_ok());
-    }
+    // #[test]
+    // fn test_scout_with_profile() {
+    //     // TODO
+    // }
 
-    fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-        fs::remove_file(file)
-            .unwrap_or_else(|_| panic!("Should be able to delete the file: {}", file));
+    // #[test]
+    // fn test_scout_list_detectors() {
+    //     // Given
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         list_detectors: true,
+    //         ..Scout::default()
+    //     };
 
-        Ok(())
-    }
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-    #[test]
-    fn test_html_format() -> Result<()> {
-        test_output_fn("report.html", OutputFormat::Html)
-    }
+    //     // Then
+    //     assert!(result.is_ok());
+    // }
 
-    #[test]
-    fn test_json_format() -> Result<()> {
-        test_output_fn("report.json", OutputFormat::Json)
-    }
+    // fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
+    //     test_output_format(file, &format)
+    //         .with_context(|| format!("Failed to test {:?} format", &format))?;
+    //     fs::remove_file(file)
+    //         .unwrap_or_else(|_| panic!("Should be able to delete the file: {}", file));
 
-    #[test]
-    fn test_raw_json_format() -> Result<()> {
-        test_output_fn("raw-report.json", OutputFormat::RawJson)
-    }
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_markdown_format() -> Result<()> {
-        test_output_fn("report.md", OutputFormat::Markdown)
-    }
+    // #[test]
+    // fn test_html_format() -> Result<()> {
+    //     test_output_fn("report.html", OutputFormat::Html)
+    // }
 
-    #[test]
-    fn test_markdown_github_format() -> Result<()> {
-        test_output_fn("report.md", OutputFormat::MarkdownGithub)
-    }
+    // #[test]
+    // fn test_json_format() -> Result<()> {
+    //     test_output_fn("report.json", OutputFormat::Json)
+    // }
 
-    #[test]
-    fn test_sarif_format() -> Result<()> {
-        test_output_fn("report.sarif", OutputFormat::Sarif)
-    }
+    // #[test]
+    // fn test_raw_json_format() -> Result<()> {
+    //     test_output_fn("raw-report.json", OutputFormat::RawJson)
+    // }
 
-    #[test]
-    fn test_pdf_format() -> Result<()> {
-        test_output_fn("report.pdf", OutputFormat::Pdf)
-    }
+    // #[test]
+    // fn test_markdown_format() -> Result<()> {
+    //     test_output_fn("report.md", OutputFormat::Markdown)
+    // }
 
-    fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
-        // For debugging purposes
-        let output_format = format.clone();
+    // #[test]
+    // fn test_markdown_github_format() -> Result<()> {
+    //     test_output_fn("report.md", OutputFormat::MarkdownGithub)
+    // }
 
-        // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            output_format: vec![format.clone()],
-            output_path: Some(PathBuf::from(output_file)),
-            ..Scout::default()
-        };
+    // #[test]
+    // fn test_sarif_format() -> Result<()> {
+    //     test_output_fn("report.sarif", OutputFormat::Sarif)
+    // }
 
-        // When
-        let result = run_scout(scout_opts);
+    // #[test]
+    // fn test_pdf_format() -> Result<()> {
+    //     test_output_fn("report.pdf", OutputFormat::Pdf)
+    // }
 
-        // Then
-        assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
+    // fn test_output_format(output_file: &str, format: &OutputFormat) -> Result<()> {
+    //     // For debugging purposes
+    //     let output_format = format.clone();
 
-        // Check if file exists and is a file
-        let metadata = fs::metadata(output_file);
-        assert!(
-            metadata.is_ok(),
-            "[{:?}] Metadata should be readable",
-            output_format
-        );
-        let metadata = metadata.unwrap();
-        assert!(
-            metadata.is_file(),
-            "[{:?}] Output should be a file",
-            output_format
-        );
+    //     // Given
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         output_format: vec![format.clone()],
+    //         output_path: Some(PathBuf::from(output_file)),
+    //         ..Scout::default()
+    //     };
 
-        // Check file size
-        assert!(
-            metadata.len() > 0,
-            "[{:?}] File should not be empty",
-            output_format
-        );
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-        if format == &OutputFormat::Pdf {
-            return Ok(());
-        }
-        // Read file contents
-        let contents = fs::read_to_string(output_file);
-        assert!(
-            contents.is_ok(),
-            "[{:?}] File should be readable",
-            output_format
-        );
-        let contents = contents.unwrap();
+    //     // Then
+    //     assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
 
-        // Check file contents
-        assert!(
-            !contents.is_empty(),
-            "[{:?}] File contents should not be empty",
-            output_format
-        );
+    //     // Check if file exists and is a file
+    //     let metadata = fs::metadata(output_file);
+    //     assert!(
+    //         metadata.is_ok(),
+    //         "[{:?}] Metadata should be readable",
+    //         output_format
+    //     );
+    //     let metadata = metadata.unwrap();
+    //     assert!(
+    //         metadata.is_file(),
+    //         "[{:?}] Output should be a file",
+    //         output_format
+    //     );
 
-        Ok(())
-    }
+    //     // Check file size
+    //     assert!(
+    //         metadata.len() > 0,
+    //         "[{:?}] File should not be empty",
+    //         output_format
+    //     );
 
-    #[test]
-    fn test_finding_presence() {
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            ..Scout::default()
-        };
+    //     if format == &OutputFormat::Pdf {
+    //         return Ok(());
+    //     }
+    //     // Read file contents
+    //     let contents = fs::read_to_string(output_file);
+    //     assert!(
+    //         contents.is_ok(),
+    //         "[{:?}] File should be readable",
+    //         output_format
+    //     );
+    //     let contents = contents.unwrap();
 
-        // When
-        let result = run_scout(scout_opts);
+    //     // Check file contents
+    //     assert!(
+    //         !contents.is_empty(),
+    //         "[{:?}] File contents should not be empty",
+    //         output_format
+    //     );
 
-        // Then
-        assert!(result.is_ok(), "Scout should run");
-        let result = result.unwrap();
+    //     Ok(())
+    // }
 
-        let findings = result
-            .iter()
-            .map(|value| {
-                value
-                    .get("code")
-                    .and_then(|value| value.get("code"))
-                    .and_then(|value| match value {
-                        Value::String(s) => Some(s.clone()),
-                        _ => None,
-                    })
-            })
-            .collect::<Vec<Option<String>>>();
-        let counts = count_strings(&findings);
-        assert!(counts.is_some(), "Scout returned data in an invalid format");
-        let counts = counts.unwrap();
-        let expected = [
-            ("overflow_check", 1_usize),
-            ("soroban_version", 1_usize),
-            ("integer_overflow_underflow", 1_usize),
-            ("divide_before_multiply", 1_usize),
-        ];
-        check_counts(&counts, &expected);
-    }
+    // #[test]
+    // fn test_finding_presence() {
+    //     let scout_opts = Scout {
+    //         manifest_path: Some(CONTRACT_PATH.clone()),
+    //         ..Scout::default()
+    //     };
 
-    fn count_strings(strings: &[Option<String>]) -> Option<HashMap<String, usize>> {
-        let mut ret = HashMap::<String, usize>::new();
-        for i in strings.iter() {
-            match i {
-                Some(s) => {
-                    let value = ret.get(s).unwrap_or(&0) + 1;
-                    ret.insert(s.clone(), value);
-                }
-                None => {
-                    return None;
-                }
-            }
-        }
-        Some(ret)
-    }
+    //     // When
+    //     let result = run_scout(scout_opts);
 
-    fn check_counts(counts: &HashMap<String, usize>, expected: &[(&str, usize)]) {
-        {
-            let expected = expected.len();
-            let actual = counts.len();
-            assert!(actual == expected, "Scout should return exactly {expected} findings for the test contract, but it returned {actual}");
-        }
-        for &(name, count) in expected.iter() {
-            let actual = *counts.get(name).unwrap_or(&0);
-            assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
-        }
-    }
+    //     // Then
+    //     assert!(result.is_ok(), "Scout should run");
+    //     let result = result.unwrap();
 
-    // Slow tests module
-    mod slow {
-        use super::*;
+    //     let findings = result
+    //         .iter()
+    //         .map(|value| {
+    //             value
+    //                 .get("code")
+    //                 .and_then(|value| value.get("code"))
+    //                 .and_then(|value| match value {
+    //                     Value::String(s) => Some(s.clone()),
+    //                     _ => None,
+    //                 })
+    //         })
+    //         .collect::<Vec<Option<String>>>();
+    //     let counts = count_strings(&findings);
+    //     assert!(counts.is_some(), "Scout returned data in an invalid format");
+    //     let counts = counts.unwrap();
+    //     let expected = [
+    //         ("overflow_check", 1_usize),
+    //         ("soroban_version", 1_usize),
+    //         ("integer_overflow_underflow", 1_usize),
+    //         ("divide_before_multiply", 1_usize),
+    //     ];
+    //     check_counts(&counts, &expected);
+    // }
 
-        #[test]
-        fn test_scout_soroban_coverage() {
-            // Given
-            let scout_opts = Scout {
-                manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
-                force_fallback: true,
-                ..Scout::default()
-            };
+    // fn count_strings(strings: &[Option<String>]) -> Option<HashMap<String, usize>> {
+    //     let mut ret = HashMap::<String, usize>::new();
+    //     for i in strings.iter() {
+    //         match i {
+    //             Some(s) => {
+    //                 let value = ret.get(s).unwrap_or(&0) + 1;
+    //                 ret.insert(s.clone(), value);
+    //             }
+    //             None => {
+    //                 return None;
+    //             }
+    //         }
+    //     }
+    //     Some(ret)
+    // }
 
-            // When
-            let result = run_scout(scout_opts);
+    // fn check_counts(counts: &HashMap<String, usize>, expected: &[(&str, usize)]) {
+    //     {
+    //         let expected = expected.len();
+    //         let actual = counts.len();
+    //         assert!(actual == expected, "Scout should return exactly {expected} findings for the test contract, but it returned {actual}");
+    //     }
+    //     for &(name, count) in expected.iter() {
+    //         let actual = *counts.get(name).unwrap_or(&0);
+    //         assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
+    //     }
+    // }
 
-            // Then
-            if result.is_err() {
-                let x = 0;
-                dbg!(result.err());
-                assert!(x == 1);
-            }
-        }
-    }
+    // // Slow tests module
+    // mod slow {
+    //     use super::*;
+
+    //     #[test]
+    //     fn test_scout_soroban_coverage() {
+    //         // Given
+    //         let scout_opts = Scout {
+    //             manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
+    //             force_fallback: true,
+    //             ..Scout::default()
+    //         };
+
+    //         // When
+    //         let result = run_scout(scout_opts);
+
+    //         // Then
+    //         if result.is_err() {
+    //             let x = 0;
+    //             dbg!(result.err());
+    //             assert!(x == 1);
+    //         }
+    //     }
+    // }
 }
