@@ -98,11 +98,18 @@ def run_integration_tests(detector, root):
     )
 
     if returncode != 0:
+        print(f"{RED}Scout failed to run.{ENDC}")
         return False
     
+    should_fail = "vulnerable" in root
+    did_fail = False
+
     with open(tempPath) as file:
         detectors_triggered = {convert_code(json.loads(line.rstrip())['code']['code']) for line in file}
-        if ("vulnerable" in root) != (detector in detectors_triggered):
+        did_fail = detector in detectors_triggered
+        if should_fail != did_fail:
+            explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
+            print(f"{RED}Test case {root} didn't pass because {explanation}.{ENDC}")
             return False
 
     print_results(

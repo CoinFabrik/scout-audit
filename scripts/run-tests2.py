@@ -1,3 +1,4 @@
+#This script is here for convenience only. Do not use it in CI/CD.
 import os
 import stat
 

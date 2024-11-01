@@ -1,10 +1,7 @@
 [workspace]
-exclude = [
-    ".cargo",
-    "target",
-    "known-vulnerabilities",
-]
+exclude = [".cargo", "known-vulnerabilities", "target"]
 members = ["*/remediated/remediated-*", "*/vulnerable/vulnerable-*"]
+resolver = "2"
 
 [workspace.package]
 authors = [
@@ -15,7 +12,6 @@ edition = "2021"
 
 [workspace.dependencies]
 codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
-frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", rev = "87971b3e92721bdf10bf40b410eaae779d494ca0", default-features = false }
 log = { version = "0.4.22", default-features = false }
@@ -38,8 +34,3 @@ strip = "symbols"
 [profile.release-with-logs]
 debug-assertions = true
 inherits = "release"
-
-[workspace.metadata.dylint]
-libraries = [
-    { path = "/Users/josegarcia/Desktop/coinfabrik/scout-substrate/detectors/unsafe-unwrap" },
-]

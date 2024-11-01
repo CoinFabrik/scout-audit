@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "unsafe-unwrap-remediated-3"
+name = "unsafe-expect-remediated-2"
 version = "0.1.0"
 
 [package.metadata.docs.rs]
