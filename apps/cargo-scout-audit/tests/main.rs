@@ -184,8 +184,7 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
-        let contract_paths = get_test_cases();
-        let contract_path = contract_paths.last().unwrap();
+        let contract_path = get_soroban_contract();
 
         // Given
         let scout_opts = Scout {
@@ -246,14 +245,29 @@ mod tests {
         Ok(())
     }
 
+    fn get_x_contract(x: &str) -> PathBuf{
+        get_test_cases()
+            .iter()
+            .find(|x| x.to_string_lossy().contains(x))
+            .unwrap()
+            .clone()
+    }
+
+    fn get_soroban_contract() -> PathBuf{
+        get_x_contract("soroban")
+    }
+
+    fn get_ink_contract() -> PathBuf{
+        get_x_contract("ink")
+    }
+
     #[test]
     fn test_finding_presence() {
         // Given
-        let contract_paths = get_test_cases();
-        let contract_path = contract_paths.iter().find(|x| x.to_string_lossy().contains("soroban")).unwrap();
+        let contract_path = get_soroban_contract();
 
         // When
-        let result = run_default_scout(contract_path);
+        let result = run_default_scout(&contract_path);
 
         // Then
         assert!(result.is_ok(), "Scout should run");
