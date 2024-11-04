@@ -245,19 +245,20 @@ mod tests {
         Ok(())
     }
 
-    fn get_x_contract(x: &str) -> PathBuf{
+    fn get_x_contract(x: &str) -> PathBuf {
         get_test_cases()
             .iter()
-            .find(|x| x.to_string_lossy().contains(x))
+            .find(|y| y.to_string_lossy().contains(x))
             .unwrap()
             .clone()
     }
 
-    fn get_soroban_contract() -> PathBuf{
+    fn get_soroban_contract() -> PathBuf {
         get_x_contract("soroban")
     }
 
-    fn get_ink_contract() -> PathBuf{
+    #[allow(dead_code)]
+    fn get_ink_contract() -> PathBuf {
         get_x_contract("ink")
     }
 

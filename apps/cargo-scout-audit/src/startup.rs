@@ -289,8 +289,8 @@ fn get_crates(
         ret.insert(normalize_crate_name(&package.name), true);
     }
     for (name, ok) in get_crates_from_output(output).iter() {
-        if ret.contains_key(name){
-            ret.insert(name.clone(), ok.clone());
+        if ret.contains_key(name) {
+            ret.insert(name.clone(), *ok);
         }
     }
     for krate in get_crates_from_findings(findings) {
