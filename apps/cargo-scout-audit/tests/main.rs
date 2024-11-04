@@ -250,7 +250,7 @@ mod tests {
     fn test_finding_presence() {
         // Given
         let contract_paths = get_test_cases();
-        let contract_path = contract_paths.last().unwrap();
+        let contract_path = contract_paths.iter().find(|x| x.to_string_lossy().contains("soroban")).unwrap();
 
         // When
         let result = run_default_scout(contract_path);
