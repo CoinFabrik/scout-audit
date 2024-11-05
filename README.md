@@ -40,7 +40,7 @@ Currently, Scout for Substrate includes the following detectors.
 | integer-overflow-or-underflow | Potential for integer arithmetic overflow/underflow. | [1](./test-cases/integer-overflow-or-underflow/vulnerable/vulnerable-1/), [2](./test-cases/integer-overflow-or-underflow/vulnerable/vulnerable-2/) / [1](./test-cases/integer-overflow-or-underflow/remediated/remediated-1/), [2](./test-cases/integer-overflow-or-underflow/remediated/remediated-2/) |
 | unsafe-expect | Unsafe usage of `expect`. | [1](./test-cases/unsafe-expect/vulnerable/vulnerable-1/) / [1](./test-cases/unsafe-expect/remediated/remediated-1/) |
 | unsafe-unwrap | Unsafe usage of `unwrap`. | [1](./test-cases/unsafe-unwrap/vulnerable/vulnerable-1/) / [1](./test-cases/unsafe-unwrap/remediated/remediated-1/), [2](./test-cases/unsafe-unwrap/remediated/remediated-2/), [3](./test-cases/unsafe-unwrap/remediated/remediated-3/) |
-| known-vulnerabilities | Usage of dependencies with know vulnerabilities. | [1](./test-cases/known-vulnerabilities/vulnerable/vulnerable-1/) / [1](./test-cases/known-vulnerabilities/remediated/remediated-1/) |
+| known-vulnerabilities | Usage of dependencies with known vulnerabilities. | [1](./test-cases/known-vulnerabilities/vulnerable/vulnerable-1/) / [1](./test-cases/known-vulnerabilities/remediated/remediated-1/) |
 
 ## Data Set
 
