@@ -12,8 +12,6 @@ This tool will help developers write secure and more robust Substrate pallets, r
 
 Our interest in this project comes from our experience in manual auditing, our usage of comparable tools, and the development of Scout for smart contracts in [Polkadot ink!](https://github.com/CoinFabrik/scout) and [other blockchains](https://github.com/CoinFabrik/scout).
 
-To improve coverage and precision, we´ll persist in research efforts on static and dynamic analysis techniques. Find more about our ongoing research at our associated repository.
-
 ## Quick Start
 
 **Install Scout Audit**
@@ -52,7 +50,7 @@ In addition, we've made the data set publicly available in Hugging Face.
 
 :point_right: [Data set repository](https://github.com/CoinFabrik/scout-substrate-dataset)
 
-:point_right: [Hugging Face data set](TBC)
+:point_right: [Hugging Face data set](https://huggingface.co/datasets/CoinFabrik/scout-substrate-m1)
 
 :heavy_exclamation_mark: Please note that this is a work in progress. The dataset will be updated as we continue with security audit analyses, identify issues, and refine their categories.
 
