@@ -36,7 +36,7 @@ Currently, Scout for Substrate includes the following detectors.
 
 | Detector | What it detects | Test cases (vulnerable/remediated) |
 |----------|-----------------|------------|
-| avoid-dispatch-error | Usage of `DispatchError::Other for error codes`. | [1](./test-cases/avoid-dispatcherror-other/vulnerable/vulnerable-1/) / [1](./test-cases/avoid-dispatcherror-other/remediated/remediated-1/) |
+| avoid-dispatch-error | Usage of `DispatchError::Other` for error codes. | [1](./test-cases/avoid-dispatcherror-other/vulnerable/vulnerable-1/) / [1](./test-cases/avoid-dispatcherror-other/remediated/remediated-1/) |
 | integer-overflow-or-underflow | Potential for integer arithmetic overflow/underflow. | [1](./test-cases/integer-overflow-or-underflow/vulnerable/vulnerable-1/), [2](./test-cases/integer-overflow-or-underflow/vulnerable/vulnerable-2/) / [1](./test-cases/integer-overflow-or-underflow/remediated/remediated-1/), [2](./test-cases/integer-overflow-or-underflow/remediated/remediated-2/) |
 | unsafe-expect | Unsafe usage of `expect`. | [1](./test-cases/unsafe-expect/vulnerable/vulnerable-1/) / [1](./test-cases/unsafe-expect/remediated/remediated-1/) |
 | unsafe-unwrap | Unsafe usage of `unwrap`. | [1](./test-cases/unsafe-unwrap/vulnerable/vulnerable-1/) / [1](./test-cases/unsafe-unwrap/remediated/remediated-1/), [2](./test-cases/unsafe-unwrap/remediated/remediated-2/), [3](./test-cases/unsafe-unwrap/remediated/remediated-3/) |
