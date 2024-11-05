@@ -17,7 +17,7 @@ scout_audit_dylint_linting::declare_early_lint! {
     /// ### Why is this bad?
     /// Using an outdated version of ink! could lead to security vulnerabilities, bugs, and other issues.
     ///```
-    pub CHECK_INK_VERSION,
+    pub INK_VERSION,
     Warn,
     LINT_MESSAGE,
     {
@@ -29,7 +29,7 @@ scout_audit_dylint_linting::declare_early_lint! {
     }
 }
 
-impl EarlyLintPass for CheckInkVersion {
+impl EarlyLintPass for InkVersion {
     fn check_crate(&mut self, cx: &rustc_lint::EarlyContext<'_>, _: &rustc_ast::Crate) {
         let latest_version = get_version();
 
@@ -55,7 +55,7 @@ impl EarlyLintPass for CheckInkVersion {
         if !ink_version.matches(&req) {
             clippy_wrappers::span_lint_and_help(
                 cx,
-                CHECK_INK_VERSION,
+                INK_VERSION,
                 rustc_span::DUMMY_SP,
                 LINT_MESSAGE,
                 None,

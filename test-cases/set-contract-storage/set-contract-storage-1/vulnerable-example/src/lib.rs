@@ -289,8 +289,6 @@ pub mod erc20 {
 
         use super::*;
 
-        pub type Event = <Erc20 as ::ink::reflect::ContractEventBase>::Type;
-
         /// For calculating the event topic hash.
         pub struct PrefixedValue<'a, 'b, T> {
             pub prefix: &'a [u8],
@@ -323,15 +321,13 @@ pub mod erc20 {
             expected_to: Option<AccountId>,
             expected_value: Balance,
         ) {
-            let decoded_event = <Event as scale::Decode>::decode(&mut &event.data[..])
-                .expect("encountered invalid contract event data buffer");
-            if let Event::Transfer(Transfer { from, to, value }) = decoded_event {
-                assert_eq!(from, expected_from, "encountered invalid Transfer.from");
-                assert_eq!(to, expected_to, "encountered invalid Transfer.to");
-                assert_eq!(value, expected_value, "encountered invalid Trasfer.value");
-            } else {
-                panic!("encountered unexpected event kind: expected a Transfer event")
-            }
+            let decoded_event =
+                <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
+                    .expect("encountered invalid contract event data buffer");
+            let Transfer { from, to, value } = decoded_event;
+            assert_eq!(from, expected_from, "encountered invalid Transfer.from");
+            assert_eq!(to, expected_to, "encountered invalid Transfer.to");
+            assert_eq!(value, expected_value, "encountered invalid Trasfer.value");
 
             fn encoded_into_hash<T>(entity: &T) -> Hash
             where

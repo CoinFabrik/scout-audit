@@ -87,11 +87,13 @@ pub mod integer_overflow_underflow {
         }
 
         #[ink::test]
+        #[should_panic]
         fn add_overflows() {
             test_utils::add_overflows(u8::MAX, 1);
         }
 
         #[ink::test]
+        #[should_panic]
         fn sub_underflows() {
             test_utils::sub_underflows(u8::MIN, 1);
         }

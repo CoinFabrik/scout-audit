@@ -44,10 +44,10 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     ///    }
     ///```
 
-    pub AVOID_STD_CORE_MEM_FORGET,
+    pub AVOID_CORE_MEM_FORGET,
     Warn,
     LINT_MESSAGE,
-    AvoidStdCoreMemForget::default(),
+    AvoidCoreMemForget::default(),
     {
         name: "Avoid std::mem::forget usage",
         long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
@@ -58,11 +58,11 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
 }
 
 #[derive(Default)]
-pub struct AvoidStdCoreMemForget {
+pub struct AvoidCoreMemForget {
     stack: Vec<NodeId>,
 }
 
-impl EarlyLintPass for AvoidStdCoreMemForget {
+impl EarlyLintPass for AvoidCoreMemForget {
     fn check_item(&mut self, _cx: &EarlyContext, item: &Item) {
         if self.in_test_item() || is_test_item(item) {
             self.stack.push(item.id);
@@ -81,7 +81,7 @@ impl EarlyLintPass for AvoidStdCoreMemForget {
             then {
                 clippy_wrappers::span_lint_and_help(
                     cx,
-                    AVOID_STD_CORE_MEM_FORGET,
+                    AVOID_CORE_MEM_FORGET,
                     expr.span,
                     LINT_MESSAGE,
                     None,
@@ -113,7 +113,7 @@ fn is_test_item(item: &Item) -> bool {
     })
 }
 
-impl AvoidStdCoreMemForget {
+impl AvoidCoreMemForget {
     fn in_test_item(&self) -> bool {
         !self.stack.is_empty()
     }

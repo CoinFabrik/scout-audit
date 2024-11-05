@@ -58,6 +58,7 @@ pub mod integer_overflow_underflow {
         }
 
         #[ink::test]
+        #[should_panic]
         fn mul_overflows() {
             // Arrange
             let mut contract = IntegerOverflowUnderflow::new(u8::MAX);
@@ -71,6 +72,7 @@ pub mod integer_overflow_underflow {
         }
 
         #[ink::test]
+        #[should_panic]
         fn pow_overflows() {
             // Arrange
             let mut contract = IntegerOverflowUnderflow::new(u8::MAX);

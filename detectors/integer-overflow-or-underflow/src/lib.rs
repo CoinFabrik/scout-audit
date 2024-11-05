@@ -32,10 +32,10 @@ scout_audit_dylint_linting::impl_late_lint! {
     /// # let a = 0;
     /// a + 1;
     /// ```
-    pub INTEGER_OVERFLOW_UNDERFLOW,
+    pub INTEGER_OVERFLOW_OR_UNDERFLOW,
     Warn,
     LINT_MESSAGE,
-    IntegerOverflowUnderflow::default(),
+    IntegerOverflowOrUnderflow::default(),
     {
         name: "Integer Overflow/Underflow",
         long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.\n In Ink! 5.0.0, using raw math operations will result in `cargo contract build` failing with an error message.",
@@ -46,10 +46,10 @@ scout_audit_dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct IntegerOverflowUnderflow {
+pub struct IntegerOverflowOrUnderflow {
     arithmetic_context: ArithmeticContext,
 }
-impl IntegerOverflowUnderflow {
+impl IntegerOverflowOrUnderflow {
     pub fn new() -> Self {
         Self {
             arithmetic_context: ArithmeticContext::default(),
@@ -57,7 +57,7 @@ impl IntegerOverflowUnderflow {
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for IntegerOverflowUnderflow {
+impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, e: &'tcx Expr<'_>) {
         match e.kind {
             ExprKind::Binary(op, lhs, rhs) => {
@@ -140,7 +140,7 @@ impl ArithmeticContext {
                         if is_integer_literal(expr, 1) {
                             clippy_wrappers::span_lint_and_help(
                                 cx,
-                                INTEGER_OVERFLOW_UNDERFLOW,
+                                INTEGER_OVERFLOW_OR_UNDERFLOW,
                                 expr.span,
                                 LINT_MESSAGE,
                                 None,
@@ -152,7 +152,7 @@ impl ArithmeticContext {
                     _ => {
                         clippy_wrappers::span_lint_and_help(
                             cx,
-                            INTEGER_OVERFLOW_UNDERFLOW,
+                            INTEGER_OVERFLOW_OR_UNDERFLOW,
                             expr.span,
                             LINT_MESSAGE,
                             None,
@@ -164,7 +164,7 @@ impl ArithmeticContext {
                 _ => {
                     clippy_wrappers::span_lint_and_help(
                         cx,
-                        INTEGER_OVERFLOW_UNDERFLOW,
+                        INTEGER_OVERFLOW_OR_UNDERFLOW,
                         expr.span,
                         LINT_MESSAGE,
                         None,
@@ -189,7 +189,7 @@ impl ArithmeticContext {
         if constant_simple(cx, cx.typeck_results(), expr).is_none() && ty.is_integral() {
             clippy_wrappers::span_lint_and_help(
                 cx,
-                INTEGER_OVERFLOW_UNDERFLOW,
+                INTEGER_OVERFLOW_OR_UNDERFLOW,
                 expr.span,
                 LINT_MESSAGE,
                 None,
