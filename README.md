@@ -16,7 +16,7 @@ Our interest in this project comes from our experience in manual auditing, our u
 
 **Install Scout Audit**
 
-Make sure that Cargo is installed on your computer. Then, install Scout with the following command:
+Make sure that [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) is installed on your computer. Then, install Scout with the following command:
 
 ```console
 cargo install cargo-scout-audit
