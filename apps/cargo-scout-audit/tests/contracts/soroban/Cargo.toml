@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "almost-empty-contract"
+name = "soroban-contract"
 version = "0.1.0"
 
 [lib]

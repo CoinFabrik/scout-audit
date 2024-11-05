@@ -48,17 +48,9 @@ jobs:
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
 
-      - name: Get the toolchain for this test suite
-        id: get-toolchain
-        working-directory: apps/cargo-scout-audit/tests/contract
-        run: |
-          TOOLCHAIN=$(cargo scout-audit --toolchain)
-          echo "toolchain=$TOOLCHAIN" >> $GITHUB_OUTPUT
-
-      - name: Install clippy-sarif and cargo-nextest, and set the toolchain
+      - name: Install clippy-sarif and cargo-nextest
         run: |
           cargo install clippy-sarif cargo-nextest --locked
-          rustup default ${{ steps.get-toolchain.outputs.toolchain }}
 
       - name: Run tests and set output
         id: run-tests

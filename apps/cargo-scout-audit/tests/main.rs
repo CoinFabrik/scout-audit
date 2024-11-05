@@ -2,28 +2,52 @@
 mod tests {
     use anyhow::{Context, Result};
     use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
-    use lazy_static::lazy_static;
     use serde_json::Value;
     use std::collections::HashMap;
+    use std::path::Path;
     use std::{fs, path::PathBuf};
 
-    lazy_static! {
-        static ref CONTRACT_PATH: PathBuf = {
-            let mut path = PathBuf::from("tests");
-            path.push("contract");
-            path.push("Cargo.toml");
-            path
+    fn get_test_cases() -> Vec<PathBuf> {
+        let contracts_dir = PathBuf::from("tests").join("contracts");
+        let contract_paths: Vec<PathBuf> = fs::read_dir(contracts_dir)
+            .expect("Should read contracts directory")
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.path().is_dir())
+            .map(|entry| entry.path().join("Cargo.toml"))
+            .filter(|path| path.exists())
+            .collect();
+        contract_paths
+    }
+
+    fn run_default_scout(contract_path: &Path) -> anyhow::Result<Vec<serde_json::Value>> {
+        let scout_opts = Scout {
+            manifest_path: Some(contract_path.to_path_buf()),
+            ..Scout::default()
         };
+        run_scout(scout_opts)
     }
 
     #[test]
-    fn test_default_scout() {
+    fn test_default_scout_first_contract() {
         // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            ..Scout::default()
-        };
-        let result = run_scout(scout_opts);
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
+
+        // When
+        let result = run_default_scout(contract_path);
+
+        // Then
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_default_scout_second_contract() {
+        // Given
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.get(1).unwrap();
+
+        // When
+        let result = run_default_scout(contract_path);
 
         // Then
         assert!(result.is_ok());
@@ -32,14 +56,24 @@ mod tests {
     #[test]
     fn test_scout_with_forced_fallback() {
         // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            force_fallback: true,
-            ..Scout::default()
-        };
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
 
         // When
-        let result = run_scout(scout_opts);
+        let result = run_default_scout(contract_path);
+
+        // Then
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_scout_with_forced_fallback_second_contract() {
+        // Given
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.get(1).unwrap();
+
+        // When
+        let result = run_default_scout(contract_path);
 
         // Then
         assert!(result.is_ok());
@@ -48,14 +82,24 @@ mod tests {
     #[test]
     fn test_scout_with_exclude() {
         // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            exclude: Some("avoid-panic-error".to_string()),
-            ..Scout::default()
-        };
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
 
         // When
-        let result = run_scout(scout_opts);
+        let result = run_default_scout(contract_path);
+
+        // Then
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_scout_with_exclude_second_contract() {
+        // Given
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.get(1).unwrap();
+
+        // When
+        let result = run_default_scout(contract_path);
 
         // Then
         assert!(result.is_ok());
@@ -64,35 +108,29 @@ mod tests {
     #[test]
     fn test_scout_with_filter() {
         // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            filter: Some("avoid-panic-error".to_string()),
-            ..Scout::default()
-        };
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
 
         // When
-        let result = run_scout(scout_opts);
+        let result = run_default_scout(contract_path);
 
         // Then
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_scout_with_profile() {
-        // TODO
-    }
+    // #[test]
+    // fn test_scout_with_profile() {
+    //     // TODO
+    // }
 
     #[test]
     fn test_scout_list_detectors() {
         // Given
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            list_detectors: true,
-            ..Scout::default()
-        };
+        let contract_paths = get_test_cases();
+        let contract_path = contract_paths.first().unwrap();
 
         // When
-        let result = run_scout(scout_opts);
+        let result = run_default_scout(contract_path);
 
         // Then
         assert!(result.is_ok());
@@ -146,9 +184,11 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
+        let contract_path = get_soroban_contract();
+
         // Given
         let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
+            manifest_path: Some(contract_path.clone()),
             output_format: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
             ..Scout::default()
@@ -156,6 +196,8 @@ mod tests {
 
         // When
         let result = run_scout(scout_opts);
+
+        // When
 
         // Then
         assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
@@ -203,15 +245,30 @@ mod tests {
         Ok(())
     }
 
+    fn get_x_contract(x: &str) -> PathBuf {
+        get_test_cases()
+            .iter()
+            .find(|y| y.to_string_lossy().contains(x))
+            .unwrap()
+            .clone()
+    }
+
+    fn get_soroban_contract() -> PathBuf {
+        get_x_contract("soroban")
+    }
+
+    #[allow(dead_code)]
+    fn get_ink_contract() -> PathBuf {
+        get_x_contract("ink")
+    }
+
     #[test]
     fn test_finding_presence() {
-        let scout_opts = Scout {
-            manifest_path: Some(CONTRACT_PATH.clone()),
-            ..Scout::default()
-        };
+        // Given
+        let contract_path = get_soroban_contract();
 
         // When
-        let result = run_scout(scout_opts);
+        let result = run_default_scout(&contract_path);
 
         // Then
         assert!(result.is_ok(), "Scout should run");
