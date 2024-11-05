@@ -4,8 +4,8 @@ members = ["token-interface-events-*/*"]
 resolver = "2"
 
 [workspace.dependencies]
-soroban-sdk = { version = "=21.4.0" }
-soroban-token-sdk = { version = "21.4.0" }
+soroban-sdk = { version = "=21.7.6" }
+soroban-token-sdk = { version = "=21.7.6" }
 
 [profile.release]
 codegen-units = 1

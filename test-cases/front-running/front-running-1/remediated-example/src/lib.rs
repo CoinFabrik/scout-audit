@@ -70,11 +70,11 @@ mod tests {
         // Given
         let env = Env::default();
         let admin = Address::generate(&env);
-        let token_contract_id = env.register_stellar_asset_contract(admin);
+        let asset_contract = env.register_stellar_asset_contract_v2(admin);
 
         let contract_id = env.register_contract(None, FrontRunning);
         let client = FrontRunningClient::new(&env, &contract_id);
-        client.init(&token_contract_id);
+        client.init(&asset_contract.address());
 
         // When
         let from = Address::generate(&env);
@@ -92,7 +92,7 @@ mod tests {
                 from.clone(),
                 AuthorizedInvocation {
                     function: AuthorizedFunction::Contract((
-                        token_contract_id.clone(),
+                        asset_contract.address().clone(),
                         Symbol::new(&env, "approve"),
                         (&from, &spender, 200_i128, 200_u32).into_val(&env)
                     )),
@@ -111,11 +111,11 @@ mod tests {
         // Given
         let env = Env::default();
         let admin = Address::generate(&env);
-        let token_contract_id = env.register_stellar_asset_contract(admin);
+        let asset_contract = env.register_stellar_asset_contract_v2(admin);
 
         let contract_id = env.register_contract(None, FrontRunning);
         let client = FrontRunningClient::new(&env, &contract_id);
-        client.init(&token_contract_id);
+        client.init(&asset_contract.address());
 
         // When
         let token_client = TokenClient::new(&env, &client.get_token());
@@ -147,11 +147,11 @@ mod tests {
         // Given
         let env = Env::default();
         let admin = Address::generate(&env);
-        let token_contract_id = env.register_stellar_asset_contract(admin);
+        let asset_contract = env.register_stellar_asset_contract_v2(admin);
 
         let contract_id = env.register_contract(None, FrontRunning);
         let client = FrontRunningClient::new(&env, &contract_id);
-        client.init(&token_contract_id);
+        client.init(&asset_contract.address());
 
         // When
         let token_client = TokenClient::new(&env, &client.get_token());

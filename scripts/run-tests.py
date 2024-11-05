@@ -1,6 +1,8 @@
 import os
 import argparse
 import time
+import tempfile
+import json
 
 from utils import (
     parse_json_from_string,
@@ -14,7 +16,6 @@ RED = "\033[91m"
 GREEN = "\033[92m"
 ENDC = "\033[0m"
 
-
 def run_tests(detector):
     errors = []
     directory = os.path.join("test-cases", detector)
@@ -27,17 +28,19 @@ def run_tests(detector):
         if is_rust_project(root):
             if run_unit_tests(root):
                 errors.append(root)
-            if run_integration_tests(detector, root):
+            if not run_integration_tests(detector, root):
                 errors.append(root)
     return errors
 
+def convert_code(s):
+    return s.replace('_', '-')
 
 def run_unit_tests(root):
     start_time = time.time()
-    returncode, _, stderr = run_subprocess(["cargo", "test", "--all-features"], root)
+    returncode, stdout, _ = run_subprocess(["cargo", "test", "--all-features"], root)
     print_results(
         returncode,
-        stderr,
+        stdout,
         "unit-test",
         root,
         time.time() - start_time,
@@ -45,10 +48,11 @@ def run_unit_tests(root):
     return returncode != 0
 
 
+
 def run_integration_tests(detector, root):
     start_time = time.time()
 
-    detectors_path = os.path.join(os.getcwd(), "detectors")
+    local_detectors = os.path.join(os.getcwd(), "detectors")
 
     returncode, stdout, _ = run_subprocess(
         [
@@ -58,12 +62,11 @@ def run_integration_tests(detector, root):
             detector,
             "--metadata",
             "--local-detectors",
-            detectors_path,
+            local_detectors,
         ],
         root,
     )
 
-    #print("stderr: ", stderr.read())
     if stdout is None:
         print(
             f"{RED}Failed to run integration tests in {root} - Metadata returned empty.{ENDC}"
@@ -73,36 +76,73 @@ def run_integration_tests(detector, root):
     detector_metadata = parse_json_from_string(stdout)
 
     if not isinstance(detector_metadata, dict):
-        print("Failed to extract JSON:\n", detector_metadata)
+        print("Failed to extract JSON:", detector_metadata)
         return True
 
     detector_key = detector.replace("-", "_")
     short_message = detector_metadata.get(detector_key, {}).get("short_message")
 
-    returncode, stdout, stderr = run_subprocess(
-        [
-            "cargo",
-            "scout-audit",
-            "--filter",
-            detector,
-            "--local-detectors",
-            os.path.join(os.getcwd(), "detectors"),
-        ],
-        root,
-    )
+    _, tempPath = tempfile.mkstemp(None, f'scout_{os.getpid()}_')
 
-    should_lint = root.endswith("vulnerable-example")
-    if should_lint and short_message and short_message not in stdout:
-        returncode = 1
+    returncode = None
+    stderr = None
+
+    if detector != "unnecessary-lint-allow":
+        returncode, _, stderr = run_subprocess(
+            [
+                "cargo",
+                "scout-audit",
+                "--filter",
+                detector,
+                "--local-detectors",
+                local_detectors,
+                "--output-format",
+                "raw-json",
+                "--output-path",
+                tempPath,
+            ],
+            root,
+        )
+    else:
+        #We need to handle this case differently, because using filter will
+        #cause other detectors to not run, making the test case invalid.
+        returncode, _, stderr = run_subprocess(
+            [
+                "cargo",
+                "scout-audit",
+                "--local-detectors",
+                local_detectors,
+                "--output-format",
+                "raw-json",
+                "--output-path",
+                tempPath,
+            ],
+            root,
+        )
+
+    if returncode != 0:
+        print(f"{RED}Scout failed to run.{ENDC}")
+        return False
+    
+    should_fail = "vulnerable" in root
+    did_fail = False
+
+    with open(tempPath) as file:
+        detectors_triggered = {convert_code(json.loads(line.rstrip())['code']['code']) for line in file}
+        did_fail = detector in detectors_triggered
+        if should_fail != did_fail:
+            explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
+            print(f"{RED}Test case {root} didn't pass because {explanation}.{ENDC}")
+            return False
 
     print_results(
         returncode,
-        stdout,
+        stderr,
         "integration-test",
         root,
         time.time() - start_time,
     )
-    return returncode != 0
+    return True
 
 
 if __name__ == "__main__":

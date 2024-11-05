@@ -27,7 +27,7 @@ const LINT_MESSAGE: &str =
     "Hardcoding an index could lead to panic if the top bound is out of bounds.";
 
 dylint_linting::declare_late_lint! {
-    pub ITERATOR_OVER_INDEXING,
+    pub ITERATORS_OVER_INDEXING,
     Warn,
     LINT_MESSAGE,
     {
@@ -365,7 +365,7 @@ impl<'a, 'b> Visitor<'a> for ForLoopVisitor<'a, 'b> {
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for IteratorOverIndexing {
+impl<'tcx> LateLintPass<'tcx> for IteratorsOverIndexing {
     fn check_fn(
         &mut self,
         cx: &rustc_lint::LateContext<'tcx>,
@@ -388,7 +388,7 @@ impl<'tcx> LateLintPass<'tcx> for IteratorOverIndexing {
             for span in span_constant {
                 span_lint_and_help(
                     cx,
-                    ITERATOR_OVER_INDEXING,
+                    ITERATORS_OVER_INDEXING,
                     span,
                     LINT_MESSAGE,
                     None,

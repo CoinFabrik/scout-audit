@@ -18,10 +18,10 @@ use rustc_span::Span;
 const LINT_MESSAGE: &str = "This vector operation is called without access control";
 
 dylint_linting::impl_late_lint! {
-    pub UNEXPECTED_REVERT_WARN,
+    pub DOS_UNEXPECTED_REVERT_WITH_VECTOR,
     Warn,
     "",
-    UnexpectedRevertWarn::default(),
+    DosUnexpectedRevertWithVector::default(),
     {
         name: "Unexpected Revert Inserting to Storage",
         long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
@@ -32,14 +32,14 @@ dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct UnexpectedRevertWarn {}
-impl UnexpectedRevertWarn {
+pub struct DosUnexpectedRevertWithVector {}
+impl DosUnexpectedRevertWithVector {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl<'tcx> LateLintPass<'tcx> for UnexpectedRevertWarn {
+impl<'tcx> LateLintPass<'tcx> for DosUnexpectedRevertWithVector {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -87,7 +87,7 @@ impl<'tcx> LateLintPass<'tcx> for UnexpectedRevertWarn {
         if uvf_storage.push_def_id.is_some() && !uvf_storage.require_auth {
             span_lint(
                 uvf_storage.cx,
-                UNEXPECTED_REVERT_WARN,
+                DOS_UNEXPECTED_REVERT_WITH_VECTOR,
                 uvf_storage.push_span.unwrap(),
                 LINT_MESSAGE,
             );
