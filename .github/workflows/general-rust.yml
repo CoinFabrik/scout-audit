@@ -67,13 +67,13 @@ jobs:
         run: rustup update
 
       - name: Install Rust nightly
-        run: rustup install nightly-2023-12-16 --profile minimal
+        run: rustup install nightly-2024-07-11 --profile minimal
 
       - name: Install dylint-link
         run: cargo install dylint-link
 
       - name: Install clippy
-        run: rustup component add clippy --toolchain nightly-2023-12-16
+        run: rustup component add clippy --toolchain nightly-2024-07-11
 
       - name: Lint with Clippy
         run: python scripts/run-clippy.py --dir test-cases detectors
