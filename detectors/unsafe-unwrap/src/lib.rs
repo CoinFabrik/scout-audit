@@ -11,7 +11,8 @@ use rustc_hir::{
     def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, PathSegment, QPath, UnOp,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, LangItem, MatchSource, PathSegment, QPath,
+    UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
@@ -270,10 +271,29 @@ impl<'a, 'tcx> UnsafeUnwrapVisitor<'a, 'tcx> {
             }
         }
     }
+
+    fn check_for_try(&mut self, expr: &Expr<'tcx>) {
+        if_chain! {
+            // Check for match expressions desugared from try
+            if let ExprKind::Match(expr, _, MatchSource::TryDesugar(_)) = &expr.kind;
+            if let ExprKind::Call(func, args) = &expr.kind;
+            // Check for the try trait branch lang item
+            if let ExprKind::Path(QPath::LangItem(LangItem::TryTraitBranch, _)) = &func.kind;
+            if let ExprKind::Path(QPath::Resolved(_, path)) = &args[0].kind;
+            // Get the HirId of the expression that is being checked
+            if let Res::Local(hir_id) = path.res;
+            then {
+                self.checked_exprs.insert(hir_id);
+            }
+        }
+    }
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeUnwrapVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
+        // Check for try expressions (desugared from `?`)
+        self.check_for_try(expr);
+
         // If we are inside an `if` or `if let` expression, we analyze its body
         if !self.conditional_checker.is_empty() {
             match &expr.kind {
