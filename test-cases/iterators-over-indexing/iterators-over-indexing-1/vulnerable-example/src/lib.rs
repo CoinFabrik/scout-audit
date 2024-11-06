@@ -19,11 +19,13 @@ mod iterators_over_indexing {
         }
 
         #[ink(message)]
-        pub fn index_bad(&self) {
+        pub fn index_bad(&self) -> u32 {
+            let mut ret = 0_u32;
             ink::env::debug_println!("this will panic");
-            for _i in 0..3 {
-                ink::env::debug_println!("item: {:?}", self.value[_i]);
+            for i in 0..3 {
+                ret += u32::from(self.value[i]);
             }
+            ret
         }
     }
 }
