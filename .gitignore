@@ -14,7 +14,6 @@ target/
 *.pdb
 
 # Ignore Cargo.lock of library files
-test-cases/**/Cargo.lock
 detectors/**/Cargo.lock
 scout-audit-internal/Cargo.lock
 
