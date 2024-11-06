@@ -17,7 +17,6 @@ std = [
 ink-as-dependency = []
 e2e-tests = []
 
-
 [dependencies]
 ink = { workspace = true }
 scale = { workspace = true }

@@ -17,13 +17,11 @@ std = [
 ink-as-dependency = []
 e2e-tests = []
 
-
 [dependencies]
 ink = { workspace = true }
 scale = { workspace = true }
 scale-info = { workspace = true }
 
-
 [dev-dependencies]
 ink_e2e = { workspace = true }
-delegate-call-fixed-exploiter = { workspace = true }
+delegate-call-fixed-exploiter = { path = "../fixed-exploiter-example" }

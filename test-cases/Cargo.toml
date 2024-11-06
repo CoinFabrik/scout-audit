@@ -1,14 +1,14 @@
 [workspace]
-exclude = [".cargo", "target"]
-members = ["lazy-values-not-set-*/*"]
+exclude = [".cargo", "target", "unrestricted-transfer-from"]
+members = ["*/*/*-example"]
 resolver = "2"
 
 [workspace.dependencies]
 ink = { version = "5.0.0", default-features = false }
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
-scale-info = { version = "2.6", default-features = false, features = ["derive"]}
+scale-info = { version = "2.6", default-features = false, features = ["derive"] }
 ink_e2e = { version = "=5.0.0" }
-
+getrandom = { version = "0.2" }
 
 [profile.release]
 codegen-units = 1
@@ -23,4 +23,3 @@ strip = "symbols"
 [profile.release-with-logs]
 debug-assertions = true
 inherits = "release"
-

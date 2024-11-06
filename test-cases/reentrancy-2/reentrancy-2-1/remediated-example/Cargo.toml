@@ -1,5 +1,5 @@
 [package]
-name = "vault-remediated-2"
+name = "reentrancy-2-1-remediated"
 version = "0.1.0"
 edition = "2021"
 authors = ["[your_name] <[your_email]>"]
@@ -17,12 +17,10 @@ std = [
 ink-as-dependency = []
 e2e-tests = []
 
-
 [dependencies]
 ink = { workspace = true }
 scale = { workspace = true }
 scale-info = { workspace = true }
-
 
 [dev-dependencies]
 ink_e2e = { workspace = true }

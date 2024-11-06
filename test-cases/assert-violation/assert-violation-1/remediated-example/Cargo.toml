@@ -21,8 +21,7 @@ e2e-tests = []
 ink = { workspace = true }
 scale = { workspace = true }
 scale-info = { workspace = true }
-getrandom ={ version = "0.2", features = ["js"]}
-
+getrandom = { workspace = true, features = ["js"]}
 
 [dev-dependencies]
 ink_e2e = { workspace = true }

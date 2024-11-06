@@ -17,7 +17,6 @@ scale-info = { workspace = true }
 [dev-dependencies]
 ink_e2e = { workspace = true }
 
-
 [features]
 default = ["std"]
 std = [
