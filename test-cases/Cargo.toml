@@ -1,7 +1,10 @@
 [workspace]
-exclude = [".cargo", "target"]
-members = ["token-interface-events-*/*"]
+exclude = [".cargo", "soroban-version", "target"]
+members = ["*/*/vulnerable-example", "*/*/remediated-example"]
 resolver = "2"
+
+[workspace.package]
+edition = "2021"
 
 [workspace.dependencies]
 soroban-sdk = { version = "=21.7.6" }
@@ -20,4 +23,3 @@ strip = "symbols"
 [profile.release-with-logs]
 debug-assertions = true
 inherits = "release"
-
