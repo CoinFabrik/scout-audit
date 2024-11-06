@@ -1,6 +1,6 @@
 [workspace]
 exclude = [".cargo", "soroban-version", "target"]
-members = ["*/*/vulnerable-example", "*/*/remediated-example"]
+members = ["*/*/remediated-example", "*/*/vulnerable-example"]
 resolver = "2"
 
 [workspace.package]

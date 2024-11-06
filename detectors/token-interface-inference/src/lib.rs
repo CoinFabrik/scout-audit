@@ -4,7 +4,7 @@ extern crate rustc_errors;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint;
+use clippy_wrappers::span_lint;
 use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_errors::MultiSpan;
