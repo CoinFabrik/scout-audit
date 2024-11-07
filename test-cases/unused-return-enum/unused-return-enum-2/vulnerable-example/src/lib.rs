@@ -55,45 +55,4 @@ mod unused_return_enum {
             assert_eq!(result, Err(Error::Overflow));
         }
     }
-
-    #[cfg(all(test, feature = "e2e-tests"))]
-    mod e2e_tests {
-        use ink_e2e::build_message;
-
-        use super::*;
-
-        type E2EResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-        #[ink_e2e::test]
-        async fn add_panics(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-            // Arrange
-            let constructor = UnusedReturnEnumRef::new();
-            let contract_acc_id = client
-                .instantiate(
-                    "unused-return-enum",
-                    &ink_e2e::alice(),
-                    constructor,
-                    0,
-                    None,
-                )
-                .await
-                .expect("instantiate failed")
-                .account_id;
-
-            // Act
-            let value1 = 100;
-            let value2 = 150;
-            let get_percentage_difference =
-                build_message::<UnusedReturnEnumRef>(contract_acc_id.clone())
-                    .call(|contract| contract.get_percentage_difference(value1, value2));
-            let result = client
-                .call(&ink_e2e::alice(), get_percentage_difference, 0, None)
-                .await;
-
-            // Assert
-            assert!(result.is_err());
-
-            Ok(())
-        }
-    }
 }

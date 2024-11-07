@@ -1,26 +1,24 @@
 #![feature(rustc_private)]
 
-extern crate rustc_abi;
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 extern crate rustc_target;
-extern crate rustc_type_ir;
 
 use std::collections::{HashMap, HashSet};
 
+use clippy_wrappers::span_lint_and_help;
 use if_chain::if_chain;
 use rustc_ast::ast::LitKind;
-use rustc_hir::def::Res;
-use rustc_hir::intravisit::{walk_expr, FnKind};
-use rustc_hir::intravisit::{walk_local, Visitor};
-use rustc_hir::{Body, FnDecl, HirId, Local, PatKind, QPath};
-use rustc_hir::{Expr, ExprKind};
+use rustc_hir::{
+    def::Res,
+    intravisit::{walk_expr, walk_local, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, HirId, Local, PatKind, QPath,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyKind;
-use rustc_span::def_id::LocalDefId;
-use rustc_span::{Span, Symbol};
+use rustc_span::{def_id::LocalDefId, Span, Symbol};
 use rustc_target::abi::VariantIdx;
 
 const LINT_MESSAGE:&str = "External calls could open the opportunity for a malicious contract to execute any arbitrary code";
@@ -280,7 +278,7 @@ impl<'tcx> LateLintPass<'tcx> for Reentrancy2 {
         // Iterate over all potential reentrancy spans and emit a warning for each.
         if reentrancy_visitor.has_insert_operation {
             reentrancy_visitor.reentrancy_spans.into_iter().for_each(|span| {
-                clippy_wrappers::span_lint_and_help(
+                span_lint_and_help(
                     cx,
                     REENTRANCY_2,
                     span,
