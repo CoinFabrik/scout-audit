@@ -45,11 +45,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache cargo dependencies
+      - name: Cache cargo dependencies and tool versions
         uses: actions/cache@v4
         with:
-          path: ~/.cargo
+          path: |
+            ~/.cargo
+            ~/.rustup
           key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-tests-
 
       - name: Install Rust stable
         run: rustup install stable --profile minimal
@@ -64,7 +67,7 @@ jobs:
         run: cargo +nightly install cargo-dylint dylint-link
 
       - name: Clone cargo-scout-audit
-        run: git clone https://github.com/CoinFabrik/scout-audit.git -b blockchain-detection-fix scout-repo
+        run: git clone https://github.com/CoinFabrik/scout-audit.git -b main scout-repo
 
       - name: Install cargo-scout-audit
         working-directory: scout-repo/apps/cargo-scout-audit
@@ -118,14 +121,16 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Cache cargo dependencies
+      - name: Cache cargo dependencies and tool versions
         uses: actions/cache@v4
         with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.lock') }}.
-  # This is broken until ink! solves stdsimd problem.
-  #      - name: Run unit and integration tests
-  #        run: python scripts/run-tests.py --detector=${{ matrix.detector }}
+          path: |
+            ~/.cargo
+            ~/.rustup
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-tests-
+      - name: Run unit and integration tests
+        run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
   comment-on-pr:
     name: Comment on PR

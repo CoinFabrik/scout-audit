@@ -173,12 +173,7 @@ impl<'tcx> LateLintPass<'tcx> for SetCodeHash {
             if caller_and_terminate.callers.is_empty() {
                 for terminate in caller_and_terminate.terminates {
                     if let TerminatorKind::Call { fn_span, .. } = terminate.0.terminator().kind {
-                        clippy_wrappers::span_lint(
-                            cx,
-                            SET_CODE_HASH,
-                            fn_span,
-                            LINT_MESSAGE,
-                        );
+                        clippy_wrappers::span_lint(cx, SET_CODE_HASH, fn_span, LINT_MESSAGE);
                     }
                 }
             } else {
@@ -190,12 +185,7 @@ impl<'tcx> LateLintPass<'tcx> for SetCodeHash {
                     &mut vec![],
                 );
                 for place in unchecked_places {
-                    clippy_wrappers::span_lint(
-                        cx,
-                        SET_CODE_HASH,
-                        place.1,
-                        LINT_MESSAGE,
-                    );
+                    clippy_wrappers::span_lint(cx, SET_CODE_HASH, place.1, LINT_MESSAGE);
                 }
             }
         }
