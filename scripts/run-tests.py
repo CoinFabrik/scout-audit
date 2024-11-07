@@ -54,8 +54,7 @@ def run_integration_tests(detector, root):
 
     local_detectors = os.path.join(os.getcwd(), "detectors")
 
-    returncode, stdout, _ = run_subprocess(
-        [
+    args = [
             "cargo",
             "scout-audit",
             "--filter",
@@ -63,14 +62,14 @@ def run_integration_tests(detector, root):
             "--metadata",
             "--local-detectors",
             local_detectors,
-        ],
-        root,
-    )
+        ]
+    returncode, stdout, stderr = run_subprocess(args, root)
 
     if stdout is None:
-        print(
-            f"{RED}Failed to run integration tests in {root} - Metadata returned empty.{ENDC}"
-        )
+        print(f"{RED}Failed to run integration tests in {root} - Metadata returned empty.{ENDC}")
+        print(f"{RED}Command: {' '.join(args)}{ENDC}")
+        print(f"{RED}WD:      {root}{ENDC}")
+        print(f"{RED}stderr:  {stderr}.{ENDC}")
         return True
 
     detector_metadata = parse_json_from_string(stdout)
