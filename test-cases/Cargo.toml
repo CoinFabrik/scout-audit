@@ -1,5 +1,5 @@
 [workspace]
-exclude = [".cargo", "soroban-version", "target"]
+exclude = [".cargo", "soroban-version", "target", "overflow-check"]
 members = ["*/*/remediated-example", "*/*/vulnerable-example"]
 resolver = "2"
 
