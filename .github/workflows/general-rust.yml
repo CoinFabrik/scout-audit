@@ -14,7 +14,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  PYTHONUNBUFFERED: 1
 
 jobs:
   format:
@@ -26,11 +25,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
-
       - name: Update Rust Toolchain
         run: rustup update
 
@@ -40,8 +34,13 @@ jobs:
       - name: Install rustfmt
         run: rustup component add rustfmt --toolchain nightly
 
-      - name: Check Format
-        run: python scripts/run-fmt.py --dir test-cases detectors
+      - name: Check Format (detectors)
+        working-directory: detectors
+        run: cargo fmt -- --check -v
+
+      - name: Check Format (test cases)
+        working-directory: test-cases
+        run: cargo fmt -- --check -v
 
   clippy:
     name: Lint with Clippy
@@ -51,11 +50,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
 
       - name: Cache Rust Dependencies
         uses: actions/cache@v4
@@ -71,14 +65,8 @@ jobs:
       - name: Install Rust nightly
         run: rustup install nightly-2023-12-16 --profile minimal
 
-      - name: Install dylint-link
-        run: cargo install dylint-link
-
       - name: Install clippy
         run: rustup component add clippy --toolchain nightly-2023-12-16
-
-      - name: Default to nightly
-        run: rustup default nightly-2023-12-16
 
       - name: Install required srcs
         run: rustup component add rust-src --toolchain nightly-2023-12-16-x86_64-unknown-linux-gnu
@@ -88,9 +76,6 @@ jobs:
 
       - name: Free-space claim-usage report1
         run: du -hs /opt/hostedtoolcache/*
-
-      - name: Free-space claim-usage report2
-        run: du -hs /opt/hostedtoolcache/Python/*
 
       - name: Free-space claim-usage report3
         run: (ls -la /usr/local/share && du -hs /usr/local/share/boost) || true
@@ -125,8 +110,13 @@ jobs:
       - name: Free-space claim-usage report1
         run: du -hs /opt/hostedtoolcache/*
 
-      - name: Lint with Clippy
-        run: python scripts/run-clippy.py --dir test-cases detectors
+      - name: Lint with Clippy (detectors)
+        working-directory: detectors
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Lint with Clippy (test cases)
+        working-directory: test-cases
+        run: cargo +nightly-2023-12-16 clippy --target=wasm32-unknown-unknown -Zbuild-std=std,core,alloc --no-default-features -- -D warnings -A clippy::new_without_default
 
   comment-on-pr:
     name: Comment on PR
