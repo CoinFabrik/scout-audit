@@ -216,7 +216,12 @@ impl<'tcx> LateLintPass<'tcx> for DosUnexpectedRevertWithVector {
                 &mut HashSet::<BasicBlock>::default(),
             );
             for place in unchecked_places {
-                clippy_wrappers::span_lint(cx, DOS_UNEXPECTED_REVERT_WITH_VECTOR, place.1, LINT_MESSAGE);
+                clippy_wrappers::span_lint(
+                    cx,
+                    DOS_UNEXPECTED_REVERT_WITH_VECTOR,
+                    place.1,
+                    LINT_MESSAGE,
+                );
             }
         }
 
