@@ -1,17 +1,13 @@
 [package]
+edition = "2021"
 name = "storage-change-events-vulnerable-1"
 version = "0.1.0"
-edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 soroban-sdk = { workspace = true }
-soroban-token-sdk = { workspace = true }
-
-[dev_dependencies]
-soroban-sdk = { workspace = true, features = ["testutils"] }
 soroban-token-sdk = { workspace = true }
 
 [features]

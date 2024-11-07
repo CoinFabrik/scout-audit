@@ -2,36 +2,31 @@
 
 extern crate rustc_errors;
 extern crate rustc_hir;
-extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+use clippy_wrappers::span_lint;
 use edit_distance::edit_distance;
-use rustc_hir::{intravisit::Visitor, Node};
-use rustc_lint::{LateContext, LateLintPass};
-
+use if_chain::if_chain;
 use rustc_errors::MultiSpan;
-use rustc_span::Span;
-
-use std::collections::HashSet;
-use std::vec;
+use rustc_hir::{intravisit::FnKind, Body, FnDecl, Item, ItemKind, Node};
+use rustc_lint::{LateContext, LateLintPass};
+use rustc_span::{def_id::DefId, def_id::LocalDefId, Span};
 use std::{
-    collections::HashMap,
+    collections::HashSet,
     ops::{Div, Mul},
+    vec,
 };
-use utils::FunctionCallVisitor;
-
-use rustc_span::def_id::DefId;
 
 const LINT_MESSAGE: &str =
     "This contract seems like a Token, consider implementing the Token Interface trait";
 const CANONICAL_FUNCTIONS_AMOUNT: u16 = 10;
 const INCLUDED_FUNCTIONS_THRESHOLD: u16 = 60;
+const TOKEN_INTERFACE_PATH: &str = "soroban_sdk::token::TokenInterface";
 
 dylint_linting::impl_late_lint! {
     pub TOKEN_INTERFACE_INFERENCE,
     Warn,
-    "",
+    LINT_MESSAGE,
     TokenInterfaceInference::default(),
     {
         name: "Token Interface Implementation Analyzer",
@@ -44,8 +39,6 @@ dylint_linting::impl_late_lint! {
 
 #[derive(Default)]
 struct TokenInterfaceInference {
-    function_call_graph: HashMap<DefId, HashSet<DefId>>,
-    checked_functions: HashSet<String>,
     canonical_funcs_def_id: HashSet<DefId>,
     impl_token_interface_trait: bool,
     detected_canonical_functions_count: u16,
@@ -53,15 +46,14 @@ struct TokenInterfaceInference {
 }
 
 impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
-    fn check_item(&mut self, cx: &LateContext<'tcx>, item: &'tcx rustc_hir::Item<'tcx>) {
-        if let rustc_hir::ItemKind::Impl(impl_block) = item.kind {
-            if let Some(trait_ref) = impl_block.of_trait {
-                let trait_def_id = trait_ref.path.res.def_id();
-                let trait_name = cx.tcx.def_path_str(trait_def_id);
-
-                if trait_name == "soroban_sdk::token::TokenInterface" {
-                    self.impl_token_interface_trait = true;
-                }
+    fn check_item(&mut self, cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
+        if_chain! {
+            if let ItemKind::Impl(impl_block) = item.kind;
+            if let Some(trait_ref) = impl_block.of_trait;
+            if let Some(trait_def_id) = trait_ref.path.res.opt_def_id();
+            if cx.tcx.def_path_str(trait_def_id) == TOKEN_INTERFACE_PATH;
+            then {
+                self.impl_token_interface_trait = true;
             }
         }
     }
@@ -78,13 +70,11 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
             .div(CANONICAL_FUNCTIONS_AMOUNT)
             >= INCLUDED_FUNCTIONS_THRESHOLD
         {
-            span_lint_and_help(
+            span_lint(
                 cx,
                 TOKEN_INTERFACE_INFERENCE,
                 MultiSpan::from_spans(self.funcs_spans.clone()),
                 LINT_MESSAGE,
-                None,
-                "",
             );
         }
     }
@@ -92,21 +82,18 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
-        _: rustc_hir::intravisit::FnKind<'tcx>,
-        _fn_decl: &'tcx rustc_hir::FnDecl<'tcx>,
-        body: &'tcx rustc_hir::Body<'tcx>,
+        _: FnKind<'tcx>,
+        _: &'tcx FnDecl<'tcx>,
+        _: &'tcx Body<'tcx>,
         span: Span,
-        local_def_id: rustc_span::def_id::LocalDefId,
+        local_def_id: LocalDefId,
     ) {
-        let def_id = local_def_id.to_def_id();
-        self.checked_functions.insert(cx.tcx.def_path_str(def_id));
-
         if span.from_expansion() {
             return;
         }
 
+        let def_id = local_def_id.to_def_id();
         let fn_name = cx.tcx.def_path_str(def_id);
-
         let fn_name_span = if let Some(node) = cx.tcx.hir().get_if_local(def_id) {
             match node {
                 Node::Item(item) => Some(item.ident.span),
@@ -116,10 +103,6 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
         } else {
             None
         };
-
-        let mut function_call_visitor =
-            FunctionCallVisitor::new(cx, def_id, &mut self.function_call_graph);
-        function_call_visitor.visit_body(body);
 
         // If the function is part of the token interface, I store its defid.
         if verify_token_interface_function_similarity(fn_name.clone()) {

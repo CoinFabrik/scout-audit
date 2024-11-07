@@ -1,7 +1,7 @@
 [package]
+edition = "2021"
 name = "token-interface-events-remediated-1"
 version = "0.1.0"
-edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
@@ -10,26 +10,5 @@ crate-type = ["cdylib"]
 soroban-sdk = { workspace = true }
 soroban-token-sdk = { workspace = true }
 
-
-[dev_dependencies]
-soroban-sdk = { workspace = true, features = ["testutils"] }
-soroban-token-sdk = { workspace = true }
-
-
 [features]
 testutils = ["soroban-sdk/testutils"]
-
-[profile.release]
-opt-level = "z"
-overflow-checks = true
-debug = 0
-strip = "symbols"
-debug-assertions = false
-panic = "abort"
-codegen-units = 1
-lto = true
-
-[profile.release-with-logs]
-inherits = "release"
-debug-assertions = true
-
