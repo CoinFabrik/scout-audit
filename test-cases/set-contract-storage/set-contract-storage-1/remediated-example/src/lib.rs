@@ -300,11 +300,7 @@ mod erc20 {
             T: ink::scale::Encode,
         {
             use ink::{
-                env::hash::{
-                    Blake2x256,
-                    CryptoHash,
-                    HashOutput,
-                },
+                env::hash::{Blake2x256, CryptoHash, HashOutput},
                 primitives::Clear,
             };
 
@@ -314,10 +310,9 @@ mod erc20 {
             let len_encoded = encoded.len();
             if len_encoded <= len_result {
                 result.as_mut()[..len_encoded].copy_from_slice(&encoded);
-                return result
+                return result;
             }
-            let mut hash_output =
-                <<Blake2x256 as HashOutput>::Type as Default>::default();
+            let mut hash_output = <<Blake2x256 as HashOutput>::Type as Default>::default();
             <Blake2x256 as CryptoHash>::hash(&encoded, &mut hash_output);
             let copy_len = core::cmp::min(hash_output.len(), len_result);
             result.as_mut()[0..copy_len].copy_from_slice(&hash_output[0..copy_len]);
@@ -330,9 +325,8 @@ mod erc20 {
             expected_to: Option<AccountId>,
             expected_value: Balance,
         ) {
-            let decoded_event =
-                <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
-                    .expect("encountered invalid contract event data buffer");
+            let decoded_event = <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
+                .expect("encountered invalid contract event data buffer");
             let Transfer { from, to, value } = decoded_event;
             assert_eq!(from, expected_from, "encountered invalid Transfer.from");
             assert_eq!(to, expected_to, "encountered invalid Transfer.to");
@@ -340,8 +334,7 @@ mod erc20 {
 
             let mut expected_topics = Vec::new();
             expected_topics.push(
-                ink::blake2x256!("Transfer(Option<AccountId>,Option<AccountId>,Balance)")
-                    .into(),
+                ink::blake2x256!("Transfer(Option<AccountId>,Option<AccountId>,Balance)").into(),
             );
             if let Some(from) = expected_from {
                 expected_topics.push(encoded_into_hash(from));

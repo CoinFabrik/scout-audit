@@ -321,9 +321,8 @@ pub mod erc20 {
             expected_to: Option<AccountId>,
             expected_value: Balance,
         ) {
-            let decoded_event =
-                <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
-                    .expect("encountered invalid contract event data buffer");
+            let decoded_event = <Transfer as ink::scale::Decode>::decode(&mut &event.data[..])
+                .expect("encountered invalid contract event data buffer");
             let Transfer { from, to, value } = decoded_event;
             assert_eq!(from, expected_from, "encountered invalid Transfer.from");
             assert_eq!(to, expected_to, "encountered invalid Transfer.to");
