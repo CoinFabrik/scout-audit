@@ -65,6 +65,9 @@ jobs:
       - name: Install Rust nightly
         run: rustup install nightly-2023-12-16 --profile minimal
 
+      - name: Install dylint-link
+        run: cargo install dylint-link
+
       - name: Install clippy
         run: rustup component add clippy --toolchain nightly-2023-12-16
 
