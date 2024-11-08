@@ -1,21 +1,16 @@
 [package]
-name = "delegate-call-remediated"
-version = "0.1.0"
 edition = "2021"
-authors = ["[your_name] <[your_email]>"]
+name = "lazy-delegate-remediated-1"
+version = "0.1.0"
 
 [lib]
 path = "src/lib.rs"
 
 [features]
+__ink_dylint_Constructor = []
+__ink_dylint_Storage = []
 default = ["std"]
-std = [
-    "ink/std",
-    "scale/std",
-    "scale-info/std",
-]
-ink-as-dependency = []
-e2e-tests = []
+std = ["ink/std", "scale-info/std", "scale/std"]
 
 [dependencies]
 ink = { workspace = true }
@@ -23,5 +18,4 @@ scale = { workspace = true }
 scale-info = { workspace = true }
 
 [dev-dependencies]
-ink_e2e = { workspace = true }
 delegate-call-fixed-exploiter = { path = "../fixed-exploiter-example" }

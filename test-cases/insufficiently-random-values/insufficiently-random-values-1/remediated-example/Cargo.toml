@@ -1,8 +1,18 @@
 [package]
-name = "insufficiently-random-values-remediated"
-version = "0.1.0"
-authors = ["[your_name] <[your_email]>"]
 edition = "2021"
+name = "insufficiently-random-values-remediated-1"
+version = "0.1.0"
 
 [lib]
 path = "src/lib.rs"
+
+[features]
+__ink_dylint_Constructor = []
+__ink_dylint_Storage = []
+default = ["std"]
+std = ["ink/std", "scale-info/std", "scale/std"]
+
+[dependencies]
+ink = { workspace = true }
+scale = { workspace = true }
+scale-info = { workspace = true }

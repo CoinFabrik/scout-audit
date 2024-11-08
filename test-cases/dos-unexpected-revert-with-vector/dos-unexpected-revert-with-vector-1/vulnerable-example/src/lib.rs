@@ -189,39 +189,4 @@ mod unexpected_revert {
             assert!(candidate.is_ok());
         }
     }
-
-    #[cfg(all(test, feature = "e2e-tests"))]
-    mod e2e_tests {
-        #[ink_e2e::test]
-        #[should_panic(expected = "add_candidate failed: CallDryRun")]
-        async fn insert_512_candidates(mut client: ink_e2e::Client<C, E>) {
-            let now: u64 = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-                Ok(n) => (n.as_secs() + 10 * 60) * 1000,
-                Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-            };
-            let constructor = UnexpectedRevertRef::new(now);
-            let contract_acc_id = client
-                .instantiate("unexpected-revert", &ink_e2e::alice(), constructor, 0, None)
-                .await
-                .expect("instantiate failed")
-                .account_id;
-
-            for i in 0u32..512 {
-                let mut zero_vec = vec![0u8; 28];
-                zero_vec.extend(i.to_be_bytes().iter().cloned());
-                let arr: [u8; 32] = match zero_vec.as_slice().try_into() {
-                    Ok(arr) => arr,
-                    Err(_) => panic!(),
-                };
-                let addr = AccountId::from(arr);
-
-                let add_candidate = build_message::<UnexpectedRevertRef>(contract_acc_id.clone())
-                    .call(|contract| contract.add_candidate(addr));
-                client
-                    .call(&ink_e2e::bob(), add_candidate.clone(), 0, None)
-                    .await
-                    .expect("add_candidate failed");
-            }
-        }
-    }
 }
