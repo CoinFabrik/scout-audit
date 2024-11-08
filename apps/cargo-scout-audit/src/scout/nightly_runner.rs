@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use anyhow::{Context, Result};
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
@@ -17,6 +18,13 @@ lazy_static! {
     };
 }
 
+#[cfg(windows)]
+#[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
+pub fn run_scout_in_nightly(_: &str) -> Result<Option<Child>> {
+    return Ok(None);
+}
+
+#[cfg(not(windows))]
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
 pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
