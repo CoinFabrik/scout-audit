@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
 use std::{
@@ -20,7 +20,29 @@ lazy_static! {
 
 #[cfg(windows)]
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-pub fn run_scout_in_nightly(_: &str) -> Result<Option<Child>> {
+pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::{
+        Win32::System::LibraryLoader::SetDllDirectoryW,
+        core::PCWSTR,
+    };
+
+    let user_profile = env::var("USERPROFILE")
+        .map_err(|e| anyhow!("Unable to get user profile directory: {e}"))?;
+    let mut user_profile = std::path::PathBuf::from(user_profile);
+    user_profile.push(".rustup");
+    user_profile.push("toolchains");
+    user_profile.push(format!("{toolchain}-x86_64-pc-windows-msvc"));
+    user_profile.push("bin");
+    
+    let user_profile = user_profile.as_os_str();
+    let directory = user_profile
+        .encode_wide()
+        .chain(Some(0))
+        .collect::<Vec<_>>();
+    unsafe{
+        let _ = SetDllDirectoryW(PCWSTR(directory.as_ptr()));
+    }
     return Ok(None);
 }
 
