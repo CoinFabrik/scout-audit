@@ -6,7 +6,7 @@ resolver = "2"
 [workspace.dependencies]
 cargo_metadata = "=0.18.1"
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "99c7838" }
-clippy_wrappers = { package = "scout-audit-clippy-wrappers", path = "../../../scout-audit-clippy-wrappers" }
+clippy_wrappers = { package = "scout-audit-clippy-wrappers-ink", path = "../../../scout-audit-clippy-wrappers-ink" }
 colored = "2.1.0"
 if_chain = "=1.0.2"
 itertools = { version = "=0.13" }
