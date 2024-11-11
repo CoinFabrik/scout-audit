@@ -1,9 +1,12 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
+
 #![feature(let_chains)]
+
 extern crate rustc_ast;
 extern crate rustc_span;
+
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_ast::{
     tokenstream::{TokenStream, TokenTree},
     visit::{walk_block, walk_expr, Visitor},
@@ -15,18 +18,21 @@ use rustc_span::Span;
 const LINT_MESSAGE: &str =
     "Using `transferred_value` without #[ink(payable)] will always return 0.";
 
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
+#[expose_lint_info]
+pub static NON_PAYABLE_TRANSFERRED_VALUE_INFO: LintInfo = LintInfo {
+    name: "Non-payable transferred_value",
+    short_message: LINT_MESSAGE,
+    long_message: "",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/non-payable-transferred-value",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
     pub NON_PAYABLE_TRANSFERRED_VALUE,
     Warn,
     LINT_MESSAGE,
-    NonPayableTransferredValue::default(),
-    {
-        name: "Non-payable transferred_value",
-        long_message: "",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/non-payable-transferred-value",
-        vulnerability_class: "Best practices",
-    }
+    NonPayableTransferredValue::default()
 }
 
 #[derive(Default)]

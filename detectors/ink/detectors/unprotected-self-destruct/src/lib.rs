@@ -1,38 +1,42 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use rustc_hir::QPath;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
-    Expr, ExprKind,
+    Expr, ExprKind, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, Place, StatementKind, TerminatorKind,
+use rustc_middle::{
+    mir::{
+        BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, Place, StatementKind,
+        TerminatorKind,
+    },
+    ty::TyKind,
 };
-use rustc_middle::ty::TyKind;
-use rustc_span::def_id::DefId;
-use rustc_span::Span;
+use rustc_span::{def_id::DefId, Span};
 
 const LINT_MESSAGE: &str = "This terminate_contract is called without access control";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static UNPROTECTED_SELF_DESTRUCT_INFO: LintInfo = LintInfo {
+    name: "Unprotected Self Destruct",
+    short_message: LINT_MESSAGE,
+    long_message: "If users are allowed to call terminate_contract, they can intentionally or accidentally destroy the contract, leading to the loss of all associated data and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-self-destruct",
+    vulnerability_class: "Authorization",
+};
+
+dylint_linting::impl_late_lint! {
     pub UNPROTECTED_SELF_DESTRUCT,
     Warn,
     LINT_MESSAGE,
-    UnprotectedSelfDestruct::default(),
-    {
-        name: "Unprotected Self Destruct",
-        long_message: "If users are allowed to call terminate_contract, they can intentionally or accidentally destroy the contract, leading to the loss of all associated data and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-self-destruct",
-        vulnerability_class: "Authorization",
-    }
+    UnprotectedSelfDestruct::default()
 }
 
 #[derive(Default)]
@@ -244,12 +248,12 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSelfDestruct {
                     ..
                 } => {
                     for arg in args {
-                        match arg {
+                        match arg.node {
                             Operand::Copy(origplace) | Operand::Move(origplace) => {
                                 if tainted_places
                                     .clone()
                                     .into_iter()
-                                    .any(|place| place == *origplace)
+                                    .any(|place| place == origplace)
                                 {
                                     tainted_places.push(*destination);
                                 }
@@ -315,16 +319,16 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSelfDestruct {
                         tainted_places,
                     ));
                 }
-                TerminatorKind::InlineAsm { destination, .. } => {
-                    if destination.is_some() {
+                TerminatorKind::InlineAsm { targets, .. } => {
+                    targets.iter().for_each(|target| {
                         ret_vec.append(&mut navigate_trough_basicblocks(
                             bbs,
-                            destination.unwrap(),
+                            *target,
                             caller_and_terminate,
                             after_comparison,
                             tainted_places,
                         ));
-                    }
+                    });
                 }
                 _ => {}
             }

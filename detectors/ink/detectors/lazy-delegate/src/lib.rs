@@ -1,9 +1,9 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
 #![feature(let_chains)]
 extern crate rustc_ast;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::ast::GenericArgs;
 use rustc_ast::{
@@ -15,7 +15,17 @@ use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "Delegate call with non-lazy, non-mapping storage";
 
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
+#[expose_lint_info]
+pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
+    name: "Lazy Delegate",
+    short_message: LINT_MESSAGE,
+    long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-delegate",
+    vulnerability_class: "Known Bugs",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
     /// ### What it does
     /// Checks for non-lazy storage when using delegate calls.
     /// ### Why is this bad?
@@ -41,14 +51,7 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     pub LAZY_DELEGATE,
     Warn,
     LINT_MESSAGE,
-    LazyDelegate::default(),
-    {
-        name: "Lazy Delegate",
-        long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-delegate",
-        vulnerability_class: "Known Bugs",
-    }
+    LazyDelegate::default()
 }
 
 #[derive(Default)]

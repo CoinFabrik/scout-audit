@@ -4,6 +4,7 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_utils::sym;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{
     ptr::P,
@@ -14,8 +15,19 @@ use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::{sym, Span};
 
 const LINT_MESSAGE: &str = "Assert causes panic. Instead, return a proper error.";
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
+
+#[expose_lint_info]
+pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
+    name: "Assert violation",
+    short_message: LINT_MESSAGE,
+    long_message: "The assert! macro can cause the contract to panic. This is not a good practice.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/assert-violation",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
+        /// ### What it does
     /// Checks for `assert!` usage.
     /// ### Why is this bad?
     /// `assert!` causes a panic, and panicking it's not a good practice. Instead, use proper error handling.
@@ -44,18 +56,10 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     ///        }
     ///    }
     ///```
-
     pub ASSERT_VIOLATION,
     Warn,
     LINT_MESSAGE,
-    AssertViolation::default(),
-    {
-        name: "Assert violation",
-        long_message: "The assert! macro can cause the contract to panic. This is not a good practice.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/assert-violation",
-        vulnerability_class: "Validations and error handling",
-    }
+    AssertViolation::default()
 }
 
 #[derive(Default)]

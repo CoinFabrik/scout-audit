@@ -4,6 +4,7 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -14,17 +15,20 @@ use rustc_span::{Span, Symbol};
 const LINT_MESSAGE: &str =
     "This is a low level way to evaluate another smart contract. Avoid using it. But if needed, use `invoke_contract`.";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static DONT_USE_INVOKE_CONTRACT_V1_INFO: LintInfo = LintInfo {
+    name: "Dont use invoke_contract_v1",
+    short_message: LINT_MESSAGE,
+    long_message: LINT_MESSAGE,
+    severity: "Enhancement",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dont-use-invoke-contract-v1",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::declare_late_lint! {
     pub DONT_USE_INVOKE_CONTRACT_V1,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Dont use invoke_contract_v1",
-        long_message: LINT_MESSAGE,
-        severity: "Enhancement",
-        help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dont-use-invoke-contract-v1",
-        vulnerability_class: "Best practices",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for DontUseInvokeContractV1 {

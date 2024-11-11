@@ -1,10 +1,11 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
+
 
 extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_utils::sym;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{
     tokenstream::{TokenStream, TokenTree},
@@ -15,7 +16,17 @@ use rustc_span::{sym, Span};
 
 const LINT_MESSAGE: &str = "The format! macro should not be used.";
 
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
+#[expose_lint_info]
+pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
+    name: "Avoid format! macro",
+    short_message: LINT_MESSAGE,
+    long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-format-string",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
     /// ### What it does
     /// Detects the usage of `format!` macro.
     ///
@@ -47,14 +58,7 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     pub AVOID_FORMAT_STRING,
     Warn,
     LINT_MESSAGE,
-    AvoidFormatString::default(),
-    {
-        name: "Avoid format! macro",
-        long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-format-string",
-        vulnerability_class: "Validations and error handling",
-    }
+    AvoidFormatString::default()
 }
 
 #[derive(Default)]

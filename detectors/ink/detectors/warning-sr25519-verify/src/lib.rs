@@ -1,10 +1,11 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
-extern crate rustc_ast;
+
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_body, walk_expr, Visitor},
     Expr, ExprKind, QPath,
@@ -14,17 +15,20 @@ use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "This function is from the unstable interface, which is unsafe and normally is not available on production chains.";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static WARNING_SR25519_VERIFY_INFO: LintInfo = LintInfo {
+    name: "Warning sr25519 verify",
+    short_message: LINT_MESSAGE,
+    long_message: LINT_MESSAGE,
+    severity: "Medium",
+    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/warning-sr25519-verify",
+    vulnerability_class: "Known Bugs",
+};
+
+dylint_linting::declare_late_lint! {
     pub WARNING_SR25519_VERIFY,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Warning sr25519 verify",
-        long_message: LINT_MESSAGE,
-        severity: "Medium",
-        help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/warning-sr25519-verify",
-        vulnerability_class: "Known Bugs",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for WarningSr25519Verify {

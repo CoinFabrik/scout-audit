@@ -10,13 +10,14 @@ extern crate rustc_type_ir;
 use std::collections::HashSet;
 
 use clippy_wrappers::span_lint_and_help;
-use rustc_ast::{Label, LitIntType, LitKind};
+use common::expose_lint_info;
+use rustc_ast::{BindingMode, Label, LitIntType, LitKind};
 use rustc_hir::{
     def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    BindingAnnotation, Block, Expr, ExprField, ExprKind, HirId, LangItem, LoopSource, MatchSource,
-    Pat, PatField, PatKind, Path, QPath, StmtKind, Ty,
+    Block, Expr, ExprField, ExprKind, HirId, LangItem, LoopSource, MatchSource, Pat, PatField,
+    PatKind, Path, QPath, StmtKind, Ty,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{TyCtxt, TyKind};
@@ -26,17 +27,20 @@ use rustc_type_ir::Interner;
 const LINT_MESSAGE: &str =
     "Hardcoding an index could lead to panic if the top bound is out of bounds.";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static ITERATORS_OVER_INDEXING_INFO: LintInfo = LintInfo {
+    name: "Iterators Over Indexing",
+    short_message: LINT_MESSAGE,
+    long_message: "Instead, use an iterator or index to `.len()`.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/iterators-over-indexing",
+    vulnerability_class: "Incorrect Use of Indexing",
+};
+
+dylint_linting::declare_late_lint! {
     pub ITERATORS_OVER_INDEXING,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Iterators Over Indexing",
-        long_message: "Instead, use an iterator or index to `.len()`.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/iterators-over-indexing",
-        vulnerability_class: "Incorrect Use of Indexing",
-    }
+    LINT_MESSAGE
 }
 
 pub fn get_node_type<'a>(
@@ -302,7 +306,7 @@ fn resolution_to_local(resolution: &Res) -> Result<&HirId, ()> {
 
 fn lit_to_int(kind: &LitKind) -> Result<(u128, LitIntType), ()> {
     if let LitKind::Int(a, b) = kind {
-        Ok((*a, *b))
+        Ok((a.get(), *b))
     } else {
         Err(())
     }
@@ -322,7 +326,7 @@ fn pattern_to_struct<'hir>(
 
 fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Result<(&BindingAnnotation, &HirId, &Ident, &Option<&'hir Pat<'hir>>), ()> {
+) -> Result<(&BindingMode, &HirId, &Ident, &Option<&'hir Pat<'hir>>), ()> {
     if let PatKind::Binding(a, b, c, d) = pat {
         Ok((a, b, c, d))
     } else {

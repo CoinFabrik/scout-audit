@@ -2,13 +2,24 @@
 
 extern crate rustc_hir;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
 
 const LINT_MESSAGE: &str = "In order to prevent randomness manipulations by validators block_timestamp should not be used as random number source";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
+    name: "Insufficiently Random Values",
+    short_message: LINT_MESSAGE,
+    long_message: "Using block attributes like block_timestamp or block_number for random number generation in ink! Substrate smart contracts is not recommended due to the predictability of these values. Block attributes are publicly visible and deterministic, making it easy for malicious actors to anticipate their values and manipulate outcomes to their advantage.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/insufficiently-random-values",
+    vulnerability_class: "Block attributes",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// This detector prevents the usage of timestamp/block number and modulo operator as a random number source.
     ///
@@ -22,14 +33,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     ///
     pub INSUFFICIENTLY_RANDOM_VALUES,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Insufficiently Random Values",
-        long_message: "Using block attributes like block_timestamp or block_number for random number generation in ink! Substrate smart contracts is not recommended due to the predictability of these values. Block attributes are publicly visible and deterministic, making it easy for malicious actors to anticipate their values and manipulate outcomes to their advantage.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/insufficiently-random-values",
-        vulnerability_class: "Block attributes",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for InsufficientlyRandomValues {

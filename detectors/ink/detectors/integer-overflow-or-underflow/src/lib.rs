@@ -3,16 +3,25 @@
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::consts::constant_simple;
-use clippy_utils::is_integer_literal;
+use clippy_utils::{consts::constant_simple, is_integer_literal};
+use common::expose_lint_info;
 use rustc_hir::{self as hir, Body, Expr, ExprKind, UnOp};
-use rustc_lint::LateContext;
-use rustc_lint::LateLintPass;
+use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
+    name: "Integer Overflow/Underflow",
+    short_message: LINT_MESSAGE,
+    long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.\n In Ink! 5.0.0, using raw math operations will result in `cargo contract build` failing with an error message.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/integer-overflow-or-underflow",
+    vulnerability_class: "Arithmetic",
+};
+
+dylint_linting::impl_late_lint! {
     /// ### What it does
     /// Checks for integer arithmetic operations which could overflow or panic.
     ///
@@ -35,14 +44,7 @@ scout_audit_dylint_linting::impl_late_lint! {
     pub INTEGER_OVERFLOW_OR_UNDERFLOW,
     Warn,
     LINT_MESSAGE,
-    IntegerOverflowOrUnderflow::default(),
-    {
-        name: "Integer Overflow/Underflow",
-        long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.\n In Ink! 5.0.0, using raw math operations will result in `cargo contract build` failing with an error message.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/integer-overflow-or-underflow",
-        vulnerability_class: "Arithmetic",
-    }
+    IntegerOverflowOrUnderflow::default()
 }
 
 #[derive(Default)]
@@ -81,11 +83,11 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
         self.arithmetic_context.expr_post(e.hir_id);
     }
 
-    fn check_body(&mut self, cx: &LateContext<'tcx>, b: &'tcx Body<'_>) {
+    fn check_body(&mut self, cx: &LateContext<'tcx>, b: &Body<'tcx>) {
         self.arithmetic_context.enter_body(cx, b);
     }
 
-    fn check_body_post(&mut self, cx: &LateContext<'tcx>, b: &'tcx Body<'_>) {
+    fn check_body_post(&mut self, cx: &LateContext<'tcx>, b: &rustc_hir::Body<'_>) {
         self.arithmetic_context.body_post(cx, b);
     }
 }
@@ -156,7 +158,7 @@ impl ArithmeticContext {
                             expr.span,
                             LINT_MESSAGE,
                             None,
-                            &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                            format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
                         );
                         self.expr_id = Some(expr.hir_id);
                     }
@@ -168,7 +170,7 @@ impl ArithmeticContext {
                         expr.span,
                         LINT_MESSAGE,
                         None,
-                        &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                        format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
                     );
                     self.expr_id = Some(expr.hir_id);
                 }

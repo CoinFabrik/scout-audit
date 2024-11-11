@@ -1,9 +1,11 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
+
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use rustc_ast::LitKind;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -15,7 +17,17 @@ use rustc_span::{def_id::LocalDefId, Span};
 const LINT_MESSAGE: &str =
     "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static DOS_UNBOUNDED_OPERATION_INFO: LintInfo = LintInfo {
+    name: "Denial of Service: Unbounded Operation",
+    short_message: LINT_MESSAGE,
+    long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unbounded-operation",
+    vulnerability_class: "Denial of Service",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// This detector checks that when using for or while loops, their conditions limit the execution to a constant number of iterations.
     /// ### Why is this bad?
@@ -40,14 +52,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub DOS_UNBOUNDED_OPERATION,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Denial of Service: Unbounded Operation",
-        long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unbounded-operation",
-        vulnerability_class: "Denial of Service",
-    }
+    LINT_MESSAGE
 }
 
 struct ForLoopVisitor {

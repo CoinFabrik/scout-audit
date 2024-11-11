@@ -8,6 +8,7 @@ extern crate rustc_span;
 use std::collections::HashSet;
 
 use clippy_wrappers::span_lint;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -25,7 +26,17 @@ use rustc_span::{def_id::DefId, def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str = "This vector operation is called without access control";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
+    name: "Denial of Service: Unexpected Revert with Vector",
+    short_message: LINT_MESSAGE,
+    long_message: "It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unexpected-revert-with-vector",
+    vulnerability_class: "Denial of Service",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks for array pushes without access control.
     /// ### Why is this bad?
@@ -55,14 +66,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub DOS_UNEXPECTED_REVERT_WITH_VECTOR,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unexpected Revert Inserting to Storage",
-        long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unexpected-revert-with-vector",
-        vulnerability_class: "Denial of Service",
-    }
+    LINT_MESSAGE
 }
 
 struct UnprotectedVectorFinder<'tcx, 'tcx_ref> {
@@ -154,8 +158,8 @@ impl<'tcx> CallersAndVecOps<'tcx> {
                             }
                         }
                     } else {
-                        for op in &push_def_id {
-                            if op == def {
+                        if let Some(op) = push_def_id {
+                            if op == *def {
                                 callers_vec
                                     .vec_ops
                                     .push((bb_data, BasicBlock::from_usize(bb)));
@@ -251,12 +255,12 @@ impl DosUnexpectedRevertWithVector {
                 ..
             } => {
                 for arg in args {
-                    match arg {
+                    match arg.node {
                         Operand::Copy(origplace) | Operand::Move(origplace) => {
                             if tainted_places
                                 .clone()
                                 .into_iter()
-                                .any(|place| place == *origplace)
+                                .any(|place| place == origplace)
                             {
                                 tainted_places.push(*destination);
                             }
@@ -273,7 +277,7 @@ impl DosUnexpectedRevertWithVector {
                     if map_op.1 == bb
                         && !after_comparison
                         && args.get(1).map_or(true, |f| {
-                            f.place().is_some_and(|f| !tainted_places.contains(&f))
+                            f.node.place().is_some_and(|f| !tainted_places.contains(&f))
                         })
                     {
                         ret_vec.push((*destination, *fn_span))
@@ -331,19 +335,19 @@ impl DosUnexpectedRevertWithVector {
                     ),
                 );
             }
-            TerminatorKind::InlineAsm { destination, .. } => {
-                if destination.is_some() {
+            TerminatorKind::InlineAsm { targets, .. } => {
+                targets.iter().for_each(|target| {
                     ret_vec.append(
                         &mut DosUnexpectedRevertWithVector::navigate_trough_basicblocks(
                             bbs,
-                            destination.unwrap(),
+                            *target,
                             caller_and_vec_ops,
                             after_comparison,
                             tainted_places,
                             visited_bbs,
                         ),
                     );
-                }
+                });
             }
             _ => {}
         }

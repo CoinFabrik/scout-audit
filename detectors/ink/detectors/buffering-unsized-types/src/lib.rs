@@ -1,36 +1,45 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
+
 #![feature(let_chains)]
+
 extern crate rustc_hir;
 extern crate rustc_span;
+
 use std::collections::HashMap;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind, GenericArg, QPath, Ty, TyKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::symbol::Ident;
-use rustc_span::Span;
+use rustc_span::{symbol::Ident, Span};
+
 const LINT_MESSAGE: &str = "Do not use these method with an unsized (dynamically sized) type.";
-scout_audit_dylint_linting::impl_late_lint! {
+
+#[expose_lint_info]
+pub static BUFFERING_UNSIZED_TYPES_INFO: LintInfo = LintInfo {
+    name: "Buffering unsized types",
+    short_message: LINT_MESSAGE,
+    long_message: "",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-considerations",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::impl_late_lint! {
     pub BUFFERING_UNSIZED_TYPES,
     Warn,
     LINT_MESSAGE,
-    BufferingUnsizedTypes::default(),
-    {
-        name: "Buffering unsized types",
-        long_message: "",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-considerations",
-        vulnerability_class: "Best practices",
-    }
+    BufferingUnsizedTypes::default()
 }
+
 const INK_MAPPING_TYPE: &str = "ink_storage::lazy::mapping::Mapping";
 const INK_VEC_STORAGE_TYPE: &str = "ink_storage::lazy::vec::StorageVec";
 const FUNCTIONS_TO_CHECK: [&str; 6] = ["insert", "pop", "push", "set", "peek", "get"];
 const UNSIZED_TYPES: [&str; 2] = ["String", "Vec"];
+
 pub fn method_is_wanted(method: &str) -> bool {
     FUNCTIONS_TO_CHECK.contains(&method)
 }
@@ -131,12 +140,12 @@ impl<'tcx> Visitor<'tcx> for BufferingUnsizedTypesVisitor<'tcx, '_> {
                 self.cx,
                 BUFFERING_UNSIZED_TYPES,
                 expr.span,
-                &format!(
+                format!(
                     "Do not use `{}` with an unsized type. Use the `try_{}` method instead.",
                     met_name, met_name
                 ),
                 Some(*self.mapping_fields.get(&struct_field_name).unwrap()),
-                &format!(
+                format!(
                     "The variable `{}` is a storage type with a dinamically sized value.",
                     field_name
                 ),

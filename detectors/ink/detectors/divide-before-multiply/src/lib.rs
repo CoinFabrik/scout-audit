@@ -7,29 +7,44 @@ extern crate rustc_span;
 
 use std::collections::HashSet;
 
+use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
-use rustc_hir::intravisit::walk_expr;
-use rustc_hir::intravisit::Visitor;
-use rustc_hir::BinOpKind;
-use rustc_hir::{Expr, ExprKind};
-use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::mir::Const;
-use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, BasicBlocks, BinOp, Operand, Place, Rvalue, StatementKind,
-    TerminatorKind,
+use rustc_hir::{
+    intravisit::{walk_expr, FnKind, Visitor},
+    BinOpKind, Body, Expr, ExprKind, FnDecl,
 };
-use rustc_middle::ty::TyKind;
-use rustc_span::def_id::DefId;
-use rustc_span::Span;
+use rustc_lint::{LateContext, LateLintPass};
+use rustc_middle::{
+    mir::{
+        BasicBlock, BasicBlockData, BasicBlocks, BinOp, Const, Operand, Place, Rvalue,
+        StatementKind, TerminatorKind,
+    },
+    ty::TyKind,
+};
+use rustc_span::{
+    def_id::{DefId, LocalDefId},
+    Span,
+};
 
 const LINT_MESSAGE: &str = "Division before multiplication might result in a loss of precision";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
+    name: "Divide before multiply",
+    short_message: LINT_MESSAGE,
+    long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/divide-before-multiply",
+    vulnerability_class: "Arithmetic",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks the existence of a division before a multiplication.
     ///
     /// ### Why is this bad?
-    /// Division between two integers might return zero.
+    /// Performing a division operation before multiplication can lead to a loss of precision. It might even result in an unintended zero value.
     ///
     /// ### Example
     /// ```rust
@@ -47,14 +62,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub DIVIDE_BEFORE_MULTIPLY,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Divide Before Multiply",
-        long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/divide-before-multiply",
-        vulnerability_class: "Arithmetic",
-    }
+    LINT_MESSAGE
 }
 
 fn get_divisions_inside_expr(expr: &Expr<'_>) -> Vec<Span> {
@@ -173,8 +181,9 @@ fn navigate_trough_basicblocks<'tcx>(
                     if BinOp::Div == *op {
                         tainted_places.push(assign.0);
                     } else if BinOp::Mul == *op
-                        && (check_operand(&operands.0, tainted_places, &assign.0)
-                            || check_operand(&operands.1, tainted_places, &assign.0))
+                        || BinOp::MulWithOverflow == *op
+                            && (check_operand(&operands.0, tainted_places, &assign.0)
+                                || check_operand(&operands.1, tainted_places, &assign.0))
                     {
                         spans.push(statement.source_info.span);
                     };
@@ -198,19 +207,19 @@ fn navigate_trough_basicblocks<'tcx>(
                     && let Const::Val(_, ty) = cst.const_
                     && let TyKind::FnDef(id, _) = ty.kind()
                 {
-                    if def_ids.checked_div.is_some_and(|f| &f == id)
-                        || def_ids.saturating_div.is_some_and(|f| &f == id)
+                    if def_ids.checked_div.is_some_and(|f| f == *id)
+                        || def_ids.saturating_div.is_some_and(|f| f == *id)
                     {
                         tainted_places.push(*destination);
                     } else {
                         for arg in args {
-                            match arg {
+                            match arg.node {
                                 Operand::Copy(place) | Operand::Move(place) => {
-                                    if tainted_places.contains(place) {
+                                    if tainted_places.contains(&place) {
                                         tainted_places.push(*destination);
 
-                                        if def_ids.checked_mul.is_some_and(|f| &f == id)
-                                            || def_ids.saturating_mul.is_some_and(|f| &f == id)
+                                        if def_ids.checked_mul.is_some_and(|f| f == *id)
+                                            || def_ids.saturating_mul.is_some_and(|f| f == *id)
                                         {
                                             spans.push(*fn_span);
                                         }
@@ -307,23 +316,19 @@ fn navigate_trough_basicblocks<'tcx>(
                     spans,
                 );
             }
-            TerminatorKind::InlineAsm {
-                template: _,
-                operands: _,
-                options: _,
-                line_spans: _,
-                destination: Option::Some(dest),
-                unwind: _,
-            } => {
-                navigate_trough_basicblocks(
-                    *dest,
-                    bbs,
-                    def_ids,
-                    tainted_places,
-                    visited_bbs,
-                    spans,
-                );
+            TerminatorKind::InlineAsm { targets, .. } => {
+                targets.iter().for_each(|target| {
+                    navigate_trough_basicblocks(
+                        *target,
+                        bbs,
+                        def_ids,
+                        tainted_places,
+                        visited_bbs,
+                        spans,
+                    );
+                });
             }
+
             _ => {}
         }
     }
@@ -333,11 +338,11 @@ impl<'tcx> LateLintPass<'tcx> for DivideBeforeMultiply {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
-        _: rustc_hir::intravisit::FnKind<'tcx>,
-        _: &'tcx rustc_hir::FnDecl<'tcx>,
-        body: &'tcx rustc_hir::Body<'tcx>,
+        _: FnKind<'tcx>,
+        _: &'tcx FnDecl<'tcx>,
+        body: &'tcx Body<'tcx>,
         _: Span,
-        localdef: rustc_span::def_id::LocalDefId,
+        localdef: LocalDefId,
     ) {
         let mut visitor = DefIdFinder {
             checked_div: None,
@@ -365,7 +370,7 @@ impl<'tcx> LateLintPass<'tcx> for DivideBeforeMultiply {
             );
 
             for span in spans {
-                clippy_wrappers::span_lint_and_help(
+                span_lint_and_help(
                     cx,
                     DIVIDE_BEFORE_MULTIPLY,
                     span,
@@ -376,13 +381,13 @@ impl<'tcx> LateLintPass<'tcx> for DivideBeforeMultiply {
             }
         }
     }
-    fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx rustc_hir::Expr<'tcx>) {
+    fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if_chain! {
             if let ExprKind::Binary(op, _lexpr, _rexpr) = expr.kind;
             if BinOpKind::Mul == op.node;
             then{
                 for division in get_divisions_inside_expr(expr) {
-                    clippy_wrappers::span_lint_and_help(
+                    span_lint_and_help(
                         cx,
                         DIVIDE_BEFORE_MULTIPLY,
                         division,

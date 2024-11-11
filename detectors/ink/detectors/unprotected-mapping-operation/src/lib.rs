@@ -1,41 +1,44 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
 use std::collections::HashSet;
 
-use rustc_hir::QPath;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
-    Expr, ExprKind,
+    Expr, ExprKind, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::mir::Const;
-use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, BasicBlocks, Operand, Place, StatementKind, TerminatorKind,
+use rustc_middle::{
+    mir::{
+        BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, Place, StatementKind,
+        TerminatorKind,
+    },
+    ty::TyKind,
 };
-use rustc_middle::ty::TyKind;
-use rustc_span::def_id::DefId;
-use rustc_span::Span;
+use rustc_span::{def_id::DefId, Span};
 
 const LINT_MESSAGE: &str = "This mapping operation is called without access control on a different key than the caller's address";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
+    name: "Unprotected Mapping Operation",
+    short_message: LINT_MESSAGE,
+    long_message: "Modifying mappings with an arbitrary key given by the user could lead to unintented modifications of critical data, modifying data belonging to other users, causing denial of service, unathorized access, and other potential issues.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-mapping-operation",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::impl_late_lint! {
     pub UNPROTECTED_MAPPING_OPERATION,
     Warn,
     LINT_MESSAGE,
-    UnprotectedMappingOperation::default(),
-    {
-        name: "Unprotected Mapping Operation",
-        long_message: "Modifying mappings with an arbitrary key given by the user could lead to unintented modifications of critical data, modifying data belonging to other users, causing denial of service, unathorized access, and other potential issues.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-mapping-operation",
-        vulnerability_class: "Validations and error handling",
-    }
+    UnprotectedMappingOperation::default()
 }
 
 #[derive(Default)]
@@ -260,12 +263,12 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                     ..
                 } => {
                     for arg in args {
-                        match arg {
+                        match arg.node {
                             Operand::Copy(origplace) | Operand::Move(origplace) => {
                                 if tainted_places
                                     .clone()
                                     .into_iter()
-                                    .any(|place| place == *origplace)
+                                    .any(|place| place == origplace)
                                 {
                                     tainted_places.push(*destination);
                                 }
@@ -282,7 +285,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                         if map_op.1 == bb
                             && !after_comparison
                             && args.get(1).map_or(true, |f| {
-                                f.place().is_some_and(|f| !tainted_places.contains(&f))
+                                f.node.place().is_some_and(|f| !tainted_places.contains(&f))
                             })
                         {
                             ret_vec.push((*destination, *fn_span))
@@ -332,17 +335,17 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                         visited_bbs,
                     ));
                 }
-                TerminatorKind::InlineAsm { destination, .. } => {
-                    if destination.is_some() {
+                TerminatorKind::InlineAsm { targets, .. } => {
+                    targets.iter().for_each(|target| {
                         ret_vec.append(&mut navigate_trough_basicblocks(
                             bbs,
-                            destination.unwrap(),
+                            *target,
                             caller_and_map_ops,
                             after_comparison,
                             tainted_places,
                             visited_bbs,
                         ));
-                    }
+                    });
                 }
                 _ => {}
             }
