@@ -6,12 +6,12 @@ resolver = "2"
 [workspace.dependencies]
 cargo_metadata = "=0.18.1"
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "99c7838" }
-clippy_wrappers = { package = "scout-audit-clippy-wrappers-ink", git = "https://github.com/CoinFabrik/scout-audit/", rev = "d2d0748a08517cb02668c59dfec35ecf9f63f467" }
+clippy_wrappers = { package = "scout-audit-clippy-wrappers-ink", path = "../../../scout-audit-clippy-wrappers-ink" }
 colored = "2.1.0"
 if_chain = "=1.0.2"
 itertools = { version = "=0.13" }
 reqwest = { version = "=0.11.27", features = ["blocking"] }
 rustsec = "=0.29.3"
-scout-audit-dylint-linting = { git = "https://github.com/CoinFabrik/scout-audit", rev = "e03ede4" }
+scout-audit-dylint-linting = { path = "../../../scout-audit-dylint-linting" }
 serde_json = "=1.0.120"
 utils = { path = "../utils" }

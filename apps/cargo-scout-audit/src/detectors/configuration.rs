@@ -2,10 +2,7 @@ use std::{env, path::Path};
 
 use crate::scout::blockchain::BlockChain;
 use anyhow::{anyhow, Context, Result};
-use cargo::{
-    core::{Dependency, GitReference, SourceId},
-    util::IntoUrl,
-};
+use cargo::core::{Dependency, GitReference, SourceId};
 use git2::{RemoteCallbacks, Repository};
 use tempfile::TempDir;
 
@@ -14,6 +11,8 @@ pub struct DetectorsConfiguration {
     pub dependency: Dependency,
     pub path: Option<String>,
 }
+
+const URL: &str = "http://gogs2.nkt/Scout/scout-audit";
 
 pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     // Set up temporary repository and remote
@@ -34,16 +33,11 @@ pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     Ok(branch_exists)
 }
 
-fn create_git_dependency(blockchain: &BlockChain, branch: &str) -> Result<Dependency> {
-    let url = blockchain
-        .get_detectors_url()
-        .into_url()
-        .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?;
-
+fn create_git_dependency(branch: &str) -> Result<Dependency> {
     Dependency::parse(
         "library",
         None,
-        SourceId::for_git(&url, GitReference::Branch(branch.to_string()))?,
+        SourceId::for_git(&reqwest::Url::parse(URL)?, GitReference::Branch(branch.to_string()))?,
     )
     .with_context(|| "Failed to create git dependency")
 }
@@ -59,24 +53,19 @@ pub fn get_remote_detectors_configuration(
     let default_branch = format!("release/{}", scout_version);
     let fallback_branch = format!("release/{}-{}", scout_version, toolchain);
 
-    let url = blockchain
-        .get_detectors_url()
-        .into_url()
-        .with_context(|| format!("Failed to get URL for {} blockchain", blockchain))?;
-
-    let branch = if !force_fallback && check_branch_exists(url.as_str(), &default_branch)? {
+    let branch = if !force_fallback && check_branch_exists(URL, &default_branch)? {
         default_branch
-    } else if check_branch_exists(url.as_str(), &fallback_branch)? {
+    } else if check_branch_exists(URL, &fallback_branch)? {
         fallback_branch
     } else {
         return Err(anyhow!("Could not find any suitable branch for detectors"));
     };
 
-    let dependency = create_git_dependency(&blockchain, &branch)?;
+    let dependency = create_git_dependency(&branch)?;
 
     let detectors = DetectorsConfiguration {
         dependency,
-        path: Some("detectors".to_string()),
+        path: Some(blockchain.get_detectors_path().to_string()),
     };
 
     Ok(detectors)
