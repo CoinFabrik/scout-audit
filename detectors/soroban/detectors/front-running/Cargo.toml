@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "front-running"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+clippy_utils = { workspace = true }
+clippy_wrappers = { workspace = true }
+dylint_linting = { workspace = true }
+if_chain = { workspace = true }
+utils = { workspace = true }
+
+[package.metadata.rust-analyzer]
+rustc_private = true

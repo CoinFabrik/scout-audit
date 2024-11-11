@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "unnecessary-admin-parameter"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+clippy_wrappers = { workspace = true }
+dylint_linting = { workspace = true }
+edit-distance = "=2.1.2"
+if_chain = { workspace = true }
+utils = { workspace = true }
+
+[package.metadata.rust-analyzer]
+rustc_private = true

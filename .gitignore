@@ -14,12 +14,12 @@ target/
 *.pdb
 
 # Ignore Cargo.lock of library files
-test-cases/**/Cargo.lock
-detectors/**/Cargo.lock
+/detectors/*/detectors/**/Cargo.lock
+/detectors/*/test-cases/**/Cargo.lock
 scout-audit-internal/Cargo.lock
 
 #ignore test generated files
-test-cases/**/test_snapshots/**
+/detectors/*/test-cases/**/test_snapshots/**
 
 # -------------------------------------------------------------------------------------
 # -------------------------------------- Misc -----------------------------------------
@@ -40,6 +40,7 @@ node_modules
 # Editors
 .vscode/
 .idea/
+!/detectors/*/.vscode/
 !/.vscode/
 
 # Generated files by Scout-Audit

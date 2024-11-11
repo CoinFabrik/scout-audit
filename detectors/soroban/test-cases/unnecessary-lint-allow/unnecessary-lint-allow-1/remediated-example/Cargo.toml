@@ -1,0 +1,18 @@
+
+[package]
+edition = "2021"
+name = "unnecessary-lint-allow-remediated-1"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+scout-utils = { version = "0.1.0" }
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]

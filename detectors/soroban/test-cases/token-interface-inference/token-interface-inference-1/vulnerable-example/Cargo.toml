@@ -1,0 +1,14 @@
+[package]
+edition = "2021"
+name = "token-interface-inference-vulnerable-1"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+soroban-token-sdk = { workspace = true }
+
+[features]
+testutils = ["soroban-sdk/testutils"]

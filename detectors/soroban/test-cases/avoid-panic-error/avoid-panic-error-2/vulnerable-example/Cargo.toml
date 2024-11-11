@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+name = "avoid-panic-error-vulnerable-2"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
