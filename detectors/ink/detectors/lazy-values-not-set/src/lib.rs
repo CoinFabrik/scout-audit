@@ -1,39 +1,43 @@
 #![feature(rustc_private)]
 #![recursion_limit = "256"]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use clippy_utils::match_def_path;
-use rustc_hir::def_id::DefId;
-use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
-use rustc_hir::{Body, FnDecl};
+use common::expose_lint_info;
+use rustc_hir::{
+    def_id::DefId,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, FnDecl,
+};
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::mir::traversal::preorder;
-use rustc_middle::mir::{Local, Operand, Rvalue, TerminatorKind};
-use rustc_middle::ty::TyKind;
-use rustc_span::def_id::LocalDefId;
-use rustc_span::Span;
+use rustc_middle::{
+    mir::{traversal::preorder, Local, Operand, Rvalue, TerminatorKind},
+    ty::TyKind,
+};
+use rustc_span::{def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str = "Lazy value was gotten here but never set afterwards";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static LAZY_VALUES_NOT_SET_INFO: LintInfo = LintInfo {
+    name: "Lazy values get and not set",
+    short_message: LINT_MESSAGE,
+    long_message: "When a get is performed, a copy of the value is received; if that copy is modified, the new value must be set afterwards.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-values-not-set",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::impl_late_lint! {
     pub LAZY_VALUES_NOT_SET,
     Warn,
     LINT_MESSAGE,
-    LazyValuesNotSet::default(),
-    {
-        name: "Lazy values get and not set",
-        long_message: "When a get is performed, a copy of the value is received; if that copy is modified, the new value must be set afterwards.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-values-not-set",
-        vulnerability_class: "Best practices",
-    }
+    LazyValuesNotSet::default()
 }
 
 #[derive(Default)]
@@ -208,7 +212,7 @@ impl LazyValuesNotSet {
                                     let mut mapping_args: Vec<Local> = vec![];
                                     let mut lazy_args: Vec<Local> = vec![];
                                     for arg in args.iter().enumerate() {
-                                        match arg.1 {
+                                        match arg.1.node {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 if mapping_get_tainted_args.contains(&a.local) {
                                                     mapping_args.push(Local::from_usize(arg.0 + 1));
@@ -231,7 +235,7 @@ impl LazyValuesNotSet {
                                     for local in cleaned_taints.0 {
                                         let op_arg = args.get(local.as_usize() - 1);
                                         if let Some(arg) = op_arg {
-                                            match arg {
+                                            match arg.node {
                                                 Operand::Copy(a) | Operand::Move(a) => {
                                                     //clean the taints
                                                     mapping_get_tainted_args
@@ -248,7 +252,7 @@ impl LazyValuesNotSet {
                                 //if is an insert call clean the taints upwards
                                 else if self.lazy_set_defid.is_some_and(|did| did == *defid) {
                                     for arg in args {
-                                        match arg {
+                                        match arg.node {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 locals_to_clean.insert(a.local);
                                             }
@@ -258,7 +262,7 @@ impl LazyValuesNotSet {
                                 } else if self.mapping_insert_defid.is_some_and(|did| did == *defid)
                                 {
                                     for arg in args {
-                                        match arg {
+                                        match arg.node {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 locals_to_clean.insert(a.local);
                                             }
@@ -268,7 +272,7 @@ impl LazyValuesNotSet {
                                 } else {
                                     let mut args_locals = vec![];
                                     for arg in args {
-                                        match arg {
+                                        match arg.node {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 args_locals.push(a.local);
                                             }
@@ -324,8 +328,7 @@ fn get_locals_in_rvalue(rvalue: &Rvalue) -> Vec<Local> {
         | rustc_middle::mir::Rvalue::CopyForDeref(p) => {
             vec![p.local]
         }
-        rustc_middle::mir::Rvalue::BinaryOp(_, ops)
-        | rustc_middle::mir::Rvalue::CheckedBinaryOp(_, ops) => {
+        rustc_middle::mir::Rvalue::BinaryOp(_, ops) => {
             let mut v = op_local(&ops.0);
             v.extend(op_local(&ops.1));
             v

@@ -8,12 +8,13 @@ use std::{collections::HashSet, hash::Hash};
 
 use clippy_utils::higher;
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Local, PathSegment, QPath, UnOp,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, LetStmt, PathSegment, QPath, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
@@ -21,7 +22,17 @@ use rustc_span::{sym, Span, Symbol};
 const LINT_MESSAGE: &str = "Unsafe usage of `unwrap`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static UNSAFE_UNWRAP_INFO: LintInfo = LintInfo {
+    name: "Unsafe Unwrap",
+    short_message: LINT_MESSAGE,
+    long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unsafe-unwrap",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks for usage of `unwrap`
     ///
@@ -54,14 +65,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub UNSAFE_UNWRAP,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Unwrap",
-        long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unsafe-unwrap",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
@@ -252,8 +256,8 @@ impl UnsafeUnwrapVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeUnwrapVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx Local<'tcx>) {
-        if let Some(init) = local.init {
+    fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
+        if let Some(init) = &local.init {
             match init.kind {
                 ExprKind::MethodCall(path_segment, receiver, args, _) => {
                     if self.is_method_call_unsafe(path_segment, receiver, args) {

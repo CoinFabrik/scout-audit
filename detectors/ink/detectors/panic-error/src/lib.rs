@@ -1,10 +1,10 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
 
 extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_utils::sym;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{
     ptr::P,
@@ -17,7 +17,17 @@ use rustc_span::{sym, Span};
 
 const LINT_MESSAGE: &str = "The panic! macro is used to stop execution when a condition is not met. This is useful for testing and prototyping, but should be avoided in production code";
 
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
+#[expose_lint_info]
+pub static PANIC_ERROR_INFO: LintInfo = LintInfo {
+    name: "Panic Error",
+    short_message: LINT_MESSAGE,
+    long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/panic-error",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
     /// ### What it does
     /// The panic! macro is used to stop execution when a condition is not met.
     /// This is useful for testing and prototyping, but should be avoided in production code
@@ -50,14 +60,7 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     pub PANIC_ERROR,
     Warn,
     LINT_MESSAGE,
-    PanicError::default(),
-    {
-        name: "Panic Error",
-        long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/panic-error",
-        vulnerability_class: "Validations and error handling",
-    }
+    PanicError::default()
 }
 
 #[derive(Default)]
@@ -117,7 +120,7 @@ fn check_macro_call(cx: &EarlyContext, span: Span, mac: &P<MacCall>) {
                 span,
                 LINT_MESSAGE,
                 None,
-                &format!("You could use instead an Error enum and then 'return Err(Error::{})'", capitalize_err_msg(lit.symbol.as_str()).replace(' ', ""))
+                format!("You could use instead an Error enum and then 'return Err(Error::{})'", capitalize_err_msg(lit.symbol.as_str()).replace(' ', ""))
             );
         }
     }

@@ -1,39 +1,42 @@
 #![feature(rustc_private)]
 #![recursion_limit = "256"]
 #![feature(let_chains)]
-extern crate rustc_ast;
+
 extern crate rustc_hir;
-extern crate rustc_middle;
 extern crate rustc_span;
 
 use std::collections::HashMap;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use itertools::Itertools;
-use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
-use rustc_hir::{Body, Expr, ExprKind, FnDecl, GenericArg, GenericArgs, PathSegment, QPath};
-use rustc_hir::{Ty, TyKind};
+use rustc_hir::{
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, GenericArg, GenericArgs, PathSegment, QPath, Ty, TyKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::def_id::LocalDefId;
-use rustc_span::Span;
+use rustc_span::{def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str =
     "You are iterating over a vector of tuples using `find`. Consider using a mapping instead.";
 
 const ITERABLE_METHODS: [&str; 1] = ["find"];
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
+    name: "Vec could be Mapping",
+    short_message: LINT_MESSAGE,
+    long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
+    vulnerability_class: "Gas Usage",
+};
+
+dylint_linting::impl_late_lint! {
     pub VEC_COULD_BE_MAPPING,
     Warn,
     LINT_MESSAGE,
-    VecCouldBeMapping::default(),
-    {
-        name: "Vec could be Mapping",
-        long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
-        vulnerability_class: "Gas Usage",
-    }
+    VecCouldBeMapping::default()
 }
 
 #[derive(Default)]

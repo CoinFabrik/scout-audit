@@ -1,23 +1,34 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
+
 
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::BinOpKind;
-use rustc_hir::def_id::LocalDefId;
-use rustc_hir::intravisit::{walk_expr, FnKind};
-use rustc_hir::intravisit::{walk_stmt, Visitor};
-use rustc_hir::{Body, FnDecl, QPath, Stmt, TyKind};
-use rustc_hir::{Expr, ExprKind};
+use rustc_hir::{
+    def_id::LocalDefId,
+    intravisit::{walk_expr, walk_stmt, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, QPath, Stmt, TyKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
 const LINT_MESSAGE:&str = "External calls could open the opportunity for a malicious contract to execute any arbitrary code";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static REENTRANCY_1_INFO: LintInfo = LintInfo {
+    name: "Reentrancy",
+    short_message: LINT_MESSAGE,
+    long_message: "An ink! smart contract can interact with other smart contracts. These operations imply (external) calls where control flow is passed to the called contract until the execution of the called code is over, then the control is delivered back to the caller. A reentrancy vulnerability may happen when a user calls a function, this function calls a malicious contract which again calls this same function, and this 'reentrancy' has unexpected reprecussions to the contract.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/reentrancy",
+    vulnerability_class: "Reentrancy",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// This linting rule checks whether the 'check-effect' interaction pattern has been properly followed by code that invokes a contract that may call back the original one.
     /// ### Why is this bad?
@@ -81,14 +92,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub REENTRANCY_1,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Reentrancy",
-        long_message: "An ink! smart contract can interact with other smart contracts. These operations imply (external) calls where control flow is passed to the called contract until the execution of the called code is over, then the control is delivered back to the caller. A reentrancy vulnerability may happen when a user calls a function, this function calls a malicious contract which again calls this same function, and this 'reentrancy' has unexpected reprecussions to the contract.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/reentrancy",
-        vulnerability_class: "Reentrancy",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for Reentrancy1 {

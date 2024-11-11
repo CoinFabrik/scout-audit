@@ -1,40 +1,43 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use rustc_hir::QPath;
+use common::expose_lint_info;
 use rustc_hir::{
     def,
     intravisit::{walk_expr, Visitor},
-    Expr, ExprKind,
+    Expr, ExprKind, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::mir::Const;
-use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, BasicBlocks, Operand, Place, StatementKind, TerminatorKind,
+use rustc_middle::{
+    mir::{
+        BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, Place, StatementKind,
+        TerminatorKind,
+    },
+    ty::TyKind,
 };
-use rustc_middle::ty::TyKind;
-use rustc_span::def_id::DefId;
-use rustc_span::Span;
+use rustc_span::{def_id::DefId, Span};
 
 const LINT_MESSAGE: &str = "This set_code_hash is called without access control";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static SET_CODE_HASH_INFO: LintInfo = LintInfo {
+    name: "Unprotected Set Code Hash",
+    short_message: LINT_MESSAGE,
+    long_message: "If users are allowed to call set_code_hash, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-set-code-hash",
+    vulnerability_class: "Authorization",
+};
+
+dylint_linting::impl_late_lint! {
     pub SET_CODE_HASH,
     Warn,
     LINT_MESSAGE,
-    SetCodeHash::default(),
-    {
-        name: "Unprotected Set Code Hash",
-        long_message: "If users are allowed to call set_code_hash, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-set-code-hash",
-        vulnerability_class: "Authorization",
-    }
+    SetCodeHash::default()
 }
 
 #[derive(Default)]
@@ -224,12 +227,12 @@ fn navigate_trough_basicblocks<'tcx>(
             ..
         } => {
             for arg in args {
-                match arg {
+                match arg.node {
                     Operand::Copy(origplace) | Operand::Move(origplace) => {
                         if tainted_places
                             .clone()
                             .into_iter()
-                            .any(|place| place == *origplace)
+                            .any(|place| place == origplace)
                         {
                             tainted_places.push(*destination);
                         }
@@ -295,16 +298,16 @@ fn navigate_trough_basicblocks<'tcx>(
                 tainted_places,
             ));
         }
-        TerminatorKind::InlineAsm { destination, .. } => {
-            if destination.is_some() {
+        TerminatorKind::InlineAsm { targets, .. } => {
+            targets.iter().for_each(|target| {
                 ret_vec.append(&mut navigate_trough_basicblocks(
                     bbs,
-                    destination.unwrap(),
+                    *target,
                     caller_and_terminate,
                     after_comparison,
                     tainted_places,
                 ));
-            }
+            });
         }
         _ => {}
     }

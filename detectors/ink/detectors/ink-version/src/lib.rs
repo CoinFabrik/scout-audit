@@ -6,12 +6,23 @@ extern crate rustc_span;
 
 use std::fs;
 
+use common::expose_lint_info;
 use rustc_lint::EarlyLintPass;
 use semver::*;
 
 const LINT_MESSAGE: &str = "Use the latest version of ink!";
 
-scout_audit_dylint_linting::declare_early_lint! {
+#[expose_lint_info]
+pub static INK_VERSION_INFO: LintInfo = LintInfo {
+    name: "Check Ink! version",
+    short_message: LINT_MESSAGE,
+    long_message: "Using a older version of ink! can be dangerous, as it may have bugs or security issues. Use the latest version available.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/ink-version",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::declare_early_lint! {
     /// ### What it does
     /// Checks the ink! version of the contract
     /// ### Why is this bad?
@@ -19,14 +30,7 @@ scout_audit_dylint_linting::declare_early_lint! {
     ///```
     pub INK_VERSION,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Check Ink! version",
-        long_message: "Using a older version of ink! can be dangerous, as it may have bugs or security issues. Use the latest version available.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/ink-version",
-        vulnerability_class: "Best practices",
-    }
+    LINT_MESSAGE
 }
 
 impl EarlyLintPass for InkVersion {
@@ -59,7 +63,7 @@ impl EarlyLintPass for InkVersion {
                 rustc_span::DUMMY_SP,
                 LINT_MESSAGE,
                 None,
-                &format!("The latest ink! version is {latest_version}, and your version is {ink_version}")
+                format!("The latest ink! version is {latest_version}, and your version is {ink_version}")
             );
         }
     }

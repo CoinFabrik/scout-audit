@@ -8,21 +8,31 @@ extern crate rustc_span;
 
 use std::collections::HashSet;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::LitKind;
-use rustc_hir::def::Res;
-use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
-use rustc_hir::{ArrayLen, Expr, HirId, QPath, TyKind};
-use rustc_hir::{BinOpKind, ExprKind};
-use rustc_hir::{Body, FnDecl, Param, PatKind};
+use rustc_hir::{
+    def::Res,
+    intravisit::{walk_expr, FnKind, Visitor},
+    ArrayLen, BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Param, PatKind, QPath, TyKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyCtxt;
-use rustc_span::def_id::LocalDefId;
-use rustc_span::Span;
+use rustc_span::{def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str = "Not checking for a zero-address could lead to a locked contract";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static ZERO_OR_TEST_ADDRESS_INFO: LintInfo = LintInfo {
+    name: "Zero or Test Address",
+    short_message: LINT_MESSAGE,
+    long_message: "The assignment of the zero address to a variable in a smart contract represents a critical vulnerability because it can lead to loss of control over the contract. This stems from the fact that the zero address does not have an associated private key, which means it's impossible to claim ownership, rendering any contract assets or functions permanently inaccessible.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/zero-or-test-address",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     ///
     /// Checks if function parameters of type `AccountId` are being compared with a zero address.
@@ -52,14 +62,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub ZERO_OR_TEST_ADDRESS,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Zero or Test Address",
-        long_message: "The assignment of the zero address to a variable in a smart contract represents a critical vulnerability because it can lead to loss of control over the contract. This stems from the fact that the zero address does not have an associated private key, which means it's impossible to claim ownership, rendering any contract assets or functions permanently inaccessible.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/zero-or-test-address",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for ZeroOrTestAddress {

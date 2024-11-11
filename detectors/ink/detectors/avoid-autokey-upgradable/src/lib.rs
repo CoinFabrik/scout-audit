@@ -1,39 +1,43 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
 #![feature(let_chains)]
+
 extern crate rustc_error_messages;
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_note;
+use common::expose_lint_info;
 use itertools::Itertools;
 use rustc_error_messages::MultiSpan;
-use rustc_hir::GenericArg;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
-    Expr, GenericArgs, QPath, TyKind,
+    Expr, GenericArg, GenericArgs, QPath, TyKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
-scout_audit_dylint_linting::impl_late_lint! {
+const LINT_MESSAGE: &str = "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.";
+
+#[expose_lint_info]
+pub static AVOID_AUTOKEY_UPGRADABLE_INFO: LintInfo = LintInfo {
+    name: "Avoid AutoKey Upgradable",
+    short_message: LINT_MESSAGE,
+    long_message: "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-autokey-upgradable",
+    vulnerability_class: "Upgradability",
+};
+
+dylint_linting::impl_late_lint! {
     pub AVOID_AUTOKEY_UPGRADABLE,
     Warn,
-    "",
-    AvoidAutokeyUpgradable::default(),
-    {
-        name: "Avoid AutoKey Upgradable",
-        long_message: "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-autokey-upgradable",
-        vulnerability_class: "Upgradability",
-    }
+    LINT_MESSAGE,
+    AvoidAutokeyUpgradable::default()
 }
 
 const LAZY_TYPE: &str = "ink_storage::lazy::Lazy";
 const MAPPING_TYPE: &str = "ink_storage::lazy::mapping::Mapping";
 const INK_VEC_STORAGE_TYPE: &str = "ink_storage::lazy::vec::StorageVec";
-
 const SET_CODE_HASH_METHOD: &str = "set_code_hash";
 
 #[derive(Default)]

@@ -1,19 +1,30 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
-extern crate rustc_middle;
 extern crate rustc_span;
 
-use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
-use rustc_hir::{Expr, ExprKind, QPath, TyKind};
+use common::expose_lint_info;
+use rustc_hir::{
+    intravisit::{walk_expr, FnKind, Visitor},
+    Expr, ExprKind, QPath, TyKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "Unused return enum";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
+    name: "Unused Return Enum",
+    short_message: LINT_MESSAGE,
+    long_message: "Ink! messages can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
+    severity: "Minor",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unused-return-enum",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// It warns if a fuction that returns a Result type does not return a Result enum variant (Ok/Err)
     ///
@@ -64,14 +75,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub UNUSED_RETURN_ENUM,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unused Return Enum",
-        long_message: "Ink! messages can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
-        severity: "Minor",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unused-return-enum",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 struct CounterVisitor {

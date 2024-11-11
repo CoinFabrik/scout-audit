@@ -1,23 +1,33 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
+
 
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
-use rustc_hir::def::Res;
-use rustc_hir::def_id::LocalDefId;
-use rustc_hir::intravisit::Visitor;
-use rustc_hir::intravisit::{walk_expr, FnKind};
-use rustc_hir::{Body, FnDecl};
-use rustc_hir::{Expr, ExprKind, PatKind, QPath};
+use rustc_hir::{
+    def::Res,
+    def_id::LocalDefId,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, PatKind, QPath,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "Passing arguments to the target of a delegate call is not safe, as it allows the caller to set a malicious hash as the target.";
 
-scout_audit_dylint_linting::declare_late_lint! {
-    /// ### What it does
+#[expose_lint_info]
+pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
+    name: "Delegate call",
+    short_message: LINT_MESSAGE,
+    long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/delegate-call",
+    vulnerability_class: "Authorization",
+};
+
+dylint_linting::declare_late_lint! {
     /// Checks for delegated calls to contracts passed as arguments.
     /// ### Why is this bad?
     ///Delegated calls to contracts passed as arguments can be used to change the expected behavior of the contract. If you need to change the target of a delegated call, you should use a storage variable, and make a function with proper access control to change it.
@@ -63,15 +73,9 @@ scout_audit_dylint_linting::declare_late_lint! {
 
     pub DELEGATE_CALL,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Delegate Call",
-        long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/delegate-call",
-        vulnerability_class: "Authorization ",
-    }
+    LINT_MESSAGE
 }
+
 impl<'tcx> LateLintPass<'tcx> for DelegateCall {
     fn check_fn(
         &mut self,

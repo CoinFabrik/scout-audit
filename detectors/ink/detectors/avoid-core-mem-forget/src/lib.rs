@@ -1,9 +1,9 @@
 #![feature(rustc_private)]
 
 extern crate rustc_ast;
-extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{Expr, ExprKind, Item, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass};
@@ -11,8 +11,17 @@ use rustc_span::sym;
 
 const LINT_MESSAGE: &str = "Using `core::mem::forget` is not recommended.";
 
-scout_audit_dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
+#[expose_lint_info]
+pub static AVOID_CORE_MEM_FORGET_INFO: LintInfo = LintInfo {
+    name: "Avoid std::mem::forget usage",
+    short_message: LINT_MESSAGE,
+    long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-core-mem-forget",
+    vulnerability_class: "Best practices",
+};
+
+dylint_linting::impl_pre_expansion_lint! {
     /// Checks for `core::mem::forget` usage.
     /// ### Why is this bad?
     /// This is a bad practice because it can lead to memory leaks, resource leaks and logic errors.
@@ -47,14 +56,7 @@ scout_audit_dylint_linting::impl_pre_expansion_lint! {
     pub AVOID_CORE_MEM_FORGET,
     Warn,
     LINT_MESSAGE,
-    AvoidCoreMemForget::default(),
-    {
-        name: "Avoid std::mem::forget usage",
-        long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-core-mem-forget",
-        vulnerability_class: "Best practices",
-    }
+    AvoidCoreMemForget::default()
 }
 
 #[derive(Default)]
@@ -81,7 +83,7 @@ impl EarlyLintPass for AvoidCoreMemForget {
             then {
                 clippy_wrappers::span_lint_and_help(
                     cx,
-                    AVOID_CORE_MEM_FORGET,
+                    &AVOID_CORE_MEM_FORGET,
                     expr.span,
                     LINT_MESSAGE,
                     None,

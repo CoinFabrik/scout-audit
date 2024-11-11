@@ -8,12 +8,13 @@ use std::{collections::HashSet, hash::Hash};
 
 use clippy_utils::higher;
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Local, PathSegment, QPath, UnOp,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, LetStmt, PathSegment, QPath, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
@@ -21,7 +22,17 @@ use rustc_span::{sym, Span, Symbol};
 const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
+    name: "Unsafe Expect",
+    short_message: LINT_MESSAGE,
+    long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unsafe-expect",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks for usage of `expect`
     ///
@@ -54,14 +65,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub UNSAFE_EXPECT,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Expect",
-        long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unsafe-expect",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
@@ -252,8 +256,8 @@ impl UnsafeExpectVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeExpectVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx Local<'tcx>) {
-        if let Some(init) = local.init {
+    fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
+        if let Some(init) = &local.init {
             match init.kind {
                 ExprKind::MethodCall(path_segment, receiver, args, _) => {
                     if self.is_method_call_unsafe(path_segment, receiver, args) {

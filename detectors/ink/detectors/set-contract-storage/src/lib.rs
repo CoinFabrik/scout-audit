@@ -1,22 +1,31 @@
 #![feature(rustc_private)]
-#![warn(unused_extern_crates)]
 
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use if_chain::if_chain;
-use rustc_hir::def_id::LocalDefId;
-use rustc_hir::intravisit::Visitor;
-use rustc_hir::intravisit::{walk_expr, FnKind};
-use rustc_hir::QPath;
-use rustc_hir::{Body, FnDecl};
-use rustc_hir::{Expr, ExprKind};
+use rustc_hir::{
+    def_id::LocalDefId,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, QPath,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 
 const LINT_MESSAGE:&str = "Abitrary users should not have control over keys because it implies writing any value of left mapping, lazy variable, or the main struct of the contract located in position 0 of the storage";
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
+    name: "Set Contract Storage",
+    short_message: LINT_MESSAGE,
+    long_message: "In ink! the function set_contract_storage(key: &K, value: &V) can be used to modify the contract storage under a given key. When a smart contract uses this function, the contract needs to check if the caller should be able to alter this storage. If this does not happen, an arbitary caller may modify balances and other relevant contract storage.    ",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/set-contract-storage",
+    vulnerability_class: "Authorization",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks for calls to env::set_contract_storage.
     ///
@@ -54,14 +63,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub SET_CONTRACT_STORAGE,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Set Contract Storage",
-        long_message: "In ink! the function set_contract_storage(key: &K, value: &V) can be used to modify the contract storage under a given key. When a smart contract uses this function, the contract needs to check if the caller should be able to alter this storage. If this does not happen, an arbitary caller may modify balances and other relevant contract storage.    ",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/set-contract-storage",
-        vulnerability_class: "Authorization",
-    }
+    LINT_MESSAGE
 }
 
 fn expr_check_owner(expr: &Expr) -> bool {
