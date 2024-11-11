@@ -14,11 +14,11 @@ target/
 *.pdb
 
 # Ignore Cargo.lock of library files
-detectors/**/Cargo.lock
+/detectors/soroban/detectors/**/Cargo.lock
 scout-audit-internal/Cargo.lock
 
 #ignore test generated files
-test-cases/**/test_snapshots/**
+/detectors/soroban/test-cases/**/test_snapshots/**
 
 # -------------------------------------------------------------------------------------
 # -------------------------------------- Misc -----------------------------------------
@@ -39,7 +39,7 @@ node_modules
 # Editors
 .vscode/
 .idea/
-!/.vscode/
+!/detectors/soroban/.vscode/
 
 **/__pycache__/
 env/
