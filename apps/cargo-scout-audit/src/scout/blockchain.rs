@@ -1,4 +1,4 @@
-use crate::build_config::DETECTOR_TOOLCHAIN;
+use crate::build_config::{INK_TOOLCHAIN, SOROBAN_TOOLCHAIN};
 use anyhow::{anyhow, Result};
 use cargo_metadata::Metadata;
 use std::collections::HashSet;
@@ -26,7 +26,11 @@ impl BlockChain {
     }
 
     pub fn get_toolchain(&self) -> &str {
-        DETECTOR_TOOLCHAIN
+        match self {
+            BlockChain::Ink => SOROBAN_TOOLCHAIN,
+            BlockChain::Soroban => SOROBAN_TOOLCHAIN,
+            BlockChain::SubstratePallet => INK_TOOLCHAIN,
+        }
     }
 
     fn get_immediate_dependencies(metadata: &Metadata) -> HashSet<String> {
