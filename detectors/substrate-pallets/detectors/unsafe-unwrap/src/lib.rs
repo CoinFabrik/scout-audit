@@ -252,7 +252,7 @@ impl UnsafeUnwrapVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeUnwrapVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx rustc_hir::Local<'tcx>) {
+    fn visit_local(&mut self, local: &'tcx rustc_hir::LetStmt<'tcx>) {
         if let Some(init) = local.init {
             match init.kind {
                 ExprKind::MethodCall(path_segment, receiver, args, _) => {

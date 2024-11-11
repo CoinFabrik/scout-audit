@@ -5,7 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 if_chain = "=1.0.2"
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "99c7838" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "51a1cf0" }
 
 [package.metadata.rust-analyzer]
 rustc_private = true

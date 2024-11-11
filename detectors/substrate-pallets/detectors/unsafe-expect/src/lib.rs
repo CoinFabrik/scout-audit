@@ -11,7 +11,7 @@ use rustc_hir::{
     def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Local, PathSegment, QPath, UnOp,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, PathSegment, QPath, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
@@ -300,7 +300,7 @@ impl UnsafeExpectVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeExpectVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx Local<'tcx>) {
+    fn visit_local(&mut self, local: &'tcx rustc_hir::LetStmt<'tcx>) {
         if let Some(init) = local.init {
             self.check_expr_for_unsafe_expect(init);
         }

@@ -18,7 +18,6 @@ pub fn match_type_to_str(cx: &LateContext<'_>, expr_type: Ty<'_>, type_str: &str
     match expr_type.kind() {
         TyKind::Adt(adt_def, _) => cx.tcx.def_path_str(adt_def.did()).contains(type_str),
         TyKind::Ref(_, ty, _) => match_type_to_str(cx, *ty, type_str),
-        TyKind::Alias(_, ty) => cx.tcx.def_path_str(ty.def_id).contains(type_str),
         _ => false,
     }
 }
@@ -39,6 +38,6 @@ pub fn fn_returns(decl: &FnDecl<'_>, type_symbol: Symbol) -> bool {
 pub fn is_macro_expansion(span: Span) -> bool {
     span.from_expansion()
         || span.in_derive_expansion()
-        || span.in_macro_expansion_with_collapse_debuginfo()
+        //|| span.in_macro_expansion_with_collapse_debuginfo()
         || span.ctxt().outer_expn_data().macro_def_id.is_some()
 }

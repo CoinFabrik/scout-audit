@@ -29,7 +29,7 @@ impl BlockChain {
         match self {
             BlockChain::Ink => SOROBAN_TOOLCHAIN,
             BlockChain::Soroban => SOROBAN_TOOLCHAIN,
-            BlockChain::SubstratePallet => INK_TOOLCHAIN,
+            BlockChain::SubstratePallet => SOROBAN_TOOLCHAIN,
         }
     }
 
