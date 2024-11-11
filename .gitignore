@@ -37,5 +37,5 @@ node_modules
 # Editors
 .vscode/
 .idea/
-!/.vscode/
+!/detectors/ink/.vscode/
 __pycache__
