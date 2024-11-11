@@ -51,3 +51,5 @@ report.md
 # Python virtual environment
 env/
 venv/
+!/detectors/ink/.vscode/
+__pycache__

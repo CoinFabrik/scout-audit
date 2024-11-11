@@ -1,0 +1,3 @@
+group_imports = "StdExternalCrate"
+ignore = ["scout-audit-clippy-utils"]
+unstable_features = true
