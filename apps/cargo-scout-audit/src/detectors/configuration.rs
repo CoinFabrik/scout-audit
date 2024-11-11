@@ -12,7 +12,7 @@ pub struct DetectorsConfiguration {
     pub path: Option<String>,
 }
 
-const URL: &str = "http://gogs2.nkt/Scout/scout-audit";
+const URL: &str = "https://github.com/CoinFabrik/scout-audit";
 
 pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     // Set up temporary repository and remote
