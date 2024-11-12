@@ -4,7 +4,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{get_node_type_opt, is_soroban_address, is_soroban_function},
+    macros::expose_lint_info,
+};
 use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_hir::{
@@ -18,7 +21,6 @@ use rustc_span::{
     Span, Symbol,
 };
 use std::collections::{HashMap, HashSet};
-use utils::{get_node_type_opt, is_soroban_address, is_soroban_function};
 
 const LINT_MESSAGE: &str = "Usage of admin parameter might be unnecessary";
 

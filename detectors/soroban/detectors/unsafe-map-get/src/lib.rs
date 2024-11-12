@@ -5,7 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_sugg;
-use common::expose_lint_info;
+use common::{analysis::is_soroban_map, macros::expose_lint_info};
 use if_chain::if_chain;
 use rustc_errors::Applicability;
 use rustc_hir::{
@@ -14,7 +14,6 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass, LintContext};
 use rustc_span::{def_id::LocalDefId, Span};
-use utils::is_soroban_map;
 
 const LINT_MESSAGE: &str = "Unsafe access on Map, method could panic.";
 const UNSAFE_GET_METHODS: [&str; 3] = ["get", "get_unchecked", "try_get_unchecked"];

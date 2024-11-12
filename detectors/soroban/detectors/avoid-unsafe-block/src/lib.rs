@@ -4,7 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
-use common::expose_lint_info;
+use common::macros::expose_lint_info;
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},

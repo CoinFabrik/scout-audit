@@ -12,7 +12,7 @@ pub fn expose_lint_info(_: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input
 
-        use common::{CLintInfo, LintInfo};
+        use common::declarations::{CLintInfo, LintInfo};
 
         #[no_mangle]
         pub extern "C" fn lint_info() -> *mut CLintInfo {

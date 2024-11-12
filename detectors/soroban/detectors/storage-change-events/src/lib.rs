@@ -4,7 +4,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{is_soroban_function, FunctionCallVisitor},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -15,7 +18,6 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
-use utils::{is_soroban_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "Consider emiting an event when storage is modified";
 

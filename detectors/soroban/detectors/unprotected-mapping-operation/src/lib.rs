@@ -5,7 +5,13 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{
+        get_node_type_opt, is_soroban_address, is_soroban_function, is_soroban_map,
+        FunctionCallVisitor,
+    },
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -18,9 +24,6 @@ use rustc_span::{
     Span, Symbol,
 };
 use std::collections::{HashMap, HashSet};
-use utils::{
-    get_node_type_opt, is_soroban_address, is_soroban_function, is_soroban_map, FunctionCallVisitor,
-};
 
 const LINT_MESSAGE: &str = "This mapping operation is called without access control on a different key than the caller's address";
 

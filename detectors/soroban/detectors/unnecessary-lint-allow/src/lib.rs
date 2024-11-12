@@ -5,7 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 mod processor;
-use common::expose_lint_info;
+use common::macros::expose_lint_info;
 pub use processor::process_findings;
 
 use clippy_wrappers::span_lint_and_help;

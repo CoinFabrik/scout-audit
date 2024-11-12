@@ -6,7 +6,7 @@ extern crate rustc_span;
 use std::{io::Error, process::Command};
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::macros::expose_lint_info;
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;

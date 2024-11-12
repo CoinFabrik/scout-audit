@@ -6,7 +6,7 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::macros::expose_lint_info;
 use rustc_hir::PatKind;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},

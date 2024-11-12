@@ -5,5 +5,5 @@ version = "0.1.0"
 
 [dependencies]
 macros = { path = "./macros" }
-types = { path = "./types" }
-utils = { path = "./utils" }
+declarations = { path = "./declarations" }
+analysis = { path = "./analysis" }
