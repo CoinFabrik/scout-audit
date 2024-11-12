@@ -17,11 +17,11 @@ impl BlockChain {
         Self::iter().map(|e| e.to_string()).collect()
     }
 
-    pub fn get_detectors_url(&self) -> &str {
+    pub fn get_detectors_path(&self) -> &str {
         match self {
-            BlockChain::Ink => "https://github.com/CoinFabrik/scout",
-            BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
-            BlockChain::SubstratePallet => "https://github.com/CoinFabrik/scout-substrate",
+            BlockChain::Ink => "detectors/ink/detectors",
+            BlockChain::Soroban => "detectors/soroban/detectors",
+            BlockChain::SubstratePallet => "detectors/substrate-pallets/detectors",
         }
     }
 

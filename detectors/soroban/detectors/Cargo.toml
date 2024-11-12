@@ -5,7 +5,7 @@ resolver = "2"
 
 [workspace.dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "51a1cf0" }
-clippy_wrappers = { package = "scout-audit-clippy-wrappers", git = "https://github.com/CoinFabrik/scout-audit/", rev = "d2d0748a08517cb02668c59dfec35ecf9f63f467" }
+clippy_wrappers = { package = "scout-audit-clippy-wrappers", path = "../../../scout-audit-clippy-wrappers" }
 common = { path = "../../common" }
 dylint_internal = "=3.1.2"
 dylint_linting = "=3.1.2"
