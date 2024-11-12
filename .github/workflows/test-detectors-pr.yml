@@ -12,8 +12,26 @@ env:
   PYTHONUNBUFFERED: 1
 
 jobs:
+  filter-paths:
+    name: Filter modified paths by PR
+    runs-on: ubuntu-latest
+    outputs:
+      detectors: ${{ steps.filter.outputs.detectors }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            detectors:
+              - 'detectors/**'
+
   validate-detectors:
     name: Validate
+    if: ${{ needs.filter-paths.outputs.detectors == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       status: ${{ job.status }}
@@ -35,6 +53,7 @@ jobs:
 
   build:
     name: Build
+    if: ${{ needs.filter-paths.outputs.detectors == 'true' }}
     needs: validate-detectors
     strategy:
       matrix:
@@ -88,6 +107,7 @@ jobs:
 
   prepare-detector-matrix:
     name: Prepare Detector Matrix
+    if: ${{ needs.filter-paths.outputs.detectors == 'true' }}
     runs-on: ubuntu-latest
     needs: build
     outputs:
@@ -101,6 +121,7 @@ jobs:
 
   test:
     name: Test detector
+    if: ${{ needs.filter-paths.outputs.detectors == 'true' }}
     needs: [build, prepare-detector-matrix]
     strategy:
       fail-fast: false

@@ -10,8 +10,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  filter-paths:
+    name: Filter modified paths by PR
+    runs-on: ubuntu-latest
+    outputs:
+      scout-audit: ${{ steps.filter.outputs.scout_audit }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            scout_audit:
+              - 'apps/cargo-scout-audit/**'
+
   run-tests:
     name: Run tests
+    if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
     strategy:
       matrix:
         os:

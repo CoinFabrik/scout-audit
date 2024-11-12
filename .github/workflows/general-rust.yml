@@ -7,8 +7,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  filter-paths:
+    name: Filter modified paths by PR
+    runs-on: ubuntu-latest
+    outputs:
+      any_rust: ${{ steps.filter.outputs.any_rust }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            any_rust:
+              - 'detectors/**'
+              - 'apps/cargo-scout-audit/**'
   format:
     name: Check Rust Format
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -26,6 +44,7 @@ jobs:
 
   clippy:
     name: Lint with Clippy
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -85,6 +104,7 @@ jobs:
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
