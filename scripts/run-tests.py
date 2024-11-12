@@ -3,6 +3,7 @@ import argparse
 import time
 import tempfile
 import json
+import utils
 
 from utils import (
     parse_json_from_string,
@@ -12,17 +13,13 @@ from utils import (
     is_rust_project,
 )
 
-RED = "\033[91m"
-GREEN = "\033[92m"
-ENDC = "\033[0m"
-
 def run_tests(detector):
     errors = []
     [blockchain, detector] = detector.split('/')
     directory = os.path.join("detectors", blockchain, 'test-cases', detector)
-    print(f"\n{GREEN}Performing tests in {directory}:{ENDC}")
+    print(f"\n{utils.GREEN}Performing tests in {directory}:{utils.ENDC}")
     if not os.path.exists(directory):
-        print(f"{RED}The specified directory does not exist.{ENDC}")
+        print(f"{utils.RED}The specified directory does not exist.{utils.ENDC}")
         return errors
 
     for root, _, _ in os.walk(directory):
@@ -70,7 +67,7 @@ def run_integration_tests(blockchain, detector, root):
 
     if stdout is None:
         print(
-            f"{RED}Failed to run integration tests in {root} - Metadata returned empty.{ENDC}"
+            f"{utils.RED}Failed to run integration tests in {root} - Metadata returned empty.{utils.ENDC}"
         )
         return True
 
@@ -103,7 +100,7 @@ def run_integration_tests(blockchain, detector, root):
     )
 
     if returncode != 0:
-        print(f"{RED}Scout failed to run.{ENDC}")
+        print(f"{utils.RED}Scout failed to run.{utils.ENDC}")
         return False
     
     should_fail = "vulnerable" in root
@@ -114,7 +111,7 @@ def run_integration_tests(blockchain, detector, root):
         did_fail = detector in detectors_triggered
         if should_fail != did_fail:
             explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
-            print(f"{RED}Test case {root} didn't pass because {explanation}.{ENDC}")
+            print(f"{utils.RED}Test case {root} didn't pass because {explanation}.{utils.ENDC}")
             return False
 
     print_results(

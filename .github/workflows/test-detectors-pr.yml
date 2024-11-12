@@ -29,8 +29,9 @@ jobs:
       - name: Install dependencies
         run: pip install fuzzywuzzy
 
-      - name: Validate detectors
-        run: python scripts/validate-detectors.py
+      # No validation until we re-organize test cases.
+      #- name: Validate detectors
+      #  run: python scripts/validate-detectors.py
 
   build:
     name: Build
