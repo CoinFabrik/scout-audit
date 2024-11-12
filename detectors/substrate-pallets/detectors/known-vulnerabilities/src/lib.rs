@@ -25,11 +25,6 @@ pub static KNOWN_VULNERABILITIES_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_early_lint! {
-    /// ### What it does
-    /// Checks for known vulnerabilities in project dependencies
-    ///
-    /// ### Why is this bad?
-    /// Using dependencies with known vulnerabilities can expose your project to security risks
     pub KNOWN_VULNERABILITIES,
     Warn,
     LINT_MESSAGE

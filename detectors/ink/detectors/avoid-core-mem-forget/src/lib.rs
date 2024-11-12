@@ -22,37 +22,6 @@ pub static AVOID_CORE_MEM_FORGET_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-    /// Checks for `core::mem::forget` usage.
-    /// ### Why is this bad?
-    /// This is a bad practice because it can lead to memory leaks, resource leaks and logic errors.
-    /// ### Example
-    /// ```rust
-    ///    #[ink(message)]
-    ///    pub fn forget_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        core::mem::forget(forgotten_value);
-    ///    }
-    ///
-    ///     ```
-    /// Use instead:
-    ///```rust
-    ///    #[ink(message)]
-    ///    pub fn forget_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        let _ = forgotten_value;
-    ///    }
-    ///
-    /// // or use drop if droppable
-    ///
-    ///    pub fn drop_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        forget_value.drop();
-    ///    }
-    ///```
-
     pub AVOID_CORE_MEM_FORGET,
     Warn,
     LINT_MESSAGE,

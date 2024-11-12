@@ -27,34 +27,6 @@ pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// Detects the usage of `format!` macro.
-    ///
-    /// ### Why is this bad?
-    /// The usage of format! is not recommended.
-    /// ### Example
-    /// ```rust
-    ///    #[ink(message)]
-    ///    pub fn crash(&self) -> Result<(), Error> {
-    ///        Err(Error::FormatError {
-    ///            msg: (format!("{}", self.value)),
-    ///        })
-    ///    }
-    ///
-    /// ```
-    /// Use instead:
-    /// ```rust
-    ///    pub enum Error {
-    ///        FormatError { msg: String },
-    ///        CrashError
-    ///    }
-    ///
-    ///    #[ink(message)]
-    ///    pub fn crash(&self) -> Result<(), Error> {
-    ///        Err(Error::FormatError { msg: self.value.to_string() })
-    ///    }
-    ///
-    /// ```
     pub AVOID_FORMAT_STRING,
     Warn,
     LINT_MESSAGE,

@@ -32,13 +32,6 @@ dylint_linting::declare_late_lint! {
     pub INTEGER_OVERFLOW_OR_UNDERFLOW,
     Warn,
     LINT_MESSAGE
-    // {
-    //     name: "Integer Overflow/Underflow",
-    //     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
-    //     severity: "Critical",
-    //     help: "https://coinfabrik.github.io/scout-substrate/docs/vulnerabilities/integer-overflow-or-underflow",
-    //     vulnerability_class: "Arithmetic",
-    // }
 }
 enum Type {
     Overflow,

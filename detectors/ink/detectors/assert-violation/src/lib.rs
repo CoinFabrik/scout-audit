@@ -27,35 +27,6 @@ pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-        /// ### What it does
-    /// Checks for `assert!` usage.
-    /// ### Why is this bad?
-    /// `assert!` causes a panic, and panicking it's not a good practice. Instead, use proper error handling.
-    /// ### Example
-    /// ```rust
-    ///    #[ink(message)]
-    ///    pub fn assert_if_greater_than_10(&self, value: u128) -> bool {
-    ///        assert!(value <= 10, "value should be less than 10");
-    ///        true
-    ///    }
-    ///     ```
-    /// Use instead:
-    ///```rust
-    ///     #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
-    ///     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-    ///     pub enum Error {
-    ///         GreaterThan10,
-    ///     }
-    ///
-    ///    #[ink(message)]
-    ///    pub fn revert_if_greater_than_10(&self, value: u128) -> Result<bool, Error> {
-    ///        if value <= 10 {
-    ///            return Ok(true)
-    ///        } else {
-    ///            return Err(Error::GreaterThan10)
-    ///        }
-    ///    }
-    ///```
     pub ASSERT_VIOLATION,
     Warn,
     LINT_MESSAGE,

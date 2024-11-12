@@ -23,11 +23,6 @@ pub static INK_VERSION_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_early_lint! {
-    /// ### What it does
-    /// Checks the ink! version of the contract
-    /// ### Why is this bad?
-    /// Using an outdated version of ink! could lead to security vulnerabilities, bugs, and other issues.
-    ///```
     pub INK_VERSION,
     Warn,
     LINT_MESSAGE

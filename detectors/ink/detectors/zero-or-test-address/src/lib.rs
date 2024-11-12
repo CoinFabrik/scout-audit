@@ -33,33 +33,6 @@ pub static ZERO_OR_TEST_ADDRESS_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    ///
-    /// Checks if function parameters of type `AccountId` are being compared with a zero address.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Not checking for a zero-address could potentially lead to contracts getting locked.
-    ///
-    /// ### Known problems
-    ///
-    /// None at the moment.
-    ///
-    /// ### Example
-    /// ```rust
-    /// fn transfer(to: AccountId, amount: Balance) {
-    ///     // ...
-    /// }
-    /// ```
-    /// This function should check if `to` is a zero address:
-    /// ```rust
-    /// fn transfer(to: AccountId, amount: Balance) -> Result<(), Error> {
-    ///     if to == AccountId::from([0u8; 32]) {
-    ///         return Err(Error::InvalidAddress);
-    ///     }
-    ///     // ...
-    /// }
-    /// ```
     pub ZERO_OR_TEST_ADDRESS,
     Warn,
     LINT_MESSAGE
