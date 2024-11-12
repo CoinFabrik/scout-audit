@@ -26,6 +26,7 @@ jobs:
               - 'apps/cargo-scout-audit/**'
   format:
     name: Check Rust Format
+    needs: filter-paths
     if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
@@ -44,6 +45,7 @@ jobs:
 
   clippy:
     name: Lint with Clippy
+    needs: filter-paths
     if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
@@ -104,6 +106,7 @@ jobs:
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
+    needs: filter-paths
     if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 

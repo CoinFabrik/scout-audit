@@ -29,6 +29,7 @@ jobs:
 
   run-tests:
     name: Run tests
+    needs: filter-paths
     if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
     strategy:
       matrix:
