@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "The panic! macro is used to stop execution when a co
 
 #[expose_lint_info]
 pub static PANIC_ERROR_INFO: LintInfo = LintInfo {
-    name: "Panic Error",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
     severity: "Enhancement",

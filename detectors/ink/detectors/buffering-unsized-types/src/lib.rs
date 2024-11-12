@@ -20,7 +20,7 @@ const LINT_MESSAGE: &str = "Do not use these method with an unsized (dynamically
 
 #[expose_lint_info]
 pub static BUFFERING_UNSIZED_TYPES_INFO: LintInfo = LintInfo {
-    name: "Buffering unsized types",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "",
     severity: "Enhancement",

@@ -11,7 +11,7 @@ const LINT_MESSAGE: &str = "In order to prevent randomness manipulations by vali
 
 #[expose_lint_info]
 pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
-    name: "Insufficiently Random Values",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using block attributes like block_timestamp or block_number for random number generation in ink! Substrate smart contracts is not recommended due to the predictability of these values. Block attributes are publicly visible and deterministic, making it easy for malicious actors to anticipate their values and manipulate outcomes to their advantage.",
     severity: "Critical",

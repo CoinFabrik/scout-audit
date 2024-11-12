@@ -31,7 +31,7 @@ const LINT_MESSAGE: &str = "Division before multiplication might result in a los
 
 #[expose_lint_info]
 pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
-    name: "Divide before multiply",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
     severity: "Medium",

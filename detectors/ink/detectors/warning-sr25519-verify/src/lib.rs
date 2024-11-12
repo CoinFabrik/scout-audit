@@ -17,7 +17,7 @@ const LINT_MESSAGE: &str = "This function is from the unstable interface, which 
 
 #[expose_lint_info]
 pub static WARNING_SR25519_VERIFY_INFO: LintInfo = LintInfo {
-    name: "Warning sr25519 verify",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: "Medium",

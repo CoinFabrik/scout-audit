@@ -13,7 +13,7 @@ const LINT_MESSAGE: &str = "Using `core::mem::forget` is not recommended.";
 
 #[expose_lint_info]
 pub static AVOID_CORE_MEM_FORGET_INFO: LintInfo = LintInfo {
-    name: "Avoid std::mem::forget usage",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
     severity: "Enhancement",

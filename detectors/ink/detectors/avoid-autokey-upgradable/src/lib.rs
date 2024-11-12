@@ -20,7 +20,7 @@ const LINT_MESSAGE: &str = "Avoid using `Lazy` fields without `ManualKey` in upg
 
 #[expose_lint_info]
 pub static AVOID_AUTOKEY_UPGRADABLE_INFO: LintInfo = LintInfo {
-    name: "Avoid AutoKey Upgradable",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.",
     severity: "Critical",

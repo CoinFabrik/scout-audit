@@ -17,7 +17,7 @@ const LINT_MESSAGE: &str = "Delegate call with non-lazy, non-mapping storage";
 
 #[expose_lint_info]
 pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
-    name: "Lazy Delegate",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
     severity: "Critical",

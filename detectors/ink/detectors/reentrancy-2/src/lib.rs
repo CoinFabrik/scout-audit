@@ -26,7 +26,7 @@ const LINT_MESSAGE:&str = "External calls could open the opportunity for a malic
 
 #[expose_lint_info]
 pub static REENTRANCY_2_INFO: LintInfo = LintInfo {
-    name: "Reentrancy",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An ink! smart contract can interact with other smart contracts. These operations imply (external) calls where control flow is passed to the called contract until the execution of the called code is over, then the control is delivered back to the caller. A reentrancy vulnerability may happen when a user calls a function, this function calls a malicious contract which again calls this same function, and this 'reentrancy' has unexpected reprecussions to the contract.",
     severity: "Critical",

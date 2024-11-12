@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "Passing arguments to the target of a delegate call i
 
 #[expose_lint_info]
 pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
-    name: "Delegate call",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
     severity: "Critical",

@@ -20,7 +20,7 @@ const LINT_MESSAGE: &str =
 
 #[expose_lint_info]
 pub static NON_PAYABLE_TRANSFERRED_VALUE_INFO: LintInfo = LintInfo {
-    name: "Non-payable transferred_value",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "",
     severity: "Enhancement",

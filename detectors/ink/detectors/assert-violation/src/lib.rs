@@ -18,7 +18,7 @@ const LINT_MESSAGE: &str = "Assert causes panic. Instead, return a proper error.
 
 #[expose_lint_info]
 pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
-    name: "Assert violation",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The assert! macro can cause the contract to panic. This is not a good practice.",
     severity: "Enhancement",

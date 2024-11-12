@@ -13,7 +13,7 @@ const LINT_MESSAGE: &str = "Avoid using unsafe blocks as it may lead to undefine
 
 #[expose_lint_info]
 pub static AVOID_UNSAFE_BLOCK_INFO: LintInfo = LintInfo {
-    name: "Avoid unsafe block",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The unsafe block is used to bypass Rust's safety checks. It is recommended to avoid using unsafe blocks as much as possible, and to use them only when necessary.",
     severity: "Enhancement",
