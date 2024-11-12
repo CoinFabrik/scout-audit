@@ -5,36 +5,30 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     def::{DefKind, Res},
     Expr, ExprKind, Path, QPath, Ty,
 };
-use rustc_lint::LateContext;
-use rustc_lint::LateLintPass;
+use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::DefId, Span};
 
 pub const LINT_MESSAGE: &str = "Avoid using DispatchError::Other for error codes.";
 
-scout_audit_dylint_linting::impl_late_lint! {
+#[expose_lint_info]
+pub static AVOID_DISPATCHERROR_OTHER_INFO: LintInfo = LintInfo {
+    name: "Avoid DispatchError::Other",
+    short_message: LINT_MESSAGE,
+    long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
+    severity: "Enhancement",
+    help: "TODO",
+    vulnerability_class: "TODO",
+};
+
+dylint_linting::declare_late_lint! {
     pub AVOID_DISPATCHERROR_OTHER,
     Warn,
-    LINT_MESSAGE,
-    AvoidDispatcherrorOther::default(),
-    {
-        name: "Avoid DispatchError::Other",
-        long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
-        severity: "Enhancement",
-        help: "TODO",
-        vulnerability_class: "TODO",
-    }
-}
-
-#[derive(Default)]
-pub struct AvoidDispatcherrorOther {}
-impl AvoidDispatcherrorOther {
-    pub fn new() -> Self {
-        Self {}
-    }
+    LINT_MESSAGE
 }
 
 fn expr_to_call<'hir>(

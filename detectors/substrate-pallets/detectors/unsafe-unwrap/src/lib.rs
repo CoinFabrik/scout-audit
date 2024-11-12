@@ -1,12 +1,12 @@
 #![feature(rustc_private)]
 #![allow(clippy::enum_variant_names)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_utils::higher;
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
@@ -21,7 +21,17 @@ use std::{collections::HashSet, hash::Hash};
 const LINT_MESSAGE: &str = "Unsafe usage of `unwrap`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
-scout_audit_dylint_linting::declare_late_lint! {
+#[expose_lint_info]
+pub static UNSAFE_UNWRAP_INFO: LintInfo = LintInfo {
+    name: "Unsafe Unwrap",
+    short_message: LINT_MESSAGE,
+    long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-substrate/docs/detectors/unsafe-unwrap",
+    vulnerability_class: "Validations and error handling",
+};
+
+dylint_linting::declare_late_lint! {
     /// ### What it does
     /// Checks for usage of `unwrap`
     ///
@@ -54,14 +64,7 @@ scout_audit_dylint_linting::declare_late_lint! {
     /// ```
     pub UNSAFE_UNWRAP,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Unwrap",
-        long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-substrate/docs/detectors/unsafe-unwrap",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
@@ -252,7 +255,7 @@ impl UnsafeUnwrapVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeUnwrapVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx rustc_hir::Local<'tcx>) {
+    fn visit_local(&mut self, local: &'tcx rustc_hir::LetStmt<'tcx>) {
         if let Some(init) = local.init {
             match init.kind {
                 ExprKind::MethodCall(path_segment, receiver, args, _) => {

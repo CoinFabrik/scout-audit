@@ -22,13 +22,23 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
     fn is_qpath_constant(&self, path: &QPath) -> bool {
         if let QPath::Resolved(_, path) = path {
             match path.res {
-                Res::Def(def_kind, _) => matches!(
-                    def_kind,
-                    DefKind::AnonConst
-                        | DefKind::AssocConst
-                        | DefKind::Const
-                        | DefKind::InlineConst
-                ),
+                Res::Def(def_kind, def_id) => {
+                    matches!(
+                        def_kind,
+                        DefKind::AnonConst
+                            | DefKind::AssocConst
+                            | DefKind::Const
+                            | DefKind::InlineConst
+                    ) || {
+                        // Allow both Some and Ok variant constructors
+                        if let DefKind::Ctor(..) = def_kind {
+                            let def_path = self.cx.tcx.def_path_str(def_id);
+                            def_path.ends_with("::Some") || def_path.ends_with("::Ok")
+                        } else {
+                            false
+                        }
+                    }
+                }
                 Res::Local(hir_id) => self.constants.contains(&hir_id),
                 _ => false,
             }
@@ -61,6 +71,9 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
             ExprKind::Struct(_, expr_fields, _) => expr_fields
                 .iter()
                 .all(|field_expr| self.is_expr_constant(field_expr.expr)),
+            ExprKind::Call(func, args) => {
+                self.is_expr_constant(func) && args.iter().all(|arg| self.is_expr_constant(arg))
+            }
             _ => false,
         }
     }
@@ -77,7 +90,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
             (ExprKind::Path(QPath::Resolved(_, path)), Some(Constant::Int(index))) => {
                 if_chain! {
                     if let Res::Local(hir_id) = path.res;
-                    if let Some(Node::Local(let_stmt)) = self.cx.tcx.hir().find_parent(hir_id);
+                    if let Node::LetStmt(let_stmt) = self.cx.tcx.parent_hir_node(hir_id);
                     if let Some(ExprKind::Array(array_elements)) = let_stmt.init.map(|init| &init.kind);
                     then {
                         self.is_array_element_constant(array_elements, index)
@@ -104,7 +117,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for ConstantAnalyzer<'a, 'tcx> {
-    fn visit_local(&mut self, l: &'tcx rustc_hir::Local<'tcx>) {
+    fn visit_local(&mut self, l: &'tcx rustc_hir::LetStmt<'tcx>) -> Self::Result {
         if let Some(init) = l.init {
             if self.is_expr_constant(init) {
                 self.constants.insert(l.pat.hir_id);

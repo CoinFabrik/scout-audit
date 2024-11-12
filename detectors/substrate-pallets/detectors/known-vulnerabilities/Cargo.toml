@@ -7,15 +7,13 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
+cargo_metadata = { version = "=0.18.1" }
 clippy_utils = { workspace = true }
 clippy_wrappers = { workspace = true }
-if_chain = { workspace = true }
-scout-audit-dylint-linting = { workspace = true }
-rustsec = { workspace = true }
-serde_json = { workspace = true }
-reqwest = { workspace = true }
-cargo_metadata = { workspace = true }
-colored = { workspace = true }
+common = { workspace = true }
+dylint_internal = { workspace = true }
+dylint_linting = { workspace = true }
+rustsec = { version = "=0.30.0" }
 
 [package.metadata.rust-analyzer]
 rustc_private = true

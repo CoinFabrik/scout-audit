@@ -39,6 +39,5 @@ pub fn fn_returns(decl: &FnDecl<'_>, type_symbol: Symbol) -> bool {
 pub fn is_macro_expansion(span: Span) -> bool {
     span.from_expansion()
         || span.in_derive_expansion()
-        || span.in_macro_expansion_with_collapse_debuginfo()
         || span.ctxt().outer_expn_data().macro_def_id.is_some()
 }

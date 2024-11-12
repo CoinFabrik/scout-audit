@@ -1,168 +1,120 @@
 #![feature(rustc_private)]
-extern crate rustc_lint;
-extern crate rustc_session;
 
-use cargo_metadata::MetadataCommand;
-use colored::Colorize;
-use rustsec::{
-    report::Settings, repository::git::Repository, Database, Lockfile, Report, Vulnerability,
-};
-use scout_audit_dylint_linting::LintInfo;
-use std::ffi::CString;
-use std::path::PathBuf;
+extern crate rustc_ast;
+extern crate rustc_span;
 
-static NAME: &str = "KNOWN_VULNERABILITIES";
-static DESC: &str =
+use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
+use rustc_ast::Crate;
+use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
+use rustc_span::DUMMY_SP;
+use rustsec::{report::Settings, repository::git::Repository, Database, Lockfile, Report};
+
+const LINT_MESSAGE: &str =
     "This dependency has known vulnerabilities. Consider updating it or removing it.";
-static LONG      : &str = "This dependency has known vulnerabilities. Consider updating it or removing it. A link to the full description of the vulnerability is provided.";
-static SEVERITY: &str = "Medium";
-static HELP: &str = "https://coinfabrik.github.io/scout/docs/vulnerabilities/known-vulnerabilities";
-static VULN_CLASS: &str = "TBD";
 
-fn string_to_c(s: &str) -> CString {
-    CString::new(s.as_bytes()).unwrap()
+#[expose_lint_info]
+pub static KNOWN_VULNERABILITIES_INFO: LintInfo = LintInfo {
+    name: "Known Vulnerabilities",
+    short_message: LINT_MESSAGE,
+    long_message:
+        "Using dependencies with known vulnerabilities can expose your project to security risks",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/known-vulnerabilities",
+    vulnerability_class: "Known Vulnerabilities",
+};
+
+dylint_linting::declare_early_lint! {
+    /// ### What it does
+    /// Checks for known vulnerabilities in project dependencies
+    ///
+    /// ### Why is this bad?
+    /// Using dependencies with known vulnerabilities can expose your project to security risks
+    pub KNOWN_VULNERABILITIES,
+    Warn,
+    LINT_MESSAGE
 }
 
-fn construct_metadata() -> LintInfo {
-    LintInfo {
-        id: string_to_c(NAME.to_lowercase().as_str()),
-        name: string_to_c(NAME),
-        short_message: string_to_c(DESC),
-        long_message: string_to_c(LONG),
-        severity: string_to_c(SEVERITY),
-        help: string_to_c(HELP),
-        vulnerability_class: string_to_c(VULN_CLASS),
+impl EarlyLintPass for KnownVulnerabilities {
+    fn check_crate(&mut self, cx: &EarlyContext<'_>, _: &Crate) {
+        // Get the workspace root path
+        let workspace_path = match std::env::current_dir() {
+            Ok(path) => path,
+            Err(e) => {
+                cx.sess()
+                    .dcx()
+                    .struct_warn(format!("Failed to get current directory: {}", e))
+                    .emit();
+                return;
+            }
+        };
+
+        let lock_path = workspace_path.join("Cargo.lock");
+        let lock_str = match lock_path.to_str() {
+            Some(s) => s,
+            None => {
+                cx.sess()
+                    .dcx()
+                    .struct_warn("Invalid path to Cargo.lock")
+                    .emit();
+                return;
+            }
+        };
+
+        // Fetch and check vulnerabilities
+        let repo = match Repository::fetch_default_repo() {
+            Ok(repo) => repo,
+            Err(e) => {
+                cx.sess()
+                    .dcx()
+                    .struct_warn(format!("Failed to fetch vulnerability database: {}", e))
+                    .emit();
+                return;
+            }
+        };
+
+        let database = match Database::load_from_repo(&repo) {
+            Ok(db) => db,
+            Err(e) => {
+                cx.sess()
+                    .dcx()
+                    .struct_warn(format!("Failed to load vulnerability database: {}", e))
+                    .emit();
+                return;
+            }
+        };
+
+        let lockfile = match Lockfile::load(lock_str) {
+            Ok(lock) => lock,
+            Err(e) => {
+                cx.sess()
+                    .dcx()
+                    .struct_warn(format!("Failed to load Cargo.lock: {}", e))
+                    .emit();
+                return;
+            }
+        };
+
+        let settings = Settings::default();
+        let report = Report::generate(&database, &lockfile, &settings);
+
+        // Report each vulnerability
+        for vuln in report.vulnerabilities.list {
+            let message = format!(
+                "Known vulnerability in {} version {}",
+                vuln.package.name, vuln.package.version
+            );
+
+            let help = format!(
+                "Advisory: {}\nDescription: {}\nURL: {}",
+                vuln.advisory.id,
+                vuln.advisory.title,
+                vuln.advisory
+                    .url
+                    .map_or("N/A".to_string(), |u| u.to_string())
+            );
+
+            span_lint_and_help(cx, KNOWN_VULNERABILITIES, DUMMY_SP, message, None, help);
+        }
     }
-}
-
-#[no_mangle]
-pub fn lint_info(info: &mut LintInfo) {
-    *info = construct_metadata();
-}
-
-#[doc(hidden)]
-#[no_mangle]
-pub extern "C" fn dylint_version() -> *mut std::os::raw::c_char {
-    std::ffi::CString::new("0.1.0").unwrap().into_raw()
-}
-
-#[no_mangle]
-pub fn register_lints(_: &rustc_session::Session, _: &mut rustc_lint::LintStore) {}
-
-#[no_mangle]
-pub fn custom_detector() {
-    let _ = perform_checking();
-}
-
-fn report_vuln(vuln: &Vulnerability, toml: &PathBuf, krate: &Option<String>) -> Result<(), ()> {
-    let port = std::env::var("SCOUT_PORT_NUMBER").map_err(|_| ())?;
-
-    let short_message = format!(
-        "Known vulnerability in {} version {}",
-        vuln.package.name, vuln.package.version
-    );
-    let first_line = format!("{}: {}", "warning".yellow(), short_message)
-        .bold()
-        .to_string();
-    let rendered = format!(
-        concat!(
-            "{}\n",
-            "    {}: {}\n",
-            "    {}: {}\n",
-            "    {}: {}\n",
-            "    Read the report to see if this vulnerability is applicable to your use case.\n",
-            "\n",
-        ),
-        first_line,
-        "Advisory".bold(),
-        vuln.advisory.id,
-        "Description".bold(),
-        vuln.advisory.title,
-        "URL".bold(),
-        vuln.advisory
-            .url
-            .clone()
-            .map(|x| x.to_string())
-            .unwrap_or("N/A".to_string()),
-    );
-    let body = serde_json::json!({
-        "crate": krate,
-        "message": {
-            "code": {
-                "code": NAME.to_lowercase(),
-                "explanation": null,
-            },
-            "message": short_message,
-            "rendered": rendered,
-            "spans": [
-                {
-                    "byte_start": 0,
-                    "byte_end": 0,
-                    "line_start": 0,
-                    "line_end": 0,
-                    "column_start": 0,
-                    "column_end": 0,
-                    "expansion": null,
-                    "file_name": toml,
-                    "is_primary": true,
-                    "suggested_replacement": null,
-                    "suggestion_applicability": null,
-                    "text": null,
-                }
-            ],
-        },
-    })
-    .to_string();
-
-    let _ = reqwest::blocking::Client::new()
-        .post(format!("http://127.0.0.1:{port}/vuln"))
-        .body(body)
-        .send();
-
-    Ok(())
-}
-
-fn perform_checking_on_dir(
-    lock: &str,
-    toml: &PathBuf,
-    krate: Option<String>,
-) -> Result<(), rustsec::Error> {
-    let repo = Repository::fetch_default_repo()?;
-    let database = Database::load_from_repo(&repo)?;
-    let lockfile = Lockfile::load(lock)?;
-    let settings = Settings::default();
-    let report = Report::generate(&database, &lockfile, &settings);
-    for vuln in report.vulnerabilities.list.iter() {
-        let _ = report_vuln(vuln, toml, &krate);
-    }
-    Ok(())
-}
-
-fn package_name_to_crate_name(s: &str) -> String {
-    let mut ret = String::new();
-    ret.reserve(s.len());
-    for c in s.chars() {
-        ret.push(if c == '-' { '_' } else { c });
-    }
-    ret
-}
-
-fn get_lock_path_and_crate(toml: &PathBuf) -> Result<(PathBuf, Option<String>), ()> {
-    let mut metadata_command = MetadataCommand::new();
-    metadata_command.manifest_path(toml);
-    let metadata = metadata_command.exec().map_err(|_| ())?;
-    let krate = metadata
-        .workspace_default_packages()
-        .first()
-        .map(|x| package_name_to_crate_name(&x.name));
-    Ok((metadata.workspace_root.into(), krate))
-}
-
-fn perform_checking() -> Result<(), ()> {
-    let mut toml = std::env::current_dir().map_err(|_| ())?;
-    toml.push("Cargo.toml");
-    let (mut lock, krate) = get_lock_path_and_crate(&toml)?;
-    lock.push("Cargo.lock");
-    let lock_str = lock.as_path().to_str().ok_or(())?;
-    perform_checking_on_dir(lock_str, &toml, krate).map_err(|_| ())
 }
