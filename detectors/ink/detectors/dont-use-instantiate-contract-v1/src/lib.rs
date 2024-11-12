@@ -18,7 +18,7 @@ const LINT_MESSAGE: &str =
 
 #[expose_lint_info]
 pub static DONT_USE_INSTANTIATE_CONTRACT_V1_INFO: LintInfo = LintInfo {
-    name: "Dont use instantiate_contract_v1",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: "Enhancement",

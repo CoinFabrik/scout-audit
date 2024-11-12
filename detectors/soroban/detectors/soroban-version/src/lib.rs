@@ -17,7 +17,7 @@ const LINT_MESSAGE: &str = "Use the latest version of Soroban";
 
 #[expose_lint_info]
 pub static SOROBAN_VERSION_INFO: LintInfo = LintInfo {
-    name: "Check Soroban version",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
     severity: "Enhancement",

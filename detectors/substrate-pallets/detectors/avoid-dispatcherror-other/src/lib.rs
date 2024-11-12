@@ -17,7 +17,7 @@ pub const LINT_MESSAGE: &str = "Avoid using DispatchError::Other for error codes
 
 #[expose_lint_info]
 pub static AVOID_DISPATCHERROR_OTHER_INFO: LintInfo = LintInfo {
-    name: "Avoid DispatchError::Other",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
     severity: "Enhancement",

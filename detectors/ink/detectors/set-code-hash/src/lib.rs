@@ -25,7 +25,7 @@ const LINT_MESSAGE: &str = "This set_code_hash is called without access control"
 
 #[expose_lint_info]
 pub static SET_CODE_HASH_INFO: LintInfo = LintInfo {
-    name: "Unprotected Set Code Hash",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "If users are allowed to call set_code_hash, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
     severity: "Critical",

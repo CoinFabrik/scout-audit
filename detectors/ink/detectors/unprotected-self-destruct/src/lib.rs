@@ -24,7 +24,7 @@ const LINT_MESSAGE: &str = "This terminate_contract is called without access con
 
 #[expose_lint_info]
 pub static UNPROTECTED_SELF_DESTRUCT_INFO: LintInfo = LintInfo {
-    name: "Unprotected Self Destruct",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "If users are allowed to call terminate_contract, they can intentionally or accidentally destroy the contract, leading to the loss of all associated data and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
     severity: "Critical",

@@ -17,7 +17,7 @@ const LINT_MESSAGE: &str = "Delegate call with non-lazy, non-mapping storage";
 
 #[expose_lint_info]
 pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
-    name: "Lazy Delegate",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
     severity: "Critical",
@@ -26,28 +26,6 @@ pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// Checks for non-lazy storage when using delegate calls.
-    /// ### Why is this bad?
-    /// ink! has a bug that makes delegated calls not modify the storage of the caller.
-    /// ### Example
-    /// ```rust
-    ///    #[ink(storage)]
-    ///    pub struct Contract {
-    ///        admin: AccountId,
-    ///    }
-    ///     ```
-    /// Use instead:
-    ///```rust
-    ///    #[ink(storage)]
-    ///    pub struct LazyDelegate {
-    ///        admin: Lazy<AccountId, ManualKey<12345>>,
-    ///    }
-    ///
-    /// ### More info
-    /// - https://github.com/paritytech/ink/issues/1825
-    /// - https://github.com/paritytech/ink/issues/1826
-    ///```
     pub LAZY_DELEGATE,
     Warn,
     LINT_MESSAGE,

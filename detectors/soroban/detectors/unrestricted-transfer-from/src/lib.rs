@@ -20,7 +20,7 @@ const LINT_MESSAGE: &str = "This argument comes from a user-supplied argument";
 
 #[expose_lint_info]
 pub static UNRESTRICTED_TRANSFER_FROM_INFO: LintInfo = LintInfo {
-    name: "Unrestricted Transfer From",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In an smart contract, allowing unrestricted transfer_from operations poses a significant vulnerability. When from arguments for that function is provided directly by the user, this might enable the withdrawal of funds from any actor with token approval on the contract. This could result in unauthorized transfers and loss of funds. To mitigate this vulnerability, instead of allowing an arbitrary from address, the from address should be restricted.",
     severity: "Critical",

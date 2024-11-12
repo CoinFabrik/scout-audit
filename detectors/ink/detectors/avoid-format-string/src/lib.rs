@@ -18,7 +18,7 @@ const LINT_MESSAGE: &str = "The format! macro should not be used.";
 
 #[expose_lint_info]
 pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
-    name: "Avoid format! macro",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
     severity: "Enhancement",
@@ -27,34 +27,6 @@ pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// Detects the usage of `format!` macro.
-    ///
-    /// ### Why is this bad?
-    /// The usage of format! is not recommended.
-    /// ### Example
-    /// ```rust
-    ///    #[ink(message)]
-    ///    pub fn crash(&self) -> Result<(), Error> {
-    ///        Err(Error::FormatError {
-    ///            msg: (format!("{}", self.value)),
-    ///        })
-    ///    }
-    ///
-    /// ```
-    /// Use instead:
-    /// ```rust
-    ///    pub enum Error {
-    ///        FormatError { msg: String },
-    ///        CrashError
-    ///    }
-    ///
-    ///    #[ink(message)]
-    ///    pub fn crash(&self) -> Result<(), Error> {
-    ///        Err(Error::FormatError { msg: self.value.to_string() })
-    ///    }
-    ///
-    /// ```
     pub AVOID_FORMAT_STRING,
     Warn,
     LINT_MESSAGE,

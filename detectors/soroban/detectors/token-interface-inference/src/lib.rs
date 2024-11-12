@@ -26,7 +26,7 @@ const TOKEN_INTERFACE_PATH: &str = "soroban_sdk::token::TokenInterface";
 
 #[expose_lint_info]
 pub static TOKEN_INTERFACE_INFERENCE_INFO: LintInfo = LintInfo {
-    name: "Token Interface Implementation Analyzer",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Implementing the Token Interface trait helps to ensure proper compliance of the SEP-41 standard.",
     severity: "Enhancement",

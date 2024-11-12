@@ -28,7 +28,7 @@ const LINT_MESSAGE: &str =
 
 #[expose_lint_info]
 pub static ITERATORS_OVER_INDEXING_INFO: LintInfo = LintInfo {
-    name: "Iterators Over Indexing",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Instead, use an iterator or index to `.len()`.",
     severity: "Medium",

@@ -14,7 +14,7 @@ const LINT_MESSAGE: &str = "Use the latest version of ink!";
 
 #[expose_lint_info]
 pub static INK_VERSION_INFO: LintInfo = LintInfo {
-    name: "Check Ink! version",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using a older version of ink! can be dangerous, as it may have bugs or security issues. Use the latest version available.",
     severity: "Enhancement",
@@ -23,11 +23,6 @@ pub static INK_VERSION_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_early_lint! {
-    /// ### What it does
-    /// Checks the ink! version of the contract
-    /// ### Why is this bad?
-    /// Using an outdated version of ink! could lead to security vulnerabilities, bugs, and other issues.
-    ///```
     pub INK_VERSION,
     Warn,
     LINT_MESSAGE

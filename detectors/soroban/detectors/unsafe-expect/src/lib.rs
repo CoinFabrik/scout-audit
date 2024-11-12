@@ -27,7 +27,7 @@ const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
 #[expose_lint_info]
 pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
-    name: "Unsafe Expect",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
     severity: "Medium",

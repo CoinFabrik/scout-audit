@@ -27,7 +27,7 @@ pub struct LintInfo {
     pub vulnerability_class: String,
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Debug)]
 pub struct LintStore {
     lints: HashMap<String, LintInfo>,
 }
