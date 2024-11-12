@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use libloading::{Library, Symbol};
 use serde::Serialize;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::{ffi::CString, path::PathBuf};
 
@@ -29,26 +29,26 @@ pub struct LintInfo {
 
 #[derive(Default, Serialize)]
 pub struct LintStore {
-    lints: HashSet<LintInfo>,
+    lints: HashMap<String, LintInfo>,
 }
 
 impl LintStore {
     pub fn new() -> Self {
         Self {
-            lints: HashSet::new(),
+            lints: HashMap::new(),
         }
     }
 
     pub fn find_by_id(&self, id: &str) -> Option<&LintInfo> {
-        self.lints.iter().find(|lint| lint.id == id)
+        self.lints.get(id)
     }
 
-    pub fn insert(&mut self, lint: LintInfo) -> bool {
-        self.lints.insert(lint)
+    pub fn insert(&mut self, lint: LintInfo) -> Option<LintInfo> {
+        self.lints.insert(lint.id.clone(), lint)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &LintInfo> {
-        self.lints.iter()
+        self.lints.values()
     }
 }
 
