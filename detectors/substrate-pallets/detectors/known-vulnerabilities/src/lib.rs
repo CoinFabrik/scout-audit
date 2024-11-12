@@ -15,7 +15,7 @@ const LINT_MESSAGE: &str =
 
 #[expose_lint_info]
 pub static KNOWN_VULNERABILITIES_INFO: LintInfo = LintInfo {
-    name: "Known Vulnerabilities",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message:
         "Using dependencies with known vulnerabilities can expose your project to security risks",
