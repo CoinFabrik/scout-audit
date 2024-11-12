@@ -7,7 +7,10 @@ mod conditional_checker;
 
 use clippy_utils::higher::If;
 use clippy_wrappers::span_lint;
-use common::expose_lint_info;
+use common::{
+    analysis::{get_node_type_opt, FunctionCallVisitor},
+    macros::expose_lint_info,
+};
 use conditional_checker::{get_res_hir_id, is_panic_inducing_call, ConditionalChecker};
 use if_chain::if_chain;
 use rustc_hir::{
@@ -24,7 +27,6 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
-use utils::{get_node_type_opt, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str =
     "The transferred amount should be checked against a minimum to prevent front-running";

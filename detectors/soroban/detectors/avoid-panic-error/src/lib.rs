@@ -4,7 +4,7 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::macros::expose_lint_info;
 use rustc_ast::{
     ptr::P,
     tokenstream::TokenTree,

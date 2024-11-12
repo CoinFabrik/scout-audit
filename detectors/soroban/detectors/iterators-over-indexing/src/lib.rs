@@ -8,7 +8,7 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{analysis::get_node_type, macros::expose_lint_info};
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
     def::Res,
@@ -22,7 +22,6 @@ use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_span::{symbol::Ident, Span};
 use rustc_type_ir::Interner;
 use std::collections::HashSet;
-use utils::get_node_type;
 
 const LINT_MESSAGE: &str =
     "Hardcoding an index could lead to panic if the top bound is out of bounds.";

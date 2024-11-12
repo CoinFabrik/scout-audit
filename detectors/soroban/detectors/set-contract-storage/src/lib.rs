@@ -7,7 +7,7 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{analysis::FunctionCallVisitor, macros::expose_lint_info};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -19,7 +19,6 @@ use rustc_span::{
     def_id::{DefId, LocalDefId},
     Span, Symbol,
 };
-use utils::FunctionCallVisitor;
 
 const LINT_MESSAGE: &str = "Abitrary users should not have control over keys because it implies writing any value of left mapping, lazy variable, or the main struct of the contract located in position 0 of the storage";
 

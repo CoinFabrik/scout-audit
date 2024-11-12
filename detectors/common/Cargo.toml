@@ -1,8 +1,0 @@
-[package]
-edition = "2021"
-name = "common"
-version = "0.1.0"
-
-[dependencies]
-common-macros = { path = "./common-macros" }
-common-types = { path = "./common-types" }
