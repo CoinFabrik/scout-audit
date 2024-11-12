@@ -125,6 +125,7 @@ def run_integration_tests(blockchain, detector, root):
 
 
 if __name__ == "__main__":
+    print(run_subprocess(["cargo", "scout-audit", "--version"], ".")[1])
     parser = argparse.ArgumentParser(description="Run tests for a specific detector.")
     parser.add_argument(
         "--detector",
