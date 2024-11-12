@@ -49,6 +49,7 @@ impl EarlyLintPass for KnownVulnerabilities {
             }
         };
 
+        // Get the path to the Cargo.lock file and its content
         let lock_path = workspace_path.join("Cargo.lock");
         let lock_str = match lock_path.to_str() {
             Some(s) => s,
