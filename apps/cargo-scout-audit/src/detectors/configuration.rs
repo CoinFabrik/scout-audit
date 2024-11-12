@@ -37,7 +37,10 @@ fn create_git_dependency(branch: &str) -> Result<Dependency> {
     Dependency::parse(
         "library",
         None,
-        SourceId::for_git(&reqwest::Url::parse(URL)?, GitReference::Branch(branch.to_string()))?,
+        SourceId::for_git(
+            &reqwest::Url::parse(URL)?,
+            GitReference::Branch(branch.to_string()),
+        )?,
     )
     .with_context(|| "Failed to create git dependency")
 }
