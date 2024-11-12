@@ -5,6 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 mod processor;
+use common::expose_lint_info;
 pub use processor::process_findings;
 
 use clippy_wrappers::span_lint_and_help;
@@ -20,17 +21,20 @@ use std::collections::VecDeque;
 
 const LINT_MESSAGE: &str = "This `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.";
 
+#[expose_lint_info]
+pub static UNNECESSARY_LINT_ALLOW_INFO: LintInfo = LintInfo {
+    name: "Unnecessary Lint Allow",
+    short_message: LINT_MESSAGE,
+    long_message: "The `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-lint-allow",
+    vulnerability_class: "Code Quality",
+};
+
 dylint_linting::declare_pre_expansion_lint! {
     pub UNNECESSARY_LINT_ALLOW,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unnecessary Lint Allow",
-        long_message: "The `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-lint-allow",
-        vulnerability_class: "Code Quality",
-    }
+    LINT_MESSAGE
 }
 
 impl UnnecessaryLintAllow {

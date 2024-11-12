@@ -8,6 +8,7 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -23,18 +24,21 @@ use utils::{is_soroban_address, is_soroban_env, is_soroban_function, FunctionCal
 
 const LINT_MESSAGE: &str = "This update_current_contract_wasm is called without access control";
 
+#[expose_lint_info]
+pub static UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM_INFO: LintInfo = LintInfo {
+    name: "Unprotected Update Current Contract Wasm",
+    short_message: LINT_MESSAGE,
+    long_message: "If users are allowed to call update_current_contract_wasm, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-update-current-contract-wasm",
+    vulnerability_class: "Authorization",
+};
+
 dylint_linting::impl_late_lint! {
     pub UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM,
     Warn,
     LINT_MESSAGE,
-    UnprotectedUpdateCurrentContractWasm::default(),
-    {
-        name: "Unprotected Update Current Contract Wasm",
-        long_message: "If users are allowed to call update_current_contract_wasm, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-update-current-contract-wasm",
-        vulnerability_class: "Authorization",
-    }
+    UnprotectedUpdateCurrentContractWasm::default()
 }
 
 #[derive(Default)]

@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
+use common::expose_lint_info;
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
@@ -14,52 +15,20 @@ use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "Avoid using unsafe blocks as it may lead to undefined behavior";
 
+#[expose_lint_info]
+pub static AVOID_UNSAFE_BLOCK_INFO: LintInfo = LintInfo {
+    name: "Avoid unsafe block",
+    short_message: LINT_MESSAGE,
+    long_message: "The unsafe block is used to bypass Rust's safety checks. It is recommended to avoid using unsafe blocks as much as possible, and to use them only when necessary.    ",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-unsafe-block",
+    vulnerability_class: "Best practices",
+};
+
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// Checks for usage of `unsafe` blocks.
-    ///
-    /// ### Why is this bad?
-    /// `unsafe` blocks should not be used unless absolutely necessary.
-    ///
-    /// ### Example
-    /// ```rust
-    ///pub fn unsafe_function(n: u64) -> u64 {
-    ///    unsafe {
-    ///        let mut i = n as f64;
-    ///        let mut y = i.to_bits();
-    ///        y = 0x5fe6ec85e7de30da - (y >> 1);
-    ///        i = f64::from_bits(y);
-    ///        i *= 1.5 - 0.5 * n as f64 * i * i;
-    ///        i *= 1.5 - 0.5 * n as f64 * i * i;
-    ///
-    ///        let result_ptr: *mut f64 = &mut i;
-    ///        let result = *result_ptr;
-    ///
-    ///        result.to_bits()
-    ///     }
-    ///}
-    /// Use instead:
-    /// ```rust
-    ///pub fn unsafe_function(n: u64) -> u64 {
-    ///        let mut i = n as f64;
-    ///        let mut y = i.to_bits();
-    ///        y = 0x5fe6ec85e7de30da - (y >> 1);
-    ///        i = f64::from_bits(y);
-    ///        i *= 1.5 - 0.5 * n as f64 * i * i;
-    ///        i *= 1.5 - 0.5 * n as f64 * i * i;
-    ///        result.to_bits()
-    ///}
-    /// ```
     pub AVOID_UNSAFE_BLOCK,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Avoid unsafe block",
-        long_message: "The unsafe block is used to bypass Rust's safety checks. It is recommended to avoid using unsafe blocks as much as possible, and to use them only when necessary.    ",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-unsafe-block",
-        vulnerability_class: "Best practices",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for AvoidUnsafeBlock {

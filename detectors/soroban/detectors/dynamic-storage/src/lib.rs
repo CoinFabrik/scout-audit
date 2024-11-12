@@ -5,6 +5,7 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -17,18 +18,21 @@ use utils::{get_node_type_opt, is_soroban_storage, SorobanStorageType};
 
 const LINT_MESSAGE: &str = "Using dynamic types in instance or persistent storage can lead to unnecessary growth or storage-related vulnerabilities.";
 
+#[expose_lint_info]
+pub static DYNAMIC_STORAGE_INFO: LintInfo = LintInfo {
+    name: "Dynamic Storage Analyzer",
+    short_message: LINT_MESSAGE,
+    long_message: "Using dynamic types in instance or persistent storage can lead to unnecessary growth or storage-related vulnerabilities.",
+    severity: "Warning",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dynamic-storage",
+    vulnerability_class: "Resource Management",
+};
+
 dylint_linting::impl_late_lint! {
     pub DYNAMIC_STORAGE,
     Warn,
     LINT_MESSAGE,
-    DynamicStorage,
-    {
-        name: "Dynamic Storage Analyzer",
-        long_message: "Using dynamic types in instance or persistent storage can lead to unnecessary growth or storage-related vulnerabilities.",
-        severity: "Warning",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dynamic-storage",
-        vulnerability_class: "Resource Management",
-    }
+    DynamicStorage
 }
 
 #[derive(Default)]

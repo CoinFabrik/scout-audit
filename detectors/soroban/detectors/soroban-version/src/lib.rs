@@ -6,6 +6,7 @@ extern crate rustc_span;
 use std::{io::Error, process::Command};
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;
@@ -14,22 +15,20 @@ use serde_json::Value;
 
 const LINT_MESSAGE: &str = "Use the latest version of Soroban";
 
+#[expose_lint_info]
+pub static SOROBAN_VERSION_INFO: LintInfo = LintInfo {
+    name: "Check Soroban version",
+    short_message: LINT_MESSAGE,
+    long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/soroban-version",
+    vulnerability_class: "Best practices",
+};
+
 dylint_linting::declare_early_lint! {
-    /// ### What it does
-    /// Checks the soroban version of the contract
-    ///
-    /// ### Why is this bad?
-    /// Using an outdated version of soroban could lead to security vulnerabilities, bugs, and other issues.
     pub SOROBAN_VERSION,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Check Soroban version",
-        long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/soroban-version",
-        vulnerability_class: "Best practices",
-    }
+    LINT_MESSAGE
 }
 
 impl EarlyLintPass for SorobanVersion {

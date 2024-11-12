@@ -11,6 +11,7 @@ use std::{
 };
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;
@@ -18,24 +19,20 @@ use toml::Value;
 
 const LINT_MESSAGE: &str = "Use `overflow-checks = true` in Cargo.toml profile";
 
+#[expose_lint_info]
+pub static OVERFLOW_CHECK_INFO: LintInfo = LintInfo {
+    name: "Overflow Check",
+    short_message: LINT_MESSAGE,
+    long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/overflow-check",
+    vulnerability_class: "Arithmetic",
+};
+
 dylint_linting::declare_early_lint! {
-    /// ### What it does
-    /// Checks that overflow-checks is enabled in Cargo.toml.
-    ///
-    /// ### Why is this bad?
-    /// Integer overflow will trigger a panic in debug builds or will wrap in
-    /// release mode. Division by zero will cause a panic in either mode. In some applications one
-    /// wants explicitly checked, wrapping or saturating arithmetic.
     pub OVERFLOW_CHECK,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Overflow Check",
-        long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/overflow-check",
-        vulnerability_class: "Arithmetic",
-    }
+    LINT_MESSAGE
 }
 
 impl OverflowCheck {

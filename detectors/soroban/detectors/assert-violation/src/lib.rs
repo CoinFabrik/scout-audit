@@ -5,6 +5,7 @@ extern crate rustc_span;
 
 use clippy_utils::sym;
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{
     ptr::P,
@@ -16,22 +17,21 @@ use rustc_span::{sym, Span};
 
 const LINT_MESSAGE: &str = "Assert causes panic. Instead, return a proper error.";
 
+#[expose_lint_info]
+pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
+    name: "Assert Violation",
+    short_message: LINT_MESSAGE,
+    long_message: "Assert causes panic. Instead, return a proper error.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/assert-violation",
+    vulnerability_class: "Panic",
+};
+
 dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// Checks for `assert!` usage.
-    /// ### Why is this bad?
-    /// `assert!` causes a panic, and panicking it's not a good practice. Instead, use proper error handling.
     pub ASSERT_VIOLATION,
     Warn,
     LINT_MESSAGE,
-    AssertViolation::default(),
-    {
-        name: "Assert Violation",
-        long_message: "Assert causes panic. Instead, return a proper error.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/assert-violation",
-        vulnerability_class: "Panic",
-    }
+    AssertViolation::default()
 }
 
 #[derive(Default)]

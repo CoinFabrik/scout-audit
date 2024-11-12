@@ -4,6 +4,7 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_ast::{
     ptr::P,
     tokenstream::TokenTree,
@@ -17,57 +18,23 @@ use rustc_span::{sym, Span};
 const LINT_MESSAGE: &str = "The panic! macro is used in a function that returns Result. \
     Consider using the ? operator or return Err() instead.";
 
+#[expose_lint_info]
+pub static AVOID_PANIC_ERROR_INFO: LintInfo = LintInfo {
+    name: "Avoid panic! macro",
+    short_message: LINT_MESSAGE,
+    long_message:
+        "Using panic! in functions that return Result defeats the purpose of error handling. \
+        Consider propagating the error using ? or return Err() instead.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-panic-error",
+    vulnerability_class: "Validations and error handling",
+};
+
 dylint_linting::impl_pre_expansion_lint! {
-        /// ### What it does
-    /// The panic! macro is used to stop execution when a condition is not met.
-    /// This is useful for testing and prototyping, but should be avoided in production code
-    ///
-    /// ### Why is this bad?
-    /// The usage of panic! is not recommended because it will stop the execution of the caller contract.
-    ///
-    /// ### Known problems
-    /// While this linter detects explicit calls to panic!, there are some ways to raise a panic such as unwrap() or expect().
-    ///
-    /// ### Example
-    /// ```rust
-    /// pub fn add(env: Env, value: u32) -> u32 {
-    ///     let storage = env.storage().instance();
-    ///     let mut count: u32 = storage.get(&COUNTER).unwrap_or(0);
-    ///     match count.checked_add(value) {
-    ///         Some(value) => count = value,
-    ///         None => panic!("Overflow error"),
-    ///     }
-    ///     storage.set(&COUNTER, &count);
-    ///     storage.extend_ttl(100, 100);
-    ///     count
-    /// }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// pub fn add(env: Env, value: u32) -> Result<u32, Error> {
-    ///     let storage = env.storage().instance();
-    ///     let mut count: u32 = storage.get(&COUNTER).unwrap_or(0);
-    ///     match count.checked_add(value) {
-    ///         Some(value) => count = value,
-    ///         None => return Err(Error::OverflowError),
-    ///     }
-    ///     storage.set(&COUNTER, &count);
-    ///     storage.extend_ttl(100, 100);
-    ///     Ok(count)
-    /// }
-    /// ```
     pub AVOID_PANIC_ERROR,
     Warn,
     LINT_MESSAGE,
-    AvoidPanicError::default(),
-    {
-        name: "Avoid panic! macro",
-        long_message: "Using panic! in functions that return Result defeats the purpose of error handling. \
-            Consider propagating the error using ? or return Err() instead.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-panic-error",
-        vulnerability_class: "Validations and error handling",
-    }
+    AvoidPanicError::default()
 }
 
 #[derive(Default)]

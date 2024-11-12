@@ -8,6 +8,7 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, FnDecl, GenericArg, HirId, QPath, Stmt, TyKind,
@@ -23,18 +24,21 @@ use utils::{
 const LINT_MESSAGE: &str =
     "You are iterating over a vector of tuples using `find`. Consider using a mapping instead.";
 
+#[expose_lint_info]
+pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
+    name: "Vec could be Mapping",
+    short_message: LINT_MESSAGE,
+    long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
+    vulnerability_class: "Gas Usage",
+};
+
 dylint_linting::impl_late_lint! {
     pub VEC_COULD_BE_MAPPING,
     Warn,
     LINT_MESSAGE,
-    VecCouldBeMapping::default(),
-    {
-        name: "Vec could be Mapping",
-        long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
-        vulnerability_class: "Gas Usage",
-    }
+    VecCouldBeMapping::default()
 }
 
 #[derive(Default)]

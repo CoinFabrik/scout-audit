@@ -8,6 +8,7 @@ extern crate rustc_span;
 use std::collections::HashSet;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -28,37 +29,20 @@ use rustc_span::{
 
 const LINT_MESSAGE: &str = "Division before multiplication might result in a loss of precision";
 
+#[expose_lint_info]
+pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
+    name: "Divide Before Multiply",
+    short_message: LINT_MESSAGE,
+    long_message: "Division before multiplication might result in a loss of precision",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/divide-before-multiply",
+    vulnerability_class: "Arithmetic",
+};
+
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// Checks the existence of a division before a multiplication.
-    ///
-    /// ### Why is this bad?
-    /// Performing a division operation before multiplication can lead to a loss of precision. It might even result in an unintended zero value.
-    ///
-    /// ### Example
-    /// ```rust
-    /// // example code that raises a warning
-    /// let x = 1;
-    /// let y = 2;
-    /// let z = x / y * 3;
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// // example code that passes the linter
-    /// let x = 1;
-    /// let y = 2;
-    /// let z = x * 3 / y;
-    /// ```
     pub DIVIDE_BEFORE_MULTIPLY,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Divide Before Multiply",
-        long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/divide-before-multiply",
-        vulnerability_class: "Arithmetic",
-    }
+    LINT_MESSAGE
 }
 
 fn get_divisions_inside_expr(expr: &Expr<'_>) -> Vec<Span> {

@@ -7,6 +7,7 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -22,40 +23,21 @@ use utils::FunctionCallVisitor;
 
 const LINT_MESSAGE: &str = "Abitrary users should not have control over keys because it implies writing any value of left mapping, lazy variable, or the main struct of the contract located in position 0 of the storage";
 
+#[expose_lint_info]
+pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
+    name: "Set Contract Storage",
+    short_message: LINT_MESSAGE,
+    long_message: "Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/set-contract-storage",
+    vulnerability_class: "Authorization",
+};
+
 dylint_linting::impl_late_lint! {
-    /// ### What it does
-    /// Checks for calls to env.storage() without a prior call to env.require_auth()
-    ///
-    /// ### Why is this bad?
-    /// Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.
-    ///
-    /// ### Known problems
-    /// Only check the function call, so false positives could result.
-    ///
-    /// ### Example
-    /// ```rust
-    /// fn set_contract_storage(env: Env) {
-    ///   let _storage = env.storage().instance();
-    /// }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// fn set_contract_storage(env: Env, user: Address) {
-    ///   user.require_auth();
-    ///   let _storage = env.storage().instance();
-    /// }
-    /// ```
     pub SET_CONTRACT_STORAGE,
     Warn,
     LINT_MESSAGE,
-    SetContractStorage::default(),
-    {
-        name: "Set Contract Storage",
-        long_message: "Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/set-contract-storage",
-        vulnerability_class: "Authorization",
-    }
+    SetContractStorage::default()
 }
 
 const SOROBAN_INSTANCE_STORAGE: &str = "soroban_sdk::storage::Instance";

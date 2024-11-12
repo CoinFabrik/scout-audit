@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -18,18 +19,21 @@ use utils::{is_soroban_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "Consider emiting an event when storage is modified";
 
+#[expose_lint_info]
+pub static STORAGE_CHANGE_EVENTS_INFO: LintInfo = LintInfo {
+    name: "Storage Change Events",
+    short_message: LINT_MESSAGE,
+    long_message: "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/storage-change-events",
+    vulnerability_class: "Best Practices",
+};
+
 dylint_linting::impl_late_lint! {
     pub STORAGE_CHANGE_EVENTS,
     Warn,
-    "",
-    StorageChangeEvents::default(),
-    {
-        name: "Storage change event checker",
-        long_message: "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/storage-change-events",
-        vulnerability_class: "Best Practices",
-    }
+    LINT_MESSAGE,
+    StorageChangeEvents::default()
 }
 
 #[derive(Default)]

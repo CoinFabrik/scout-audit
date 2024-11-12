@@ -6,6 +6,7 @@ extern crate rustc_span;
 
 use clippy_utils::higher::IfOrIfLet;
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
@@ -22,47 +23,20 @@ use utils::{fn_returns, ConstantAnalyzer};
 const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
+#[expose_lint_info]
+pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
+    name: "Unsafe Expect",
+    short_message: LINT_MESSAGE,
+    long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-expect",
+    vulnerability_class: "Validations and error handling",
+};
+
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// Checks for usage of `expect`
-    ///
-    /// ### Why is this bad?
-    /// `expect` might panic if the result value is an error or `None`.
-    ///
-    /// ### Example
-    /// ```rust
-    /// // example code where a warning is issued
-    /// fn main() {
-    ///    let result = result_fn().expect("error");
-    /// }
-    ///
-    /// fn result_fn() -> Result<u8, Error> {
-    ///     Err(Error::new(ErrorKind::Other, "error"))
-    /// }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// // example code that does not raise a warning
-    /// fn main() {
-    ///    let result = if let Ok(result) = result_fn() {
-    ///       result
-    ///   }
-    /// }
-    ///
-    /// fn result_fn() -> Result<u8, Error> {
-    ///     Err(Error::new(ErrorKind::Other, "error"))
-    /// }
-    /// ```
     pub UNSAFE_EXPECT,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Expect",
-        long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-expect",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.

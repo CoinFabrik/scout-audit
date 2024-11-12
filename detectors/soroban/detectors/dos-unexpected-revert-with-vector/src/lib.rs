@@ -7,28 +7,32 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
-use rustc_hir::intravisit::walk_expr;
-use rustc_hir::intravisit::Visitor;
-use rustc_hir::{Expr, ExprKind};
+use common::expose_lint_info;
+use rustc_hir::{
+    intravisit::{walk_expr, Visitor},
+    Expr, ExprKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
-use rustc_span::def_id::DefId;
-use rustc_span::Span;
+use rustc_span::{def_id::DefId, Span};
 
 const LINT_MESSAGE: &str = "This vector operation is called without access control";
+
+#[expose_lint_info]
+pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
+    name: "Unexpected Revert Inserting to Storage",
+    short_message: LINT_MESSAGE,
+    long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dos-unexpected-revert-with-vector",
+    vulnerability_class: "Denial of Service",
+};
 
 dylint_linting::impl_late_lint! {
     pub DOS_UNEXPECTED_REVERT_WITH_VECTOR,
     Warn,
     "",
-    DosUnexpectedRevertWithVector::default(),
-    {
-        name: "Unexpected Revert Inserting to Storage",
-        long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dos-unexpected-revert-with-vector",
-        vulnerability_class: "Denial of Service",
-    }
+    DosUnexpectedRevertWithVector::default()
 }
 
 #[derive(Default)]

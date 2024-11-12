@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_hir::{
@@ -21,18 +22,21 @@ use utils::{get_node_type_opt, is_soroban_address, is_soroban_function};
 
 const LINT_MESSAGE: &str = "Usage of admin parameter might be unnecessary";
 
+#[expose_lint_info]
+pub static UNNECESSARY_ADMIN_PARAMETER_INFO: LintInfo = LintInfo {
+    name: "Unnecessary Admin Parameter",
+    short_message: LINT_MESSAGE,
+    long_message: "This function has an admin parameter that might be unnecessary. Consider retrieving the admin from storage instead.",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-admin-parameter",
+    vulnerability_class: "Access Control",
+};
+
 dylint_linting::impl_late_lint! {
     pub UNNECESSARY_ADMIN_PARAMETER,
     Warn,
     LINT_MESSAGE,
-    UnnecessaryAdminParameter::default(),
-    {
-        name: "Unnecessary Admin Parameter",
-        long_message: "This function has an admin parameter that might be unnecessary. Consider retrieving the admin from storage instead.",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-admin-parameter",
-        vulnerability_class: "Access Control",
-    }
+    UnnecessaryAdminParameter::default()
 }
 
 struct AdminInfo {

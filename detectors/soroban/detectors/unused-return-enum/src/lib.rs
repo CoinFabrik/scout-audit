@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -14,17 +15,20 @@ use rustc_span::{def_id::LocalDefId, sym, Span};
 
 const LINT_MESSAGE : &str = "If any of the variants (Ok/Err) is not used, the code could be simplified or it could imply a bug";
 
+#[expose_lint_info]
+pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
+    name: "Unused Return Enum",
+    short_message: LINT_MESSAGE,
+    long_message: "Soroban functions can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
+    severity: "Minor",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unused-return-enum",
+    vulnerability_class: "Validations and error handling",
+};
+
 dylint_linting::declare_late_lint! {
     pub UNUSED_RETURN_ENUM,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unused Return Enum",
-        long_message: "Soroban functions can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
-        severity: "Minor",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unused-return-enum",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 #[derive(Debug)]

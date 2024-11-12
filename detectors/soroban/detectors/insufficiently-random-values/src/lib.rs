@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
@@ -11,28 +12,20 @@ use rustc_span::Symbol;
 
 const LINT_MESSAGE: &str = "Use env.prng() to generate random numbers, and remember that all random numbers are under the control of validators";
 
+#[expose_lint_info]
+pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
+    name: "Insufficiently Random Values",
+    short_message: LINT_MESSAGE,
+    long_message: LINT_MESSAGE,
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/insufficiently-random-values",
+    vulnerability_class: "Block attributes",
+};
+
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// This detector prevents the usage of timestamp/sequence number and modulo operator as a random number source.
-    ///
-    /// ### Why is this bad?
-    /// The value of the block timestamp and block sequence can be manipulated by validators, which means they're not a secure source of randomness. Therefore, they shouldn't be used for generating random numbers, especially in the context of a betting contract where the outcomes of bets could be manipulated.
-    ///
-    /// ### Example
-    /// ```rust
-    ///  let pseudo_random = env.ledger().timestamp() % max_val;
-    /// ```
-    ///
     pub INSUFFICIENTLY_RANDOM_VALUES,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Insufficiently Random Values",
-        long_message: "Use env.prng() to generate random numbers, and remember that all random numbers are under the control of validators.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/insufficiently-random-values",
-        vulnerability_class: "Block attributes",
-    }
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for InsufficientlyRandomValues {

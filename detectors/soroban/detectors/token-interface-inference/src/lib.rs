@@ -5,6 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
+use common::expose_lint_info;
 use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_errors::MultiSpan;
@@ -23,18 +24,21 @@ const CANONICAL_FUNCTIONS_AMOUNT: u16 = 10;
 const INCLUDED_FUNCTIONS_THRESHOLD: u16 = 60;
 const TOKEN_INTERFACE_PATH: &str = "soroban_sdk::token::TokenInterface";
 
+#[expose_lint_info]
+pub static TOKEN_INTERFACE_INFERENCE_INFO: LintInfo = LintInfo {
+    name: "Token Interface Implementation Analyzer",
+    short_message: LINT_MESSAGE,
+    long_message: "Implementing the Token Interface trait helps to ensure proper compliance of the SEP-41 standard.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-inference",
+    vulnerability_class: "Best Practices",
+};
+
 dylint_linting::impl_late_lint! {
     pub TOKEN_INTERFACE_INFERENCE,
     Warn,
     LINT_MESSAGE,
-    TokenInterfaceInference::default(),
-    {
-        name: "Token Interface Implementation Analyzer",
-        long_message: "Implementing the Token Interface trait helps to ensure proper compliance of the SEP-41 standard.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-inference",
-        vulnerability_class: "Best Practices",
-    }
+    TokenInterfaceInference::default()
 }
 
 #[derive(Default)]

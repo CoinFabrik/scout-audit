@@ -7,6 +7,7 @@ mod conditional_checker;
 
 use clippy_utils::higher::If;
 use clippy_wrappers::span_lint;
+use common::expose_lint_info;
 use conditional_checker::{get_res_hir_id, is_panic_inducing_call, ConditionalChecker};
 use if_chain::if_chain;
 use rustc_hir::{
@@ -28,18 +29,21 @@ use utils::{get_node_type_opt, FunctionCallVisitor};
 const LINT_MESSAGE: &str =
     "The transferred amount should be checked against a minimum to prevent front-running";
 
+#[expose_lint_info]
+pub static FRONT_RUNNING_INFO: LintInfo = LintInfo {
+    name: "Front Running Detection",
+    short_message: LINT_MESSAGE,
+    long_message: "This lint checks for potential front-running vulnerabilities in token transfers",
+    severity: "Warning",
+    help: "Consider implementing a minimum amount check before the transfer",
+    vulnerability_class: "MEV",
+};
+
 dylint_linting::impl_late_lint! {
     pub FRONT_RUNNING,
     Warn,
     LINT_MESSAGE,
-    FrontRunning::default(),
-    {
-        name: "Front Running Detection",
-        long_message: "This lint checks for potential front-running vulnerabilities in token transfers",
-        severity: "Warning",
-        help: "Consider implementing a minimum amount check before the transfer",
-        vulnerability_class: "MEV",
-    }
+    FrontRunning::default()
 }
 
 #[derive(Default)]

@@ -5,6 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     def::{DefKind, Res},
@@ -16,17 +17,20 @@ use rustc_span::{def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str = "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided";
 
+#[expose_lint_info]
+pub static DOS_UNBOUNDED_OPERATION_INFO: LintInfo = LintInfo {
+    name: "Denial of Service: Unbounded Operation",
+    short_message: LINT_MESSAGE,
+    long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dos-unbounded-operation",
+    vulnerability_class: "Denial of Service",
+};
+
 dylint_linting::declare_late_lint!(
     pub DOS_UNBOUNDED_OPERATION,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Denial of Service: Unbounded Operation",
-        long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/dos-unbounded-operation",
-        vulnerability_class: "Denial of Service",
-    }
+    LINT_MESSAGE
 );
 
 struct ForLoopVisitor {

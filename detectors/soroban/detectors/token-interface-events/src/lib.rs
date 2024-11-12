@@ -4,6 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -18,18 +19,21 @@ use utils::{verify_token_interface_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "This function belongs to the Token Interface and should emit an event";
 
+#[expose_lint_info]
+pub static TOKEN_INTERFACE_EVENTS_INFO: LintInfo = LintInfo {
+    name: "Token Interface events",
+    short_message: LINT_MESSAGE,
+    long_message: "Not emiting the established events breaks compatibility with the token standard and can lead to interoperability problems between the contract and its observers",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-events",
+    vulnerability_class: "Standard Compliance",
+};
+
 dylint_linting::impl_late_lint! {
     pub TOKEN_INTERFACE_EVENTS,
     Warn,
-    "",
-    TokenInterfaceEvents::default(),
-    {
-        name: "Token Interface events checker",
-        long_message: "Not emiting the established events breaks compatibility with the token standard and can lead to interoperability problems between the contract and its observers",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-events",
-        vulnerability_class: "Standard Compliance",
-    }
+    LINT_MESSAGE,
+    TokenInterfaceEvents::default()
 }
 
 #[derive(Default)]

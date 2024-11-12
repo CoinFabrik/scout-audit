@@ -5,6 +5,7 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -23,18 +24,21 @@ use utils::{
 
 const LINT_MESSAGE: &str = "This mapping operation is called without access control on a different key than the caller's address";
 
+#[expose_lint_info]
+pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
+    name: "Unprotected Mapping Operation",
+    short_message: LINT_MESSAGE,
+    long_message: "This mapping operation is called without access control on a different key than the caller's address",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-mapping-operation",
+    vulnerability_class: "Access Control",
+};
+
 dylint_linting::impl_late_lint! {
     pub UNPROTECTED_MAPPING_OPERATION,
     Warn,
     LINT_MESSAGE,
-    UnprotectedMappingOperation::default(),
-    {
-        name: "Unprotected Mapping Operation",
-        long_message: "This mapping operation is called without access control on a different key than the caller's address",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-mapping-operation",
-        vulnerability_class: "Access Control",
-    }
+    UnprotectedMappingOperation::default()
 }
 
 #[derive(Default)]

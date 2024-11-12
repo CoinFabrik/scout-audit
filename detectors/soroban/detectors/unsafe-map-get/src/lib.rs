@@ -5,6 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_sugg;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_errors::Applicability;
 use rustc_hir::{
@@ -18,17 +19,20 @@ use utils::is_soroban_map;
 const LINT_MESSAGE: &str = "Unsafe access on Map, method could panic.";
 const UNSAFE_GET_METHODS: [&str; 3] = ["get", "get_unchecked", "try_get_unchecked"];
 
+#[expose_lint_info]
+pub static UNSAFE_MAP_GET_INFO: LintInfo = LintInfo {
+    name: "Unsafe Map Get",
+    short_message: LINT_MESSAGE,
+    long_message: "This vulnerability class pertains to the inappropriate usage of the get method for Map in soroban",
+    severity: "Medium",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-map-get",
+    vulnerability_class: "Validations and error handling",
+};
+
 dylint_linting::declare_late_lint! {
     pub UNSAFE_MAP_GET,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Unsafe Map Get",
-        long_message: "This vulnerability class pertains to the inappropriate usage of the get method for Map in soroban",
-        severity: "Medium",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-map-get",
-        vulnerability_class: "Validations and error handling",
-    }
+    LINT_MESSAGE
 }
 
 struct UnsafeMapGetVisitor<'a, 'tcx> {

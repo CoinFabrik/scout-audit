@@ -4,6 +4,7 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::{Expr, ExprKind, Item, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass};
@@ -11,48 +12,21 @@ use rustc_span::sym;
 
 const LINT_MESSAGE: &str = "Use the `let _ = ...` pattern or `.drop()` method to forget the value";
 
-dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// Checks for `core::mem::forget` usage.
-    /// ### Why is this bad?
-    /// This is a bad practice because it can lead to memory leaks, resource leaks and logic errors.
-    /// ### Example
-    /// ```rust
-    ///    pub fn forget_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        core::mem::forget(forgotten_value);
-    ///    }
-    ///
-    ///     ```
-    /// Use instead:
-    ///```rust
-    ///    pub fn forget_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        let _ = forgotten_value;
-    ///    }
-    ///
-    /// // or use drop if droppable
-    ///
-    ///    pub fn drop_value(&mut self) {
-    ///        let forgotten_value = self.value;
-    ///        self.value = false;
-    ///        forget_value.drop();
-    ///    }
-    ///```
+#[expose_lint_info]
+pub static AVOID_CORE_MEM_FORGET_INFO: LintInfo = LintInfo {
+    name: "Avoid core::mem::forget usage",
+    short_message: LINT_MESSAGE,
+    long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
+    severity: "Enhancement",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-core-mem-forget",
+    vulnerability_class: "Best practices",
+};
 
+dylint_linting::impl_pre_expansion_lint! {
     pub AVOID_CORE_MEM_FORGET,
     Warn,
     LINT_MESSAGE,
-    AvoidCoreMemForget::default(),
-    {
-        name: "Avoid core::mem::forget usage",
-        long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
-        severity: "Enhancement",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-core-mem-forget",
-        vulnerability_class: "Best practices",
-    }
+    AvoidCoreMemForget::default()
 }
 
 #[derive(Default)]

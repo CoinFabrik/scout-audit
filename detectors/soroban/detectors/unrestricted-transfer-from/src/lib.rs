@@ -6,6 +6,7 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
+use common::expose_lint_info;
 use rustc_hir::PatKind;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
@@ -17,18 +18,21 @@ use rustc_span::Span;
 
 const LINT_MESSAGE: &str = "This argument comes from a user-supplied argument";
 
+#[expose_lint_info]
+pub static UNRESTRICTED_TRANSFER_FROM_INFO: LintInfo = LintInfo {
+    name: "Unrestricted Transfer From",
+    short_message: LINT_MESSAGE,
+    long_message: "In an smart contract, allowing unrestricted transfer_from operations poses a significant vulnerability. When from arguments for that function is provided directly by the user, this might enable the withdrawal of funds from any actor with token approval on the contract. This could result in unauthorized transfers and loss of funds. To mitigate this vulnerability, instead of allowing an arbitrary from address, the from address should be restricted.",
+    severity: "Critical",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unrestricted-transfer-from",
+    vulnerability_class: "Validations and error handling",
+};
+
 dylint_linting::impl_late_lint! {
     pub UNRESTRICTED_TRANSFER_FROM,
     Warn,
     LINT_MESSAGE,
-    UnrestrictedTransferFrom::default(),
-    {
-        name: "Unrestricted Transfer From",
-        long_message: "In an smart contract, allowing unrestricted transfer_from operations poses a significant vulnerability. When from arguments for that function is provided directly by the user, this might enable the withdrawal of funds from any actor with token approval on the contract. This could result in unauthorized transfers and loss of funds. To mitigate this vulnerability, instead of allowing an arbitrary from address, the from address should be restricted.",
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unrestricted-transfer-from",
-        vulnerability_class: "Validations and error handling",
-    }
+    UnrestrictedTransferFrom::default()
 }
 
 #[derive(Default)]

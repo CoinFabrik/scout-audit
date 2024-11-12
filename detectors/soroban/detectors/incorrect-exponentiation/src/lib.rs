@@ -5,6 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
+use common::expose_lint_info;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::intravisit::Visitor;
 use rustc_hir::intravisit::{walk_expr, FnKind};
@@ -16,18 +17,20 @@ use rustc_span::Span;
 const LINT_MESSAGE: &str = "'^' It is not an exponential operator. It is a bitwise XOR.";
 const LINT_HELP: &str = "If you want to use XOR, use bitxor(). If you want to raise a number use .checked_pow() or .pow() ";
 
+#[expose_lint_info]
+pub static INCORRECT_EXPONENTIATION_INFO: LintInfo = LintInfo {
+    name: "Incorrect Exponentiation",
+    short_message: LINT_MESSAGE,
+    long_message: LINT_MESSAGE,
+    severity: "Critical",
+    help: LINT_HELP,
+    vulnerability_class: "Arithmetic",
+};
+
 dylint_linting::declare_late_lint! {
     pub INCORRECT_EXPONENTIATION,
     Warn,
-    LINT_MESSAGE,
-    {
-        name: "Incorrect Exponentiation",
-        long_message: LINT_MESSAGE,
-        severity: "Critical",
-        help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/incorrect-exponentiation",
-        vulnerability_class: "Arithmetic",
-    }
-
+    LINT_MESSAGE
 }
 
 impl<'tcx> LateLintPass<'tcx> for IncorrectExponentiation {
