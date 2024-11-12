@@ -1,5 +1,5 @@
 [workspace]
-exclude = [".cargo", ".vscode", "common", "target"]
+exclude = [".cargo", ".vscode", "target"]
 members = ["*"]
 
 [workspace.dependencies]
