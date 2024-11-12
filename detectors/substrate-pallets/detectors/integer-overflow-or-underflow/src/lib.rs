@@ -5,7 +5,10 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{match_type_to_str, ConstantAnalyzer},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
@@ -14,7 +17,6 @@ use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
 use std::collections::HashSet;
-use utils::{match_type_to_str, ConstantAnalyzer};
 
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
