@@ -13,9 +13,7 @@ if_chain = { workspace = true }
 scout-audit-dylint-linting = { workspace = true }
 rustsec = { workspace = true }
 serde_json = { workspace = true }
-reqwest = { workspace = true }
 cargo_metadata = { workspace = true }
-colored = { workspace = true }
 
 [package.metadata.rust-analyzer]
 rustc_private = true

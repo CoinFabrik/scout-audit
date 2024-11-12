@@ -1,15 +1,18 @@
 #![feature(rustc_private)]
-extern crate rustc_lint;
-extern crate rustc_session;
+extern crate rustc_span;
+extern crate rustc_ast;
 
 use cargo_metadata::MetadataCommand;
-use colored::Colorize;
 use rustsec::{
     report::Settings, repository::git::Repository, Database, Lockfile, Report, Vulnerability,
 };
 use scout_audit_dylint_linting::LintInfo;
 use std::ffi::CString;
 use std::path::PathBuf;
+use rustc_span::DUMMY_SP;
+use rustc_ast::Crate;
+use rustc_lint::{EarlyContext, EarlyLintPass};
+use clippy_wrappers::span_lint_and_help;
 
 static NAME: &str = "KNOWN_VULNERABILITIES";
 static DESC: &str =
@@ -35,94 +38,41 @@ fn construct_metadata() -> LintInfo {
     }
 }
 
-#[no_mangle]
-pub fn lint_info(info: &mut LintInfo) {
-    *info = construct_metadata();
+scout_audit_dylint_linting::declare_early_lint! {
+    /// ### What it does
+    /// Checks the soroban version of the contract
+    ///
+    /// ### Why is this bad?
+    /// Using an outdated version of soroban could lead to security vulnerabilities, bugs, and other issues.
+    pub KNOWN_VULNERABILITIES,
+    Warn,
+    DESC,
+    {
+        name: NAME,
+        long_message: LONG,
+        severity: SEVERITY,
+        help: HELP,
+        vulnerability_class: VULN_CLASS,
+    }
 }
 
-#[doc(hidden)]
-#[no_mangle]
-pub extern "C" fn dylint_version() -> *mut std::os::raw::c_char {
-    std::ffi::CString::new("0.1.0").unwrap().into_raw()
-}
-
-#[no_mangle]
-pub fn register_lints(_: &rustc_session::Session, _: &mut rustc_lint::LintStore) {}
-
-#[no_mangle]
-pub fn custom_detector() {
-    let _ = perform_checking();
-}
-
-fn report_vuln(vuln: &Vulnerability, toml: &PathBuf, krate: &Option<String>) -> Result<(), ()> {
-    let port = std::env::var("SCOUT_PORT_NUMBER").map_err(|_| ())?;
-
-    let short_message = format!(
-        "Known vulnerability in {} version {}",
-        vuln.package.name, vuln.package.version
+fn report_vuln(vuln: &Vulnerability) -> String{
+    let mut message = format!(
+        "Known vulnerability in {} version {} (advisory {}): {}",
+        vuln.package.name, vuln.package.version, vuln.advisory.id, vuln.advisory.title
     );
-    let first_line = format!("{}: {}", "warning".yellow(), short_message)
-        .bold()
-        .to_string();
-    let rendered = format!(
-        concat!(
-            "{}\n",
-            "    {}: {}\n",
-            "    {}: {}\n",
-            "    {}: {}\n",
-            "    Read the report to see if this vulnerability is applicable to your use case.\n",
-            "\n",
-        ),
-        first_line,
-        "Advisory".bold(),
-        vuln.advisory.id,
-        "Description".bold(),
-        vuln.advisory.title,
-        "URL".bold(),
-        vuln.advisory
-            .url
-            .clone()
-            .map(|x| x.to_string())
-            .unwrap_or("N/A".to_string()),
-    );
-    let body = serde_json::json!({
-        "crate": krate,
-        "message": {
-            "code": {
-                "code": NAME.to_lowercase(),
-                "explanation": null,
-            },
-            "message": short_message,
-            "rendered": rendered,
-            "spans": [
-                {
-                    "byte_start": 0,
-                    "byte_end": 0,
-                    "line_start": 0,
-                    "line_end": 0,
-                    "column_start": 0,
-                    "column_end": 0,
-                    "expansion": null,
-                    "file_name": toml,
-                    "is_primary": true,
-                    "suggested_replacement": null,
-                    "suggestion_applicability": null,
-                    "text": null,
-                }
-            ],
-        },
-    })
-    .to_string();
-
-    let _ = reqwest::blocking::Client::new()
-        .post(format!("http://127.0.0.1:{port}/vuln"))
-        .body(body)
-        .send();
-
-    Ok(())
+    let url = vuln.advisory
+        .url
+        .clone()
+        .map(|x| x.to_string());
+    if let Some(url) = url{
+        message = format!("{}\nRead the report at {} to see if this vulnerability is applicable to your use case.", message, url);
+    }
+    message
 }
 
 fn perform_checking_on_dir(
+    cx: &EarlyContext<'_>,
     lock: &str,
     toml: &PathBuf,
     krate: Option<String>,
@@ -133,7 +83,14 @@ fn perform_checking_on_dir(
     let settings = Settings::default();
     let report = Report::generate(&database, &lockfile, &settings);
     for vuln in report.vulnerabilities.list.iter() {
-        let _ = report_vuln(vuln, toml, &krate);
+        span_lint_and_help(
+            cx,
+            KNOWN_VULNERABILITIES,
+            DUMMY_SP,
+            DESC,
+            None,
+            report_vuln(vuln),
+        );
     }
     Ok(())
 }
@@ -158,11 +115,17 @@ fn get_lock_path_and_crate(toml: &PathBuf) -> Result<(PathBuf, Option<String>), 
     Ok((metadata.workspace_root.into(), krate))
 }
 
-fn perform_checking() -> Result<(), ()> {
+fn perform_checking(cx: &EarlyContext<'_>) -> Result<(), ()> {
     let mut toml = std::env::current_dir().map_err(|_| ())?;
     toml.push("Cargo.toml");
     let (mut lock, krate) = get_lock_path_and_crate(&toml)?;
     lock.push("Cargo.lock");
     let lock_str = lock.as_path().to_str().ok_or(())?;
-    perform_checking_on_dir(lock_str, &toml, krate).map_err(|_| ())
+    perform_checking_on_dir(cx, lock_str, &toml, krate).map_err(|_| ())
+}
+
+impl EarlyLintPass for KnownVulnerabilities {
+    fn check_crate(&mut self, cx: &EarlyContext<'_>, _: &Crate) {
+        let _ = perform_checking(cx);
+    }
 }
