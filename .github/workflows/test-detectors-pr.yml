@@ -87,15 +87,9 @@ jobs:
       - name: Install dylint, dylint-link
         run: cargo +nightly install cargo-dylint dylint-link
 
-      - name: Clone cargo-scout-audit
-        run: git clone https://github.com/CoinFabrik/scout-audit.git -b main scout-repo
-
       - name: Install cargo-scout-audit
-        working-directory: scout-repo/apps/cargo-scout-audit
+        working-directory: apps/cargo-scout-audit
         run: cargo install --path .
-
-      - name: Clean up after installation
-        run: rm -rf scout-repo
 
       - name: Determine build status and write to file
         run: echo "${{ job.status }}" > status-${{ matrix.os }}.txt
