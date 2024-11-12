@@ -5,7 +5,7 @@ extern crate rustc_span;
 
 use clippy_utils::sym;
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{declarations::{Severity, VulnerabilityClass}, macros::expose_lint_info};
 use if_chain::if_chain;
 use rustc_ast::{
     ptr::P,
@@ -22,9 +22,9 @@ pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
     name: "Assert Violation",
     short_message: LINT_MESSAGE,
     long_message: "Assert causes panic. Instead, return a proper error.",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/assert-violation",
-    vulnerability_class: "Panic",
+    vulnerability_class: VulnerabilityClass::Panic,
 };
 
 dylint_linting::impl_pre_expansion_lint! {

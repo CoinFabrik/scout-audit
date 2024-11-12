@@ -5,7 +5,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_errors::MultiSpan;
@@ -29,9 +32,9 @@ pub static TOKEN_INTERFACE_INFERENCE_INFO: LintInfo = LintInfo {
     name: "Token Interface Implementation Analyzer",
     short_message: LINT_MESSAGE,
     long_message: "Implementing the Token Interface trait helps to ensure proper compliance of the SEP-41 standard.",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-inference",
-    vulnerability_class: "Best Practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_late_lint! {

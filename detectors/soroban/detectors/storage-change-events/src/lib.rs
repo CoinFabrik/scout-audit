@@ -4,7 +4,11 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{is_soroban_function, FunctionCallVisitor},
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -24,9 +28,9 @@ pub static STORAGE_CHANGE_EVENTS_INFO: LintInfo = LintInfo {
     name: "Storage Change Events",
     short_message: LINT_MESSAGE,
     long_message: "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/storage-change-events",
-    vulnerability_class: "Best Practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_late_lint! {

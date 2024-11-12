@@ -8,7 +8,14 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::{
+        definition_to_string, expr_to_method_call, expr_to_path, get_node_type, get_type_string,
+        path_to_resolved, resolution_to_local, stmt_to_local, type_to_adt,
+    },
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, FnDecl, GenericArg, HirId, QPath, Stmt, TyKind,
@@ -29,9 +36,9 @@ pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
     name: "Vec could be Mapping",
     short_message: LINT_MESSAGE,
     long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
-    vulnerability_class: "Gas Usage",
+    vulnerability_class: VulnerabilityClass::GasUsage,
 };
 
 dylint_linting::impl_late_lint! {

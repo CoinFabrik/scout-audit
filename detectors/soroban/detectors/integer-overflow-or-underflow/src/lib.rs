@@ -4,7 +4,11 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    analysis::ConstantAnalyzer,
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
@@ -21,9 +25,9 @@ pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
     name: "Integer Overflow/Underflow",
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/vulnerabilities/integer-overflow-or-underflow",
-    vulnerability_class: "Arithmetic",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::declare_late_lint! {
