@@ -72,7 +72,7 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Install Rust stable
@@ -143,7 +143,7 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-tests-
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
