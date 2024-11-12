@@ -21,33 +21,8 @@ jobs:
       - name: Install rustfmt
         run: rustup component add rustfmt
 
-      - name: Check Format (Scout)
-        working-directory: apps/cargo-scout-audit
-        run: cargo fmt --all --check
-
-      - name: Check Format (detectors/ink)
-        working-directory: detectors/ink/detectors
-        run: cargo fmt -- --check -v
-
-      - name: Check Format (detectors/soroban)
-        working-directory: detectors/soroban/detectors
-        run: cargo fmt --check
-
-      - name: Check Format (detectors/substrate-pallets)
-        working-directory: detectors/substrate-pallets/detectors
-        run: cargo fmt --check
-
-      - name: Check Format (test-cases/ink)
-        working-directory: detectors/ink/test-cases
-        run: cargo fmt -- --check -v
-
-      - name: Check Format (detectors/soroban)
-        working-directory: detectors/soroban/test-cases
-        run: cargo fmt --check
-
-      - name: Check Format (detectors/substrate-pallets)
-        working-directory: detectors/substrate-pallets/test-cases
-        run: cargo fmt --check
+      - name: Check Format
+        run: /bin/sh scripts/fmt.sh
 
   clippy:
     name: Lint with Clippy
@@ -76,6 +51,9 @@ jobs:
 
       - name: Install clippy
         run: rustup component add clippy
+
+      - name: Install clippy for detectors
+        run: run: rustup component add clippy --toolchain nightly-2024-07-11
 
       - name: Lint Code (Scout)
         working-directory: apps/cargo-scout-audit
