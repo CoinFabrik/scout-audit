@@ -662,7 +662,7 @@ fn count_findings(
             continue;
         }
         let code = code.unwrap();
-        let detector = detectors_info.iter().find(|d| d.id == code);
+        let detector = detectors_info.find_by_id(&code);
         if detector.is_none() {
             continue;
         }
