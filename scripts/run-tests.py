@@ -24,7 +24,7 @@ def run_tests(detector):
 
     for root, _, _ in os.walk(directory):
         if is_rust_project(root):
-            if run_unit_tests(root):
+            if run_unit_tests(root, blockchain):
                 errors.append(root)
             if not run_integration_tests(blockchain, detector, root):
                 errors.append(root)
@@ -33,9 +33,13 @@ def run_tests(detector):
 def convert_code(s):
     return s.replace('_', '-')
 
-def run_unit_tests(root):
+def run_unit_tests(root, blockchain):
     start_time = time.time()
-    returncode, stdout, _ = run_subprocess(["cargo", "test", "--all-features"], root)
+    params = ["cargo", "test"]
+    if blockchain != 'ink':
+        #E2E tests don't work on Ink! test cases.
+        params.append("--all-features")
+    returncode, stdout, _ = run_subprocess(params, root)
     print_results(
         returncode,
         stdout,
