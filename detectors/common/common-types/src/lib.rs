@@ -34,7 +34,7 @@ pub enum LintInfoError {
 impl<'a> LintInfo<'a> {
     pub fn into_c(&self) -> Result<CLintInfo, LintInfoError> {
         Ok(CLintInfo {
-            id: CString::new(self.name)?,
+            id: CString::new(self.name.to_lowercase().replace(' ', "_"))?,
             name: CString::new(self.name)?,
             short_message: CString::new(self.short_message)?,
             long_message: CString::new(self.long_message)?,

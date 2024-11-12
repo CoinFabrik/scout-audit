@@ -3,7 +3,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     slice::{Iter, IterMut},
     str::FromStr,
     sync::Mutex,
@@ -647,7 +647,7 @@ pub(crate) fn prepare_tera_for_table_render_html(
 fn count_findings(
     findings: &[Value],
     crate_to_find: &String,
-    detectors_info: &HashMap<String, LintInfo>,
+    detectors_info: &HashSet<LintInfo>,
 ) -> [usize; 4] {
     let mut ret = [0_usize; 4];
 
@@ -662,7 +662,7 @@ fn count_findings(
             continue;
         }
         let code = code.unwrap();
-        let detector = detectors_info.get(&code);
+        let detector = detectors_info.iter().find(|d| d.id == code);
         if detector.is_none() {
             continue;
         }
@@ -682,7 +682,7 @@ fn count_findings(
 pub(crate) fn construct_table(
     findings: &[Value],
     crates: &HashMap<String, bool>,
-    detectors_info: &HashMap<String, LintInfo>,
+    detectors_info: &HashSet<LintInfo>,
 ) -> Table {
     let mut header = Row::from_strs(&[
         "Crate",

@@ -2,6 +2,7 @@ use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability}
 use crate::{scout::project_info::ProjectInfo, utils::detectors_info::LintInfo};
 use anyhow::{Context, Result};
 use serde_json::Value;
+use std::collections::HashSet;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
@@ -20,7 +21,7 @@ impl RawReport {
         json_findings: &[Value],
         crates: &HashMap<String, bool>,
         info: &ProjectInfo,
-        detector_info: &HashMap<String, LintInfo>,
+        detector_info: &HashSet<LintInfo>,
     ) -> Result<Report> {
         let scout_findings = json_findings;
         let findings = process_findings(scout_findings, info, detector_info)
@@ -59,7 +60,7 @@ pub(crate) fn json_to_string_opt(s: Option<&Value>) -> Option<String> {
 fn process_findings(
     scout_findings: &[Value],
     info: &ProjectInfo,
-    detector_info: &HashMap<String, LintInfo>,
+    detector_info: &HashSet<LintInfo>,
 ) -> Result<Vec<Finding>> {
     let mut det_map: HashMap<String, u32> = HashMap::new();
     let mut findings: Vec<Finding> = Vec::new();
@@ -68,7 +69,10 @@ fn process_findings(
         let category = parse_category(finding).with_context(|| {
             format!("Failed to parse vulnerability category for finding {}", id)
         })?;
-        if !detector_info.contains_key(&category) {
+        if !detector_info
+            .iter()
+            .any(|d| d.id == category)
+        {
             continue;
         }
 
@@ -101,7 +105,12 @@ fn process_findings(
         findings.push(Finding {
             id: id as u32,
             occurrence_index: *occurrence_index,
-            category_id: detector_info[&category].vulnerability_class.clone(),
+            category_id: detector_info
+                .iter()
+                .find(|d| d.id == category)
+                .unwrap()
+                .vulnerability_class
+                .clone(),
             vulnerability_id: category,
             error_message,
             span,
@@ -210,13 +219,16 @@ fn parse_error_message(finding: &Value) -> String {
 }
 
 fn generate_categories(
-    detector_info: &HashMap<String, LintInfo>,
+    detector_info: &HashSet<LintInfo>,
     findings: &[Finding],
 ) -> Result<Vec<Category>> {
     let mut categories: HashMap<String, Category> = HashMap::new();
 
     for finding in findings {
-        if let Some(vuln_info) = detector_info.get(&finding.vulnerability_id) {
+        if let Some(vuln_info) = detector_info
+            .iter()
+            .find(|d| d.id == finding.vulnerability_id)
+        {
             let category = categories
                 .entry(vuln_info.vulnerability_class.clone())
                 .or_insert_with(|| Category {
@@ -241,7 +253,7 @@ fn generate_categories(
 }
 
 fn create_summary(
-    detector_info: &HashMap<String, LintInfo>,
+    detector_info: &HashSet<LintInfo>,
     info: &ProjectInfo,
     findings: &[Finding],
     json_findings: &[Value],
@@ -260,7 +272,10 @@ fn create_summary(
     .collect();
 
     for finding in findings {
-        if let Some(lint_info) = detector_info.get(&finding.vulnerability_id) {
+        if let Some(lint_info) = detector_info
+            .iter()
+            .find(|d| d.id == finding.vulnerability_id)
+        {
             match lint_info.severity.as_ref() {
                 "Critical" => *by_severity.get_mut(&Severity::Critical).unwrap() += 1,
                 "Medium" => *by_severity.get_mut(&Severity::Medium).unwrap() += 1,

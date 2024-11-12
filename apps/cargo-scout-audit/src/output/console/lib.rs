@@ -6,7 +6,7 @@ use crate::{
     utils::detectors_info::LintInfo,
 };
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tera::{Context, Tera};
 use terminal_color_builder::OutputFormatter;
 
@@ -22,7 +22,7 @@ fn get_template_path() -> (String, String) {
 pub(crate) fn render_report(
     findings: &[Value],
     crates: &HashMap<String, bool>,
-    detectors_info: &HashMap<String, LintInfo>,
+    detectors_info: &HashSet<LintInfo>,
 ) -> Result<(), tera::Error> {
     for finding in findings.iter() {
         let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
