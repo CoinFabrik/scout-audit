@@ -1,9 +1,9 @@
-use crate::{output::raw_report::json_to_string_opt, utils::detectors_info::LintInfo};
+use crate::{output::raw_report::json_to_string_opt, utils::detectors_info::LintStore};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     slice::{Iter, IterMut},
     str::FromStr,
     sync::Mutex,
@@ -647,7 +647,7 @@ pub(crate) fn prepare_tera_for_table_render_html(
 fn count_findings(
     findings: &[Value],
     crate_to_find: &String,
-    detectors_info: &HashSet<LintInfo>,
+    detectors_info: &LintStore,
 ) -> [usize; 4] {
     let mut ret = [0_usize; 4];
 
@@ -682,7 +682,7 @@ fn count_findings(
 pub(crate) fn construct_table(
     findings: &[Value],
     crates: &HashMap<String, bool>,
-    detectors_info: &HashSet<LintInfo>,
+    detectors_info: &LintStore,
 ) -> Table {
     let mut header = Row::from_strs(&[
         "Crate",

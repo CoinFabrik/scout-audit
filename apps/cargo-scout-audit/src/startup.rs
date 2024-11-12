@@ -13,7 +13,7 @@ use crate::{
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, LintInfo},
+        detectors_info::{get_detectors_info, LintStore},
         print::{print_error, print_warning},
     },
 };
@@ -545,7 +545,7 @@ fn do_report(
     findings: &Vec<Value>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: HashSet<LintInfo>,
+    detectors_info: LintStore,
     output_string: String,
     opts: Scout,
     inside_vscode: bool,
@@ -628,7 +628,7 @@ fn generate_report(
     findings: &Vec<Value>,
     crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: &HashSet<LintInfo>,
+    detectors_info: &LintStore,
     output_path: Option<PathBuf>,
     output_format: &[OutputFormat],
 ) -> Result<()> {

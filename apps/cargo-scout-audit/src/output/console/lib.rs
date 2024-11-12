@@ -3,10 +3,10 @@ use crate::{
         raw_report::json_to_string,
         table::{construct_table, prepare_tera_for_table_render_console},
     },
-    utils::detectors_info::LintInfo,
+    utils::detectors_info::LintStore,
 };
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tera::{Context, Tera};
 use terminal_color_builder::OutputFormatter;
 
@@ -22,7 +22,7 @@ fn get_template_path() -> (String, String) {
 pub(crate) fn render_report(
     findings: &[Value],
     crates: &HashMap<String, bool>,
-    detectors_info: &HashSet<LintInfo>,
+    detectors_info: &LintStore,
 ) -> Result<(), tera::Error> {
     for finding in findings.iter() {
         let rendered = json_to_string(finding.get("rendered").unwrap_or(&Value::default()));

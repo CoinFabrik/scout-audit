@@ -27,6 +27,30 @@ pub struct LintInfo {
     pub vulnerability_class: String,
 }
 
+#[derive(Default, Serialize)]
+pub struct LintStore {
+    lints: HashSet<LintInfo>,
+}
+
+impl LintStore {
+    pub fn new() -> Self {
+        Self {
+            lints: HashSet::new(),
+        }
+    }
+
+    pub fn find_by_id(&self, id: &str) -> Option<&LintInfo> {
+        self.lints.iter().find(|lint| lint.id == id)
+    }
+
+    pub fn insert(&mut self, lint: LintInfo) -> bool {
+        self.lints.insert(lint)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &LintInfo> {
+        self.lints.iter()
+    }
+}
 
 impl TryFrom<&RawLintInfo> for LintInfo {
     type Error = anyhow::Error;
@@ -48,8 +72,8 @@ type LintInfoFunc = unsafe fn() -> *mut RawLintInfo;
 type FreeLintInfoFunc = unsafe fn(*mut RawLintInfo);
 
 #[tracing::instrument(level = "debug", skip_all)]
-pub fn get_detectors_info(detectors_paths: &[PathBuf]) -> Result<HashSet<LintInfo>> {
-    let mut lint_store = HashSet::new();
+pub fn get_detectors_info(detectors_paths: &[PathBuf]) -> Result<LintStore> {
+    let mut lint_store = LintStore::new();
 
     for detector_path in detectors_paths {
         let lib = unsafe {
