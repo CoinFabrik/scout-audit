@@ -31,7 +31,7 @@ const LINT_MESSAGE: &str =
 
 #[expose_lint_info]
 pub static FRONT_RUNNING_INFO: LintInfo = LintInfo {
-    name: "Front Running Detection",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This lint checks for potential front-running vulnerabilities in token transfers",
     severity: "Warning",

@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "In order to prevent a single transaction from consum
 
 #[expose_lint_info]
 pub static DOS_UNBOUNDED_OPERATION_INFO: LintInfo = LintInfo {
-    name: "Denial of Service: Unbounded Operation",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
     severity: "Medium",

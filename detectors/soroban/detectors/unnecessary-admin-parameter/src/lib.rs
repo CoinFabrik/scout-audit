@@ -24,7 +24,7 @@ const LINT_MESSAGE: &str = "Usage of admin parameter might be unnecessary";
 
 #[expose_lint_info]
 pub static UNNECESSARY_ADMIN_PARAMETER_INFO: LintInfo = LintInfo {
-    name: "Unnecessary Admin Parameter",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This function has an admin parameter that might be unnecessary. Consider retrieving the admin from storage instead.",
     severity: "Medium",

@@ -21,7 +21,7 @@ const LINT_MESSAGE: &str = "Consider emiting an event when storage is modified";
 
 #[expose_lint_info]
 pub static STORAGE_CHANGE_EVENTS_INFO: LintInfo = LintInfo {
-    name: "Storage Change Events",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
     severity: "Enhancement",

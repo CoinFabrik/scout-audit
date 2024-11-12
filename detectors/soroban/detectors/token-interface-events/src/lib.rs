@@ -21,7 +21,7 @@ const LINT_MESSAGE: &str = "This function belongs to the Token Interface and sho
 
 #[expose_lint_info]
 pub static TOKEN_INTERFACE_EVENTS_INFO: LintInfo = LintInfo {
-    name: "Token Interface events",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Not emiting the established events breaks compatibility with the token standard and can lead to interoperability problems between the contract and its observers",
     severity: "Medium",

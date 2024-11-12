@@ -14,7 +14,7 @@ const LINT_MESSAGE: &str = "Use env.prng() to generate random numbers, and remem
 
 #[expose_lint_info]
 pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
-    name: "Insufficiently Random Values",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: "Critical",

@@ -21,7 +21,7 @@ const UNSAFE_GET_METHODS: [&str; 3] = ["get", "get_unchecked", "try_get_unchecke
 
 #[expose_lint_info]
 pub static UNSAFE_MAP_GET_INFO: LintInfo = LintInfo {
-    name: "Unsafe Map Get",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This vulnerability class pertains to the inappropriate usage of the get method for Map in soroban",
     severity: "Medium",
