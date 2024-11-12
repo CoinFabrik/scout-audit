@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "Assert causes panic. Instead, return a proper error.
 
 #[expose_lint_info]
 pub static ASSERT_VIOLATION_INFO: LintInfo = LintInfo {
-    name: "Assert Violation",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Assert causes panic. Instead, return a proper error.",
     severity: Severity::Medium,

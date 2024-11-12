@@ -25,7 +25,7 @@ const LINT_MESSAGE: &str = "Lazy value was gotten here but never set afterwards"
 
 #[expose_lint_info]
 pub static LAZY_VALUES_NOT_SET_INFO: LintInfo = LintInfo {
-    name: "Lazy values get and not set",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "When a get is performed, a copy of the value is received; if that copy is modified, the new value must be set afterwards.",
     severity: "Critical",

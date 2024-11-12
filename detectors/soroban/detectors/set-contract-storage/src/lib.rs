@@ -25,7 +25,7 @@ const LINT_MESSAGE: &str = "Abitrary users should not have control over keys bec
 
 #[expose_lint_info]
 pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
-    name: "Set Contract Storage",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.",
     severity: Severity::Critical,

@@ -33,7 +33,7 @@ const LINT_MESSAGE: &str = "This mapping operation is called without access cont
 
 #[expose_lint_info]
 pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
-    name: "Unprotected Mapping Operation",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This mapping operation is called without access control on a different key than the caller's address",
     severity: Severity::Critical,

@@ -34,7 +34,7 @@ const LINT_MESSAGE: &str = "Division before multiplication might result in a los
 
 #[expose_lint_info]
 pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
-    name: "Divide Before Multiply",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Division before multiplication might result in a loss of precision",
     severity: Severity::Medium,

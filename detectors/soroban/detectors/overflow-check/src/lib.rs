@@ -24,7 +24,7 @@ const LINT_MESSAGE: &str = "Use `overflow-checks = true` in Cargo.toml profile";
 
 #[expose_lint_info]
 pub static OVERFLOW_CHECK_INFO: LintInfo = LintInfo {
-    name: "Overflow Check",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
     severity: Severity::Critical,

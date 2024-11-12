@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "Passing arguments to the target of a delegate call i
 
 #[expose_lint_info]
 pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
-    name: "Delegate call",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
     severity: "Critical",
@@ -28,49 +28,6 @@ pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// Checks for delegated calls to contracts passed as arguments.
-    /// ### Why is this bad?
-    ///Delegated calls to contracts passed as arguments can be used to change the expected behavior of the contract. If you need to change the target of a delegated call, you should use a storage variable, and make a function with proper access control to change it.
-    /// ### Known problems
-    /// Remove if none.
-    ///
-    /// ### Example
-    /// ```rust
-    ///pub fn delegateCall(&mut self, target: Hash, argument: Balance) {
-    ///    let selector_bytes = [0x0, 0x0, 0x0, 0x0];
-    ///    let result: T  = build_call::<DefaultEnvironment>()
-    ///        .delegate(target)
-    ///        .exec_input(
-    ///            ExecutionInput::new(Selector::new(selector_bytes))
-    ///                .push_arg(argument)
-    ///     )
-    ///        .returns::<T>()
-    ///     .invoke();
-    ///}
-    ///     ```
-    /// Use instead:
-    ///```rust
-    ///pub fn delegate_call(&mut self, argument: Balance) {
-    ///    let selector_bytes = [0x0, 0x0, 0x0, 0x0];
-    ///    let result: T  = build_call::<DefaultEnvironment>()
-    ///        .delegate(self.target)
-    ///        .exec_input(
-    ///            ExecutionInput::new(Selector::new(selector_bytes))
-    ///                .push_arg(argument)
-    ///        )
-    ///        .returns::<T>()
-    ///        .invoke();
-    ///}
-    ///
-    ///pub fn set_target(&mut self, new_target: Hash) -> Result<(), &'static str> {
-    ///   if self.admin != self.env().caller() {
-    ///        Err("Only admin can set target")
-    ///    } else {
-    ///        self.target = new_target;
-    ///        Ok(())
-     ///   }
-    ///}
-
     pub DELEGATE_CALL,
     Warn,
     LINT_MESSAGE

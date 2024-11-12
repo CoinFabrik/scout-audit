@@ -19,7 +19,7 @@ const LINT_MESSAGE: &str = "The panic! macro is used to stop execution when a co
 
 #[expose_lint_info]
 pub static PANIC_ERROR_INFO: LintInfo = LintInfo {
-    name: "Panic Error",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
     severity: "Enhancement",
@@ -28,35 +28,6 @@ pub static PANIC_ERROR_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::impl_pre_expansion_lint! {
-    /// ### What it does
-    /// The panic! macro is used to stop execution when a condition is not met.
-    /// This is useful for testing and prototyping, but should be avoided in production code
-    ///
-    /// ### Why is this bad?
-    /// The usage of panic! is not recommended because it will stop the execution of the caller contract.
-    ///
-    /// ### Known problems
-    /// While this linter detects explicit calls to panic!, there are some ways to raise a panic such as unwrap() or expect().
-    ///
-    /// ### Example
-    /// ```rust
-    /// pub fn add(&mut self, value: u32)   {
-    ///    match self.value.checked_add(value) {
-    ///        Some(v) => self.value = v,
-    ///        None => panic!("Overflow error"),
-    ///    };
-    /// }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// pub fn add(&mut self, value: u32) -> Result<(), Error>  {
-    ///     match self.value.checked_add(value) {
-    ///         Some(v) => self.value = v,
-    ///         None => return Err(Error::OverflowError),
-    ///     };
-    ///     Ok(())
-    /// }
-    /// ```
     pub PANIC_ERROR,
     Warn,
     LINT_MESSAGE,

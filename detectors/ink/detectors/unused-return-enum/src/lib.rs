@@ -16,7 +16,7 @@ const LINT_MESSAGE: &str = "Unused return enum";
 
 #[expose_lint_info]
 pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
-    name: "Unused Return Enum",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Ink! messages can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
     severity: "Minor",
@@ -25,54 +25,6 @@ pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// It warns if a fuction that returns a Result type does not return a Result enum variant (Ok/Err)
-    ///
-    /// ### Why is this bad?
-    /// If any of the variants (Ok/Err) is not used, the code could be simplified or it could imply a bug.
-    ///
-    ///
-    /// ### Example
-    /// ```rust
-    /// // example code where a warning is issued
-    ///     #![cfg_attr(not(feature = "std"), no_std)]
-    ///     pub enum TradingPairErrors {
-    ///         Overflow,
-    ///     }
-    ///     (...)
-    ///
-    ///     #[ink(message)]
-    ///     pub fn get_percentage_difference(&mut self, value1: Balance, value2: Balance) -> Result<Balance, TradingPairErrors>  {
-    ///         let absolute_difference = value1.abs_diff(value2);
-    ///         let sum = value1 + value2;
-    ///         let percentage_difference =
-    ///         match 100u128.checked_mul(absolute_difference / sum) {
-    ///            Some(result) => result,
-    ///            None => Err(TradingPairErrors::Overflow),
-    ///         }
-    ///     }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// // example code that does not raise a warning
-    ///     #![cfg_attr(not(feature = "std"), no_std)]
-    ///     pub enum TradingPairErrors {
-    ///         Overflow,
-    ///     }
-    ///     (...)
-    ///
-    ///     #[ink(message)]
-    ///     pub fn get_percentage_difference(&mut self, value1: Balance, value2: Balance) -> Result<Balance, TradingPairErrors>  {
-    ///         let absolute_difference = value1.abs_diff(value2);
-    ///         let sum = value1 + value2;
-    ///         let percentage_difference =
-    ///         match 100u128.checked_mul(absolute_difference / sum) {
-    ///            Some(result) => Ok(result),
-    ///            None => panic!("overflow!"),
-    ///         };
-    ///         return Err(TradingPairErrors::Overflow);
-    ///     }
-    /// ```
     pub UNUSED_RETURN_ENUM,
     Warn,
     LINT_MESSAGE

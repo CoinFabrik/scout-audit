@@ -20,7 +20,7 @@ const LINT_MESSAGE : &str = "If any of the variants (Ok/Err) is not used, the co
 
 #[expose_lint_info]
 pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
-    name: "Unused Return Enum",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Soroban functions can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
     severity: Severity::Minor,

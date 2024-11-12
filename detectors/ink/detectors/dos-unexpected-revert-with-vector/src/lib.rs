@@ -28,7 +28,7 @@ const LINT_MESSAGE: &str = "This vector operation is called without access contr
 
 #[expose_lint_info]
 pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
-    name: "Denial of Service: Unexpected Revert with Vector",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
     severity: "Medium",
@@ -37,33 +37,6 @@ pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// Checks for array pushes without access control.
-    /// ### Why is this bad?
-    /// Arrays have a maximum size according to the storage cell. If the array is full, the push will revert. This can be used to prevent the execution of a function.
-    /// ### Known problems
-    /// If the owner validation is performed in an auxiliary function, the warning will be shown, resulting in a false positive.
-    /// ### Example
-    /// ```rust
-    /// if self.votes.contains(candidate) {
-    ///     Err(Errors::CandidateAlreadyAdded)
-    /// } else {
-    ///     self.candidates.push(candidate);
-    ///     self.votes.insert(candidate, &0);
-    ///     Ok(())
-    /// }
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// if self.votes.contains(candidate) {
-    ///     Err(Errors::CandidateAlreadyAdded)
-    /// } else {
-    ///     self.candidates.insert(self.total_candidates, &candidate);
-    ///     self.total_candidates += 1;
-    ///     self.votes.insert(candidate, &0);
-    ///     Ok(())
-    /// }
-    /// ```
     pub DOS_UNEXPECTED_REVERT_WITH_VECTOR,
     Warn,
     LINT_MESSAGE

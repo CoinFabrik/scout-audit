@@ -24,7 +24,7 @@ const ITERABLE_METHODS: [&str; 1] = ["find"];
 
 #[expose_lint_info]
 pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
-    name: "Vec could be Mapping",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
     severity: "Enhancement",

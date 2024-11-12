@@ -31,7 +31,7 @@ const LINT_MESSAGE: &str = "Division before multiplication might result in a los
 
 #[expose_lint_info]
 pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
-    name: "Divide before multiply",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Performing a division operation before a multiplication can lead to a loss of precision. This issue becomes significant in programs like smart contracts where numerical precision is crucial.",
     severity: "Medium",
@@ -40,26 +40,6 @@ pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// Checks the existence of a division before a multiplication.
-    ///
-    /// ### Why is this bad?
-    /// Performing a division operation before multiplication can lead to a loss of precision. It might even result in an unintended zero value.
-    ///
-    /// ### Example
-    /// ```rust
-    /// // example code that raises a warning
-    /// let x = 1;
-    /// let y = 2;
-    /// let z = x / y * 3;
-    /// ```
-    /// Use instead:
-    /// ```rust
-    /// // example code that passes the linter
-    /// let x = 1;
-    /// let y = 2;
-    /// let z = x * 3 / y;
-    /// ```
     pub DIVIDE_BEFORE_MULTIPLY,
     Warn,
     LINT_MESSAGE

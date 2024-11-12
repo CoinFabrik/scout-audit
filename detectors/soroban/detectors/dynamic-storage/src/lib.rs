@@ -24,7 +24,7 @@ const LINT_MESSAGE: &str = "Using dynamic types in instance or persistent storag
 
 #[expose_lint_info]
 pub static DYNAMIC_STORAGE_INFO: LintInfo = LintInfo {
-    name: "Dynamic Storage Analyzer",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using dynamic types in instance or persistent storage can lead to unnecessary growth or storage-related vulnerabilities.",
     severity: Severity::Medium,

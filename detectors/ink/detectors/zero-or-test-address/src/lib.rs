@@ -24,7 +24,7 @@ const LINT_MESSAGE: &str = "Not checking for a zero-address could lead to a lock
 
 #[expose_lint_info]
 pub static ZERO_OR_TEST_ADDRESS_INFO: LintInfo = LintInfo {
-    name: "Zero or Test Address",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The assignment of the zero address to a variable in a smart contract represents a critical vulnerability because it can lead to loss of control over the contract. This stems from the fact that the zero address does not have an associated private key, which means it's impossible to claim ownership, rendering any contract assets or functions permanently inaccessible.    ",
     severity: "Medium",
@@ -33,33 +33,6 @@ pub static ZERO_OR_TEST_ADDRESS_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    ///
-    /// Checks if function parameters of type `AccountId` are being compared with a zero address.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Not checking for a zero-address could potentially lead to contracts getting locked.
-    ///
-    /// ### Known problems
-    ///
-    /// None at the moment.
-    ///
-    /// ### Example
-    /// ```rust
-    /// fn transfer(to: AccountId, amount: Balance) {
-    ///     // ...
-    /// }
-    /// ```
-    /// This function should check if `to` is a zero address:
-    /// ```rust
-    /// fn transfer(to: AccountId, amount: Balance) -> Result<(), Error> {
-    ///     if to == AccountId::from([0u8; 32]) {
-    ///         return Err(Error::InvalidAddress);
-    ///     }
-    ///     // ...
-    /// }
-    /// ```
     pub ZERO_OR_TEST_ADDRESS,
     Warn,
     LINT_MESSAGE

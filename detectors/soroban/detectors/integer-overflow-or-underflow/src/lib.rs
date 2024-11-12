@@ -22,7 +22,7 @@ pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underf
 
 #[expose_lint_info]
 pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
-    name: "Integer Overflow/Underflow",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
     severity: Severity::Critical,

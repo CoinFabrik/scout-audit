@@ -23,7 +23,7 @@ const LINT_MESSAGE: &str = "This vector operation is called without access contr
 
 #[expose_lint_info]
 pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
-    name: "Unexpected Revert Inserting to Storage",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: " It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
     severity: Severity::Medium,

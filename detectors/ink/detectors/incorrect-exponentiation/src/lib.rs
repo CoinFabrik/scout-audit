@@ -19,7 +19,7 @@ const LINT_HELP: &str = "If you want to use XOR, use bitxor(). If you want to ra
 
 #[expose_lint_info]
 pub static INCORRECT_EXPONENTIATION_INFO: LintInfo = LintInfo {
-    name: "Incorrect Exponentiation",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: "Critical",

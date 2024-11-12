@@ -11,7 +11,7 @@ const LINT_MESSAGE: &str = "In order to prevent randomness manipulations by vali
 
 #[expose_lint_info]
 pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
-    name: "Insufficiently Random Values",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using block attributes like block_timestamp or block_number for random number generation in ink! Substrate smart contracts is not recommended due to the predictability of these values. Block attributes are publicly visible and deterministic, making it easy for malicious actors to anticipate their values and manipulate outcomes to their advantage.",
     severity: "Critical",
@@ -20,17 +20,6 @@ pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
 };
 
 dylint_linting::declare_late_lint! {
-    /// ### What it does
-    /// This detector prevents the usage of timestamp/block number and modulo operator as a random number source.
-    ///
-    /// ### Why is this bad?
-    /// The value of the block timestamp and block number can be manipulated by validators, which means they're not a secure source of randomness. Therefore, they shouldn't be used for generating random numbers, especially in the context of a betting contract where the outcomes of bets could be manipulated.
-    ///
-    /// ### Example
-    /// ```rust
-    /// let pseudo_random: u8 = (self.env().block_timestamp() % 37).try_into().unwrap();
-    /// ```
-    ///
     pub INSUFFICIENTLY_RANDOM_VALUES,
     Warn,
     LINT_MESSAGE

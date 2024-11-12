@@ -26,7 +26,7 @@ const LINT_MESSAGE: &str = "This `#[scout_allow]` attribute may be unnecessary. 
 
 #[expose_lint_info]
 pub static UNNECESSARY_LINT_ALLOW_INFO: LintInfo = LintInfo {
-    name: "Unnecessary Lint Allow",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.",
     severity: Severity::Enhancement,

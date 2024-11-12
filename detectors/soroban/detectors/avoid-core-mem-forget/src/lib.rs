@@ -17,7 +17,7 @@ const LINT_MESSAGE: &str = "Use the `let _ = ...` pattern or `.drop()` method to
 
 #[expose_lint_info]
 pub static AVOID_CORE_MEM_FORGET_INFO: LintInfo = LintInfo {
-    name: "Avoid core::mem::forget usage",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The core::mem::forget function is used to forget about a value without running its destructor. This could lead to memory leaks and logic errors.",
     severity: Severity::Enhancement,

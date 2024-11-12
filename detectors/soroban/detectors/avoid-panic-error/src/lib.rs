@@ -23,7 +23,7 @@ const LINT_MESSAGE: &str = "The panic! macro is used in a function that returns 
 
 #[expose_lint_info]
 pub static AVOID_PANIC_ERROR_INFO: LintInfo = LintInfo {
-    name: "Avoid panic! macro",
+    name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message:
         "Using panic! in functions that return Result defeats the purpose of error handling. \
