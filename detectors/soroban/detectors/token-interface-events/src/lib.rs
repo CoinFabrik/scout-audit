@@ -19,7 +19,6 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
-use utils::{verify_token_interface_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "This function belongs to the Token Interface and should emit an event";
 

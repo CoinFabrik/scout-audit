@@ -19,7 +19,6 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
-use utils::{is_soroban_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "Consider emiting an event when storage is modified";
 

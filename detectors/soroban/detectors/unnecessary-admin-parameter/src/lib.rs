@@ -22,7 +22,6 @@ use rustc_span::{
     Span, Symbol,
 };
 use std::collections::{HashMap, HashSet};
-use utils::{get_node_type_opt, is_soroban_address, is_soroban_function};
 
 const LINT_MESSAGE: &str = "Usage of admin parameter might be unnecessary";
 

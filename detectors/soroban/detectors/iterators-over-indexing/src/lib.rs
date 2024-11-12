@@ -26,7 +26,6 @@ use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_span::{symbol::Ident, Span};
 use rustc_type_ir::Interner;
 use std::collections::HashSet;
-use utils::get_node_type;
 
 const LINT_MESSAGE: &str =
     "Hardcoding an index could lead to panic if the top bound is out of bounds.";

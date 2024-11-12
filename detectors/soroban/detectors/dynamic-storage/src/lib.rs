@@ -18,7 +18,6 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{Ty, TyKind};
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
-use utils::{get_node_type_opt, is_soroban_storage, SorobanStorageType};
 
 const LINT_MESSAGE: &str = "Using dynamic types in instance or persistent storage can lead to unnecessary growth or storage-related vulnerabilities.";
 

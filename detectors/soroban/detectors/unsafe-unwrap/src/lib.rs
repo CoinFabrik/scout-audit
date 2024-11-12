@@ -22,7 +22,6 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
 use std::{collections::HashSet, hash::Hash};
-use utils::{fn_returns, get_node_type_opt, match_type_to_str, ConstantAnalyzer};
 
 const LINT_MESSAGE: &str = "Unsafe usage of `unwrap`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];

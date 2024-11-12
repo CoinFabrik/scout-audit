@@ -28,7 +28,6 @@ use std::{
     collections::{HashMap, HashSet},
     vec,
 };
-use utils::{get_node_type_opt, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str =
     "The transferred amount should be checked against a minimum to prevent front-running";

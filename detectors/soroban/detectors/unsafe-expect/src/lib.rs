@@ -22,7 +22,6 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span, Symbol};
 use std::{collections::HashSet, hash::Hash};
-use utils::{fn_returns, ConstantAnalyzer};
 
 const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];

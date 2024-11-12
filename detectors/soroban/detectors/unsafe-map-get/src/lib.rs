@@ -18,7 +18,6 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass, LintContext};
 use rustc_span::{def_id::LocalDefId, Span};
-use utils::is_soroban_map;
 
 const LINT_MESSAGE: &str = "Unsafe access on Map, method could panic.";
 const UNSAFE_GET_METHODS: [&str; 3] = ["get", "get_unchecked", "try_get_unchecked"];

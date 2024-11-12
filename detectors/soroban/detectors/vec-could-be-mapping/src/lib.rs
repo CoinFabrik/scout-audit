@@ -23,10 +23,6 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::GenericArgKind;
 use rustc_span::{def_id::LocalDefId, Span};
-use utils::{
-    definition_to_string, expr_to_method_call, expr_to_path, get_node_type, get_type_string,
-    path_to_resolved, resolution_to_local, stmt_to_local, type_to_adt,
-};
 
 const LINT_MESSAGE: &str =
     "You are iterating over a vector of tuples using `find`. Consider using a mapping instead.";

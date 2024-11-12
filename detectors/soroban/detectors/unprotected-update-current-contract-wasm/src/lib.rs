@@ -24,7 +24,6 @@ use rustc_span::{
     def_id::{DefId, LocalDefId},
     Span, Symbol,
 };
-use utils::{is_soroban_address, is_soroban_env, is_soroban_function, FunctionCallVisitor};
 
 const LINT_MESSAGE: &str = "This update_current_contract_wasm is called without access control";
 

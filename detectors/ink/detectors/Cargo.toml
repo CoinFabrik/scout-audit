@@ -1,11 +1,12 @@
 [workspace]
 exclude = [".cargo", ".vscode", "target"]
 members = ["*"]
+resolver = "2"
 
 [workspace.dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "51a1cf0" }
 clippy_wrappers = { package = "scout-audit-clippy-wrappers", path = "../../../scout-audit-clippy-wrappers" }
-common = { path = "../../common" }
+common = { path = "../../../common" }
 dylint_internal = "=3.1.2"
 dylint_linting = "=3.1.2"
 if_chain = "=1.0.2"
