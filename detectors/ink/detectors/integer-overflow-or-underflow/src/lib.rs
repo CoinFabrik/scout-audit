@@ -4,7 +4,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_utils::{consts::constant_simple, is_integer_literal};
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{self as hir, Body, Expr, ExprKind, UnOp};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
@@ -16,9 +19,9 @@ pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.\n In Ink! 5.0.0, using raw math operations will result in `cargo contract build` failing with an error message.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/integer-overflow-or-underflow",
-    vulnerability_class: "Arithmetic",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::impl_late_lint! {

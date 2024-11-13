@@ -1,11 +1,13 @@
 #![feature(rustc_private)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     def::{DefKind, Res},
     Expr, ExprKind, Path, QPath, Ty,
@@ -20,9 +22,9 @@ pub static AVOID_DISPATCHERROR_OTHER_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "TODO",
-    vulnerability_class: "TODO",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {

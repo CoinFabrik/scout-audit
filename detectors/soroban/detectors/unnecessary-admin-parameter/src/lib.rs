@@ -6,6 +6,7 @@ extern crate rustc_span;
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{get_node_type_opt, is_soroban_address, is_soroban_function},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use edit_distance::edit_distance;
@@ -29,9 +30,9 @@ pub static UNNECESSARY_ADMIN_PARAMETER_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This function has an admin parameter that might be unnecessary. Consider retrieving the admin from storage instead.",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-admin-parameter",
-    vulnerability_class: "Access Control",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::impl_late_lint! {

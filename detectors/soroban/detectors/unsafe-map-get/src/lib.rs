@@ -5,7 +5,11 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_sugg;
-use common::{analysis::is_soroban_map, macros::expose_lint_info};
+use common::{
+    analysis::is_soroban_map,
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_errors::Applicability;
 use rustc_hir::{
@@ -23,9 +27,9 @@ pub static UNSAFE_MAP_GET_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This vulnerability class pertains to the inappropriate usage of the get method for Map in soroban",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-map-get",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::declare_late_lint! {

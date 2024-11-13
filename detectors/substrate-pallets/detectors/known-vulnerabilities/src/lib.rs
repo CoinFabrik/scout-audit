@@ -4,7 +4,10 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;
@@ -19,9 +22,9 @@ pub static KNOWN_VULNERABILITIES_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message:
         "Using dependencies with known vulnerabilities can expose your project to security risks",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/known-vulnerabilities",
-    vulnerability_class: "Known Vulnerabilities",
+    vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 
 dylint_linting::declare_early_lint! {

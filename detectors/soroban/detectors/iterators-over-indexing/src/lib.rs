@@ -8,7 +8,11 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 use clippy_wrappers::span_lint_and_help;
-use common::{analysis::get_node_type, macros::expose_lint_info};
+use common::{
+    analysis::get_node_type,
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
     def::Res,
@@ -31,9 +35,9 @@ pub static ITERATORS_OVER_INDEXING_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Instead, use an iterator or index to `.len()`.",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/iterators-over-indexing",
-    vulnerability_class: "Incorrect Use of Indexing",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::declare_late_lint! {

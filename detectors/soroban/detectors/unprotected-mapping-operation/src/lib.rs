@@ -10,6 +10,7 @@ use common::{
         get_node_type_opt, is_soroban_address, is_soroban_function, is_soroban_map,
         FunctionCallVisitor,
     },
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
@@ -32,9 +33,9 @@ pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This mapping operation is called without access control on a different key than the caller's address",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-mapping-operation",
-    vulnerability_class: "Access Control",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::impl_late_lint! {

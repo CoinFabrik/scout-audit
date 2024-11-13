@@ -4,7 +4,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -20,9 +23,9 @@ pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Soroban functions can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
-    severity: "Minor",
+    severity: Severity::Minor,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unused-return-enum",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {

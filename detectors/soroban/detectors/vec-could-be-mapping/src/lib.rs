@@ -13,6 +13,7 @@ use common::{
         definition_to_string, expr_to_method_call, expr_to_path, get_node_type, get_type_string,
         path_to_resolved, resolution_to_local, stmt_to_local, type_to_adt,
     },
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use rustc_hir::{
@@ -31,9 +32,9 @@ pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
-    severity: "Enhancement",
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/vec-could-be-mapping",
-    vulnerability_class: "Gas Usage",
+    severity: Severity::Enhancement,
+    help: "https://coinfabrik.github.io/scout-soroban/docs/vulnerabilities/vec-could-be-mapping",
+    vulnerability_class: VulnerabilityClass::GasUsage,
 };
 
 dylint_linting::impl_late_lint! {

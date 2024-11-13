@@ -6,6 +6,7 @@ extern crate rustc_span;
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{verify_token_interface_function, FunctionCallVisitor},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use rustc_hir::{
@@ -26,9 +27,9 @@ pub static TOKEN_INTERFACE_EVENTS_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Not emiting the established events breaks compatibility with the token standard and can lead to interoperability problems between the contract and its observers",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-events",
-    vulnerability_class: "Standard Compliance",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_late_lint! {

@@ -6,7 +6,10 @@ extern crate rustc_span;
 use std::{io::Error, process::Command};
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;
@@ -20,9 +23,9 @@ pub static SOROBAN_VERSION_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/soroban-version",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::declare_early_lint! {

@@ -8,7 +8,10 @@ extern crate rustc_span;
 use std::collections::HashSet;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -34,9 +37,9 @@ pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Division before multiplication might result in a loss of precision",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/divide-before-multiply",
-    vulnerability_class: "Arithmetic",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::declare_late_lint! {

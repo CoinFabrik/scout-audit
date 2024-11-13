@@ -6,7 +6,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_note;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use itertools::Itertools;
 use rustc_error_messages::MultiSpan;
 use rustc_hir::{
@@ -23,9 +26,9 @@ pub static AVOID_AUTOKEY_UPGRADABLE_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-autokey-upgradable",
-    vulnerability_class: "Upgradability",
+    vulnerability_class: VulnerabilityClass::Upgradability,
 };
 
 dylint_linting::impl_late_lint! {

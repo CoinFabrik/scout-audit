@@ -5,7 +5,10 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::LitKind;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -22,9 +25,9 @@ pub static DOS_UNBOUNDED_OPERATION_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unbounded-operation",
-    vulnerability_class: "Denial of Service",
+    vulnerability_class: VulnerabilityClass::DoS,
 };
 
 dylint_linting::declare_late_lint! {

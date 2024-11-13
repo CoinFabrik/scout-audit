@@ -11,7 +11,10 @@ use std::{
 };
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::Crate;
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::DUMMY_SP;
@@ -24,9 +27,9 @@ pub static OVERFLOW_CHECK_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/overflow-check",
-    vulnerability_class: "Arithmetic",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::declare_early_lint! {

@@ -8,6 +8,7 @@ use clippy_utils::higher::IfOrIfLet;
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{fn_returns, ConstantAnalyzer},
+        declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
@@ -30,9 +31,9 @@ pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-expect",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {

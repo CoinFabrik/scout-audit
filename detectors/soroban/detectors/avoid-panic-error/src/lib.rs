@@ -4,7 +4,10 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::{
     ptr::P,
     tokenstream::TokenTree,
@@ -25,9 +28,9 @@ pub static AVOID_PANIC_ERROR_INFO: LintInfo = LintInfo {
     long_message:
         "Using panic! in functions that return Result defeats the purpose of error handling. \
         Consider propagating the error using ? or return Err() instead.",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/avoid-panic-error",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::impl_pre_expansion_lint! {

@@ -1,12 +1,14 @@
 #![feature(rustc_private)]
-
 #![feature(let_chains)]
 
 extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_ast::{
     tokenstream::{TokenStream, TokenTree},
     visit::{walk_block, walk_expr, Visitor},
@@ -23,9 +25,9 @@ pub static NON_PAYABLE_TRANSFERRED_VALUE_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/non-payable-transferred-value",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_pre_expansion_lint! {

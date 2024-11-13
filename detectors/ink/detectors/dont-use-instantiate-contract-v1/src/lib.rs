@@ -5,7 +5,7 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::{declarations::{Severity, VulnerabilityClass}, macros::expose_lint_info};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -21,9 +21,9 @@ pub static DONT_USE_INSTANTIATE_CONTRACT_V1_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dont-use-instantiate-contract-v1",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::declare_late_lint! {

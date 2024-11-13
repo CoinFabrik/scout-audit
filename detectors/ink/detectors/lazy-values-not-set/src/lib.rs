@@ -8,7 +8,10 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_utils::match_def_path;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     def_id::DefId,
     intravisit::{walk_expr, FnKind, Visitor},
@@ -28,9 +31,9 @@ pub static LAZY_VALUES_NOT_SET_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "When a get is performed, a copy of the value is received; if that copy is modified, the new value must be set afterwards.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-values-not-set",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_late_lint! {

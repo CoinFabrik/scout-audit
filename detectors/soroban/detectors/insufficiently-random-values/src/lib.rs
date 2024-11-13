@@ -4,7 +4,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass};
@@ -17,9 +20,9 @@ pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/insufficiently-random-values",
-    vulnerability_class: "Block attributes",
+    vulnerability_class: VulnerabilityClass::BlockAttributes,
 };
 
 dylint_linting::declare_late_lint! {

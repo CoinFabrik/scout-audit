@@ -7,7 +7,7 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_wrappers::span_lint_and_help;
-use common::{analysis::FunctionCallVisitor, macros::expose_lint_info};
+use common::{analysis::FunctionCallVisitor, declarations::{Severity, VulnerabilityClass}, macros::expose_lint_info};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
@@ -27,9 +27,9 @@ pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/set-contract-storage",
-    vulnerability_class: "Authorization",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::impl_late_lint! {

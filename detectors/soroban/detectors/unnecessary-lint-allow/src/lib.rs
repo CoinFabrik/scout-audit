@@ -5,7 +5,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 mod processor;
-use common::macros::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 pub use processor::process_findings;
 
 use clippy_wrappers::span_lint_and_help;
@@ -26,9 +29,9 @@ pub static UNNECESSARY_LINT_ALLOW_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-lint-allow",
-    vulnerability_class: "Code Quality",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::declare_pre_expansion_lint! {

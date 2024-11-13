@@ -10,6 +10,7 @@ use std::collections::{HashMap, HashSet};
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{is_soroban_address, is_soroban_env, is_soroban_function, FunctionCallVisitor},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
@@ -31,9 +32,9 @@ pub static UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "If users are allowed to call update_current_contract_wasm, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-update-current-contract-wasm",
-    vulnerability_class: "Authorization",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::impl_late_lint! {
