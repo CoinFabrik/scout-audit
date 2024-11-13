@@ -1,11 +1,13 @@
 #![feature(rustc_private)]
 
-
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
@@ -22,9 +24,9 @@ pub static INCORRECT_EXPONENTIATION_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/incorrect-exponentiation",
-    vulnerability_class: "Arithmetic",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
 dylint_linting::declare_late_lint! {

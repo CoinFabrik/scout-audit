@@ -4,7 +4,10 @@ extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_utils::sym;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_ast::{
     ptr::P,
@@ -22,9 +25,9 @@ pub static PANIC_ERROR_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The use of the panic! macro to stop execution when a condition is not met is useful for testing and prototyping but should be avoided in production code. Using Result as the return type for functions that can fail is the idiomatic way to handle errors in Rust.    ",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/panic-error",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_pre_expansion_lint! {

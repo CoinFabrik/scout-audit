@@ -1,11 +1,13 @@
 #![feature(rustc_private)]
 
-
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_ast::BinOpKind;
 use rustc_hir::{
@@ -23,9 +25,9 @@ pub static REENTRANCY_1_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An ink! smart contract can interact with other smart contracts. These operations imply (external) calls where control flow is passed to the called contract until the execution of the called code is over, then the control is delivered back to the caller. A reentrancy vulnerability may happen when a user calls a function, this function calls a malicious contract which again calls this same function, and this 'reentrancy' has unexpected reprecussions to the contract.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/reentrancy",
-    vulnerability_class: "Reentrancy",
+    vulnerability_class: VulnerabilityClass::Reentrancy,
 };
 
 dylint_linting::declare_late_lint! {

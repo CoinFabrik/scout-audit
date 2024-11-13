@@ -7,7 +7,10 @@ extern crate rustc_span;
 
 use std::collections::HashSet;
 
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind, QPath,
@@ -29,9 +32,9 @@ pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "Modifying mappings with an arbitrary key given by the user could lead to unintented modifications of critical data, modifying data belonging to other users, causing denial of service, unathorized access, and other potential issues.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-mapping-operation",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::impl_late_lint! {

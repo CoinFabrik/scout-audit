@@ -3,7 +3,8 @@
 extern crate rustc_ast;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::declarations::{Severity, VulnerabilityClass};
+use common::macros::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::ast::GenericArgs;
 use rustc_ast::{
@@ -20,9 +21,9 @@ pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-delegate",
-    vulnerability_class: "Known Bugs",
+    vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 
 dylint_linting::impl_pre_expansion_lint! {

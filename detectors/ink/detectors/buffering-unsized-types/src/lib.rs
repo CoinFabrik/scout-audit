@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-
 #![feature(let_chains)]
 
 extern crate rustc_hir;
@@ -8,7 +7,10 @@ extern crate rustc_span;
 use std::collections::HashMap;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind, GenericArg, QPath, Ty, TyKind,
@@ -23,9 +25,9 @@ pub static BUFFERING_UNSIZED_TYPES_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-considerations",
-    vulnerability_class: "Best practices",
+    vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
 dylint_linting::impl_late_lint! {

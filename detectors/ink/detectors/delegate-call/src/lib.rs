@@ -1,10 +1,12 @@
 #![feature(rustc_private)]
 
-
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
@@ -22,9 +24,9 @@ pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/delegate-call",
-    vulnerability_class: "Authorization",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::declare_late_lint! {

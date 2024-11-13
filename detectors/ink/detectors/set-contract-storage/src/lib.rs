@@ -3,7 +3,10 @@
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     def_id::LocalDefId,
@@ -20,9 +23,9 @@ pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "In ink! the function set_contract_storage(key: &K, value: &V) can be used to modify the contract storage under a given key. When a smart contract uses this function, the contract needs to check if the caller should be able to alter this storage. If this does not happen, an arbitary caller may modify balances and other relevant contract storage.    ",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/set-contract-storage",
-    vulnerability_class: "Authorization",
+    vulnerability_class: VulnerabilityClass::Authorization,
 };
 
 dylint_linting::declare_late_lint! {

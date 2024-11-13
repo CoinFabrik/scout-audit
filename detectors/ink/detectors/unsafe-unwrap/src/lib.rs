@@ -8,7 +8,10 @@ use std::{collections::HashSet, hash::Hash};
 
 use clippy_utils::higher;
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
@@ -27,9 +30,9 @@ pub static UNSAFE_UNWRAP_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unsafe-unwrap",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {

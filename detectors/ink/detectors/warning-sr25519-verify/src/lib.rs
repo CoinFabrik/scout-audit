@@ -5,7 +5,10 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_wrappers::span_lint_and_help;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_body, walk_expr, Visitor},
     Expr, ExprKind, QPath,
@@ -20,9 +23,9 @@ pub static WARNING_SR25519_VERIFY_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
-    severity: "Medium",
+    severity: Severity::Medium,
     help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/warning-sr25519-verify",
-    vulnerability_class: "Known Bugs",
+    vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 
 dylint_linting::declare_late_lint! {

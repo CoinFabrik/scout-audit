@@ -1,11 +1,13 @@
 #![feature(rustc_private)]
 
-
 extern crate rustc_ast;
 extern crate rustc_span;
 
 use clippy_utils::sym;
-use common::expose_lint_info;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_ast::{
     tokenstream::{TokenStream, TokenTree},
@@ -21,9 +23,9 @@ pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
-    severity: "Enhancement",
+    severity: Severity::Enhancement,
     help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-format-string",
-    vulnerability_class: "Validations and error handling",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::impl_pre_expansion_lint! {
