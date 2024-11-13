@@ -49,5 +49,5 @@ def print_list(test_cases):
 test_cases = utils.list_test_cases()
 #test_cases = filter_test_cases(test_cases, files_touched)
 
-#print_json(test_cases)
-print_list(test_cases)
+print_json(test_cases)
+#print_list(test_cases)
