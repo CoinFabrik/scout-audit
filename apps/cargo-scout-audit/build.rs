@@ -167,6 +167,14 @@ fn hash_file<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
     Ok(format!("{:x}", result))
 }
 
+fn hash_file_allow_missing<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
+    if !std::fs::exists(&path)? {
+        Ok("".into())
+    } else {
+        hash_file(path)
+    }
+}
+
 fn hash_matching_files<P: AsRef<Path>>(
     dir: P,
     pattern: &Regex,
@@ -222,7 +230,7 @@ fn write_file_lazy(path: &str, contents: &[u8]) -> std::io::Result<()> {
         output.write_all(contents)?;
         output.sync_all()?;
     }
-    let old = hash_file(path)?;
+    let old = hash_file_allow_missing(path)?;
     let new = hash_file(&temporary)?;
     if old == new {
         std::fs::remove_file(temporary)?;
