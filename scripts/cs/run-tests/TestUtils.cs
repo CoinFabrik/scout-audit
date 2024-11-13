@@ -55,9 +55,33 @@ namespace run_tests
                 }
             }
 
+            //Warm up test cases.
+            foreach (var blockchain in blockchains)
+            {
+                Console.WriteLine($"Building test cases for {blockchain}");
+                var (code, _, err) = RunProcess(
+                    "cargo",
+                    new[]
+                    {
+                        "+nightly",
+                        "build",
+                        "--release",
+                        "--target=wasm32-unknown-unknown",
+                        "--no-default-features",
+                        "-Zbuild-std=std,core,alloc",
+                    },
+                    Path.Join(new[] { "detectors", blockchain, "test-cases" }));
+                if (code != 0)
+                {
+                    AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building test cases failed: {err}");
+                    return null;
+                }
+            }
+
             var ret = new HashSet<string>();
 
-            var tasks = detectors.Select(x => AsyncRunTests(x, ts)).ToList();
+            list.Shuffle();
+            var tasks = list.Select(x => AsyncRunTests(x, ts)).ToList();
             Task.WhenAll(tasks).ContinueWith(x =>
             {
                 lock (ret)
@@ -107,10 +131,7 @@ namespace run_tests
             bool failed = !RunUnitTests(root, blockchain);
             failed |= !RunScoutTests(blockchain, detector, root);
             if (failed)
-            {
-                lock (errors)
-                    errors.Add(root);
-            }
+                errors.Add(root);
         }
 
         private static bool RunUnitTests(string root, string blockchain)
@@ -161,9 +182,10 @@ namespace run_tests
                 return null;
             }
 
-            if (!detectorsMetadata.lints.TryGetValue(detector.Replace('-', '_'), out var detectorMetadata))
+            if (!detectorsMetadata.lints.TryGetValue(detector/*.Replace('-', '_')*/, out var detectorMetadata))
             {
-                AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract message from JSON.");
+                var found = detectorsMetadata.lints.Keys.FirstOrNull() ?? "<<null>>";
+                AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract message from JSON. Found metadata for {found}");
                 return null;
             }
 
@@ -181,9 +203,9 @@ namespace run_tests
             if (GetShortMessage(detector, localDetectors, root) == null)
                 return false;
 
-            var temp = Path.Join(Path.GetTempPath(), Path.GetTempFileName());
+            var temp = Path.GetTempFileName();
 
-            var (code, _, err) = RunProcess(
+            var (code, @out, err) = RunProcess(
                 "cargo",
                 new []
                 {
@@ -301,13 +323,13 @@ namespace run_tests
             var stdout = new StringBuilder();
             var stderr = new StringBuilder();
 
-            process.OutputDataReceived += (sender, e) =>
+            process.OutputDataReceived += (_, e) =>
             {
                 if (e.Data != null)
                     stdout.Append(e.Data + Environment.NewLine);
             };
 
-            process.ErrorDataReceived += (sender, e) =>
+            process.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
                     stderr.Append(e.Data + Environment.NewLine);
