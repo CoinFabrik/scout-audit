@@ -14,12 +14,9 @@ namespace run_tests
     {
         public static IEnumerable<string> ListTestCases()
         {
-            foreach (var blockchain in Directory.EnumerateDirectories("detectors").Select(Path.GetFileName))
+            foreach (var blockchain in Directory.EnumerateDirectories("test-cases").Select(Path.GetFileName))
             {
-                var path = $"detectors/{blockchain}/test-cases";
-                if (!Directory.Exists(path))
-                    continue;
-                foreach (var testCase in Directory.EnumerateDirectories(path).Select(Path.GetFileName))
+                foreach (var testCase in Directory.EnumerateDirectories($"test-cases/{blockchain}").Select(Path.GetFileName))
                 {
                     if (testCase == "target")
                         continue;
@@ -47,7 +44,7 @@ namespace run_tests
             foreach (var blockchain in blockchains)
             {
                 Console.WriteLine($"Building detectors for {blockchain}");
-                var (code, _, err) = RunProcess("cargo", new[] { "build", "--release" }, Path.Join(new[] { "detectors", blockchain, "detectors" }));
+                var (code, _, err) = RunProcess("cargo", new[] { "build", "--release" }, Path.Join(new[] { "detectors", blockchain }));
                 if (code != 0)
                 {
                     AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building detectors failed: {err}");
@@ -70,7 +67,7 @@ namespace run_tests
                         "--no-default-features",
                         "-Zbuild-std=std,core,alloc",
                     },
-                    Path.Join(new[] { "detectors", blockchain, "test-cases" }));
+                    Path.Join(new[] { "test-cases", blockchain }));
                 if (code != 0)
                 {
                     AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building test cases failed: {err}");
@@ -107,7 +104,7 @@ namespace run_tests
         {
             var ret = new HashSet<string>();
             var (blockchain, detector) = SplitTestCase(detector0);
-            var directory = Path.Join(new[] { "detectors", blockchain, "test-cases", detector });
+            var directory = Path.Join(new[] { "test-cases", blockchain, detector });
 
             AutoConsoleColor.WriteLine(ConsoleColor.Green, $"Performing tests in {directory}");
 

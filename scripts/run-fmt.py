@@ -2,13 +2,13 @@
 import utils
 
 commands = [
-    ("apps/cargo-scout-audit",                 "cargo fmt --all --check"),
-    ("detectors/ink/detectors",                "cargo fmt --check -v"),
-    ("detectors/soroban/detectors",            "cargo fmt --check"),
-    ("detectors/substrate-pallets/detectors",  "cargo fmt --check"),
-    ("detectors/ink/test-cases",               "cargo fmt --check -v"),
-    ("detectors/soroban/test-cases",           "cargo fmt --check"),
-    ("detectors/substrate-pallets/test-cases", "cargo fmt --check"),
+    ("apps/cargo-scout-audit",       "cargo fmt --all --check"),
+    ("detectors/ink",                "cargo fmt --check -v"   ),
+    ("detectors/soroban",            "cargo fmt --check"      ),
+    ("detectors/substrate-pallets",  "cargo fmt --check"      ),
+    ("test-cases/ink",               "cargo fmt --check -v"   ),
+    ("test-cases/soroban",           "cargo fmt --check"      ),
+    ("test-cases/substrate-pallets", "cargo fmt --check"      ),
 ]
 
 if __name__ == "__main__":

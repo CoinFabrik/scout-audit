@@ -16,7 +16,7 @@ from utils import (
 def run_tests(detector):
     errors = []
     [blockchain, detector] = detector.split('/')
-    directory = os.path.join("detectors", blockchain, 'test-cases', detector)
+    directory = os.path.join("test-cases", blockchain, detector)
     print(f"\n{utils.GREEN}Performing tests in {directory}:{utils.ENDC}")
     if not os.path.exists(directory):
         print(f"{utils.RED}The specified directory does not exist.{utils.ENDC}")

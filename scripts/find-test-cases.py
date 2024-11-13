@@ -23,8 +23,8 @@ def list_files_touched(base_ref, head_ref):
     return ret
 
 def any_file_touched(files_touched, blockchain, detector):
-    p1 = f'^detectors\\/{re.escape(blockchain)}\\/test\\-cases\\/{re.escape(detector)}\\/.*'
-    p2 = f'^detectors\\/{re.escape(blockchain)}\\/detectors\\/{re.escape(detector)}\\/.*'
+    p1 = f'^test\\-cases\\/{re.escape(blockchain)}\\/{re.escape(detector)}\\/.*'
+    p2 = f'^detectors\\/{re.escape(blockchain)}\\/{re.escape(detector)}\\/.*'
     for ft in files_touched:
         if re.match(p1, ft) or re.match(p2, ft):
             return True
@@ -49,5 +49,5 @@ def print_list(test_cases):
 test_cases = utils.list_test_cases()
 #test_cases = filter_test_cases(test_cases, files_touched)
 
-print_json(test_cases)
-#print_list(test_cases)
+#print_json(test_cases)
+print_list(test_cases)

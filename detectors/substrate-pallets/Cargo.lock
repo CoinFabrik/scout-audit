@@ -36,6 +36,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45862d1c77f2228b9e10bc609d5bc203d86ebc9b87ad8d5d5167a6c9abf739d9"
 
 [[package]]
+name = "analysis"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "if_chain",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -282,24 +290,9 @@ checksum = "cbd0f76e066e64fdc5631e3bb46381254deab9ef1158292f27c8c57e3bf3fe59"
 name = "common"
 version = "0.1.0"
 dependencies = [
- "common-macros",
- "common-types",
-]
-
-[[package]]
-name = "common-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "common-types"
-version = "0.1.0"
-dependencies = [
- "thiserror 2.0.3",
+ "analysis",
+ "declarations",
+ "macros",
 ]
 
 [[package]]
@@ -368,6 +361,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ec6a2f799b0e3103192800872de17ee1d39fe0c598628277b9b012f09b4010f"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "declarations"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 2.0.3",
 ]
 
 [[package]]
@@ -1742,7 +1743,6 @@ dependencies = [
  "dylint_linting",
  "if_chain",
  "scout-audit-clippy-wrappers",
- "utils",
 ]
 
 [[package]]
@@ -1876,6 +1876,15 @@ name = "log"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+
+[[package]]
+name = "macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "maybe-async"
@@ -3086,7 +3095,6 @@ dependencies = [
  "dylint_linting",
  "if_chain",
  "scout-audit-clippy-wrappers",
- "utils",
 ]
 
 [[package]]
@@ -3130,14 +3138,6 @@ name = "utf8_iter"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "if_chain",
-]
 
 [[package]]
 name = "vcpkg"
