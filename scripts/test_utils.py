@@ -54,7 +54,7 @@ def run_unit_tests(root, blockchain):
 def run_integration_tests(blockchain, detector, root):
     start_time = time.time()
 
-    local_detectors = os.path.join(os.getcwd(), "detectors", blockchain, "detectors")
+    local_detectors = os.path.join(os.getcwd(), "detectors", blockchain)
 
     returncode, stdout, _ = run_subprocess(
         [
