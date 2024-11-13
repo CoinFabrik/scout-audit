@@ -1,3 +1,5 @@
+#![feature(internal_output_capture)]
+
 mod unix;
 mod windows;
 

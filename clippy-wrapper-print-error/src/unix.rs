@@ -1,5 +1,4 @@
 #![cfg(unix)]
-#![feature(internal_output_capture)]
 use capture_stdio::Capture;
 use std::io::BufRead;
 
