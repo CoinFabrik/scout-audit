@@ -14,10 +14,10 @@ pub enum Severity {
 impl AsRef<str> for Severity {
     fn as_ref(&self) -> &str {
         match self {
-            Severity::Critical => "critical",
-            Severity::Enhancement => "enhancement",
-            Severity::Medium => "medium",
-            Severity::Minor => "minor",
+            Severity::Critical => "Critical",
+            Severity::Enhancement => "Enhancement",
+            Severity::Medium => "Medium",
+            Severity::Minor => "Minor",
         }
     }
 }
@@ -43,19 +43,19 @@ pub enum VulnerabilityClass {
 impl AsRef<str> for VulnerabilityClass {
     fn as_ref(&self) -> &str {
         match self {
-            VulnerabilityClass::Arithmetic => "arithmetic",
-            VulnerabilityClass::Authorization => "authorization",
-            VulnerabilityClass::BestPractices => "best-practices",
-            VulnerabilityClass::BlockAttributes => "block-attributes",
-            VulnerabilityClass::DoS => "dos",
-            VulnerabilityClass::ErrorHandling => "error-handling",
-            VulnerabilityClass::GasUsage => "gas-usage",
-            VulnerabilityClass::KnownBugs => "known-bugs",
-            VulnerabilityClass::MEV => "mev",
-            VulnerabilityClass::Panic => "panic",
-            VulnerabilityClass::Reentrancy => "reentrancy",
-            VulnerabilityClass::ResourceManagement => "resource-management",
-            VulnerabilityClass::Upgradability => "upgradability",
+            VulnerabilityClass::Arithmetic => "Arithmetic",
+            VulnerabilityClass::Authorization => "Authorization",
+            VulnerabilityClass::BestPractices => "Best Practices",
+            VulnerabilityClass::BlockAttributes => "Block Attributes",
+            VulnerabilityClass::DoS => "DoS",
+            VulnerabilityClass::ErrorHandling => "Error Handling",
+            VulnerabilityClass::GasUsage => "Gas Usage",
+            VulnerabilityClass::KnownBugs => "Known Bugs",
+            VulnerabilityClass::MEV => "MEV",
+            VulnerabilityClass::Panic => "Panic",
+            VulnerabilityClass::Reentrancy => "Reentrancy",
+            VulnerabilityClass::ResourceManagement => "Resource Management",
+            VulnerabilityClass::Upgradability => "Upgradability",
         }
     }
 }
