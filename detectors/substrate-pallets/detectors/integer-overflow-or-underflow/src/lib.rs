@@ -7,6 +7,7 @@ extern crate rustc_span;
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{match_type_to_str, ConstantAnalyzer},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use rustc_hir::{
@@ -25,9 +26,9 @@ pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
-    severity: "Critical",
+    severity: Severity::Critical,
     help: "TODO",
-    vulnerability_class: "TODO",
+    vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {
