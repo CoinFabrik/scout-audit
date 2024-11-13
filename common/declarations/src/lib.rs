@@ -34,8 +34,8 @@ pub enum LintInfoError {
 impl<'a> LintInfo<'a> {
     pub fn into_c(&self) -> Result<CLintInfo, LintInfoError> {
         Ok(CLintInfo {
-            id: CString::new(self.name.to_lowercase().replace(' ', "_"))?,
-            name: CString::new(self.name)?,
+            id: CString::new(self.name.to_lowercase().replace('-', "_"))?,
+            name: CString::new(snake_to_title_case(self.name))?,
             short_message: CString::new(self.short_message)?,
             long_message: CString::new(self.long_message)?,
             severity: CString::new(self.severity)?,
@@ -60,4 +60,22 @@ pub unsafe extern "C" fn free_lint_info(ptr: *mut CLintInfo) {
     if !ptr.is_null() {
         let _ = unsafe { Box::from_raw(ptr) };
     }
+}
+
+fn snake_to_title_case(input: &str) -> String {
+    // Split the string by underscores
+    let words: Vec<&str> = input.split('-').collect();
+
+    // Capitalize first letter of each word and join with spaces
+    words
+        .iter()
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().chain(chars).collect(),
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(" ")
 }
