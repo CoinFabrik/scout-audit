@@ -54,3 +54,8 @@ env/
 venv/
 !/detectors/ink/.vscode/
 __pycache__
+
+.vs
+/scripts/cs/run-tests/bin/
+/scripts/cs/run-tests/obj/
+launchSettings.json
