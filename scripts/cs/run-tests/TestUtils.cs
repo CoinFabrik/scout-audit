@@ -182,10 +182,11 @@ namespace run_tests
                 return null;
             }
 
-            if (!detectorsMetadata.lints.TryGetValue(detector.Replace('-', '_'), out var detectorMetadata))
+            var replaced = detector.Replace('-', '_');
+            if (!detectorsMetadata.lints.TryGetValue(replaced, out var detectorMetadata))
             {
                 var found = detectorsMetadata.lints.Keys.FirstOrNull() ?? "<<null>>";
-                AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract message from JSON. Found metadata for {found}");
+                AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract message from JSON. While looking for {replaced} found metadata for {found}");
                 return null;
             }
 
