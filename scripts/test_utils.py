@@ -104,7 +104,7 @@ def run_integration_tests(blockchain, detector, root):
     )
 
     if returncode != 0:
-        print(f"{utils.RED}Scout failed to run.{utils.ENDC}")
+        print(f"{utils.RED}Scout failed to run.\n{stderr}{utils.ENDC}")
         return False
     
     should_fail = "vulnerable" in root
@@ -115,7 +115,7 @@ def run_integration_tests(blockchain, detector, root):
         did_fail = detector in detectors_triggered
         if should_fail != did_fail:
             explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
-            print(f"{utils.RED}Test case {root} didn't pass because {explanation}.{utils.ENDC}")
+            print(f"{utils.RED}Test case {root} didn't pass because {explanation}.\n{stderr}{utils.ENDC}")
             return False
 
     print_results(
