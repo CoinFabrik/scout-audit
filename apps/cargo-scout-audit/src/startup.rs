@@ -271,6 +271,9 @@ fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
     let mut ret = HashSet::<String>::new();
 
     for s in findings {
+        if findings.len() == 0 {
+            continue;
+        }
         let value = from_str::<Value>(s).unwrap();
         let krate = json_to_string(value.get("crate").unwrap());
         ret.insert(krate);
