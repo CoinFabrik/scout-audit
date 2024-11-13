@@ -208,14 +208,14 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
             anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
 }
 
-fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
+pub fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
     let mut ret = String::new();
     std::io::Read::read_to_string(&mut file, &mut ret)?;
     let _ = file.close();
     Ok(ret)
 }
 
-fn output_to_json(output: &str) -> Vec<Value> {
+pub fn output_to_json(output: &str) -> Vec<Value> {
     output
         .lines()
         .map(|line| from_str::<Value>(line).unwrap())
@@ -229,7 +229,7 @@ fn get_crate_from_finding(finding: &Value) -> Option<String> {
 //In some cases, rustc (or dylint, or clipply, or whoever) has returned the
 //package name where it should be returning the crate name. If you run into
 //problems in the future, try removing the call to this function.
-fn normalize_crate_name(s: &str) -> String {
+pub fn normalize_crate_name(s: &str) -> String {
     let mut ret = String::new();
     ret.reserve(s.len());
     for c in s.chars() {
