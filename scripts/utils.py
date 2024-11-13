@@ -36,8 +36,8 @@ def simple_runner(name, commands, opts):
 
 def list_test_cases():
     ret = []
-    for blockchain in os.listdir('detectors'):
-        path = f'detectors/{blockchain}/test-cases'
+    for blockchain in os.listdir('test-cases'):
+        path = f'test-cases/{blockchain}'
         if not os.path.isdir(path):
             continue
         for test_case in os.listdir(path):

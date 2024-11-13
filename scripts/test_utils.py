@@ -16,7 +16,7 @@ from utils import (
 def run_tests(detector):
     errors = []
     [blockchain, detector] = detector.split('/')
-    directory = os.path.join("detectors", blockchain, 'test-cases', detector)
+    directory = os.path.join("test-cases", blockchain, detector)
     print(f"\n{utils.GREEN}Performing tests in {directory}:{utils.ENDC}")
     if not os.path.exists(directory):
         print(f"{utils.RED}The specified directory does not exist.{utils.ENDC}")
@@ -54,7 +54,7 @@ def run_unit_tests(root, blockchain):
 def run_integration_tests(blockchain, detector, root):
     start_time = time.time()
 
-    local_detectors = os.path.join(os.getcwd(), "detectors", blockchain, "detectors")
+    local_detectors = os.path.join(os.getcwd(), "detectors", blockchain)
 
     returncode, stdout, _ = run_subprocess(
         [
