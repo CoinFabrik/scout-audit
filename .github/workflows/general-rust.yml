@@ -7,8 +7,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  filter-paths:
+    name: Filter modified paths by PR
+    runs-on: ubuntu-latest
+    outputs:
+      any_rust: ${{ steps.filter.outputs.any_rust }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            any_rust:
+              - 'detectors/**'
+              - 'apps/cargo-scout-audit/**'
   format:
     name: Check Rust Format
+    needs: filter-paths
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +40,13 @@ jobs:
       - name: Install rustfmt
         run: rustup component add rustfmt
 
-      - name: Check Formatting
-        working-directory: apps/cargo-scout-audit
-        run: cargo fmt --all --check
+      - name: Check Format
+        run: /bin/sh scripts/fmt.sh
 
   clippy:
     name: Lint with Clippy
+    needs: filter-paths
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -44,15 +64,50 @@ jobs:
       - name: Update Rust Toolchain
         run: rustup update
 
+      - name: Install Rust nightly
+        run: rustup install nightly-2024-07-11 --profile minimal
+
+      - name: Install dylint-link
+        run: cargo install dylint-link
+
       - name: Install clippy
         run: rustup component add clippy
 
-      - name: Lint Code
+      - name: Install clippy for detectors
+        run: run: rustup component add clippy --toolchain nightly-2024-07-11
+
+      - name: Lint Code (Scout)
         working-directory: apps/cargo-scout-audit
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Lint Code (detectors/ink)
+        working-directory: detectors/ink/detectors
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Lint Code (detectors/soroban)
+        working-directory: detectors/soroban/detectors
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Lint Code (detectors/substrate-pallets)
+        working-directory: detectors/substrate-pallets/detectors
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Lint Code (test-cases/ink)
+        working-directory: detectors/ink/test-cases
+        run: cargo clippy -- -D warnings -A clippy::new_without_default
+
+      - name: Lint Code (test-cases/soroban)
+        working-directory: detectors/soroban/test-cases
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Lint Code (test-cases/substrate-pallets)
+        working-directory: detectors/substrate-pallets/test-cases
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
+    needs: filter-paths
+    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -76,3 +131,34 @@ jobs:
       - name: Check Unused Dependencies
         working-directory: apps/cargo-scout-audit
         run: cargo udeps --all-targets
+
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    if: ${{ always()}}
+    needs: [format, clippy, udeps]
+    steps:
+      - name: Find comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "🎉 **General Rust Workflow Summary** 🎉"
+
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🎉 **General Rust Workflow Summary** 🎉
+
+            | Component                 | Status |
+            |---------------------------|--------|
+            | Check Rust Format         | ${{ (needs.format.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            | Lint with Clippy          | ${{ (needs.clippy.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            | Check unused dependencies | ${{ (needs.udeps.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+
+            The workflow has completed. Great job! 🚀

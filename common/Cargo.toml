@@ -1,0 +1,9 @@
+[package]
+edition = "2021"
+name = "common"
+version = "0.1.0"
+
+[dependencies]
+macros = { path = "./macros" }
+declarations = { path = "./declarations" }
+analysis = { path = "./analysis" }

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use axum::{http::StatusCode, routing::post, Router};
 use std::{
     sync::{Arc, Mutex},
@@ -107,6 +108,7 @@ fn start_server(state: Arc<AppState>) -> std::thread::JoinHandle<()> {
     ret
 }
 
+#[cfg(unix)]
 pub(crate) fn capture_output<T, E, F: FnOnce() -> Result<T, E>>(
     cb: F,
 ) -> Result<(Vec<String>, T), E> {
@@ -125,4 +127,63 @@ pub(crate) fn capture_output<T, E, F: FnOnce() -> Result<T, E>>(
         }
         Err(e) => Err(e),
     }
+}
+
+fn temp_file_to_string(file: &mut tempfile::NamedTempFile) -> anyhow::Result<String> {
+    let mut ret = String::new();
+    std::io::Read::read_to_string(file, &mut ret)?;
+    Ok(ret)
+}
+
+fn transform_value(v: &serde_json::Value) -> Option<serde_json::Value> {
+    use crate::output::raw_report::{json_to_string, json_to_string_opt};
+
+    if !json_to_string_opt(v.get("reason")).is_some_and(|x| x == "compiler-message") {
+        return None;
+    }
+
+    let message = v.get("message");
+    if let Some(message) = message {
+        if !message.get("code").is_some_and(|x| x.is_object()) {
+            return None;
+        }
+
+        let krate = v.get("target").and_then(|x| x.get("name"));
+        let ret = if let Some(krate) = krate {
+            serde_json::json!({
+                "crate": crate::startup::normalize_crate_name(json_to_string(krate).as_str()),
+                "message": message.clone(),
+            })
+        } else {
+            serde_json::json!({
+                "message": message.clone(),
+            })
+        };
+        Some(ret)
+    } else {
+        None
+    }
+}
+
+#[cfg(windows)]
+pub(crate) fn capture_output<
+    E: std::convert::From<anyhow::Error>,
+    F: FnOnce() -> Result<(bool, tempfile::NamedTempFile), E>,
+>(
+    cb: F,
+) -> Result<(Vec<String>, (bool, tempfile::NamedTempFile)), E> {
+    let (failed_build, mut stdout) = cb()?;
+
+    let output_string =
+        temp_file_to_string(&mut stdout).map_err(|_| anyhow::anyhow!("internal error"))?;
+    let mut output_json = crate::startup::output_to_json(&output_string);
+
+    let ret = output_json
+        .iter_mut()
+        .map(|x| transform_value(x).and_then(|y| Some(y.to_string())))
+        .filter(|x| x.is_some())
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>();
+
+    Ok((ret, (failed_build, stdout)))
 }

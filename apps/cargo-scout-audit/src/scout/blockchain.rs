@@ -1,4 +1,4 @@
-use crate::build_config::{INK_TOOLCHAIN, SOROBAN_TOOLCHAIN};
+use crate::build_config::TOOLCHAIN;
 use anyhow::{anyhow, Result};
 use cargo_metadata::Metadata;
 use std::collections::HashSet;
@@ -17,19 +17,19 @@ impl BlockChain {
         Self::iter().map(|e| e.to_string()).collect()
     }
 
-    pub fn get_detectors_url(&self) -> &str {
+    pub fn get_detectors_path(&self) -> &str {
         match self {
-            BlockChain::Ink => "https://github.com/CoinFabrik/scout",
-            BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
-            BlockChain::SubstratePallet => "https://github.com/CoinFabrik/scout-substrate",
+            BlockChain::Ink => "detectors/ink/detectors",
+            BlockChain::Soroban => "detectors/soroban/detectors",
+            BlockChain::SubstratePallet => "detectors/substrate-pallets/detectors",
         }
     }
 
     pub fn get_toolchain(&self) -> &str {
         match self {
-            BlockChain::Ink => INK_TOOLCHAIN,
-            BlockChain::Soroban => SOROBAN_TOOLCHAIN,
-            BlockChain::SubstratePallet => INK_TOOLCHAIN,
+            BlockChain::Ink => TOOLCHAIN,
+            BlockChain::Soroban => TOOLCHAIN,
+            BlockChain::SubstratePallet => TOOLCHAIN,
         }
     }
 

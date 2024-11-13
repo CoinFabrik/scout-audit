@@ -1,0 +1,109 @@
+name: General Rust
+
+on:
+  pull_request:
+    paths:
+      - "detectors/**"
+      - "test-cases/**"
+      - "scripts/**"
+      - "!detectors/**/*.md"
+      - "!test-cases/**/*.md"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  format:
+    name: Check Rust Format
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust nightly
+        run: rustup install nightly --profile minimal
+
+      - name: Install rustfmt
+        run: rustup component add rustfmt --toolchain nightly
+
+      - name: Check Format
+        run: python scripts/run-fmt.py --dir test-cases detectors
+
+  clippy:
+    name: Lint with Clippy
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Cache Rust Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ~/.rustup
+          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust nightly
+        run: rustup install nightly-2024-07-11 --profile minimal
+
+      - name: Install dylint-link
+        run: cargo install dylint-link
+
+      - name: Install clippy
+        run: rustup component add clippy --toolchain nightly-2024-07-11
+
+      - name: Lint with Clippy
+        run: python scripts/run-clippy.py --dir test-cases detectors
+
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    if: ${{ always()}}
+    needs: [format, clippy]
+    steps:
+      - name: Find comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "🎉 **General Rust Workflow Summary** 🎉"
+
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🎉 **General Rust Workflow Summary** 🎉
+
+            | Component                 | Status |
+            |---------------------------|--------|
+            | Check Rust Format         | ${{ (needs.format.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            | Lint with Clippy          | ${{ (needs.clippy.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+
+            The workflow has completed. Great job! 🚀

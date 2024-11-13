@@ -1,0 +1,22 @@
+[package]
+edition = "2021"
+name = "ink-version"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+clippy_utils = { workspace = true }
+clippy_wrappers = { workspace = true }
+common = { workspace = true }
+dylint_internal = { workspace = true }
+dylint_linting = { workspace = true }
+if_chain = { workspace = true }
+semver = "1.0.4"
+serde_json = "1.0"
+toml = "0.7.6"
+ureq = { version = "2.7.1", features = ["json"] }
+
+[package.metadata.rust-analyzer]
+rustc_private = true

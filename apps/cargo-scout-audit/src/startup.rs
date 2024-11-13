@@ -13,7 +13,7 @@ use crate::{
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, CustomLint, LintInfo},
+        detectors_info::{get_detectors_info, LintStore},
         print::{print_error, print_warning},
     },
 };
@@ -208,14 +208,14 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
             anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
 }
 
-fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
+pub fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
     let mut ret = String::new();
     std::io::Read::read_to_string(&mut file, &mut ret)?;
     let _ = file.close();
     Ok(ret)
 }
 
-fn output_to_json(output: &str) -> Vec<Value> {
+pub fn output_to_json(output: &str) -> Vec<Value> {
     output
         .lines()
         .map(|line| from_str::<Value>(line).unwrap())
@@ -229,7 +229,7 @@ fn get_crate_from_finding(finding: &Value) -> Option<String> {
 //In some cases, rustc (or dylint, or clipply, or whoever) has returned the
 //package name where it should be returning the crate name. If you run into
 //problems in the future, try removing the call to this function.
-fn normalize_crate_name(s: &str) -> String {
+pub fn normalize_crate_name(s: &str) -> String {
     let mut ret = String::new();
     ret.reserve(s.len());
     for c in s.chars() {
@@ -271,6 +271,9 @@ fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
     let mut ret = HashSet::<String>::new();
 
     for s in findings {
+        if s.is_empty() {
+            continue;
+        }
         let value = from_str::<Value>(s).unwrap();
         let krate = json_to_string(value.get("crate").unwrap());
         ret.insert(krate);
@@ -454,7 +457,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
             )
         })?;
 
-    let (detectors_info, custom_detectors) = get_detectors_info(&detectors_paths)?;
+    let detectors_info = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
         let json = to_string_pretty(&detectors_info);
@@ -473,16 +476,10 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
         capture_output
     };
 
-    let (findings, (_failed_build, stdout)) = wrapper_function(|| {
+    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
         // Run dylint
-        run_dylint(
-            detectors_paths.clone(),
-            &opts,
-            &metadata,
-            inside_vscode,
-            &custom_detectors,
-        )
-        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
+        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
+            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
     })?;
 
     let output_string = temp_file_to_string(stdout)?;
@@ -551,7 +548,7 @@ fn do_report(
     findings: &Vec<Value>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: HashMap<String, LintInfo>,
+    detectors_info: LintStore,
     output_string: String,
     opts: Scout,
     inside_vscode: bool,
@@ -576,13 +573,12 @@ fn do_report(
     Ok(())
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip(detectors_paths, opts, custom_detectors))]
+#[tracing::instrument(name = "RUN DYLINT", skip_all)]
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
     metadata: &Metadata,
     inside_vscode: bool,
-    custom_detectors: &HashMap<String, CustomLint<'_>>,
 ) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
@@ -625,14 +621,9 @@ fn run_dylint(
 
     crate::cleanup::clean_up_before_run(metadata);
 
-    let failure = dylint::run(&options).is_err();
-    if !failure {
-        for (_, lint) in custom_detectors.iter() {
-            lint.call();
-        }
-    }
+    let success = dylint::run(&options).is_err();
 
-    Ok((failure, stdout_temp_file))
+    Ok((success, stdout_temp_file))
 }
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
@@ -640,7 +631,7 @@ fn generate_report(
     findings: &Vec<Value>,
     crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
-    detectors_info: &HashMap<String, LintInfo>,
+    detectors_info: &LintStore,
     output_path: Option<PathBuf>,
     output_format: &[OutputFormat],
 ) -> Result<()> {
