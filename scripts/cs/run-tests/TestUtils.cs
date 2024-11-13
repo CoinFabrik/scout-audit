@@ -38,7 +38,7 @@ namespace run_tests
             return (split[0], split[1]);
         }
 
-        public static IEnumerable<string> RunManyTests(IEnumerable<string> detectors)
+        public static IEnumerable<string> RunManyTests(IEnumerable<string> detectors, TaskScheduler? ts = null)
         {
             var list = detectors.ToList();
 
@@ -57,7 +57,7 @@ namespace run_tests
 
             var ret = new HashSet<string>();
 
-            var tasks = detectors.Select(AsyncRunTests).ToList();
+            var tasks = detectors.Select(x => AsyncRunTests(x, ts)).ToList();
             Task.WhenAll(tasks).ContinueWith(x =>
             {
                 lock (ret)
@@ -71,9 +71,12 @@ namespace run_tests
             return ret;
         }
 
-        private static async Task<HashSet<string>> AsyncRunTests(string detector)
+        private static Task<HashSet<string>> AsyncRunTests(string detector, TaskScheduler? ts)
         {
-            return RunTests(detector).ToHashSet();
+            Func<HashSet<string>> f = () => RunTests(detector).ToHashSet();
+            if (ts == null)
+                return Task.Run(f);
+            return Task.Factory.StartNew(f, CancellationToken.None, TaskCreationOptions.None, ts);
         }
 
         public static IEnumerable<string> RunTests(string detector0)
@@ -90,7 +93,7 @@ namespace run_tests
                 return ret;
             }
 
-            foreach (var root in Directory.EnumerateDirectories(directory))
+            foreach (var root in Directory.EnumerateDirectories(directory, "*", SearchOption.AllDirectories))
             {
                 if (!IsRustProject(root))
                     continue;
@@ -151,25 +154,20 @@ namespace run_tests
 
             Debug.Assert(stdout != null);
 
-            var detectorMetadata = JsonConvert.DeserializeObject<JToken>(stdout);
-            if ((detectorMetadata?.Type ?? JTokenType.Null) != JTokenType.Object)
+            var detectorsMetadata = JsonConvert.DeserializeObject<ScoutMetadata>(stdout);
+            if (detectorsMetadata == null)
             {
                 AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract JSON from metadata.");
                 return null;
             }
 
-            Debug.Assert(detectorMetadata != null);
-
-            var value = ((JObject)detectorMetadata)[detector.Replace('-', '_')];
-            if ((value?.Type ?? JTokenType.Null) != JTokenType.String)
+            if (!detectorsMetadata.lints.TryGetValue(detector.Replace('-', '_'), out var detectorMetadata))
             {
                 AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract message from JSON.");
                 return null;
             }
 
-            Debug.Assert(value != null);
-
-            return value.ToString();
+            return detectorMetadata.short_message;
         }
 
         private static bool RunScoutTests(string blockchain, string detector, string root)
@@ -300,43 +298,27 @@ namespace run_tests
             };
 
             // Capture output asynchronously to avoid buffer-related deadlocks
-            var @out = new StringBuilder();
-            var err = new StringBuilder();
-            //var outputTask = new TaskCompletionSource<string>();
-            //var errorTask = new TaskCompletionSource<string>();
+            var stdout = new StringBuilder();
+            var stderr = new StringBuilder();
 
             process.OutputDataReceived += (sender, e) =>
             {
                 if (e.Data != null)
-                    @out.Append(e.Data + Environment.NewLine);
-                //if (e.Data == null)
-                //    outputTask.TrySetResult(string.Empty); // End of stream
-                //else
-                //    outputTask.TrySetResult(e.Data);
+                    stdout.Append(e.Data + Environment.NewLine);
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (e.Data != null)
-                    err.Append(e.Data + Environment.NewLine);
-                //if (e.Data == null)
-                //    errorTask.TrySetResult(string.Empty); // End of stream
-                //else
-                //    errorTask.TrySetResult(e.Data);
+                    stderr.Append(e.Data + Environment.NewLine);
             };
 
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             process.WaitForExit();
-            //outputTask.Task.Wait();
-            //errorTask.Task.Wait();
-            //
-            //var stdout = outputTask.Task.Result;
-            //var stderr = errorTask.Task.Result;
 
-            //return (process.ExitCode, stdout, stderr);
-            return (process.ExitCode, @out.ToString(), err.ToString());
+            return (process.ExitCode, stdout.ToString(), stderr.ToString());
         }
 
         private static bool IsRustProject(string root)

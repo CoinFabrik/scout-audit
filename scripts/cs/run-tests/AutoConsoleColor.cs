@@ -5,9 +5,11 @@ namespace run_tests;
 class AutoConsoleColor : IDisposable
 {
     private ConsoleColor? _old;
+    private static Mutex _lock = new();
 
     public AutoConsoleColor(ConsoleColor c)
     {
+        _lock.WaitOne();
         _old = Console.ForegroundColor;
         Console.ForegroundColor = c;
     }
@@ -18,6 +20,7 @@ class AutoConsoleColor : IDisposable
         {
             Console.ForegroundColor = _old.Value;
             _old = null;
+            _lock.ReleaseMutex();
         }
     }
 
