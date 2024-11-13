@@ -3,6 +3,7 @@ use crate::{
         builder::DetectorBuilder,
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
+    digest,
     output::raw_report::{json_to_string, json_to_string_opt, RawReport},
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
@@ -151,6 +152,14 @@ pub struct Scout {
         default_value_t = false
     )]
     pub debug: bool,
+
+    #[clap(
+        name = "src-hash",
+        long,
+        help = "Prints a hash of the sources at the time of build",
+        default_value_t = false
+    )]
+    pub src_hash: bool,
 }
 
 impl Scout {
@@ -352,6 +361,11 @@ fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>
 pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
     opts.validate()?;
     opts.prepare_args();
+
+    if opts.src_hash {
+        println!("{}", digest::SOURCE_DIGEST);
+        return Ok(vec![]);
+    }
 
     let metadata = get_project_metadata(&opts.manifest_path)?;
     let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
