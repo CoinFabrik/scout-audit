@@ -196,7 +196,7 @@ namespace run_tests
             sw.Start();
 
             var localDetectors = Path.Join(new[]
-                { Environment.CurrentDirectory, "detectors", blockchain, "detectors" });
+                { Environment.CurrentDirectory, "detectors", blockchain });
 
             if (GetShortMessage(detector, localDetectors, root) == null)
                 return false;
