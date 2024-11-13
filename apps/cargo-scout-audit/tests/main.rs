@@ -292,7 +292,7 @@ mod tests {
         let expected = [
             ("overflow_check", 1_usize),
             ("soroban_version", 1_usize),
-            ("integer_overflow_underflow", 1_usize),
+            ("integer_overflow_or_underflow", 1_usize),
             ("divide_before_multiply", 1_usize),
         ];
         check_counts(&counts, &expected);
