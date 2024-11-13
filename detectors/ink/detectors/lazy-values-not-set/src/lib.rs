@@ -161,7 +161,7 @@ impl LazyValuesNotSet {
         tainted_get_lazy: &[Local],
         visited_funs: &mut Vec<DefId>,
     ) -> (Vec<Local>, HashMap<Local, Span>) {
-        if visited_funs.contains(&func_defid) {
+        if visited_funs.contains(&func_defid) || !cx.tcx.is_mir_available(func_defid) {
             return (vec![], HashMap::new());
         }
         visited_funs.push(func_defid);
