@@ -19,9 +19,9 @@ impl BlockChain {
 
     pub fn get_detectors_path(&self) -> &str {
         match self {
-            BlockChain::Ink => "detectors/ink/detectors",
-            BlockChain::Soroban => "detectors/soroban/detectors",
-            BlockChain::SubstratePallet => "detectors/substrate-pallets/detectors",
+            BlockChain::Ink => "detectors/ink",
+            BlockChain::Soroban => "detectors/soroban",
+            BlockChain::SubstratePallet => "detectors/substrate-pallets",
         }
     }
 
