@@ -92,7 +92,7 @@ impl<'tcx> LateLintPass<'tcx> for UnnecessaryAdminParameter {
         }
 
         // Skip analysis for functions named "initialize"
-        if let Some(fn_name) = cx.tcx.opt_item_name(def_id){
+        if let Some(fn_name) = cx.tcx.opt_item_name(def_id) {
             if is_similar_to(&fn_name.as_str().to_lowercase(), "initialize") {
                 return;
             }

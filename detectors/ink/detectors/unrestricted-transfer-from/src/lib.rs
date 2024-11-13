@@ -216,18 +216,17 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                                 tainted_locals.push(assign.0.local);
                             }
                         }
-                        rustc_middle::mir::Rvalue::Use(operand) => match &operand {
-                            Operand::Copy(origplace) | Operand::Move(origplace) => {
-                                if tainted_locals
-                                    .clone()
-                                    .into_iter()
-                                    .any(|local| local == origplace.local)
-                                {
-                                    tainted_locals.push(assign.0.local);
-                                }
+                        rustc_middle::mir::Rvalue::Use(
+                            Operand::Copy(origplace) | Operand::Move(origplace),
+                        ) => {
+                            if tainted_locals
+                                .clone()
+                                .into_iter()
+                                .any(|local| local == origplace.local)
+                            {
+                                tainted_locals.push(assign.0.local);
                             }
-                            _ => {}
-                        },
+                        }
                         _ => {}
                     }
                 }

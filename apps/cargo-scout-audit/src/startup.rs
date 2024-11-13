@@ -271,7 +271,7 @@ fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
     let mut ret = HashSet::<String>::new();
 
     for s in findings {
-        if findings.len() == 0 {
+        if findings.is_empty() {
             continue;
         }
         let value = from_str::<Value>(s).unwrap();

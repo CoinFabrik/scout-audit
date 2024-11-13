@@ -8,7 +8,7 @@ use clippy_utils::higher::IfOrIfLet;
 use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{fn_returns, ConstantAnalyzer},
-        declarations::{Severity, VulnerabilityClass},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;

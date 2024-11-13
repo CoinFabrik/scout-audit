@@ -219,18 +219,17 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                                 tainted_places.push(assign.0);
                             }
                         }
-                        rustc_middle::mir::Rvalue::Use(operand) => match &operand {
-                            Operand::Copy(origplace) | Operand::Move(origplace) => {
-                                if tainted_places
-                                    .clone()
-                                    .into_iter()
-                                    .any(|place| place == *origplace)
-                                {
-                                    tainted_places.push(assign.0);
-                                }
+                        rustc_middle::mir::Rvalue::Use(
+                            Operand::Copy(origplace) | Operand::Move(origplace),
+                        ) => {
+                            if tainted_places
+                                .clone()
+                                .into_iter()
+                                .any(|place| place == *origplace)
+                            {
+                                tainted_places.push(assign.0);
                             }
-                            _ => {}
-                        },
+                        }
                         _ => {}
                     }
                 }

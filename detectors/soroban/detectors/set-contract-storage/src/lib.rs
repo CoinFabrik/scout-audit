@@ -7,7 +7,11 @@ extern crate rustc_span;
 use std::collections::{HashMap, HashSet};
 
 use clippy_wrappers::span_lint_and_help;
-use common::{analysis::FunctionCallVisitor, declarations::{Severity, VulnerabilityClass}, macros::expose_lint_info};
+use common::{
+    analysis::FunctionCallVisitor,
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},

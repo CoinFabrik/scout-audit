@@ -55,7 +55,7 @@ impl EarlyLintPass for AvoidCoreMemForget {
             then {
                 clippy_wrappers::span_lint_and_help(
                     cx,
-                    &AVOID_CORE_MEM_FORGET,
+                    AVOID_CORE_MEM_FORGET,
                     expr.span,
                     LINT_MESSAGE,
                     None,

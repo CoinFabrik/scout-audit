@@ -5,7 +5,10 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use common::{declarations::{Severity, VulnerabilityClass}, macros::expose_lint_info};
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,

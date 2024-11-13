@@ -133,13 +133,11 @@ impl<'tcx> CallersAndVecOps<'tcx> {
                                     .push((bb_data, BasicBlock::from_usize(bb)));
                             }
                         }
-                    } else {
-                        if let Some(op) = push_def_id {
-                            if op == *def {
-                                callers_vec
-                                    .vec_ops
-                                    .push((bb_data, BasicBlock::from_usize(bb)));
-                            }
+                    } else if let Some(op) = push_def_id {
+                        if op == *def {
+                            callers_vec
+                                .vec_ops
+                                .push((bb_data, BasicBlock::from_usize(bb)));
                         }
                     }
                 }
@@ -182,18 +180,15 @@ impl DosUnexpectedRevertWithVector {
                             tainted_places.push(assign.0);
                         }
                     }
-                    Rvalue::Use(operand) => match &operand {
-                        Operand::Copy(origplace) | Operand::Move(origplace) => {
-                            if tainted_places
-                                .clone()
-                                .into_iter()
-                                .any(|place| place == *origplace)
-                            {
-                                tainted_places.push(assign.0);
-                            }
+                    Rvalue::Use(Operand::Copy(origplace) | Operand::Move(origplace)) => {
+                        if tainted_places
+                            .clone()
+                            .into_iter()
+                            .any(|place| place == *origplace)
+                        {
+                            tainted_places.push(assign.0);
                         }
-                        _ => {}
-                    },
+                    }
                     _ => {}
                 }
             }
