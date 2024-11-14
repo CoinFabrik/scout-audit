@@ -111,7 +111,7 @@ def run_integration_tests(blockchain, detector, root):
     did_fail = False
 
     with open(tempPath) as file:
-        detectors_triggered = {convert_code(json.loads(line.rstrip())['code']['code']) for line in file}
+        detectors_triggered = {convert_code(json.loads(line.rstrip())['message']['code']['code']) for line in file}
         did_fail = detector in detectors_triggered
         if should_fail != did_fail:
             explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
