@@ -2,5 +2,5 @@
 
 internal class ScoutOutputObject
 {
-    public ScoutOutputCode code;
+    public ScoutOutputMessage message;
 }
