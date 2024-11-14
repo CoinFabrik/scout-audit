@@ -81,6 +81,7 @@ namespace run_tests
                         new[]
                         {
                             "build",
+                            "--tests",
                         },
                         Path.Join(new[] { "test-cases", blockchain }));
                     if (code != 0)
