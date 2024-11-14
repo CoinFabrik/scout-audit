@@ -14,6 +14,11 @@ class ValidationError:
     message: str
 
 
+def should_skip_validation(dir_path: str) -> bool:
+    """Check if validation should be skipped for this directory."""
+    return os.path.isfile(os.path.join(dir_path, "Cargo.toml.skip"))
+
+
 def is_rust_project(dir_path: str) -> List[str]:
     """Check if a directory contains a valid Rust project."""
     errors = []
@@ -179,7 +184,7 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
 
         # Validate test case
         test_case_errors = validate_test_case(test_case_path, detector)
-        for error in test_case_errors:
+        for error in test_case_errors if not should_skip_validation(test_case_path) else []:
             errors.append(
                 ValidationError(blockchain=blockchain, detector=detector, message=error)
             )
