@@ -549,6 +549,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "sha2",
  "strum",
  "strum_macros",
  "tempfile",
@@ -560,6 +561,7 @@ dependencies = [
  "tracing-bunyan-formatter",
  "tracing-log 0.2.0",
  "tracing-subscriber",
+ "walkdir",
  "webbrowser",
  "windows",
 ]

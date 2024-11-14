@@ -5,6 +5,7 @@ pub mod build_config;
 
 pub mod cleanup;
 pub mod detectors;
+pub mod digest;
 pub mod output;
 pub mod scout;
 pub mod server;

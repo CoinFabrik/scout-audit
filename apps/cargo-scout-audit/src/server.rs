@@ -180,9 +180,7 @@ pub(crate) fn capture_output<
 
     let ret = output_json
         .iter_mut()
-        .map(|x| transform_value(x).and_then(|y| Some(y.to_string())))
-        .filter(|x| x.is_some())
-        .map(|x| x.unwrap())
+        .filter_map(|x| transform_value(x).map(|y| y.to_string()))
         .collect::<Vec<String>>();
 
     Ok((ret, (failed_build, stdout)))
