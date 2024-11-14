@@ -342,7 +342,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     });
 
     let detectors_config = match &opts.local_detectors {
-        Some(path) => get_local_detectors_configuration(&PathBuf::from(path)).map_err(|e| {
+        Some(path) => get_local_detectors_configuration(path).map_err(|e| {
             anyhow!(
                 "Failed to get local detectors configuration.\n\n     → Caused by: {}",
                 e
