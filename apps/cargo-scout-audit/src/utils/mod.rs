@@ -6,3 +6,4 @@ pub mod detectors_info;
 pub mod env;
 pub mod print;
 pub mod telemetry;
+pub mod json;

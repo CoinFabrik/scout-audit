@@ -1,4 +1,7 @@
-use crate::{output::raw_report::json_to_string_opt, utils::detectors_info::LintStore};
+use crate::{
+    utils::detectors_info::LintStore,
+    finding::Finding,
+};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -645,7 +648,7 @@ pub(crate) fn prepare_tera_for_table_render_html(
 }
 
 fn count_findings(
-    findings: &[Value],
+    findings: &[Finding],
     crate_to_find: &String,
     detectors_info: &LintStore,
 ) -> [usize; 4] {
@@ -653,24 +656,23 @@ fn count_findings(
 
     let mut ignored = 0;
     for finding in findings.iter() {
-        let krate = json_to_string_opt(finding.get("crate"));
-        if krate.is_none() || krate.unwrap() != *crate_to_find {
+        let krate = finding.krate();
+        if krate != *crate_to_find {
             continue;
         }
-        let code = json_to_string_opt(finding.get("code").and_then(|x| x.get("code")));
-        if code.is_none() {
+        let code = finding.code();
+        if code.is_empty() {
             continue;
         }
-        let code = code.unwrap();
         let detector = detectors_info.find_by_id(&code);
         if detector.is_none() {
             continue;
         }
         let detector = detector.unwrap();
         *match detector.severity.as_str() {
-            "Critical" => &mut ret[0],
-            "Medium" => &mut ret[1],
-            "Minor" => &mut ret[2],
+            "Critical"    => &mut ret[0],
+            "Medium"      => &mut ret[1],
+            "Minor"       => &mut ret[2],
             "Enhancement" => &mut ret[3],
             _ => &mut ignored,
         } += 1;
@@ -680,7 +682,7 @@ fn count_findings(
 }
 
 pub(crate) fn construct_table(
-    findings: &[Value],
+    findings: &[Finding],
     crates: &HashMap<String, bool>,
     detectors_info: &LintStore,
 ) -> Table {

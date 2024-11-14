@@ -8,6 +8,6 @@ pub mod detectors;
 pub mod digest;
 pub mod output;
 pub mod scout;
-pub mod server;
 pub mod startup;
 pub mod utils;
+pub mod finding;

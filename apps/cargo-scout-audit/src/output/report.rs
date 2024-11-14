@@ -1,11 +1,10 @@
 use super::{html, markdown, pdf, utils};
-use crate::output::raw_report::json_to_string;
 use crate::output::table::Table;
 use crate::startup::OutputFormat;
 use crate::utils::detectors_info::LintInfo;
+use crate::finding::Finding as JsonFinding;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -132,7 +131,7 @@ impl Report {
 
     pub fn write_out(
         &self,
-        findings: &Vec<Value>,
+        findings: &Vec<JsonFinding>,
         output_path: Option<PathBuf>,
         output_format: &OutputFormat,
     ) -> Result<Option<PathBuf>> {
@@ -170,7 +169,7 @@ impl Report {
                 let mut json_file = File::create(&json_path)?;
 
                 for finding in findings.iter() {
-                    std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
+                    std::io::Write::write(&mut json_file, finding.json().to_string().as_bytes())?;
                     std::io::Write::write(&mut json_file, b"\n")?;
                 }
 
@@ -207,11 +206,9 @@ impl Report {
                     .spawn()?;
 
                 for finding in findings {
-                    let rendered =
-                        json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
                     std::io::Write::write_all(
                         &mut child.stdin.as_ref().unwrap(),
-                        rendered.as_bytes(),
+                        finding.rendered().as_bytes(),
                     )?;
                 }
 

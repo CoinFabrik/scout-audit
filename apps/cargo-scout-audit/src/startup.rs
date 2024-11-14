@@ -4,19 +4,20 @@ use crate::{
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
     digest,
-    output::raw_report::{json_to_string, json_to_string_opt, RawReport},
+    output::raw_report::RawReport,
+    utils::json::json_to_string_opt,
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
         post_processing::PostProcessing, project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
-    server::capture_output,
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::{get_detectors_info, LintStore},
         print::{print_error, print_warning},
     },
+    finding::Finding,
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::{core::Verbosity, GlobalContext};
@@ -25,10 +26,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    io::Write,
-    path::PathBuf,
+    collections::{HashMap, HashSet}, fs, io::Write, path::PathBuf
 };
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
@@ -231,134 +229,78 @@ pub fn output_to_json(output: &str) -> Vec<Value> {
         .collect::<Vec<Value>>()
 }
 
-fn get_crate_from_finding(finding: &Value) -> Option<String> {
-    json_to_string_opt(finding.get("target").and_then(|x| x.get("name")))
-}
-
 //In some cases, rustc (or dylint, or clipply, or whoever) has returned the
 //package name where it should be returning the crate name. If you run into
 //problems in the future, try removing the call to this function.
 pub fn normalize_crate_name(s: &str) -> String {
-    let mut ret = String::new();
-    ret.reserve(s.len());
-    for c in s.chars() {
-        ret.push(if c == '-' { '_' } else { c });
-    }
-    ret
+    s.replace("-", "_")
 }
 
-fn get_crates_from_output(output: &Vec<Value>) -> HashMap<String, bool> {
+fn get_crates_from_output(output: &Vec<Finding>) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
 
-    for val in output {
-        let reason = val.get("reason");
-        let message = val.get("message");
-        if reason.is_none() || message.is_none() || reason.unwrap() != "compiler-message" {
+    for finding in output {
+        let reason = finding.reason();
+        if reason != "compiler-message"{
             continue;
         }
-        let message = message.unwrap();
-
-        let name = get_crate_from_finding(val);
-        if name.is_none() {
+        let name = finding.package();
+        if name.is_empty(){
             continue;
         }
-        let name = normalize_crate_name(&name.unwrap());
         if let Some(previous) = ret.get(&name) {
             if !previous {
                 continue;
             }
         }
-        let level = message.get("level");
-        let ok = level.is_none() || level.unwrap() != "error";
-        ret.insert(name, ok);
-    }
-
-    ret
-}
-
-fn get_crates_from_findings(findings: &Vec<String>) -> HashSet<String> {
-    let mut ret = HashSet::<String>::new();
-
-    for s in findings {
-        if s.is_empty() {
-            continue;
-        }
-        let value = from_str::<Value>(s).unwrap();
-        let krate = json_to_string(value.get("crate").unwrap());
-        ret.insert(krate);
+        ret.insert(name, finding.is_compiler_error());
     }
 
     ret
 }
 
 fn get_crates(
-    output: &Vec<Value>,
-    findings: &Vec<String>,
+    findings: &Vec<Finding>,
     packages: &[crate::output::report::Package],
 ) -> HashMap<String, bool> {
     let mut ret = HashMap::<String, bool>::new();
     for package in packages.iter() {
         ret.insert(normalize_crate_name(&package.name), true);
     }
-    for (name, ok) in get_crates_from_output(output).iter() {
+    for (name, ok) in get_crates_from_output(findings).iter() {
         if ret.contains_key(name) {
             ret.insert(name.clone(), *ok);
         }
-    }
-    for krate in get_crates_from_findings(findings) {
-        ret.entry(krate).or_insert(true);
     }
 
     ret
 }
 
 fn split_findings(
-    raw_findings: Vec<String>,
+    findings: &Vec<Finding>,
     crates: &HashMap<String, bool>,
-) -> (Vec<Value>, Vec<Value>) {
-    let mut findings = Vec::new();
-
-    for s in raw_findings.iter() {
-        if s.trim().is_empty() {
-            continue;
-        }
-        let value = from_str::<Value>(s).unwrap();
-        findings.push(value);
-    }
-    let mut successful_findings = Vec::<Value>::new();
-    let mut failed_findings = Vec::<Value>::new();
+) -> (Vec<Finding>, Vec<Finding>) {
+    let mut successful_findings = Vec::<Finding>::new();
+    let mut failed_findings = Vec::<Finding>::new();
 
     for finding in findings.iter() {
-        let krate = finding.get("crate");
-        let message = finding.get("message");
-        if krate.is_none() || message.is_none() {
+        let krate = finding.krate();
+        if krate.is_empty(){
             continue;
         }
-        let krate = json_to_string(krate.unwrap());
-        let message = message.unwrap();
-        let mut message = message.clone();
-        message["crate"] = Value::String(krate.clone());
         if *crates.get(&krate).unwrap_or(&true) {
             &mut successful_findings
         } else {
             &mut failed_findings
         }
-        .push(message);
+        .push(finding.clone());
     }
 
     (successful_findings, failed_findings)
 }
 
-fn capture_noop<T, E, F: FnOnce() -> Result<T, E>>(cb: F) -> Result<(Vec<String>, T), E> {
-    use std::result::Result::Ok;
-    match cb() {
-        Ok(r) => Ok((Vec::<String>::new(), r)),
-        Err(e) => Err(e),
-    }
-}
-
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
-pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
+pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     opts.validate()?;
     opts.prepare_args();
 
@@ -484,22 +426,22 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
 
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
-    let wrapper_function = if inside_vscode {
-        capture_noop
-    } else {
-        capture_output
-    };
+    // Run dylint
+    let (_successful_build, stdout) = run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
+        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
 
-    let (findings, (_successful_build, stdout)) = wrapper_function(|| {
-        // Run dylint
-        run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
-            .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))
-    })?;
-
-    let output_string = temp_file_to_string(stdout)?;
-    //println!("{}", output_string);
-    let output = output_to_json(&output_string);
-    let crates = get_crates(&output, &findings, &project_info.packages);
+    let raw_findings_string = temp_file_to_string(stdout)?;
+    let raw_findings = output_to_json(&raw_findings_string)
+        .into_iter()
+        .map(|x| Finding::new(x))
+        .collect::<Vec<_>>();
+    let crates = get_crates(&raw_findings, &project_info.packages);
+    let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
+    let findings = raw_findings
+        .iter()
+        .cloned()
+        .filter(|x| x.is_scout_finding(&detector_names))
+        .collect::<Vec<_>>();
 
     if crates.is_empty() && !inside_vscode {
         let string = OutputFormatter::new()
@@ -511,7 +453,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
         return Ok(vec![]);
     }
 
-    let (successful_findings, _failed_findings) = split_findings(findings, &crates);
+    let (successful_findings, _failed_findings) = split_findings(&findings, &crates);
 
     // Get the path of the 'unnecessary_lint_allow' detector
     let unnecessary_lint_allow_path = detectors_paths.iter().find_map(|path| {
@@ -526,23 +468,23 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
             std::result::Result::Ok(post_processor) => {
                 match post_processor.process(
                     successful_findings.clone(),
-                    output.clone(),
+                    raw_findings,
                     inside_vscode,
                 ) {
                     std::result::Result::Ok(result) => result,
                     Err(e) => {
                         print_error(&format!("Error running post process: {}", e));
-                        (successful_findings, output_string)
+                        (successful_findings, raw_findings_string)
                     }
                 }
             }
             Err(e) => {
                 print_error(&format!("Error creating PostProcessing: {}", e));
-                (successful_findings, output_string)
+                (successful_findings, raw_findings_string)
             }
         }
     } else {
-        (successful_findings, output_string)
+        (successful_findings, raw_findings_string)
     };
     // Generate report
     do_report(
@@ -559,7 +501,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Value>> {
 }
 
 fn do_report(
-    findings: &Vec<Value>,
+    findings: &Vec<Finding>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: LintStore,
@@ -642,7 +584,7 @@ fn run_dylint(
 
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
-    findings: &Vec<Value>,
+    findings: &Vec<Finding>,
     crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: &LintStore,

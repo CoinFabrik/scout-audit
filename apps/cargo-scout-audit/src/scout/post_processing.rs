@@ -1,8 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use libloading::{Library, Symbol};
-use serde_json::Value;
 use std::ffi::{c_char, CStr, CString};
 use std::path::Path;
+use crate::finding::Finding;
 
 type ProcessFindingsFunc = unsafe fn(*const c_char, *const c_char, bool) -> *mut c_char;
 type FreeStringFunc = unsafe fn(*mut c_char);
@@ -24,14 +24,25 @@ impl FindingProcessor {
 
     pub fn process_findings(
         &self,
-        successful_findings: &[Value],
-        output: &[Value],
+        successful_findings: &[Finding],
+        output: &[Finding],
         inside_vscode: bool,
-    ) -> Result<(Vec<Value>, String)> {
-        let successful_findings_json = serde_json::to_string(successful_findings)
+    ) -> Result<(Vec<Finding>, String)> {
+        let successful_findings_json = serde_json::to_string(
+                &successful_findings
+                    .iter()
+                    .cloned()
+                    .map(|x| x.decompose())
+                    .collect::<Vec<_>>()
+            )
             .with_context(|| "Failed to serialize successful_findings")?;
-        let output_json =
-            serde_json::to_string(output).with_context(|| "Failed to serialize output")?;
+        let output_json = serde_json::to_string(
+                &output
+                    .iter()
+                    .cloned()
+                    .map(|x| x.decompose())
+                    .collect::<Vec<_>>()
+            ).with_context(|| "Failed to serialize output")?;
 
         let successful_findings_cstring = CString::new(successful_findings_json)
             .with_context(|| "Failed to create CString for successful_findings")?;
@@ -81,6 +92,11 @@ impl FindingProcessor {
             .ok_or_else(|| anyhow!("Failed to parse output_string_vscode"))?
             .to_string();
 
+        let console_findings = console_findings
+            .into_iter()
+            .map(|x| Finding::new(x))
+            .collect::<Vec<_>>();
+
         Ok((console_findings, output_string_vscode))
     }
 }
@@ -97,10 +113,10 @@ impl PostProcessing {
 
     pub fn process(
         &self,
-        successful_findings: Vec<Value>,
-        output: Vec<Value>,
+        successful_findings: Vec<Finding>,
+        output: Vec<Finding>,
         inside_vscode: bool,
-    ) -> Result<(Vec<Value>, String)> {
+    ) -> Result<(Vec<Finding>, String)> {
         self.processor
             .process_findings(&successful_findings, &output, inside_vscode)
     }
