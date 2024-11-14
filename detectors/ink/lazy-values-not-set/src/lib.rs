@@ -128,7 +128,7 @@ impl<'tcx> LateLintPass<'tcx> for LazyValuesNotSet {
 
         let (_, hm) = self.get_func_info(cx, id.to_def_id(), &[], &[], &mut vec![]);
         for val in hm.values() {
-            clippy_wrappers::span_lint(cx, LAZY_VALUES_NOT_SET, *val, LINT_MESSAGE);
+            clippy_utils::diagnostics::span_lint(cx, LAZY_VALUES_NOT_SET, *val, LINT_MESSAGE);
         }
     }
 }
