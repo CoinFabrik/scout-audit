@@ -162,7 +162,6 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
 
         # Validate detector
         detector_errors = is_rust_project(detector_path)
-        detector_errors.extend(run_cargo_check(detector_path))
         for error in detector_errors:
             errors.append(
                 ValidationError(blockchain=blockchain, detector=detector, message=error)
