@@ -236,7 +236,8 @@ namespace run_tests
                     .Split('\n')
                     .Select(JsonConvert.DeserializeObject<ScoutOutputObject>)
                     .Where(x => x != null)
-                    .Select(x => x.code.code.Replace('_', '-'))
+                    .Select(x => x?.code?.code?.Replace('_', '-'))
+                    .Where(x => x != null)
                     .ToHashSet();
                 didFail = detectorsTriggered.Contains(detector);
             }
