@@ -27,8 +27,7 @@ fn parse_finding(finding: &Finding) -> Option<PostProcFinding> {
     let line_end = span.get("line_end")?.as_u64()?;
 
     let allowed_lint = if detector == "unnecessary_lint_allow" {
-        finding.json()
-            .get("children")?
+        finding.children()?
             .get(0)?
             .get("message")?
             .as_str()

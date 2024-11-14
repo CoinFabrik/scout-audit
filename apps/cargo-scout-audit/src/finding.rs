@@ -79,4 +79,10 @@ impl Finding{
             .and_then(|x| json_to_string_exact(x))
             .unwrap_or_else(|| String::new())
     }
+    pub fn children(&self) -> Option<Value>{
+        Some(self.value
+            .get("message")?
+            .get("children")?
+            .clone())
+    }
 }
