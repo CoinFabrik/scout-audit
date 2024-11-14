@@ -8,21 +8,25 @@ GREEN = "\033[92m"
 BLUE = "\033[94m"
 ENDC = "\033[0m"
 
+
 def run_subprocess(command: list, cwd: str):
     result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
     stdout = result.stdout.strip() if result.stdout else None
     stderr = result.stderr.strip() if result.stderr else None
     return (result.returncode, stdout, stderr)
 
+
 def get_or_default(map, k, default):
     return map[k] if k in map else default
+
 
 def simple_runner(name, commands, opts):
     show_err = get_or_default(opts, "show_err", True)
     fail_fast = get_or_default(opts, "fail_fast", True)
     ret = 0
-    for (wd, cmd) in commands:
-        retcode, out, err = run_subprocess(cmd.split(' '), wd)
+    for wd, cmd in commands:
+        print(f"{BLUE}[>] Running '{name}' in {wd}{ENDC}")
+        retcode, out, err = run_subprocess(cmd.split(" "), wd)
         if retcode != 0:
             if show_err:
                 print(f"{RED}Error running {name} on {wd}:")
@@ -34,21 +38,23 @@ def simple_runner(name, commands, opts):
             ret = retcode
     return ret
 
+
 def list_test_cases():
     ret = []
-    for blockchain in os.listdir('test-cases'):
-        path = f'test-cases/{blockchain}'
+    for blockchain in os.listdir("test-cases"):
+        path = f"test-cases/{blockchain}"
         if not os.path.isdir(path):
             continue
         for test_case in os.listdir(path):
-            if not os.path.isdir(f'{path}/{test_case}'):
+            if not os.path.isdir(f"{path}/{test_case}"):
                 continue
-            if test_case == 'target':
+            if test_case == "target":
                 continue
-            if test_case[0:1] == '.':
+            if test_case[0:1] == ".":
                 continue
-            ret.append(f'{blockchain}/{test_case}')
+            ret.append(f"{blockchain}/{test_case}")
     return ret
+
 
 def parse_json_from_string(console_output):
     json_start, json_end = None, None
@@ -73,6 +79,7 @@ def parse_json_from_string(console_output):
             return "Extracted string is not valid JSON"
     else:
         return console_output
+
 
 def print_errors(errors):
     if errors:
@@ -109,6 +116,7 @@ def print_results(returncode, error_message, check_type, root, elapsed_time):
             for line in error_message.strip().split("\n"):
                 print(f"| {line}")
             print("\n")
+
 
 def is_rust_project(dir_path):
     has_cargo_toml = os.path.isfile(os.path.join(dir_path, "Cargo.toml"))

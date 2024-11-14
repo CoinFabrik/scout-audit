@@ -59,21 +59,3 @@ impl AsRef<str> for VulnerabilityClass {
         }
     }
 }
-
-fn snake_to_title_case(input: &str) -> String {
-    // Split the string by underscores
-    let words: Vec<&str> = input.split('-').collect();
-
-    // Capitalize first letter of each word and join with spaces
-    words
-        .iter()
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().chain(chars).collect(),
-            }
-        })
-        .collect::<Vec<String>>()
-        .join(" ")
-}
