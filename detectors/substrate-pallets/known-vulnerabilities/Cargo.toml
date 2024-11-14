@@ -9,7 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 cargo_metadata = { version = "=0.18.1" }
 clippy_utils = { workspace = true }
-clippy_wrappers = { workspace = true }
 common = { workspace = true }
 dylint_internal = { workspace = true }
 dylint_linting = { workspace = true }
