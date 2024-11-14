@@ -4,35 +4,25 @@ on:
   pull_request:
     paths:
       - "apps/cargo-scout-audit/**"
+      - "detectors/**"
+      - "test-cases/**"
+      - "scripts/**"
   workflow_dispatch:
 
 jobs:
-  filter-paths:
-    name: Filter modified paths by PR
-    runs-on: ubuntu-latest
-    outputs:
-      any_rust: ${{ steps.filter.outputs.any_rust }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Filter Paths
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            any_rust:
-              - 'detectors/**'
-              - 'apps/cargo-scout-audit/**'
   format:
     name: Check Rust Format
-    needs: filter-paths
-    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
-
+    outputs:
+      status: ${{ job.status }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
       - name: Update Rust Toolchain
         run: rustup update
@@ -41,14 +31,13 @@ jobs:
         run: rustup component add rustfmt
 
       - name: Check Format
-        run: /bin/sh scripts/fmt.sh
+        run: python3 scripts/run-fmt.py
 
   clippy:
     name: Lint with Clippy
-    needs: filter-paths
-    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
-
+    outputs:
+      status: ${{ job.status }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -70,46 +59,17 @@ jobs:
       - name: Install dylint-link
         run: cargo install dylint-link
 
-      - name: Install clippy
-        run: rustup component add clippy
-
       - name: Install clippy for detectors
-        run: run: rustup component add clippy --toolchain nightly-2024-07-11
+        run: rustup component add clippy --toolchain nightly-2024-07-11
 
-      - name: Lint Code (Scout)
-        working-directory: apps/cargo-scout-audit
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Lint Code (detectors/ink)
-        working-directory: detectors/ink/detectors
-        run: cargo clippy --all-features -- -D warnings
-
-      - name: Lint Code (detectors/soroban)
-        working-directory: detectors/soroban/detectors
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Lint Code (detectors/substrate-pallets)
-        working-directory: detectors/substrate-pallets/detectors
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Lint Code (test-cases/ink)
-        working-directory: detectors/ink/test-cases
-        run: cargo clippy -- -D warnings -A clippy::new_without_default
-
-      - name: Lint Code (test-cases/soroban)
-        working-directory: detectors/soroban/test-cases
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Lint Code (test-cases/substrate-pallets)
-        working-directory: detectors/substrate-pallets/test-cases
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Check Clippy
+        run: python3 scripts/run-clippy.py
 
   udeps:
     name: Check Unused Dependencies with cargo-udeps
-    needs: filter-paths
-    if: ${{ needs.filter-paths.outputs.any_rust == 'true' }}
     runs-on: ubuntu-latest
-
+    outputs:
+      status: ${{ job.status }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
