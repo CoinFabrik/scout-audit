@@ -5,7 +5,6 @@ use crate::{
     },
     digest,
     output::raw_report::RawReport,
-    utils::json::json_to_string_opt,
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
         post_processing::PostProcessing, project_info::ProjectInfo,
@@ -49,6 +48,8 @@ pub enum OutputFormat {
     Html,
     Json,
     RawJson,
+    RawSingleJson,
+    UnfilteredJson,
     #[clap(name = "md")]
     Markdown,
     #[clap(name = "md-gh")]
@@ -253,7 +254,7 @@ fn get_crates_from_output(output: &Vec<Finding>) -> HashMap<String, bool> {
                 continue;
             }
         }
-        ret.insert(name, finding.is_compiler_error());
+        ret.insert(name, !finding.is_compiler_error());
     }
 
     ret
@@ -468,7 +469,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
             std::result::Result::Ok(post_processor) => {
                 match post_processor.process(
                     successful_findings.clone(),
-                    raw_findings,
+                    raw_findings.clone(),
                     inside_vscode,
                 ) {
                     std::result::Result::Ok(result) => result,
@@ -489,6 +490,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     // Generate report
     do_report(
         &console_findings,
+        raw_findings,
         crates,
         project_info,
         detectors_info,
@@ -502,6 +504,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
 fn do_report(
     findings: &Vec<Finding>,
+    raw_findings: Vec<Finding>,
     crates: HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: LintStore,
@@ -518,6 +521,7 @@ fn do_report(
         crate::output::console::render_report(findings, &crates, &detectors_info)?;
         generate_report(
             findings,
+            raw_findings,
             &crates,
             project_info,
             &detectors_info,
@@ -585,6 +589,7 @@ fn run_dylint(
 #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
 fn generate_report(
     findings: &Vec<Finding>,
+    raw_findings: Vec<Finding>,
     crates: &HashMap<String, bool>,
     project_info: ProjectInfo,
     detectors_info: &LintStore,
@@ -597,7 +602,7 @@ fn generate_report(
     tracing::trace!(?report, "Report");
 
     for format in output_format.iter() {
-        let path = report.write_out(findings, output_path.clone(), format)?;
+        let path = report.write_out(findings, &raw_findings, output_path.clone(), format)?;
 
         if let Some(path) = path {
             let path = path

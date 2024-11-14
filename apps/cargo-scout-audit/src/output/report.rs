@@ -129,9 +129,35 @@ impl Report {
         pdf::generate_pdf(path, self)
     }
 
+    fn write_single_json(file: &mut File, findings: &Vec<JsonFinding>) -> Result<()>{
+        let bytes = findings
+            .iter()
+            .map(|x| x.json().to_string().as_bytes().to_vec())
+            .collect::<Vec<_>>();
+
+        let mut w = |x| std::io::Write::write(file, x);
+
+        w(b"[")?;
+        let mut first = true;
+        for finding in bytes.iter() {
+            let s: &[u8] = if first{
+                first = false;
+                b"\n"
+            }else{
+                b",\n"
+            };
+            w(s)?;
+            w(finding.as_slice())?;
+        }
+        w(b"\n]")?;
+
+        Ok(())
+    }
+
     pub fn write_out(
         &self,
         findings: &Vec<JsonFinding>,
+        raw_findings: &Vec<JsonFinding>,
         output_path: Option<PathBuf>,
         output_format: &OutputFormat,
     ) -> Result<Option<PathBuf>> {
@@ -173,6 +199,18 @@ impl Report {
                     std::io::Write::write(&mut json_file, b"\n")?;
                 }
 
+                Ok(Some(json_path))
+            }
+            OutputFormat::RawSingleJson => {
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("raw-report.json"));
+                let mut json_file = File::create(&json_path)?;
+                Self::write_single_json(&mut json_file, findings)?;
+                Ok(Some(json_path))
+            }
+            OutputFormat::UnfilteredJson => {
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("raw-report.json"));
+                let mut json_file = File::create(&json_path)?;
+                Self::write_single_json(&mut json_file, raw_findings)?;
                 Ok(Some(json_path))
             }
             OutputFormat::Markdown => {
