@@ -56,22 +56,38 @@ namespace run_tests
             foreach (var blockchain in blockchains)
             {
                 Console.WriteLine($"Building test cases for {blockchain}");
-                var (code, _, err) = RunProcess(
-                    "cargo",
-                    new[]
-                    {
-                        "+nightly",
-                        "build",
-                        "--release",
-                        "--target=wasm32-unknown-unknown",
-                        "--no-default-features",
-                        "-Zbuild-std=std,core,alloc",
-                    },
-                    Path.Join(new[] { "test-cases", blockchain }));
-                if (code != 0)
                 {
-                    AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building test cases failed: {err}");
-                    return null;
+                    var (code, _, err) = RunProcess(
+                        "cargo",
+                        new[]
+                        {
+                            "+nightly",
+                            "build",
+                            "--release",
+                            "--target=wasm32-unknown-unknown",
+                            "--no-default-features",
+                            "-Zbuild-std=std,core,alloc",
+                        },
+                        Path.Join(new[] { "test-cases", blockchain }));
+                    if (code != 0)
+                    {
+                        AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building test cases failed: {err}");
+                        return null;
+                    }
+                }
+                {
+                    var (code, _, err) = RunProcess(
+                        "cargo",
+                        new[]
+                        {
+                            "build",
+                        },
+                        Path.Join(new[] { "test-cases", blockchain }));
+                    if (code != 0)
+                    {
+                        AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Building test cases failed: {err}");
+                        return null;
+                    }
                 }
             }
 
