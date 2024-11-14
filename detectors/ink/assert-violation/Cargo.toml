@@ -8,7 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 clippy_utils = { workspace = true }
-clippy_wrappers = { workspace = true }
 common = { workspace = true }
 dylint_linting = { workspace = true }
 if_chain = { workspace = true }

@@ -114,7 +114,7 @@ impl<'tcx> LateLintPass<'tcx> for SetContractStorage {
         walk_expr(&mut reentrant_storage, body.value);
 
         if reentrant_storage.has_set_contract && reentrant_storage.unprotected {
-            clippy_wrappers::span_lint_and_help(
+            clippy_utils::diagnostics::span_lint_and_help(
                 cx,
                 SET_CONTRACT_STORAGE,
                 reentrant_storage.span.unwrap(),

@@ -124,7 +124,7 @@ impl ArithmeticContext {
                     hir::ExprKind::Lit(_lit) => (),
                     hir::ExprKind::Unary(hir::UnOp::Neg, expr) => {
                         if is_integer_literal(expr, 1) {
-                            clippy_wrappers::span_lint_and_help(
+                            clippy_utils::diagnostics::span_lint_and_help(
                                 cx,
                                 INTEGER_OVERFLOW_OR_UNDERFLOW,
                                 expr.span,
@@ -136,7 +136,7 @@ impl ArithmeticContext {
                         }
                     }
                     _ => {
-                        clippy_wrappers::span_lint_and_help(
+                        clippy_utils::diagnostics::span_lint_and_help(
                             cx,
                             INTEGER_OVERFLOW_OR_UNDERFLOW,
                             expr.span,
@@ -148,7 +148,7 @@ impl ArithmeticContext {
                     }
                 },
                 _ => {
-                    clippy_wrappers::span_lint_and_help(
+                    clippy_utils::diagnostics::span_lint_and_help(
                         cx,
                         INTEGER_OVERFLOW_OR_UNDERFLOW,
                         expr.span,
@@ -173,7 +173,7 @@ impl ArithmeticContext {
         }
         let ty = cx.typeck_results().expr_ty(arg);
         if constant_simple(cx, cx.typeck_results(), expr).is_none() && ty.is_integral() {
-            clippy_wrappers::span_lint_and_help(
+            clippy_utils::diagnostics::span_lint_and_help(
                 cx,
                 INTEGER_OVERFLOW_OR_UNDERFLOW,
                 expr.span,

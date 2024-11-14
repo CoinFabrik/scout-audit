@@ -55,7 +55,7 @@ impl EarlyLintPass for InkVersion {
         let ink_version = VersionReq::parse(&ink_version.replace('\"', "")).unwrap();
 
         if !ink_version.matches(&req) {
-            clippy_wrappers::span_lint_and_help(
+            clippy_utils::diagnostics::span_lint_and_help(
                 cx,
                 INK_VERSION,
                 rustc_span::DUMMY_SP,

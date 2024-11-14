@@ -156,7 +156,7 @@ impl<'tcx> LateLintPass<'tcx> for UnusedReturnEnum {
             && (visitor.count_err == 0 || visitor.count_ok == 0)
         {
             visitor.span.iter().for_each(|span| {
-                clippy_wrappers::span_lint_and_help(
+                clippy_utils::diagnostics::span_lint_and_help(
                     cx,
                     UNUSED_RETURN_ENUM,
                     *span,

@@ -4,8 +4,8 @@
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use clippy_utils::diagnostics::span_lint_and_help;
 use clippy_utils::higher::IfOrIfLet;
-use clippy_wrappers::span_lint_and_help;
 use common::{
     analysis::{fn_returns, ConstantAnalyzer},
     declarations::{Severity, VulnerabilityClass},

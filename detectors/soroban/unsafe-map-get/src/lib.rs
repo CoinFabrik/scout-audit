@@ -4,7 +4,7 @@ extern crate rustc_errors;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_wrappers::span_lint_and_sugg;
+use clippy_utils::diagnostics::span_lint_and_sugg;
 use common::{
     analysis::is_soroban_map,
     declarations::{Severity, VulnerabilityClass},

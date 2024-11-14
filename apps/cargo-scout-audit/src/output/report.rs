@@ -1,11 +1,10 @@
 use super::{html, markdown, pdf, utils};
-use crate::output::raw_report::json_to_string;
+use crate::finding::Finding as JsonFinding;
 use crate::output::table::Table;
 use crate::startup::OutputFormat;
 use crate::utils::detectors_info::LintInfo;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -130,9 +129,35 @@ impl Report {
         pdf::generate_pdf(path, self)
     }
 
+    fn write_single_json(file: &mut File, findings: &[JsonFinding]) -> Result<()> {
+        let bytes = findings
+            .iter()
+            .map(|x| x.json().to_string().as_bytes().to_vec())
+            .collect::<Vec<_>>();
+
+        let mut w = |x| std::io::Write::write(file, x);
+
+        w(b"[")?;
+        let mut first = true;
+        for finding in bytes.iter() {
+            let s: &[u8] = if first {
+                first = false;
+                b"\n"
+            } else {
+                b",\n"
+            };
+            w(s)?;
+            w(finding.as_slice())?;
+        }
+        w(b"\n]")?;
+
+        Ok(())
+    }
+
     pub fn write_out(
         &self,
-        findings: &Vec<Value>,
+        findings: &Vec<JsonFinding>,
+        raw_findings: &[JsonFinding],
         output_path: Option<PathBuf>,
         output_format: &OutputFormat,
     ) -> Result<Option<PathBuf>> {
@@ -170,10 +195,22 @@ impl Report {
                 let mut json_file = File::create(&json_path)?;
 
                 for finding in findings.iter() {
-                    std::io::Write::write(&mut json_file, finding.to_string().as_bytes())?;
+                    std::io::Write::write(&mut json_file, finding.json().to_string().as_bytes())?;
                     std::io::Write::write(&mut json_file, b"\n")?;
                 }
 
+                Ok(Some(json_path))
+            }
+            OutputFormat::RawSingleJson => {
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("raw-report.json"));
+                let mut json_file = File::create(&json_path)?;
+                Self::write_single_json(&mut json_file, findings)?;
+                Ok(Some(json_path))
+            }
+            OutputFormat::UnfilteredJson => {
+                let json_path = output_path.unwrap_or_else(|| PathBuf::from("raw-report.json"));
+                let mut json_file = File::create(&json_path)?;
+                Self::write_single_json(&mut json_file, raw_findings)?;
                 Ok(Some(json_path))
             }
             OutputFormat::Markdown => {
@@ -207,11 +244,9 @@ impl Report {
                     .spawn()?;
 
                 for finding in findings {
-                    let rendered =
-                        json_to_string(finding.get("rendered").unwrap_or(&Value::default()));
                     std::io::Write::write_all(
                         &mut child.stdin.as_ref().unwrap(),
-                        rendered.as_bytes(),
+                        finding.rendered().as_bytes(),
                     )?;
                 }
 

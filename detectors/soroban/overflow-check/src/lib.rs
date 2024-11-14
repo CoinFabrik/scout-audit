@@ -10,7 +10,7 @@ use std::{
     str::from_utf8,
 };
 
-use clippy_wrappers::span_lint_and_help;
+use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
