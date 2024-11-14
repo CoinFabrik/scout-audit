@@ -4,12 +4,10 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-mod processor;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
-pub use processor::process_findings;
 
 use clippy_utils::diagnostics::span_lint_and_help;
 use if_chain::if_chain;

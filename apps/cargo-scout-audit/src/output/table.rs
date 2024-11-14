@@ -656,7 +656,7 @@ fn count_findings(
 
     let mut ignored = 0;
     for finding in findings.iter() {
-        let krate = finding.krate();
+        let krate = finding.package();
         if krate != *crate_to_find {
             continue;
         }

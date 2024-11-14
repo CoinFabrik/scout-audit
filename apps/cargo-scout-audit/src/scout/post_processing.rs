@@ -1,123 +1,142 @@
-use anyhow::{anyhow, Context, Result};
-use libloading::{Library, Symbol};
-use std::ffi::{c_char, CStr, CString};
-use std::path::Path;
+use std::collections::HashMap;
 use crate::finding::Finding;
 
-type ProcessFindingsFunc = unsafe fn(*const c_char, *const c_char, bool) -> *mut c_char;
-type FreeStringFunc = unsafe fn(*mut c_char);
-
-struct FindingProcessor {
-    lib: Library,
+struct FindingsCache {
+    by_file: HashMap<String, FileFindings>,
 }
 
-impl FindingProcessor {
-    pub fn new<P: AsRef<Path>>(library_path: P) -> Result<Self> {
-        let lib = unsafe {
-            Library::new(library_path.as_ref()).with_context(|| {
-                format!("Failed to load library {}", library_path.as_ref().display())
-            })?
-        };
+#[derive(Debug, Clone)]
+struct PostProcFinding {
+    detector: String,
+    file_name: String,
+    span: (usize, usize),
+    allowed_lint: Option<String>,
+}
 
-        Ok(FindingProcessor { lib })
-    }
+struct FileFindings {
+    unnecessary_allows: Vec<PostProcFinding>,
+    other_findings: Vec<PostProcFinding>,
+}
 
-    pub fn process_findings(
-        &self,
-        successful_findings: &[Finding],
-        output: &[Finding],
-        inside_vscode: bool,
-    ) -> Result<(Vec<Finding>, String)> {
-        let successful_findings_json = serde_json::to_string(
-                &successful_findings
-                    .iter()
-                    .cloned()
-                    .map(|x| x.decompose())
-                    .collect::<Vec<_>>()
-            )
-            .with_context(|| "Failed to serialize successful_findings")?;
-        let output_json = serde_json::to_string(
-                &output
-                    .iter()
-                    .cloned()
-                    .map(|x| x.decompose())
-                    .collect::<Vec<_>>()
-            ).with_context(|| "Failed to serialize output")?;
+fn parse_finding(finding: &Finding) -> Option<PostProcFinding> {
+    let detector = finding.code();
+    let spans = finding.spans()?;
+    let span = spans.get(0)?;
+    let file_name = span.get("file_name")?.as_str()?;
+    let line_start = span.get("line_start")?.as_u64()?;
+    let line_end = span.get("line_end")?.as_u64()?;
 
-        let successful_findings_cstring = CString::new(successful_findings_json)
-            .with_context(|| "Failed to create CString for successful_findings")?;
-        let output_cstring =
-            CString::new(output_json).with_context(|| "Failed to create CString for output")?;
+    let allowed_lint = if detector == "unnecessary_lint_allow" {
+        finding.json()
+            .get("children")?
+            .get(0)?
+            .get("message")?
+            .as_str()
+            .and_then(|msg| msg.split('`').nth(1).map(String::from))
+    } else {
+        None
+    };
 
-        let process_func: Symbol<ProcessFindingsFunc> = unsafe {
-            self.lib
-                .get(b"process_findings")
-                .with_context(|| "Failed to get process_findings function")?
-        };
+    let start = usize::try_from(line_start).ok()?;
+    let end = usize::try_from(line_end).ok()?;
 
-        let free_func: Symbol<FreeStringFunc> = unsafe {
-            self.lib
-                .get(b"free_string")
-                .with_context(|| "Failed to get free_string function")?
-        };
+    Some(PostProcFinding {
+        detector: detector.to_owned(),
+        file_name: file_name.to_owned(),
+        span: (start, end),
+        allowed_lint,
+    })
+}
 
-        let result_ptr = unsafe {
-            process_func(
-                successful_findings_cstring.as_ptr(),
-                output_cstring.as_ptr(),
-                inside_vscode,
-            )
-        };
+impl FindingsCache {
+    fn new(all_findings: &[Finding]) -> Self {
+        let mut by_file: HashMap<String, FileFindings> = HashMap::new();
 
-        if result_ptr.is_null() {
-            return Err(anyhow!("process_findings returned null"));
+        for finding in all_findings {
+            if let Some(parsed) = parse_finding(finding) {
+                by_file
+                    .entry(parsed.file_name.clone())
+                    .or_insert_with(|| FileFindings {
+                        unnecessary_allows: Vec::new(),
+                        other_findings: Vec::new(),
+                    })
+                    .add_finding(parsed);
+            }
         }
 
-        let result_cstr = unsafe { CStr::from_ptr(result_ptr) };
-        let result_str = result_cstr
-            .to_str()
-            .with_context(|| "Failed to convert result to str")?;
-        let result: serde_json::Value =
-            serde_json::from_str(result_str).with_context(|| "Failed to parse result JSON")?;
+        FindingsCache { by_file }
+    }
+}
 
-        // Ensure we free the memory allocated by the C function
-        unsafe { free_func(result_ptr) };
+impl FileFindings {
+    fn add_finding(&mut self, finding: PostProcFinding) {
+        if finding.detector == "unnecessary_lint_allow" {
+            self.unnecessary_allows.push(finding);
+        } else {
+            self.other_findings.push(finding);
+        }
+    }
+}
 
-        let console_findings = result["console_findings"]
-            .as_array()
-            .ok_or_else(|| anyhow!("Failed to parse console_findings"))?
-            .clone();
-        let output_string_vscode = result["output_string_vscode"]
-            .as_str()
-            .ok_or_else(|| anyhow!("Failed to parse output_string_vscode"))?
-            .to_string();
+fn spans_overlap(span1: (usize, usize), span2: (usize, usize)) -> bool {
+    span1.0 <= span2.1 && span2.0 <= span1.1
+}
 
-        let console_findings = console_findings
+fn should_include_finding(finding: &Finding, cache: &FindingsCache) -> bool {
+    let current_finding = match parse_finding(finding) {
+        Some(f) => f,
+        None => return false, // If we can't parse the finding, we don't include it
+    };
+
+    if let Some(file_findings) = cache.by_file.get(&current_finding.file_name) {
+        if current_finding.detector == "unnecessary_lint_allow" {
+            if let Some(allowed_lint) = &current_finding.allowed_lint {
+                !file_findings.other_findings.iter().any(|f| {
+                    &f.detector == allowed_lint && spans_overlap(f.span, current_finding.span)
+                })
+            } else {
+                true // Include if we can't determine the allowed lint
+            }
+        } else {
+            !file_findings.unnecessary_allows.iter().any(|allow| {
+                allow
+                    .allowed_lint
+                    .as_ref()
+                    .map_or(false, |lint| lint == &current_finding.detector)
+                    && spans_overlap(allow.span, current_finding.span)
+            })
+        }
+    } else {
+        true // If we can't find the file, we include it by default
+    }
+}
+
+pub fn process(
+    successful_findings: Vec<Finding>,
+    output: Vec<Finding>,
+    inside_vscode: bool,
+) -> (Vec<Finding>, String) {
+    let findings_cache = FindingsCache::new(&successful_findings);
+
+    let console_findings: Vec<_> = successful_findings
+        .into_iter()
+        .filter(|finding| should_include_finding(finding, &findings_cache))
+        .collect();
+
+    let output_vscode: Vec<_> = if inside_vscode {
+        output
             .into_iter()
-            .map(|x| Finding::new(x))
-            .collect::<Vec<_>>();
+            .filter(|val| should_include_finding(val, &findings_cache))
+            .collect()
+    } else {
+        Vec::new()
+    };
 
-        Ok((console_findings, output_string_vscode))
-    }
-}
+    let output_string_vscode = output_vscode
+        .into_iter()
+        .filter_map(|finding| serde_json::to_string(&finding.json()).ok())
+        .collect::<Vec<_>>()
+        .join("\n");
 
-pub struct PostProcessing {
-    processor: FindingProcessor,
-}
-
-impl PostProcessing {
-    pub fn new<P: AsRef<Path>>(library_path: P) -> Result<Self> {
-        let processor = FindingProcessor::new(library_path)?;
-        Ok(PostProcessing { processor })
-    }
-
-    pub fn process(
-        &self,
-        successful_findings: Vec<Finding>,
-        output: Vec<Finding>,
-        inside_vscode: bool,
-    ) -> Result<(Vec<Finding>, String)> {
-        self.processor
-            .process_findings(&successful_findings, &output, inside_vscode)
-    }
+    (console_findings, output_string_vscode)
 }

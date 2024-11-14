@@ -7,7 +7,7 @@ use crate::{
     output::raw_report::RawReport,
     scout::{
         blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
-        post_processing::PostProcessing, project_info::ProjectInfo,
+        project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
     utils::{
@@ -428,7 +428,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
     // Run dylint
-    let (_successful_build, stdout) = run_dylint(detectors_paths.clone(), &opts, &metadata, inside_vscode)
+    let (_successful_build, stdout) = run_dylint(detectors_paths.clone(), &opts, inside_vscode)
         .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
 
     let raw_findings_string = temp_file_to_string(stdout)?;
@@ -464,26 +464,12 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     });
 
     // Create and run post processor if the path is found, otherwise use default values
-    let (console_findings, output_string_vscode) = if let Some(path) = unnecessary_lint_allow_path {
-        match PostProcessing::new(path) {
-            std::result::Result::Ok(post_processor) => {
-                match post_processor.process(
-                    successful_findings.clone(),
-                    raw_findings.clone(),
-                    inside_vscode,
-                ) {
-                    std::result::Result::Ok(result) => result,
-                    Err(e) => {
-                        print_error(&format!("Error running post process: {}", e));
-                        (successful_findings, raw_findings_string)
-                    }
-                }
-            }
-            Err(e) => {
-                print_error(&format!("Error creating PostProcessing: {}", e));
-                (successful_findings, raw_findings_string)
-            }
-        }
+    let (console_findings, output_string_vscode) = if unnecessary_lint_allow_path.is_some() {
+        crate::scout::post_processing::process(
+            successful_findings.clone(),
+            raw_findings.clone(),
+            inside_vscode,
+        )
     } else {
         (successful_findings, raw_findings_string)
     };
@@ -537,7 +523,6 @@ fn do_report(
 fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,
-    metadata: &Metadata,
     inside_vscode: bool,
 ) -> Result<(bool, NamedTempFile)> {
     // Convert detectors paths to string
@@ -578,8 +563,6 @@ fn run_dylint(
         operation: Operation::Check(check_opts.clone()),
         ..Default::default()
     };
-
-    crate::cleanup::clean_up_before_run(metadata);
 
     let success = dylint::run(&options).is_err();
 

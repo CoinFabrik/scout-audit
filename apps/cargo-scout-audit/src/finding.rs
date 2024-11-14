@@ -3,7 +3,7 @@ use std::result::Result;
 use std::collections::HashSet;
 use crate::utils::json::{json_to_string_exact, json_to_string_opt};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Finding{
     value: Value,
 }
@@ -29,8 +29,11 @@ impl Finding{
         self.code_helper()
             .unwrap_or_else(|_| String::new())
     }
+    pub fn dashed_code(&self) -> String{
+        self.code().replace("_", "-")
+    }
     pub fn is_scout_finding(&self, filtered_detectors: &HashSet<String>) -> bool{
-        self.reason() == "compiler-message" && filtered_detectors.contains(&self.code())
+        self.reason() == "compiler-message" && filtered_detectors.contains(&self.dashed_code())
     }
     pub fn is_compiler_error(&self) -> bool{
         if self.reason() != "compiler-message"{
