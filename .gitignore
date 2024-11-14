@@ -19,7 +19,7 @@ target/
 scout-audit-internal/Cargo.lock
 
 #ignore test generated files
-/detectors/*/test-cases/**/test_snapshots/**
+/test-cases/**/test_snapshots/*
 
 # -------------------------------------------------------------------------------------
 # -------------------------------------- Misc -----------------------------------------
