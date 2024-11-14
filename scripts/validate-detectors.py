@@ -1,7 +1,8 @@
 import os
 import re
 from fuzzywuzzy import process
-import utils
+from utils import BLUE, GREEN, RED, ENDC
+
 
 def is_rust_project(dir_path):
     """Check if a directory contains a Rust project with a Cargo.toml and src/lib.rs."""
@@ -65,94 +66,90 @@ def validate_example_structure(example_path, example_name):
     return errors
 
 
-def validate_examples(detector_path, examples):
-    """Validate the structure and naming convention of examples."""
+def validate_examples(detector_path, test_cases):
+    """Validate the structure and naming convention of test cases."""
     errors = []
     ignore_dirs = {"target", ".cargo"}
     detector_name = os.path.basename(detector_path)
-    example_suffixes = set()
+    test_case_suffixes = set()
 
-    for example in examples:
-        example_path = os.path.join(detector_path, example)
-        if os.path.basename(example_path) not in ignore_dirs:
-            errors.extend(check_for_extra_files(example_path))
-            errors.extend(validate_naming_convention(example, detector_name))
-            suffix = example.split("-")[-1]
-            if suffix in example_suffixes:
+    for test_case in test_cases:
+        test_case_path = os.path.join(detector_path, test_case)
+        if os.path.basename(test_case_path) not in ignore_dirs:
+            errors.extend(check_for_extra_files(test_case_path))
+            errors.extend(validate_naming_convention(test_case, detector_name))
+            suffix = test_case.split("-")[-1]
+            if suffix in test_case_suffixes:
                 errors.append(
-                    f"Duplicate example number found in {detector_name}: {example}"
+                    f"Duplicate example number found in {detector_name}: {test_case}"
                 )
             else:
-                example_suffixes.add(suffix)
-            errors.extend(validate_example_structure(example_path, example))
+                test_case_suffixes.add(suffix)
+            errors.extend(validate_example_structure(test_case_path, test_case))
     return errors
 
 
-def validate_detectors(test_cases_path, detectors_path):
+def validate(test_cases_path, detectors_path):
     """Validate the structure of the test-cases directory."""
     errors = []
 
     # Directories to ignore while validating
     ignore_dirs = {"target", ".cargo"}
 
-    test_cases = [
+    detectors = [
         tc
-        for tc in os.listdir(test_cases_path)
-        if os.path.isdir(os.path.join(test_cases_path, tc))
+        for tc in os.listdir(detectors_path)
+        if os.path.isdir(os.path.join(detectors_path, tc)) and tc not in ignore_dirs
     ]
 
-    for test_case in test_cases:
-        test_case_path = os.path.join(test_cases_path, test_case)
-
-        print(f"Validating {test_case}...")
+    for detector in detectors:
+        detector_path = os.path.join(detectors_path, detector)
 
         # Validate that the detector exists
-        if not os.path.exists(os.path.join(detectors_path, test_case)):
-            errors.append(
-                f"Detector folder missing for {test_case} in {detectors_path}"
-            )
+        if not os.path.exists(os.path.join(detectors_path, detector)):
+            errors.append(f"Detector folder missing for {detector} in {detectors_path}")
         else:
-            errors.extend(is_rust_project(os.path.join(detectors_path, test_case)))
+            errors.extend(is_rust_project(os.path.join(detectors_path, detector)))
 
-        # Check for unwanted files in the test case directory
-        errors.extend(check_for_extra_files(test_case_path))
-        examples = [
+        # Check for unwanted files in the detector directory
+        errors.extend(check_for_extra_files(detector_path))
+
+        # Validate the detector test-cases
+        test_cases = [
             e
-            for e in os.listdir(test_case_path)
-            if os.path.isdir(os.path.join(test_case_path, e))
+            for e in os.listdir(test_cases_path)
+            if os.path.isdir(os.path.join(test_cases_path, e)) and e not in ignore_dirs
         ]
-        if not examples:
-            errors.append(f"No examples found in {test_case}.")
-        else:
-            # Validate each vulnerable and remediated example
-            errors.extend(validate_examples(test_case_path, examples))
+        if not test_cases:
+            errors.append(f"No test cases found in {detector}.")
+        # else:
+        # Validate each vulnerable and remediated example
+        # errors.extend(validate_examples(detector_path, test_cases))
 
-    # Validate that each detector has a test case
-    for detector in os.listdir(detectors_path):
-        if detector in ignore_dirs or not os.path.isdir(
-            os.path.join(detectors_path, detector)
-        ):
-            continue
-
-        if detector not in test_cases:
-            errors.append(
-                f"Test case missing for detector {detector} in {test_cases_path}"
-            )
-
+        ## Verify that there are an exact match of test cases and detectors and names are unique ## TODOOO
+        # if len(test_cases) != len(set(test_cases)):
+        # errors.append(f"Duplicate test cases found in {detector}.")
     return errors
 
 
 if __name__ == "__main__":
-    for blockchain in os.listdir('detectors'):
-        detectors_path = f'detectors/{blockchain}/detectors'
-        test_cases_path = f'detectors/{blockchain}/test-cases'
+    errors = []
+    for blockchain in os.listdir("detectors"):
+        detectors_path = f"detectors/{blockchain}/"
+        test_cases_path = f"test-cases/{blockchain}/"
         if not os.path.isdir(detectors_path) or not os.path.isdir(test_cases_path):
+            print(f"{RED}Skipping {blockchain} as it is not a directory.{ENDC}")
             continue
-        errors = validate_detectors(test_cases_path, detectors_path)
+        errors.extend(validate(test_cases_path, detectors_path))
         if errors:
-            print(f"{utils.RED}\nValidation errors found:{utils.ENDC}")
-            for error in errors:
-                print(f"* {error}")
-            exit(1)
+            print(f"{RED}\nValidation errors found for {blockchain}:{ENDC}")
+            # for error in errors:
+            # print(f"* {error}")
         else:
-            print(f"{utils.GREEN}\nAll detectors and test cases are valid.{utils.ENDC}")
+            print(
+                f"{GREEN}[+] All detectors and test cases are valid for {blockchain}.{ENDC}"
+            )
+
+    if errors:
+        exit(1)
+

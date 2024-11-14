@@ -1,5 +1,4 @@
 import subprocess
-import stat
 import os
 import json
 
