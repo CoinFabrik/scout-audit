@@ -129,7 +129,7 @@ impl Report {
         pdf::generate_pdf(path, self)
     }
 
-    fn write_single_json(file: &mut File, findings: &Vec<JsonFinding>) -> Result<()>{
+    fn write_single_json(file: &mut File, findings: &[JsonFinding]) -> Result<()>{
         let bytes = findings
             .iter()
             .map(|x| x.json().to_string().as_bytes().to_vec())
@@ -157,7 +157,7 @@ impl Report {
     pub fn write_out(
         &self,
         findings: &Vec<JsonFinding>,
-        raw_findings: &Vec<JsonFinding>,
+        raw_findings: &[JsonFinding],
         output_path: Option<PathBuf>,
         output_format: &OutputFormat,
     ) -> Result<Option<PathBuf>> {

@@ -16,8 +16,8 @@ impl Finding{
     }
     pub fn reason(&self) -> String{
         self.value.get("reason")
-            .and_then(|x| json_to_string_exact(x))
-            .unwrap_or_else(|| String::new())
+            .and_then(json_to_string_exact)
+            .unwrap_or_default()
     }
     fn code_helper(&self) -> Result<String, ()>{
         let message = self.value.get("message").ok_or(())?;
@@ -42,13 +42,12 @@ impl Finding{
         self.value
             .get("message")
             .and_then(|x| x.get("level"))
-            .and_then(|x| json_to_string_exact(x))
-            .and_then(|x| Some(x == "error"))
+            .and_then(json_to_string_exact).map(|x| x == "error")
             .unwrap_or(false)
     }
     pub fn package(&self) -> String{
         json_to_string_opt(self.value.get("target").and_then(|x| x.get("name")))
-            .unwrap_or_else(|| String::new())
+            .unwrap_or_default()
     }
     pub fn krate(&self) -> String{
         self.package().replace("_", "-")
@@ -62,22 +61,21 @@ impl Finding{
     pub fn spans(&self) -> Option<Value>{
         self.value
             .get("message")
-            .and_then(|x| x.get("spans"))
-            .and_then(|x| Some(x.clone()))
+            .and_then(|x| x.get("spans")).cloned()
     }
     pub fn message(&self) -> String{
         self.value
             .get("message")
             .and_then(|x| x.get("message"))
-            .and_then(|x| json_to_string_exact(x))
-            .unwrap_or_else(|| String::new())
+            .and_then(json_to_string_exact)
+            .unwrap_or_default()
     }
     pub fn rendered(&self) -> String{
         self.value
             .get("message")
             .and_then(|x| x.get("rendered"))
-            .and_then(|x| json_to_string_exact(x))
-            .unwrap_or_else(|| String::new())
+            .and_then(json_to_string_exact)
+            .unwrap_or_default()
     }
     pub fn children(&self) -> Option<Value>{
         Some(self.value

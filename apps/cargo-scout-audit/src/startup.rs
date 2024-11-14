@@ -278,7 +278,7 @@ fn get_crates(
 }
 
 fn split_findings(
-    findings: &Vec<Finding>,
+    findings: &[Finding],
     crates: &HashMap<String, bool>,
 ) -> (Vec<Finding>, Vec<Finding>) {
     let mut successful_findings = Vec::<Finding>::new();
@@ -434,14 +434,12 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     let raw_findings_string = temp_file_to_string(stdout)?;
     let raw_findings = output_to_json(&raw_findings_string)
         .into_iter()
-        .map(|x| Finding::new(x))
+        .map(Finding::new)
         .collect::<Vec<_>>();
     let crates = get_crates(&raw_findings, &project_info.packages);
     let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
     let findings = raw_findings
-        .iter()
-        .cloned()
-        .filter(|x| x.is_scout_finding(&detector_names))
+        .iter().filter(|&x| x.is_scout_finding(&detector_names)).cloned()
         .collect::<Vec<_>>();
 
     if crates.is_empty() && !inside_vscode {
@@ -474,39 +472,15 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
         (successful_findings, raw_findings_string)
     };
     // Generate report
-    do_report(
-        &console_findings,
-        raw_findings,
-        crates,
-        project_info,
-        detectors_info,
-        output_string_vscode,
-        opts,
-        inside_vscode,
-    )?;
-
-    Ok(console_findings)
-}
-
-fn do_report(
-    findings: &Vec<Finding>,
-    raw_findings: Vec<Finding>,
-    crates: HashMap<String, bool>,
-    project_info: ProjectInfo,
-    detectors_info: LintStore,
-    output_string: String,
-    opts: Scout,
-    inside_vscode: bool,
-) -> Result<()> {
     if inside_vscode {
         std::io::stdout()
             .lock()
-            .write_all(output_string.as_bytes())
+            .write_all(output_string_vscode.as_bytes())
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
-        crate::output::console::render_report(findings, &crates, &detectors_info)?;
+        crate::output::console::render_report(&console_findings, &crates, &detectors_info)?;
         generate_report(
-            findings,
+            &console_findings,
             raw_findings,
             &crates,
             project_info,
@@ -516,7 +490,7 @@ fn do_report(
         )?;
     }
 
-    Ok(())
+    Ok(console_findings)
 }
 
 #[tracing::instrument(name = "RUN DYLINT", skip_all)]
