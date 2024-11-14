@@ -15,7 +15,8 @@ commands = [
 def create_digest():
     digest_path = "apps/cargo-scout-audit/src/digest.rs"
     if not os.path.exists(digest_path):
-        with open(digest_path, 'w') as _:
+        with open(digest_path, 'w') as file:
+            file.write('\n')
             return
 
 if __name__ == "__main__":
