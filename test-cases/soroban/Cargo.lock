@@ -42,10 +42,66 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert-violation-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "assert-violation-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
+
+[[package]]
+name = "avoid-core-mem-forget-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "avoid-core-mem-forget-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "avoid-panic-error-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "avoid-panic-error-remediated-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "avoid-panic-error-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "avoid-panic-error-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
 
 [[package]]
 name = "avoid-unsafe-block-remediated-1"
