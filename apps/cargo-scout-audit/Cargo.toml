@@ -34,7 +34,6 @@ path = "src/main.rs"
 [dependencies]
 ansi_term = "=0.12.1"
 anyhow = "=1.0.86"
-axum = "=0.7.4"
 cargo = "=0.80.0"
 cargo_metadata = "=0.18.1"
 chrono = { version = "=0.4.38", features = ["serde"] }

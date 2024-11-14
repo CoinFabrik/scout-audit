@@ -7,7 +7,7 @@ extern crate rustc_span;
 
 use std::collections::{HashMap, HashSet};
 
-use clippy_wrappers::span_lint_and_help;
+use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
     analysis::{is_soroban_address, is_soroban_env, is_soroban_function, FunctionCallVisitor},
     declarations::{Severity, VulnerabilityClass},

@@ -71,7 +71,7 @@ impl EarlyLintPass for AvoidFormatString {
             if mac.path == sym!(format);
 
             then {
-                clippy_wrappers::span_lint_and_help(
+                clippy_utils::diagnostics::span_lint_and_help(
                     cx,
                     AVOID_FORMAT_STRING,
                     expr.span,

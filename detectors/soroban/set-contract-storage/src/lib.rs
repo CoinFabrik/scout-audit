@@ -6,7 +6,7 @@ extern crate rustc_span;
 
 use std::collections::{HashMap, HashSet};
 
-use clippy_wrappers::span_lint_and_help;
+use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
     analysis::FunctionCallVisitor,
     declarations::{Severity, VulnerabilityClass},

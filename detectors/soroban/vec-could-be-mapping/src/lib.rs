@@ -7,7 +7,7 @@ extern crate rustc_middle;
 extern crate rustc_span;
 extern crate rustc_type_ir;
 
-use clippy_wrappers::span_lint_and_help;
+use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
     analysis::{
         definition_to_string, expr_to_method_call, expr_to_path, get_node_type, get_type_string,
