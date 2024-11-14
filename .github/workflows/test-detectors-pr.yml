@@ -24,31 +24,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache cargo dependencies and tool versions
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo
-            ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
-          restore-keys: ${{ runner.os }}-tests-
-
-      - name: Install Rust stable
-        run: rustup install stable --profile minimal
-
-      - name: Update Rust Toolchain
-        run: rustup update
-
-      - name: Install Rust nightly
-        run: rustup install nightly --profile minimal
-
-      - name: Install dylint, dylint-link
-        run: cargo +nightly install cargo-dylint dylint-link
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.10"
 
       - name: Validate detectors
         run: python scripts/validate-detectors.py
@@ -74,6 +53,18 @@ jobs:
             ~/.rustup
           key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
           restore-keys: ${{ runner.os }}-tests-
+
+      - name: Install Rust stable
+        run: rustup install stable --profile minimal
+
+      - name: Update Rust Toolchain
+        run: rustup update
+
+      - name: Install Rust nightly
+        run: rustup install nightly --profile minimal
+
+      - name: Install dylint, dylint-link
+        run: cargo +nightly install cargo-dylint dylint-link
 
       - name: Install cargo-scout-audit
         working-directory: apps/cargo-scout-audit

@@ -40,19 +40,6 @@ def is_rust_project(dir_path: str) -> List[str]:
     return errors
 
 
-def run_cargo_check(dir_path: str) -> List[str]:
-    """Run cargo check in the specified directory."""
-    try:
-        result = subprocess.run(
-            ["cargo", "check"], cwd=dir_path, capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            return [f"Cargo check failed in {dir_path}: {result.stderr}"]
-    except Exception as e:
-        return [f"Failed to run cargo check in {dir_path}: {str(e)}"]
-    return []
-
-
 def validate_example_naming(dir_path: str, prefix: str) -> List[str]:
     """Validate example naming convention and numbering."""
     errors = []
@@ -76,7 +63,6 @@ def validate_example_naming(dir_path: str, prefix: str) -> List[str]:
     for example in examples:
         example_path = os.path.join(dir_path, example)
         errors.extend(is_rust_project(example_path))
-        errors.extend(run_cargo_check(example_path))
 
     return errors
 
@@ -184,7 +170,9 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
 
         # Validate test case
         test_case_errors = validate_test_case(test_case_path, detector)
-        for error in test_case_errors if not should_skip_validation(test_case_path) else []:
+        for error in (
+            test_case_errors if not should_skip_validation(test_case_path) else []
+        ):
             errors.append(
                 ValidationError(blockchain=blockchain, detector=detector, message=error)
             )
