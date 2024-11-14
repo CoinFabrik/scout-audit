@@ -122,7 +122,7 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
         walk_expr(&mut utf_storage, body.value);
 
         if utf_storage.from_ref {
-            clippy_wrappers::span_lint(
+            clippy_utils::diagnostics::span_lint(
                 cx,
                 UNRESTRICTED_TRANSFER_FROM,
                 utf_storage.span.unwrap(),

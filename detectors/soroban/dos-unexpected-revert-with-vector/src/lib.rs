@@ -6,7 +6,7 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_wrappers::span_lint;
+use clippy_utils::diagnostics::span_lint;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
