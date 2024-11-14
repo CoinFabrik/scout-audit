@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
-    use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
+    use cargo_scout_audit::{
+        startup::{run_scout, OutputFormat, Scout},
+        finding::Finding,
+    };
     use serde_json::Value;
     use std::collections::HashMap;
     use std::path::Path;
@@ -19,7 +22,7 @@ mod tests {
         contract_paths
     }
 
-    fn run_default_scout(contract_path: &Path) -> anyhow::Result<Vec<serde_json::Value>> {
+    fn run_default_scout(contract_path: &Path) -> anyhow::Result<Vec<Finding>> {
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
             ..Scout::default()
@@ -276,16 +279,8 @@ mod tests {
 
         let findings = result
             .iter()
-            .map(|value| {
-                value
-                    .get("code")
-                    .and_then(|value| value.get("code"))
-                    .and_then(|value| match value {
-                        Value::String(s) => Some(s.clone()),
-                        _ => None,
-                    })
-            })
-            .collect::<Vec<Option<String>>>();
+            .map(|value| value.code())
+            .collect::<Vec<_>>();
         let counts = count_strings(&findings);
         assert!(counts.is_some(), "Scout returned data in an invalid format");
         let counts = counts.unwrap();
@@ -298,18 +293,14 @@ mod tests {
         check_counts(&counts, &expected);
     }
 
-    fn count_strings(strings: &[Option<String>]) -> Option<HashMap<String, usize>> {
+    fn count_strings(strings: &[String]) -> Option<HashMap<String, usize>> {
         let mut ret = HashMap::<String, usize>::new();
         for i in strings.iter() {
-            match i {
-                Some(s) => {
-                    let value = ret.get(s).unwrap_or(&0) + 1;
-                    ret.insert(s.clone(), value);
-                }
-                None => {
-                    return None;
-                }
+            if i.is_empty(){
+                return None;
             }
+            let value = ret.get(i).unwrap_or(&0) + 1;
+            ret.insert(i.clone(), value);
         }
         Some(ret)
     }
