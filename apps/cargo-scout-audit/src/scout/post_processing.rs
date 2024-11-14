@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::finding::Finding;
+use std::collections::HashMap;
 
 struct FindingsCache {
     by_file: HashMap<String, FileFindings>,
@@ -27,7 +27,8 @@ fn parse_finding(finding: &Finding) -> Option<PostProcFinding> {
     let line_end = span.get("line_end")?.as_u64()?;
 
     let allowed_lint = if detector == "unnecessary_lint_allow" {
-        finding.children()?
+        finding
+            .children()?
             .get(0)?
             .get("message")?
             .as_str()

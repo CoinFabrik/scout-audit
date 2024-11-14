@@ -1,7 +1,4 @@
-use crate::{
-    utils::detectors_info::LintStore,
-    finding::Finding,
-};
+use crate::{finding::Finding, utils::detectors_info::LintStore};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -670,9 +667,9 @@ fn count_findings(
         }
         let detector = detector.unwrap();
         *match detector.severity.as_str() {
-            "Critical"    => &mut ret[0],
-            "Medium"      => &mut ret[1],
-            "Minor"       => &mut ret[2],
+            "Critical" => &mut ret[0],
+            "Medium" => &mut ret[1],
+            "Minor" => &mut ret[2],
             "Enhancement" => &mut ret[3],
             _ => &mut ignored,
         } += 1;

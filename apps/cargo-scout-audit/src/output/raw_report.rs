@@ -1,4 +1,5 @@
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
+use crate::finding::Finding as JsonFinding;
 use crate::scout::project_info::ProjectInfo;
 use crate::utils::detectors_info::LintStore;
 use crate::utils::json::json_to_string;
@@ -9,7 +10,6 @@ use std::{
     io::{BufReader, Read, Seek, SeekFrom},
     path::{Path, PathBuf},
 };
-use crate::finding::Finding as JsonFinding;
 
 pub struct RawReport;
 
@@ -106,17 +106,20 @@ fn process_findings(
 
 fn get_code(finding: &JsonFinding) -> Result<String> {
     let code = finding.code();
-    if code.is_empty(){
+    if code.is_empty() {
         None.with_context(|| "Category not found in finding structure")
-    }else{
+    } else {
         Ok(code)
     }
 }
 
 fn parse_file_details(finding: &JsonFinding, workspace_root: &Path) -> Result<FileDetails> {
-    let spans = finding.spans().with_context(|| "File name not found in finding structure")?;
+    let spans = finding
+        .spans()
+        .with_context(|| "File name not found in finding structure")?;
     let relative_path = json_to_string(
-        spans.get(0)
+        spans
+            .get(0)
             .and_then(|span| span.get("file_name"))
             .with_context(|| "File name not found in finding structure")?,
     );
@@ -166,11 +169,8 @@ fn parse_span(finding: &JsonFinding, file_name: &str) -> String {
 fn extract_code_snippet(file_path: &Path, finding: &JsonFinding) -> Result<String> {
     let no_spans = || "Span information not found in finding structure";
 
-    let spans = finding.spans()
-        .with_context(no_spans)?;
-    let first_span = spans
-        .get(0)
-        .with_context(no_spans)?;
+    let spans = finding.spans().with_context(no_spans)?;
+    let first_span = spans.get(0).with_context(no_spans)?;
 
     let byte_start = first_span
         .get("byte_start")
@@ -194,9 +194,9 @@ fn extract_code_snippet(file_path: &Path, finding: &JsonFinding) -> Result<Strin
 
 fn parse_error_message(finding: &JsonFinding) -> String {
     let message = finding.message();
-    if message.is_empty(){
+    if message.is_empty() {
         "Error message not available".to_string()
-    }else{
+    } else {
         message
     }
 }

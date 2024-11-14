@@ -5,8 +5,8 @@ extern crate rustc_span;
 
 mod conditional_checker;
 
-use clippy_utils::higher::If;
 use clippy_utils::diagnostics::span_lint;
+use clippy_utils::higher::If;
 use common::{
     analysis::{get_node_type_opt, FunctionCallVisitor},
     declarations::{Severity, VulnerabilityClass},

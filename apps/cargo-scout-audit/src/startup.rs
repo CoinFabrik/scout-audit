@@ -4,10 +4,10 @@ use crate::{
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
     digest,
+    finding::Finding,
     output::raw_report::RawReport,
     scout::{
-        blockchain::BlockChain, nightly_runner::run_scout_in_nightly,
-        project_info::ProjectInfo,
+        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
     utils::{
@@ -16,7 +16,6 @@ use crate::{
         detectors_info::{get_detectors_info, LintStore},
         print::{print_error, print_warning},
     },
-    finding::Finding,
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::{core::Verbosity, GlobalContext};
@@ -25,7 +24,10 @@ use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::{from_str, to_string_pretty, Value};
 use std::{
-    collections::{HashMap, HashSet}, fs, io::Write, path::PathBuf
+    collections::{HashMap, HashSet},
+    fs,
+    io::Write,
+    path::PathBuf,
 };
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
@@ -242,11 +244,11 @@ fn get_crates_from_output(output: &Vec<Finding>) -> HashMap<String, bool> {
 
     for finding in output {
         let reason = finding.reason();
-        if reason != "compiler-message"{
+        if reason != "compiler-message" {
             continue;
         }
         let name = finding.package();
-        if name.is_empty(){
+        if name.is_empty() {
             continue;
         }
         if let Some(previous) = ret.get(&name) {
@@ -286,7 +288,7 @@ fn split_findings(
 
     for finding in findings.iter() {
         let krate = finding.krate();
-        if krate.is_empty(){
+        if krate.is_empty() {
             continue;
         }
         if *crates.get(&krate).unwrap_or(&true) {
@@ -439,7 +441,9 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     let crates = get_crates(&raw_findings, &project_info.packages);
     let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
     let findings = raw_findings
-        .iter().filter(|&x| x.is_scout_finding(&detector_names)).cloned()
+        .iter()
+        .filter(|&x| x.is_scout_finding(&detector_names))
+        .cloned()
         .collect::<Vec<_>>();
 
     if crates.is_empty() && !inside_vscode {

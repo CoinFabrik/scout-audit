@@ -1,8 +1,8 @@
 use super::{html, markdown, pdf, utils};
+use crate::finding::Finding as JsonFinding;
 use crate::output::table::Table;
 use crate::startup::OutputFormat;
 use crate::utils::detectors_info::LintInfo;
-use crate::finding::Finding as JsonFinding;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -129,7 +129,7 @@ impl Report {
         pdf::generate_pdf(path, self)
     }
 
-    fn write_single_json(file: &mut File, findings: &[JsonFinding]) -> Result<()>{
+    fn write_single_json(file: &mut File, findings: &[JsonFinding]) -> Result<()> {
         let bytes = findings
             .iter()
             .map(|x| x.json().to_string().as_bytes().to_vec())
@@ -140,10 +140,10 @@ impl Report {
         w(b"[")?;
         let mut first = true;
         for finding in bytes.iter() {
-            let s: &[u8] = if first{
+            let s: &[u8] = if first {
                 first = false;
                 b"\n"
-            }else{
+            } else {
                 b",\n"
             };
             w(s)?;

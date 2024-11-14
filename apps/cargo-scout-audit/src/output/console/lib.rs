@@ -1,7 +1,7 @@
 use crate::{
+    finding::Finding,
     output::table::{construct_table, prepare_tera_for_table_render_console},
     utils::detectors_info::LintStore,
-    finding::Finding,
 };
 use std::collections::HashMap;
 use tera::{Context, Tera};

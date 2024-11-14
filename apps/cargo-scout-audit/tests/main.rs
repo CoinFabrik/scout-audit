@@ -2,14 +2,14 @@
 mod tests {
     use anyhow::{Context, Result};
     use cargo_scout_audit::{
-        startup::{run_scout, OutputFormat, Scout},
         finding::Finding,
+        startup::{run_scout, OutputFormat, Scout},
     };
     use std::collections::HashMap;
     use std::path::Path;
     use std::{fs, path::PathBuf};
 
-    fn get_detectors_dir(blockchain: &str) -> Result<PathBuf>{
+    fn get_detectors_dir(blockchain: &str) -> Result<PathBuf> {
         let mut ret = std::env::current_dir()?;
         ret.pop();
         ret.pop();
@@ -288,10 +288,7 @@ mod tests {
         assert!(result.is_ok(), "Scout should run");
         let result = result.unwrap();
 
-        let findings = result
-            .iter()
-            .map(|value| value.code())
-            .collect::<Vec<_>>();
+        let findings = result.iter().map(|value| value.code()).collect::<Vec<_>>();
         let counts = count_strings(&findings);
         assert!(counts.is_some(), "Scout returned data in an invalid format");
         let counts = counts.unwrap();
@@ -307,7 +304,7 @@ mod tests {
     fn count_strings(strings: &[String]) -> Option<HashMap<String, usize>> {
         let mut ret = HashMap::<String, usize>::new();
         for i in strings.iter() {
-            if i.is_empty(){
+            if i.is_empty() {
                 return None;
             }
             let value = ret.get(i).unwrap_or(&0) + 1;
@@ -333,7 +330,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_scout_soroban_coverage() -> Result<()>{
+        fn test_scout_soroban_coverage() -> Result<()> {
             // Given
             let scout_opts = Scout {
                 manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
