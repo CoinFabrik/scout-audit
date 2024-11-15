@@ -1,4 +1,6 @@
 #![no_std]
+#![allow(clippy::unnecessary_literal_unwrap)]
+
 use soroban_sdk::{contract, contracterror, contractimpl};
 
 #[contract]
@@ -13,9 +15,14 @@ pub enum Error {
 
 #[contractimpl]
 impl UnsafeUnwrap {
-    pub fn unwrap(n: u64) -> (u64, u64) {
+    pub fn unwrap(n: u64) -> u64 {
         let result = Self::non_zero_or_error(n);
-        (result.unwrap(), result.unwrap())
+        let known_value = Some(1u64);
+        let first_operation = known_value.unwrap().checked_mul(result.unwrap());
+        if let Some(first_operation) = first_operation {
+            return first_operation;
+        }
+        0
     }
 
     pub fn non_zero_or_error(n: u64) -> Result<u64, Error> {
@@ -52,7 +59,6 @@ mod tests {
         let result = UnsafeUnwrap::unwrap(test_value);
 
         // Then
-        assert_eq!(result.0, test_value);
-        assert_eq!(result.1, test_value);
+        assert_eq!(result, test_value);
     }
 }

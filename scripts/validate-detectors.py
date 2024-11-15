@@ -41,11 +41,16 @@ def is_rust_project(dir_path: str) -> List[str]:
 
 
 def validate_example_naming(dir_path: str, prefix: str) -> List[str]:
-    """Validate example naming convention and numbering."""
+    """Validate example naming convention, numbering, and structure."""
     errors = []
     pattern = re.compile(f"^{prefix}-\\d+$")
 
-    # Get all numbered examples
+    # Check all items in directory - everything must match the pattern
+    for item in os.listdir(dir_path):
+        if not pattern.match(item):
+            errors.append(f"Invalid item found in {dir_path}: {item}. Must match pattern '{prefix}-n'")
+
+    # Get all valid numbered examples
     examples = [d for d in os.listdir(dir_path) if pattern.match(d)]
     if not examples:
         return [f"No {prefix} examples found in {dir_path}"]
@@ -168,10 +173,12 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
             )
 
         # Validate test case
-        test_case_errors = validate_test_case(test_case_path, detector)
-        for error in (
-            test_case_errors if not should_skip_validation(test_case_path) else []
-        ):
+        test_case_errors = (
+            validate_test_case(test_case_path, detector)
+            if not should_skip_validation(test_case_path)
+            else []
+        )
+        for error in test_case_errors:
             errors.append(
                 ValidationError(blockchain=blockchain, detector=detector, message=error)
             )

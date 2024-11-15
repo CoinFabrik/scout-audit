@@ -28,10 +28,17 @@ impl UnsafeExpect {
     }
 
     // Returns the balance of a given account.
-    pub fn balance_of(env: Env, owner: Address) -> Option<i128> {
+    pub fn balance_of(env: Env, owner: Address) -> Option<(i128, i128)> {
         let state = Self::get_state(env);
-        let balance = state.balances.get(owner).expect("could not get balance");
-        Some(balance)
+        // For similarity with the remediated-example, we will return the same value twice.
+        let balances = (
+            state
+                .balances
+                .get(owner.clone())
+                .expect("could not get balance"),
+            state.balances.get(owner).expect("could not get balance"),
+        );
+        Some(balances)
     }
 
     /// Return the current state.
@@ -63,8 +70,9 @@ mod tests {
         client.set_balance(&contract_id, &TOTAL_SUPPLY);
 
         // Then
-        let balance = client.balance_of(&contract_id);
-        assert_eq!(TOTAL_SUPPLY, balance.unwrap());
+        let balances = client.balance_of(&contract_id).unwrap();
+        assert_eq!(TOTAL_SUPPLY, balances.0);
+        assert_eq!(TOTAL_SUPPLY, balances.1);
     }
 
     #[test]

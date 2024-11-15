@@ -449,15 +449,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dos-unbounded-operation-remediated-2"
-version = "0.1.0"
-dependencies = [
- "ink 5.0.0",
- "parity-scale-codec",
- "scale-info",
-]
-
-[[package]]
 name = "dos-unbounded-operation-vulnerable-1"
 version = "0.1.0"
 dependencies = [
@@ -1503,13 +1494,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "reentrancy-1-vulnerable-2"
-version = "0.1.0"
-dependencies = [
- "ink 5.0.0",
-]
-
-[[package]]
 name = "reentrancy-2-remediated-1"
 version = "0.1.0"
 dependencies = [
@@ -2098,15 +2082,6 @@ dependencies = [
 
 [[package]]
 name = "unused-return-enum-vulnerable-1"
-version = "0.1.0"
-dependencies = [
- "ink 5.0.0",
- "parity-scale-codec",
- "scale-info",
-]
-
-[[package]]
-name = "unused-return-enum-vulnerable-2"
 version = "0.1.0"
 dependencies = [
  "ink 5.0.0",

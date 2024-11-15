@@ -15,7 +15,13 @@ pub enum Error {
 impl UnsafeUnwrap {
     pub fn unwrap(n: u64) -> u64 {
         let result = Self::non_zero_or_error(n);
-        result.unwrap()
+        // Using result is unsafe
+        let first_operation = result.unwrap().checked_mul(2);
+        if first_operation.is_none() {
+            return 0;
+        }
+        // Using first_operation is now safe
+        first_operation.unwrap()
     }
 
     pub fn non_zero_or_error(n: u64) -> Result<u64, Error> {
@@ -52,6 +58,6 @@ mod tests {
         let result = UnsafeUnwrap::unwrap(test_value);
 
         // Then
-        assert_eq!(result, test_value);
+        assert_eq!(result, test_value * 2);
     }
 }

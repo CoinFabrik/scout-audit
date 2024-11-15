@@ -13,9 +13,9 @@ pub enum Error {
 
 #[contractimpl]
 impl UnsafeUnwrap {
-    pub fn unwrap(n: u64) -> u64 {
+    pub fn unwrap(n: u64) -> (u64, u64) {
         let result = Self::non_zero_or_error(n);
-        result.unwrap()
+        (result.unwrap(), result.unwrap())
     }
 
     pub fn non_zero_or_error(n: u64) -> Result<u64, Error> {
@@ -52,6 +52,7 @@ mod tests {
         let result = UnsafeUnwrap::unwrap(test_value);
 
         // Then
-        assert_eq!(result, test_value);
+        assert_eq!(result.0, test_value);
+        assert_eq!(result.1, test_value);
     }
 }
