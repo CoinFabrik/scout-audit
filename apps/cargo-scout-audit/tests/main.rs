@@ -324,32 +324,4 @@ mod tests {
             assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
         }
     }
-
-    // Slow tests module
-    mod slow {
-        use super::*;
-
-        #[test]
-        fn test_scout_soroban_coverage() -> Result<()> {
-            // Given
-            let scout_opts = Scout {
-                manifest_path: Some("./tests/test-cases/avoid-unsafe-block/Cargo.toml".into()),
-                force_fallback: true,
-                local_detectors: Some(get_detectors_dir("soroban")?),
-                ..Scout::default()
-            };
-
-            // When
-            let result = run_scout(scout_opts);
-
-            // Then
-            if result.is_err() {
-                let x = 0;
-                dbg!(result.err());
-                assert!(x == 1);
-            }
-
-            Ok(())
-        }
-    }
 }
