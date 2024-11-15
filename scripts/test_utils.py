@@ -13,9 +13,10 @@ from utils import (
     is_rust_project,
 )
 
+
 def run_tests(detector):
     errors = []
-    [blockchain, detector] = detector.split('/')
+    [blockchain, detector] = detector.split("/")
     directory = os.path.join("test-cases", blockchain, detector)
     print(f"\n{utils.GREEN}Performing tests in {directory}:{utils.ENDC}")
     if not os.path.exists(directory):
@@ -30,25 +31,26 @@ def run_tests(detector):
                 errors.append(root)
     return errors
 
+
 def convert_code(s):
-    return s.replace('_', '-')
+    return s.replace("_", "-")
+
 
 def run_unit_tests(root, blockchain):
     start_time = time.time()
     params = ["cargo", "test"]
-    if blockchain != 'ink':
-        #E2E tests don't work on Ink! test cases.
+    if blockchain != "ink":
+        # E2E tests don't work on Ink! test cases.
         params.append("--all-features")
-    returncode, stdout, _ = run_subprocess(params, root)
+    returncode, stdout, stderr = run_subprocess(params, root)
     print_results(
         returncode,
-        stdout,
+        stderr,
         "unit-test",
         root,
         time.time() - start_time,
     )
     return returncode != 0
-
 
 
 def run_integration_tests(blockchain, detector, root):
@@ -84,7 +86,7 @@ def run_integration_tests(blockchain, detector, root):
     detector_key = detector.replace("-", "_")
     short_message = detector_metadata.get(detector_key, {}).get("short_message")
 
-    _, tempPath = tempfile.mkstemp(None, f'scout_{os.getpid()}_')
+    _, tempPath = tempfile.mkstemp(None, f"scout_{os.getpid()}_")
 
     returncode = None
     stderr = None
@@ -106,16 +108,25 @@ def run_integration_tests(blockchain, detector, root):
     if returncode != 0:
         print(f"{utils.RED}Scout failed to run.\n{stderr}{utils.ENDC}")
         return False
-    
+
     should_fail = "vulnerable" in root
     did_fail = False
 
     with open(tempPath) as file:
-        detectors_triggered = {convert_code(json.loads(line.rstrip())['message']['code']['code']) for line in file}
+        detectors_triggered = {
+            convert_code(json.loads(line.rstrip())["message"]["code"]["code"])
+            for line in file
+        }
         did_fail = detector in detectors_triggered
         if should_fail != did_fail:
-            explanation = "it failed when it shouldn't have" if did_fail else "it didn't fail when it should have"
-            print(f"{utils.RED}Test case {root} didn't pass because {explanation}.\n{stderr}{utils.ENDC}")
+            explanation = (
+                "it failed when it shouldn't have"
+                if did_fail
+                else "it didn't fail when it should have"
+            )
+            print(
+                f"{utils.RED}Test case {root} didn't pass because {explanation}.\n{stderr}{utils.ENDC}"
+            )
             return False
 
     print_results(

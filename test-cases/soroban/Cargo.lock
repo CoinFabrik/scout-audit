@@ -97,13 +97,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "avoid-panic-error-vulnerable-2"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
 name = "avoid-unsafe-block-remediated-1"
 version = "0.1.0"
 dependencies = [
@@ -492,13 +485,6 @@ dependencies = [
 
 [[package]]
 name = "dos-unexpected-revert-with-vector-vulnerable-1"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "dos-unexpected-revert-with-vector-vulnerable-2"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
@@ -1920,20 +1906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "unsafe-expect-vulnerable-4"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "unsafe-expect-vulnerable-5"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
 name = "unsafe-map-get-remediated-1"
 version = "0.1.0"
 dependencies = [
@@ -2018,20 +1990,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "unsafe-unwrap-vulnerable-5"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "unsafe-unwrap-vulnerable-6"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
 name = "unused-return-enum-remediated-1"
 version = "0.1.0"
 dependencies = [
@@ -2047,13 +2005,6 @@ dependencies = [
 
 [[package]]
 name = "unused-return-enum-vulnerable-1"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "unused-return-enum-vulnerable-2"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",

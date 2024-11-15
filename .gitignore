@@ -17,10 +17,9 @@ target/
 # Ignore Cargo.lock of library files
 /detectors/**/Cargo.lock
 /test-cases/**/Cargo.lock
-scout-audit-internal/Cargo.lock
 
 #ignore test generated files
-/detectors/*/test-cases/**/test_snapshots/**
+/test-cases/**/test_snapshots/*
 
 # -------------------------------------------------------------------------------------
 # -------------------------------------- Misc -----------------------------------------
