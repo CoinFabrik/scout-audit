@@ -172,6 +172,7 @@ jobs:
             | Detector Validation     | ${{ (needs.validate-detectors.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Build on Ubuntu         | ${{ (steps.ubuntu_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Tests Execution         | ${{ (needs.test.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            
             The workflow has completed. Great job! 🚀
 
 #            | Build on macOS          | ${{ (steps.macos_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
