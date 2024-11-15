@@ -42,10 +42,10 @@ def run_unit_tests(root, blockchain):
     if blockchain != "ink":
         # E2E tests don't work on Ink! test cases.
         params.append("--all-features")
-    returncode, stdout, _ = run_subprocess(params, root)
+    returncode, stdout, stderr = run_subprocess(params, root)
     print_results(
         returncode,
-        stdout,
+        stderr,
         "unit-test",
         root,
         time.time() - start_time,
@@ -113,7 +113,10 @@ def run_integration_tests(blockchain, detector, root):
     did_fail = False
 
     with open(tempPath) as file:
-        detectors_triggered = {convert_code(json.loads(line.rstrip())['message']['code']['code']) for line in file}
+        detectors_triggered = {
+            convert_code(json.loads(line.rstrip())["message"]["code"]["code"])
+            for line in file
+        }
         did_fail = detector in detectors_triggered
         if should_fail != did_fail:
             explanation = (
