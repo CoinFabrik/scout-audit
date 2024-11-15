@@ -40,7 +40,6 @@ jobs:
         os:
           - ubuntu-latest
     #          - macos-latest
-    #          - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -84,22 +83,14 @@ jobs:
     name: Prepare Detector Matrix
     runs-on: ubuntu-latest
     needs: [build, validate-detectors]
-    strategy:
-      matrix:
-        blockchain:
-          - ink
-          - soroban
-          - substrate-pallets
     outputs:
-      ink: ${{ steps.set-matrix.outputs.ink }}
-      soroban: ${{ steps.set-matrix.outputs.soroban }}
-      substrate: ${{ steps.set-matrix.outputs.substrate }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - id: set-matrix
-        run: echo "${{ matrix.blockchain }}=$(python3 scripts/find-test-cases.py --blockchain=${{ matrix.blockchain }})" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(python3 scripts/find-test-cases.py)" >> $GITHUB_OUTPUT
 
   test:
     name: Test detector
@@ -107,17 +98,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - blockchain: ink
-            detectors: ${{fromJson(needs.prepare-detector-matrix.outputs.ink)}}
-          - blockchain: soroban
-            detectors: ${{fromJson(needs.prepare-detector-matrix.outputs.soroban)}}
-          - blockchain: substrate
-            detectors: ${{fromJson(needs.prepare-detector-matrix.outputs.substrate)}}
         os:
           - ubuntu-latest
         #          - macos-latest
         #          - windows-latest
+        detector: ${{fromJson(needs.prepare-detector-matrix.outputs.matrix)}}
     runs-on: ${{ matrix.os }}
     outputs:
       status: ${{ job.status }}
@@ -140,7 +125,7 @@ jobs:
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Run unit and integration tests
-        run: python scripts/run-tests.py --detectors=${{ matrix.detectors }}
+        run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
   comment-on-pr:
     name: Comment on PR
@@ -182,13 +167,11 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             🎉 **Test Detectors Workflow Summary** 🎉
-
             | Component               | Status |
             |-------------------------|--------|
             | Detector Validation     | ${{ (needs.validate-detectors.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Build on Ubuntu         | ${{ (steps.ubuntu_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Tests Execution         | ${{ (needs.test.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
-
             The workflow has completed. Great job! 🚀
 
 #            | Build on macOS          | ${{ (steps.macos_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
