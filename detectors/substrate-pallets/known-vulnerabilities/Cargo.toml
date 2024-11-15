@@ -1,0 +1,18 @@
+[package]
+edition = "2021"
+name = "known-vulnerabilities"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cargo_metadata = { version = "=0.18.1" }
+clippy_utils = { workspace = true }
+common = { workspace = true }
+dylint_internal = { workspace = true }
+dylint_linting = { workspace = true }
+rustsec = { version = "=0.30.0" }
+
+[package.metadata.rust-analyzer]
+rustc_private = true

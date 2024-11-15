@@ -1,0 +1,13 @@
+{
+  "rust-analyzer.rustfmt.extraArgs": ["+nightly"],
+  "rust-analyzer.showUnlinkedFileNotification": false,
+  "rust-analyzer.linkedProjects": [
+    "apps/cargo-scout-audit/Cargo.toml",
+    "detectors/ink/Cargo.toml",
+    "detectors/soroban/Cargo.toml",
+    "detectors/substrate-pallets/Cargo.toml",
+    "test-cases/ink/Cargo.toml",
+    "test-cases/soroban/Cargo.toml",
+    "test-cases/substrate-pallets/Cargo.toml"
+  ]
+}

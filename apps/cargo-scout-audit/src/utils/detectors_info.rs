@@ -1,7 +1,9 @@
 use anyhow::{anyhow, Result};
 use libloading::{Library, Symbol};
 use serde::Serialize;
-use std::{collections::HashMap, ffi::CString, path::PathBuf};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::{ffi::CString, path::PathBuf};
 
 #[derive(Default, Debug, Clone)]
 pub struct RawLintInfo {
@@ -14,7 +16,7 @@ pub struct RawLintInfo {
     pub vulnerability_class: CString,
 }
 
-#[derive(Default, Debug, Clone, Serialize)]
+#[derive(Default, Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct LintInfo {
     pub id: String,
     pub name: String,
@@ -23,6 +25,31 @@ pub struct LintInfo {
     pub severity: String,
     pub help: String,
     pub vulnerability_class: String,
+}
+
+#[derive(Default, Serialize, Debug)]
+pub struct LintStore {
+    lints: HashMap<String, LintInfo>,
+}
+
+impl LintStore {
+    pub fn new() -> Self {
+        Self {
+            lints: HashMap::new(),
+        }
+    }
+
+    pub fn find_by_id(&self, id: &str) -> Option<&LintInfo> {
+        self.lints.get(id)
+    }
+
+    pub fn insert(&mut self, lint: LintInfo) -> Option<LintInfo> {
+        self.lints.insert(lint.id.clone(), lint)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &LintInfo> {
+        self.lints.values()
+    }
 }
 
 impl TryFrom<&RawLintInfo> for LintInfo {
@@ -41,16 +68,23 @@ impl TryFrom<&RawLintInfo> for LintInfo {
     }
 }
 
-type LintInfoFunc = unsafe fn(info: &mut RawLintInfo);
+type LintInfoFunc = unsafe fn() -> *mut RawLintInfo;
+type FreeLintInfoFunc = unsafe fn(*mut RawLintInfo);
 
 #[tracing::instrument(level = "debug", skip_all)]
-pub fn get_detectors_info(detectors_paths: &[PathBuf]) -> Result<HashMap<String, LintInfo>> {
-    let mut lint_store = HashMap::new();
+pub fn get_detectors_info(detectors_paths: &[PathBuf]) -> Result<LintStore> {
+    let mut lint_store = LintStore::new();
 
     for detector_path in detectors_paths {
         let lib = unsafe {
             Library::new(detector_path)
                 .map_err(|e| anyhow!("Failed to load library {}: {}", detector_path.display(), e))?
+        };
+        let lib = Arc::new(lib);
+
+        let free_lint_info: Symbol<FreeLintInfoFunc> = unsafe {
+            lib.get(b"free_lint_info")
+                .map_err(|e| anyhow!("Failed to get free_lint_info function: {}", e))?
         };
 
         let lint_info_func: Symbol<LintInfoFunc> = unsafe {
@@ -63,18 +97,30 @@ pub fn get_detectors_info(detectors_paths: &[PathBuf]) -> Result<HashMap<String,
             })?
         };
 
-        let mut raw_info = RawLintInfo::default();
-        unsafe { lint_info_func(&mut raw_info) };
+        // Call the lint_info function to get the CLintInfo pointer
+        let raw_info_ptr = unsafe { lint_info_func() };
+        if raw_info_ptr.is_null() {
+            return Err(anyhow!(
+                "lint_info function from {} returned null pointer",
+                detector_path.display()
+            ));
+        }
 
-        let lint_info = LintInfo::try_from(&raw_info).map_err(|e| {
+        // Convert the raw pointer to a reference and create SerializableLintInfo
+        let raw_info = unsafe { &*raw_info_ptr };
+        let lint_info = LintInfo::try_from(raw_info).map_err(|e| {
+            unsafe { free_lint_info(raw_info_ptr) };
             anyhow!(
-                "Failed to convert RawLintInfo from {}: {}",
+                "Failed to convert CLintInfo from {}: {}",
                 detector_path.display(),
                 e
             )
         })?;
 
-        lint_store.insert(lint_info.id.clone(), lint_info);
+        // Free the raw_info_ptr after successful conversion
+        unsafe { free_lint_info(raw_info_ptr) };
+
+        lint_store.insert(lint_info);
     }
 
     Ok(lint_store)

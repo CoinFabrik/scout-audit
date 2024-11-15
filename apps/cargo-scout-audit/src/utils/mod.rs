@@ -4,5 +4,6 @@ pub mod config;
 pub mod detectors;
 pub mod detectors_info;
 pub mod env;
+pub mod json;
 pub mod print;
 pub mod telemetry;
