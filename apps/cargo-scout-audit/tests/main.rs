@@ -18,16 +18,16 @@ mod tests {
         Ok(ret)
     }
 
-    fn get_test_cases() -> Vec<PathBuf> {
+    fn get_test_cases() -> Vec<(PathBuf, String)> {
         let contracts_dir = PathBuf::from("tests").join("contracts");
-        let mut contract_paths: Vec<PathBuf> = fs::read_dir(contracts_dir)
+        let mut contract_paths: Vec<(PathBuf, String)> = fs::read_dir(contracts_dir)
             .expect("Should read contracts directory")
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.path().is_dir())
-            .map(|entry| entry.path().join("Cargo.toml"))
-            .filter(|path| path.exists())
+            .map(|entry| (entry.path().join("Cargo.toml"), entry.file_name().to_str().unwrap().to_string()))
+            .filter(|(path, name)| path.exists())
             .collect();
-        contract_paths.sort();
+        contract_paths.sort_by_key(|x| x.0.clone());
         contract_paths
     }
 
@@ -44,13 +44,13 @@ mod tests {
     fn test_default_scout_first_contract() {
         // Given
         let contract_paths = get_test_cases();
-        let contract_path = contract_paths.first().unwrap();
+        for (contract_path, chain) in contract_paths{
+            // When
+            let result = run_default_scout(&contract_path, &chain);
 
-        // When
-        let result = run_default_scout(contract_path, "ink");
-
-        // Then
-        assert!(result.is_ok());
+            // Then
+            assert!(result.is_ok());
+        }
     }
 
     #[test]
@@ -122,7 +122,7 @@ mod tests {
     fn test_scout_with_filter() {
         // Given
         let contract_paths = get_test_cases();
-        let contract_path = contract_paths.first().unwrap();
+        let (contract_path, chain) = contract_paths.first().unwrap();
 
         // When
         let result = run_default_scout(contract_path, "ink");
@@ -140,10 +140,10 @@ mod tests {
     fn test_scout_list_detectors() {
         // Given
         let contract_paths = get_test_cases();
-        let contract_path = contract_paths.first().unwrap();
+        let (contract_path, chain) = contract_paths.first().unwrap();
 
         // When
-        let result = run_default_scout(contract_path, "soroban");
+        let result = run_default_scout(contract_path, &chain);
 
         // Then
         assert!(result.is_ok());
@@ -197,7 +197,7 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
-        let contract_path = get_soroban_contract();
+        let contract_path = get_soroban_contract().0;
 
         // Given
         let scout_opts = Scout {
@@ -259,30 +259,30 @@ mod tests {
         Ok(())
     }
 
-    fn get_x_contract(x: &str) -> PathBuf {
+    fn get_x_contract(x: &str) -> (PathBuf, String) {
         get_test_cases()
             .iter()
-            .find(|y| y.to_string_lossy().contains(x))
+            .find(|y| y.1 == x)
             .unwrap()
             .clone()
     }
 
-    fn get_soroban_contract() -> PathBuf {
+    fn get_soroban_contract() -> (PathBuf, String) {
         get_x_contract("soroban")
     }
 
     #[allow(dead_code)]
-    fn get_ink_contract() -> PathBuf {
+    fn get_ink_contract() -> (PathBuf, String) {
         get_x_contract("ink")
     }
 
     #[test]
     fn test_finding_presence() {
         // Given
-        let contract_path = get_soroban_contract();
+        let (contract_path, chain) = get_soroban_contract();
 
         // When
-        let result = run_default_scout(&contract_path, "soroban");
+        let result = run_default_scout(&contract_path, &chain);
 
         // Then
         assert!(result.is_ok(), "Scout should run");
