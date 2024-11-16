@@ -1,5 +1,5 @@
 pub mod builder;
 pub mod configuration;
-mod library;
+pub mod library;
 
-mod source;
+pub mod source;

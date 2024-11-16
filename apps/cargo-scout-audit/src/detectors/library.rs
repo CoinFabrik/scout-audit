@@ -17,6 +17,15 @@ pub struct Library {
     pub metadata: Metadata,
 }
 
+pub fn get_library_location(target_dir: &PathBuf, toolchain: Option<&str>) -> PathBuf{
+    let ret = target_dir
+        .join("scout/libraries");
+    match toolchain{
+        Some(toolchain) => ret.join(toolchain),
+        None => ret,
+    }
+}
+
 impl Library {
     /// Creates a new instance of `Library`.
     pub fn new(root: PathBuf, toolchain: String, target_dir: PathBuf, metadata: Metadata) -> Self {
@@ -39,13 +48,7 @@ impl Library {
             .success()?;
 
         // Verify all libraries were built
-        let compiled_library_paths = self
-            .metadata
-            .packages
-            .clone()
-            .into_iter()
-            .map(|p| self.path(p.name))
-            .collect_vec();
+        let compiled_library_paths = Self::get_compiled_library_paths(&self.metadata, Some(&self.toolchain));
 
         let unexistant_libraries = compiled_library_paths
             .clone()
@@ -66,23 +69,40 @@ impl Library {
     }
 
     pub fn target_directory(&self) -> PathBuf {
-        self.target_dir
-            .join("scout/libraries")
-            .join(&self.toolchain)
+        get_library_location(&self.target_dir, Some(&self.toolchain))
     }
 
-    pub fn path(&self, library_name: String) -> PathBuf {
-        self.metadata
+    pub fn get_compiled_library_paths(metadata: &Metadata, toolchain: Option<&str>) -> Vec<PathBuf>{
+        metadata
+            .packages
+            .clone()
+            .into_iter()
+            .map(|p| Self::path(metadata, p.name, toolchain))
+            .collect_vec()
+    }
+
+    fn path(metadata: &Metadata, library_name: String, toolchain: Option<&str>) -> PathBuf {
+        let filename = if let Some(toolchain) = toolchain{
+            format!(
+                "{}{}@{}{}",
+                consts::DLL_PREFIX,
+                library_name.replace('-', "_"),
+                toolchain,
+                consts::DLL_SUFFIX
+            )
+        }else{
+            format!(
+                "{}{}{}",
+                consts::DLL_PREFIX,
+                library_name.replace('-', "_"),
+                consts::DLL_SUFFIX
+            )
+        };
+        metadata
             .target_directory
             .clone()
             .into_std_path_buf()
             .join("release")
-            .join(format!(
-                "{}{}@{}{}",
-                consts::DLL_PREFIX,
-                library_name.replace('-', "_"),
-                self.toolchain,
-                consts::DLL_SUFFIX
-            ))
+            .join(filename)
     }
 }
