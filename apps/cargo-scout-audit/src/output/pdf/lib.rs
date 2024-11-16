@@ -1,9 +1,6 @@
 use super::generator::{generate_body, generate_header, generate_summary};
+use crate::output::pdf::external::{build_library, call};
 use crate::output::report::Report;
-use crate::output::pdf::external::{
-    build_library,
-    call,
-};
 use anyhow::{Context, Result};
 use std::io::Write;
 use std::path::Path;
@@ -41,9 +38,9 @@ pub fn generate_pdf(path: &Path, report: &Report) -> Result<()> {
         .with_context(|| "Failed to get output path for PDF")?;
     let result = call(&library, &url, output_path)?;
     let _ = temp_html.close();
-    if result{
+    if result {
         Ok(())
-    }else{
+    } else {
         None.with_context(|| "PDF generation failed")
     }
 }

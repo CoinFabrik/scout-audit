@@ -1,8 +1,10 @@
-use std::{env::consts, path::PathBuf};
-
 use anyhow::Result;
 use cargo_metadata::Metadata;
 use itertools::Itertools;
+use std::{
+    env::consts,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     scout::blockchain::BlockChain,
@@ -17,10 +19,9 @@ pub struct Library {
     pub metadata: Metadata,
 }
 
-pub fn get_library_location(target_dir: &PathBuf, toolchain: Option<&str>) -> PathBuf{
-    let ret = target_dir
-        .join("scout/libraries");
-    match toolchain{
+pub fn get_library_location(target_dir: &Path, toolchain: Option<&str>) -> PathBuf {
+    let ret = target_dir.join("scout/libraries");
+    match toolchain {
         Some(toolchain) => ret.join(toolchain),
         None => ret,
     }
@@ -48,7 +49,8 @@ impl Library {
             .success()?;
 
         // Verify all libraries were built
-        let compiled_library_paths = Self::get_compiled_library_paths(&self.metadata, Some(&self.toolchain));
+        let compiled_library_paths =
+            Self::get_compiled_library_paths(&self.metadata, Some(&self.toolchain));
 
         let unexistant_libraries = compiled_library_paths
             .clone()
@@ -72,7 +74,10 @@ impl Library {
         get_library_location(&self.target_dir, Some(&self.toolchain))
     }
 
-    pub fn get_compiled_library_paths(metadata: &Metadata, toolchain: Option<&str>) -> Vec<PathBuf>{
+    pub fn get_compiled_library_paths(
+        metadata: &Metadata,
+        toolchain: Option<&str>,
+    ) -> Vec<PathBuf> {
         metadata
             .packages
             .clone()
@@ -82,7 +87,7 @@ impl Library {
     }
 
     fn path(metadata: &Metadata, library_name: String, toolchain: Option<&str>) -> PathBuf {
-        let filename = if let Some(toolchain) = toolchain{
+        let filename = if let Some(toolchain) = toolchain {
             format!(
                 "{}{}@{}{}",
                 consts::DLL_PREFIX,
@@ -90,7 +95,7 @@ impl Library {
                 toolchain,
                 consts::DLL_SUFFIX
             )
-        }else{
+        } else {
             format!(
                 "{}{}{}",
                 consts::DLL_PREFIX,

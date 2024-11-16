@@ -30,7 +30,7 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: &Bloc
             ))
             .expect("Could not write to stderr");
     }
-    call_cargo(&[subcommand], quiet, Some(&toolchain))
+    call_cargo(&[subcommand], quiet, Some(toolchain))
 }
 
 pub fn call_cargo(subcommand: &[&str], quiet: bool, toolchain: Option<&str>) -> Command {
@@ -48,11 +48,11 @@ pub fn call_cargo(subcommand: &[&str], quiet: bool, toolchain: Option<&str>) -> 
         .unwrap();
         command.envs(vec![("PATH", new_path)]);
     }
-    if let Some(toolchain) = toolchain{
+    if let Some(toolchain) = toolchain {
         let mut temp = vec![toolchain];
         temp.extend_from_slice(subcommand);
         command.args(&temp);
-    }else{
+    } else {
         command.args(subcommand);
     }
     if quiet {
