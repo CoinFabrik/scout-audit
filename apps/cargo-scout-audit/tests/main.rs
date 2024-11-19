@@ -161,7 +161,7 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
-        let (contract_path, chain) = get_test_cases().iter().first().unwrap();
+        let (contract_path, chain) = get_test_cases().first().unwrap().clone();
 
         // Given
         let scout_opts = Scout {
