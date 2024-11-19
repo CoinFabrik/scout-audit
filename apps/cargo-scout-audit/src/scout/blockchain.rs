@@ -7,9 +7,12 @@ use strum_macros::{Display, EnumIter, EnumString};
 
 #[derive(Debug, Copy, Clone, EnumIter, Display, EnumString)]
 pub enum BlockChain {
+    #[strum(serialize = "ink")]
     Ink,
+    #[strum(serialize = "soroban")]
     Soroban,
-    SubstratePallet,
+    #[strum(serialize = "substrate-pallets")]
+    SubstratePallets,
 }
 
 impl BlockChain {
@@ -21,7 +24,7 @@ impl BlockChain {
         match self {
             BlockChain::Ink => "detectors/ink",
             BlockChain::Soroban => "detectors/soroban",
-            BlockChain::SubstratePallet => "detectors/substrate-pallets",
+            BlockChain::SubstratePallets => "detectors/substrate-pallets",
         }
     }
 
@@ -29,7 +32,7 @@ impl BlockChain {
         match self {
             BlockChain::Ink => TOOLCHAIN,
             BlockChain::Soroban => TOOLCHAIN,
-            BlockChain::SubstratePallet => TOOLCHAIN,
+            BlockChain::SubstratePallets => TOOLCHAIN,
         }
     }
 
@@ -55,7 +58,7 @@ impl BlockChain {
         } else if immediate_dependencies.contains("ink") {
             Ok(BlockChain::Ink)
         } else if immediate_dependencies.contains("frame-system") {
-            Ok(BlockChain::SubstratePallet)
+            Ok(BlockChain::SubstratePallets)
         } else {
             let supported_blockchains = BlockChain::variants().join(", ");
             Err(anyhow!("Could not find any supported blockchain dependency in the Cargo.toml file.\n   Supported blockchains include:\n   - {}\n",
