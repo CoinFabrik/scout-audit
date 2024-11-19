@@ -4,7 +4,11 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use current_platform::CURRENT_PLATFORM;
 use std::path::PathBuf;
 
-use super::{configuration::DetectorsConfiguration, library::Library, source::download_git_repo};
+use super::{
+    configuration::{DetectorConfig, DetectorsConfiguration},
+    library::Library,
+    source::download_git_repo,
+};
 use crate::scout::blockchain::BlockChain;
 
 #[derive(Debug)]
@@ -34,31 +38,38 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     pub fn build(&self, bc: &BlockChain, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
-        let library = self.get_library()?;
-        let library_paths = library.build(bc, self.verbose)?;
-        self.filter_detectors(&library_paths, used_detectors)
+        let mut all_library_paths = Vec::new();
+
+        for config in self.detectors_config.iter_configs() {
+            let library = self.get_library(config)?;
+            let library_paths = library.build(bc, self.verbose)?;
+            all_library_paths.extend(library_paths);
+        }
+
+        self.filter_detectors(&all_library_paths, used_detectors)
     }
 
     pub fn get_detector_names(&self) -> Result<Vec<String>> {
-        let library = self.get_library()?;
-        Ok(library
-            .metadata
-            .packages
-            .into_iter()
-            .map(|p| p.name)
-            .collect())
+        let mut all_names = Vec::new();
+
+        for config in self.detectors_config.iter_configs() {
+            let library = self.get_library(config)?;
+            all_names.extend(library.metadata.packages.into_iter().map(|p| p.name));
+        }
+
+        Ok(all_names)
     }
 
-    fn get_library(&self) -> Result<Library> {
-        let detector_root = self.get_detector()?;
-        let workspace_path = self.parse_library_path(&detector_root)?;
+    fn get_library(&self, config: &DetectorConfig) -> Result<Library> {
+        let detector_root = self.get_detector(config)?;
+        let workspace_path = self.parse_library_path(config, &detector_root)?;
         self.create_library(workspace_path)
     }
 
-    fn get_detector(&self) -> Result<PathBuf> {
-        let source_id = self.detectors_config.dependency.source_id();
+    fn get_detector(&self, config: &DetectorConfig) -> Result<PathBuf> {
+        let source_id = config.dependency.source_id();
         if source_id.is_git() {
-            download_git_repo(&self.detectors_config.dependency, self.cargo_config)
+            download_git_repo(&config.dependency, self.cargo_config)
         } else if source_id.is_path() {
             source_id.local_path().map(PathBuf::from).ok_or_else(|| {
                 anyhow::anyhow!("Path source should have a local path: {}", source_id)
@@ -68,9 +79,12 @@ impl<'a> DetectorBuilder<'a> {
         }
     }
 
-    fn parse_library_path(&self, dependency_root: &PathBuf) -> Result<PathBuf> {
-        let path = self
-            .detectors_config
+    fn parse_library_path(
+        &self,
+        config: &DetectorConfig,
+        dependency_root: &PathBuf,
+    ) -> Result<PathBuf> {
+        let path = config
             .path
             .as_ref()
             .map(|p| dependency_root.join(p))

@@ -27,7 +27,7 @@ def run_tests(detector):
         if is_rust_project(root):
             if run_unit_tests(root, blockchain):
                 errors.append(root)
-            if not run_integration_tests(blockchain, detector, root):
+            if not run_integration_tests(detector, root):
                 errors.append(root)
     return errors
 
@@ -53,10 +53,10 @@ def run_unit_tests(root, blockchain):
     return returncode != 0
 
 
-def run_integration_tests(blockchain, detector, root):
+def run_integration_tests(detector, root):
     start_time = time.time()
 
-    local_detectors = os.path.join(os.getcwd(), "detectors", blockchain)
+    local_detectors = os.path.join(os.getcwd(), "detectors")
 
     returncode, stdout, _ = run_subprocess(
         [

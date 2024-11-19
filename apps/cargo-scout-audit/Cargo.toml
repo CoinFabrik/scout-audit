@@ -2,16 +2,14 @@
 [package]
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
+    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
     "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
+    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
+    "Federico Pinho <federico.pinho@coinfabrik.com>",
     "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
     "Víctor M. González <victor.gonzalez@coinfabrik.com>",
-    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
-    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
-    "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
 ]
-
-
 
 build = "build.rs"
 categories = ["command-line-utilities", "development-tools"]
@@ -22,7 +20,7 @@ license = "MIT"
 name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.2.21"
+version = "0.2.22"
 
 [lib]
 path = "src/lib.rs"
@@ -59,7 +57,6 @@ strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
 terminal_color_builder = "=0.1.1"
-tokio = { version = "=1.39.2", features = ["full"] }
 toml = "=0.8.15"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"
@@ -73,4 +70,4 @@ sha2 = "0.10.8"
 walkdir = "2.5.0"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "=0.58.0", features = [ "Win32_System_LibraryLoader" ] }
+windows = { version = "=0.58.0", features = ["Win32_System_LibraryLoader"] }

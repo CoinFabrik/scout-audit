@@ -28,8 +28,9 @@ def simple_runner(name, commands, opts):
         retcode, out, err = run_subprocess(cmd.split(" "), wd)
         if retcode != 0:
             if show_err:
-                print(f"{RED}Error running {name} on {wd}:")
-                print(f"{err}{ENDC}")
+                print(f"{RED}Error running {name} on {wd}:{ENDC}")
+                print(f"STDOUT: {out}{ENDC}")
+                print(f"STDERR: {err}{ENDC}")
             else:
                 print(f"{RED}Error running {name} on {wd}{ENDC}")
             if fail_fast:
