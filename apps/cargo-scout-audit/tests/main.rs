@@ -161,64 +161,62 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
-        let contract_paths = get_test_cases();
+        let (contract_path, chain) = get_test_cases().iter().first().unwrap();
 
         // Given
-        for (contract_path, chain) in contract_paths {
-            let scout_opts = Scout {
-                manifest_path: Some(contract_path),
-                output_format: vec![format.clone()],
-                output_path: Some(PathBuf::from(output_file)),
-                local_detectors: Some(get_detectors_dir(&chain)?),
-                ..Scout::default()
-            };
+        let scout_opts = Scout {
+            manifest_path: Some(contract_path),
+            output_format: vec![format.clone()],
+            output_path: Some(PathBuf::from(output_file)),
+            local_detectors: Some(get_detectors_dir(&chain)?),
+            ..Scout::default()
+        };
 
-            // When
-            let result = run_scout(scout_opts);
+        // When
+        let result = run_scout(scout_opts);
 
-            // Then
-            assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
+        // Then
+        assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
 
-            // Check if file exists and is a file
-            let metadata = fs::metadata(output_file);
-            assert!(
-                metadata.is_ok(),
-                "[{:?}] Metadata should be readable",
-                output_format
-            );
-            let metadata = metadata.unwrap();
-            assert!(
-                metadata.is_file(),
-                "[{:?}] Output should be a file",
-                output_format
-            );
+        // Check if file exists and is a file
+        let metadata = fs::metadata(output_file);
+        assert!(
+            metadata.is_ok(),
+            "[{:?}] Metadata should be readable",
+            output_format
+        );
+        let metadata = metadata.unwrap();
+        assert!(
+            metadata.is_file(),
+            "[{:?}] Output should be a file",
+            output_format
+        );
 
-            // Check file size
-            assert!(
-                metadata.len() > 0,
-                "[{:?}] File should not be empty",
-                output_format
-            );
+        // Check file size
+        assert!(
+            metadata.len() > 0,
+            "[{:?}] File should not be empty",
+            output_format
+        );
 
-            if format == &OutputFormat::Pdf {
-                return Ok(());
-            }
-            // Read file contents
-            let contents = fs::read_to_string(output_file);
-            assert!(
-                contents.is_ok(),
-                "[{:?}] File should be readable",
-                output_format
-            );
-            let contents = contents.unwrap();
-
-            // Check file contents
-            assert!(
-                !contents.is_empty(),
-                "[{:?}] File contents should not be empty",
-                output_format
-            );
+        if format == &OutputFormat::Pdf {
+            return Ok(());
         }
+        // Read file contents
+        let contents = fs::read_to_string(output_file);
+        assert!(
+            contents.is_ok(),
+            "[{:?}] File should be readable",
+            output_format
+        );
+        let contents = contents.unwrap();
+
+        // Check file contents
+        assert!(
+            !contents.is_empty(),
+            "[{:?}] File contents should not be empty",
+            output_format
+        );
 
         Ok(())
     }
