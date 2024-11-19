@@ -2,44 +2,40 @@
 mod tests {
     use anyhow::{Context, Result};
     use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
+    use lazy_static::lazy_static;
     use std::{collections::HashMap, fs, path::PathBuf};
 
-    fn get_detectors_dir(blockchain: &str) -> Result<PathBuf> {
-        let mut ret = std::env::current_dir()?;
-        ret.pop();
-        ret.pop();
-        ret.push("detectors");
-        ret.push(blockchain);
-        Ok(ret)
+    lazy_static! {
+        static ref DETECTORS_DIR: PathBuf = {
+            let mut ret = std::env::current_dir().expect("Failed to get current directory");
+            ret.pop();
+            ret.pop();
+            ret.push("detectors");
+            ret
+        };
     }
 
-    fn get_test_cases() -> Vec<(PathBuf, String)> {
+    fn get_test_cases() -> Vec<PathBuf> {
         let contracts_dir = PathBuf::from("tests").join("contracts");
-        let mut contract_paths: Vec<(PathBuf, String)> = fs::read_dir(contracts_dir)
-            .expect("Should read contracts directory")
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.path().is_dir())
-            .map(|entry| {
-                (
-                    entry.path().join("Cargo.toml"),
-                    entry.file_name().to_str().unwrap().to_string(),
-                )
-            })
-            .filter(|(path, _)| path.exists())
-            .collect();
-        contract_paths.sort_by_key(|x| x.0.clone());
-        contract_paths
+        let contract_paths = fs::read_dir(&contracts_dir)
+            .unwrap_or_else(|_| panic!("Failed to read directory: {}", contracts_dir.display()))
+            .filter_map(|entry| entry.ok().map(|e| e.path().join("Cargo.toml")))
+            .collect::<Vec<_>>();
+
+        let mut sorted_paths = contract_paths;
+        sorted_paths.sort();
+        sorted_paths
     }
 
     #[test]
     fn test_default_scout() {
         // Given
         let contract_paths = get_test_cases();
-        for (contract_path, chain) in contract_paths {
+        for contract_path in contract_paths {
             // When
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
-                local_detectors: Some(get_detectors_dir(&chain).unwrap()),
+                local_detectors: Some(DETECTORS_DIR.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -53,11 +49,11 @@ mod tests {
     fn test_scout_with_exclude() {
         // Given
         let contract_paths = get_test_cases();
-        for (contract_path, chain) in contract_paths {
+        for contract_path in contract_paths {
             // When
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
-                local_detectors: Some(get_detectors_dir(&chain).unwrap()),
+                local_detectors: Some(DETECTORS_DIR.clone()),
                 exclude: Some("unsafe-unwrap".to_string()),
                 ..Scout::default()
             };
@@ -74,10 +70,10 @@ mod tests {
         let contract_paths = get_test_cases();
 
         // When
-        for (contract_path, chain) in contract_paths {
+        for contract_path in contract_paths {
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
-                local_detectors: Some(get_detectors_dir(&chain).unwrap()),
+                local_detectors: Some(DETECTORS_DIR.clone()),
                 filter: Some("unsafe-unwrap".to_string()),
                 ..Scout::default()
             };
@@ -99,10 +95,10 @@ mod tests {
         let contract_paths = get_test_cases();
 
         // When
-        for (contract_path, chain) in contract_paths {
+        for contract_path in contract_paths {
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
-                local_detectors: Some(get_detectors_dir(&chain).unwrap()),
+                local_detectors: Some(DETECTORS_DIR.clone()),
                 list_detectors: true,
                 ..Scout::default()
             };
@@ -161,14 +157,14 @@ mod tests {
         // For debugging purposes
         let output_format = format.clone();
 
-        let (contract_path, chain) = get_test_cases().first().unwrap().clone();
+        let contract_path = get_test_cases().first().unwrap().clone();
 
         // Given
         let scout_opts = Scout {
             manifest_path: Some(contract_path),
             output_format: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
-            local_detectors: Some(get_detectors_dir(&chain)?),
+            local_detectors: Some(DETECTORS_DIR.clone()),
             ..Scout::default()
         };
 
@@ -224,16 +220,16 @@ mod tests {
     #[test]
     fn test_finding_presence() {
         // Given
-        let (contract_path, chain) = get_test_cases()
+        let contract_path = get_test_cases()
             .iter()
-            .find(|y| y.1 == "soroban")
+            .find(|y| y.to_str().unwrap().contains("soroban"))
             .unwrap()
             .clone();
 
         // When
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
-            local_detectors: Some(get_detectors_dir(&chain).unwrap()),
+            local_detectors: Some(DETECTORS_DIR.clone()),
             ..Scout::default()
         };
         let result = run_scout(scout_opts);
