@@ -1,15 +1,34 @@
-use std::{env, path::Path};
-
 use crate::scout::blockchain::BlockChain;
 use anyhow::{anyhow, Context, Result};
 use cargo::core::{Dependency, GitReference, SourceId};
 use git2::{RemoteCallbacks, Repository};
+use std::{env, path::Path};
 use tempfile::TempDir;
+
+// Constants
+const SCOUT_REPO_URL: &str = "https://github.com/CoinFabrik/scout-audit";
+const BASE_DETECTOR_PATH: &str = "detectors/rust";
+const LOCAL_BASE_DETECTOR_PATH: &str = "rust";
+const LIBRARY_NAME: &str = "library";
 
 #[derive(Debug, Clone)]
 pub struct DetectorConfig {
     pub dependency: Dependency,
     pub path: Option<String>,
+}
+
+impl DetectorConfig {
+    fn new(dependency: Dependency, path: Option<String>) -> Self {
+        Self { dependency, path }
+    }
+
+    fn with_dependency_and_path(source_id: SourceId, path: impl Into<String>) -> Result<Self> {
+        Ok(Self::new(
+            Dependency::parse(LIBRARY_NAME, None, source_id)
+                .with_context(|| "Failed to parse detector dependency")?,
+            Some(path.into()),
+        ))
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -31,8 +50,7 @@ impl DetectorsConfiguration {
     }
 }
 
-const URL: &str = "https://github.com/CoinFabrik/scout-audit";
-
+#[tracing::instrument(name = "CHECK BRANCH EXISTS", skip_all, level = "debug")]
 pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     // Set up temporary repository and remote
     let temp_dir = TempDir::new()?;
@@ -52,43 +70,36 @@ pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     Ok(branch_exists)
 }
 
+#[tracing::instrument(name = "CREATE GIT DEPENDENCY", skip_all, level = "debug")]
 fn create_git_dependency(branch: &str) -> Result<Dependency> {
-    Dependency::parse(
-        "library",
-        None,
-        SourceId::for_git(
-            &reqwest::Url::parse(URL)?,
-            GitReference::Branch(branch.to_string()),
-        )?,
-    )
-    .with_context(|| "Failed to create git dependency")
+    let source_id = SourceId::for_git(
+        &reqwest::Url::parse(SCOUT_REPO_URL)?,
+        GitReference::Branch(branch.to_string()),
+    )?;
+
+    Dependency::parse(LIBRARY_NAME, None, source_id)
+        .with_context(|| "Failed to create git dependency")
 }
 
-/// Returns list of detectors.
+/// Returns list of detectors from remote repository.
 #[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
 pub fn get_remote_detectors_configuration(
     blockchain: BlockChain,
 ) -> Result<DetectorsConfiguration> {
     let scout_version = env!("CARGO_PKG_VERSION");
-    let default_branch = format!("release/{}", scout_version);
+    let default_branch = format!("release/{scout_version}");
 
-    let branch = if check_branch_exists(URL, &default_branch)? {
-        default_branch
-    } else {
-        return Err(anyhow!("Could not find any suitable branch for detectors"));
-    };
+    if !check_branch_exists(SCOUT_REPO_URL, &default_branch)? {
+        return Err(anyhow!("Could not find suitable branch for detectors"));
+    }
 
-    let dependency = create_git_dependency(&branch)?;
+    let dependency = create_git_dependency(&default_branch)?;
+    let source_id = dependency.source_id();
 
-    let blockchain_config = DetectorConfig {
-        dependency: dependency.clone(),
-        path: Some(blockchain.get_detectors_path().to_string()),
-    };
+    let base_config = DetectorConfig::with_dependency_and_path(source_id, BASE_DETECTOR_PATH)?;
 
-    let base_config = DetectorConfig {
-        dependency,
-        path: Some("detectors/rust".to_string()),
-    };
+    let blockchain_config =
+        DetectorConfig::with_dependency_and_path(source_id, blockchain.get_detectors_path())?;
 
     Ok(DetectorsConfiguration::new(
         base_config,
@@ -103,20 +114,13 @@ pub fn get_local_detectors_configuration(
     blockchain: BlockChain,
 ) -> Result<DetectorsConfiguration> {
     let source_id = SourceId::for_path(path)
-        .with_context(|| format!("Failed to create SourceId for path: {:?}", path))?;
+        .with_context(|| format!("Failed to create SourceId for path: {path:?}"))?;
 
-    let dependency = Dependency::parse("library", None, source_id)
-        .with_context(|| "Failed to parse local detector dependency")?;
+    let base_config =
+        DetectorConfig::with_dependency_and_path(source_id, LOCAL_BASE_DETECTOR_PATH)?;
 
-    let base_config = DetectorConfig {
-        dependency: dependency.clone(),
-        path: Some("rust".to_string()),
-    };
-
-    let blockchain_config = DetectorConfig {
-        dependency,
-        path: Some(blockchain.to_string()),
-    };
+    let blockchain_config =
+        DetectorConfig::with_dependency_and_path(source_id, blockchain.to_string())?;
 
     Ok(DetectorsConfiguration::new(
         base_config,

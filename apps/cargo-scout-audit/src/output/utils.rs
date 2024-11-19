@@ -54,10 +54,8 @@ pub fn get_template<F: FnOnce() -> (String, String)>(get_path: F, template: &str
     }
     let path = dir + file.as_str();
     if exists(&path) {
-        let path = PathBuf::from_str(path.as_str());
-        if let Ok(path) = path {
-            let _ = crate::output::utils::write_to_file(&path, template.as_bytes());
-        }
+        let path = PathBuf::from_str(&path);
+        let _ = crate::output::utils::write_to_file(&path.unwrap(), template.as_bytes());
         return template.to_string();
     }
     let file = fs::File::open(path);
