@@ -48,7 +48,9 @@ def validate_example_naming(dir_path: str, prefix: str) -> List[str]:
     # Check all items in directory - everything must match the pattern
     for item in os.listdir(dir_path):
         if not pattern.match(item):
-            errors.append(f"Invalid item found in {dir_path}: {item}. Must match pattern '{prefix}-n'")
+            errors.append(
+                f"Invalid item found in {dir_path}: {item}. Must match pattern '{prefix}-n'"
+            )
 
     # Get all valid numbered examples
     examples = [d for d in os.listdir(dir_path) if pattern.match(d)]
@@ -109,6 +111,7 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
 
     detectors_path = os.path.join(base_path, "detectors", blockchain)
     test_cases_path = os.path.join(base_path, "test-cases", blockchain)
+    rust_path = os.path.join(base_path, "detectors", "rust")
 
     # Skip if either path doesn't exist
     if not os.path.isdir(detectors_path) or not os.path.isdir(test_cases_path):
@@ -124,6 +127,10 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
     # Get all detectors and test cases for this blockchain
     detectors = set(os.listdir(detectors_path))
     test_cases = set(os.listdir(test_cases_path))
+
+    # Add rust detectors if the rust directory exists
+    if os.path.isdir(rust_path):
+        detectors.update(os.listdir(rust_path))
 
     # Remove common ignored directories
     ignore_dirs = {"target", ".cargo"}
@@ -141,6 +148,17 @@ def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError
     # Check for mismatches between detectors and test cases
     missing_test_cases = detectors - test_cases
     extra_test_cases = test_cases - detectors
+    rust_path = os.path.join(base_path, "detectors", "rust")
+
+    # For test cases with no detector in blockchain folder, check rust folder
+    if os.path.isdir(rust_path):
+        rust_detectors = set(
+            d
+            for d in os.listdir(rust_path)
+            if d not in ignore_dirs and os.path.isdir(os.path.join(rust_path, d))
+        )
+        # Remove test cases that have a detector in the rust folder
+        extra_test_cases = extra_test_cases - rust_detectors
 
     for detector in missing_test_cases:
         errors.append(

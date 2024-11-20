@@ -116,13 +116,6 @@ pub struct Scout {
     pub local_detectors: Option<PathBuf>,
 
     #[clap(
-        long,
-        help = "Force fallback to secondary detectors branch.",
-        default_value_t = false
-    )]
-    pub force_fallback: bool,
-
-    #[clap(
         short,
         long,
         help = "Print detectors metadata",
@@ -344,20 +337,18 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     });
 
     let detectors_config = match &opts.local_detectors {
-        Some(path) => get_local_detectors_configuration(path).map_err(|e| {
+        Some(path) => get_local_detectors_configuration(path, blockchain).map_err(|e| {
             anyhow!(
                 "Failed to get local detectors configuration.\n\n     → Caused by: {}",
                 e
             )
         })?,
-        None => {
-            get_remote_detectors_configuration(blockchain, opts.force_fallback).map_err(|e| {
-                anyhow!(
-                    "Failed to get remote detectors configuration.\n\n     → Caused by: {}",
-                    e
-                )
-            })?
-        }
+        None => get_remote_detectors_configuration(blockchain).map_err(|e| {
+            anyhow!(
+                "Failed to get remote detectors configuration.\n\n     → Caused by: {}",
+                e
+            )
+        })?,
     };
 
     // Instantiate detectors
