@@ -2,9 +2,6 @@
 
 extern crate alloc;
 
-// #[cfg(test)]
-// mod tests;
-
 pub use pallet::*;
 
 pub mod weights;
