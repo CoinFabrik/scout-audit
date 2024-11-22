@@ -21,6 +21,7 @@ pub struct DetectorBuilder<'a> {
 }
 
 impl<'a> DetectorBuilder<'a> {
+    #[allow(dead_code)]
     const LIB_PREFIX: &'static str = "lib";
 
     pub fn new(
