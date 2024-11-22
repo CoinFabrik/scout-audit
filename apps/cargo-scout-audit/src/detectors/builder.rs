@@ -1,6 +1,6 @@
 use anyhow::{bail, ensure, Context, Result};
 use cargo::GlobalContext;
-use cargo_metadata::{Metadata, MetadataCommand};
+use cargo_metadata::Metadata;
 use current_platform::CURRENT_PLATFORM;
 use std::path::{Path, PathBuf};
 
@@ -48,12 +48,9 @@ impl<'a> DetectorBuilder<'a> {
     #[tracing::instrument(skip_all, level = "debug")]
     pub fn get_detector_names(&self) -> Result<Vec<String>> {
         let mut all_names = Vec::new();
+        let libraries = self.get_all_libraries()?;
 
-        for config in self.detectors_config.iter_configs() {
-            let library = self
-                .get_library(config)
-                .with_context(|| "Failed to get library for detector names")?;
-
+        for library in libraries {
             all_names.extend(library.metadata.packages.into_iter().map(|p| p.name));
         }
 
@@ -64,26 +61,45 @@ impl<'a> DetectorBuilder<'a> {
     fn build_all_libraries(&self, bc: &BlockChain) -> Result<Vec<PathBuf>> {
         let mut all_library_paths = Vec::new();
 
-        for config in self.detectors_config.iter_configs() {
-            let library = self
-                .get_library(config)
-                .with_context(|| "Failed to get library while building")?;
+        let libraries = self.get_all_libraries()?;
 
+        for library in libraries {
             let library_paths = library
                 .build(bc, self.verbose)
                 .with_context(|| "Failed to build library")?;
-
             all_library_paths.extend(library_paths);
         }
 
         Ok(all_library_paths)
     }
 
+    fn get_all_libraries(&self) -> Result<Vec<Library>> {
+        let mut all_libraries = Vec::new();
+
+        for config in self.detectors_config.iter_configs() {
+            let library = self.get_library(config)?;
+            all_libraries.push(library);
+        }
+
+        let deduplicated_libraries = Library::deduplicate_libraries(all_libraries);
+
+        Ok(deduplicated_libraries)
+    }
+
     #[tracing::instrument(skip_all, level = "debug")]
     fn get_library(&self, config: &DetectorConfig) -> Result<Library> {
         let detector_root = self.get_detector(config)?;
         let workspace_path = self.parse_library_path(config, &detector_root)?;
-        self.create_library(workspace_path)
+        let toolchain = format!("{}-{}", self.toolchain, CURRENT_PLATFORM);
+
+        Library::create(
+            workspace_path,
+            toolchain,
+            self.root_metadata
+                .target_directory
+                .clone()
+                .into_std_path_buf(),
+        )
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
@@ -124,41 +140,6 @@ impl<'a> DetectorBuilder<'a> {
         );
 
         Ok(canonical_path)
-    }
-
-    #[tracing::instrument(skip_all, level = "debug")]
-    fn create_library(&self, workspace_path: PathBuf) -> Result<Library> {
-        ensure!(
-            workspace_path.is_dir(),
-            "Not a directory: {}",
-            workspace_path.to_string_lossy()
-        );
-
-        let package_metadata = self.get_package_metadata(&workspace_path)?;
-        let toolchain = format!("{}-{}", self.toolchain, CURRENT_PLATFORM);
-
-        Ok(Library::new(
-            workspace_path,
-            toolchain,
-            self.root_metadata
-                .target_directory
-                .clone()
-                .into_std_path_buf(),
-            package_metadata,
-        ))
-    }
-
-    fn get_package_metadata(&self, workspace_path: &PathBuf) -> Result<Metadata> {
-        MetadataCommand::new()
-            .current_dir(workspace_path)
-            .no_deps()
-            .exec()
-            .with_context(|| {
-                format!(
-                    "Could not get metadata for the workspace at {}",
-                    workspace_path.to_string_lossy()
-                )
-            })
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
