@@ -1,15 +1,34 @@
-use anyhow::{bail, ensure, Context, Result};
-use cargo::GlobalContext;
+use anyhow::{ensure, Result};
+use cargo::{core::SourceId, GlobalContext};
 use cargo_metadata::Metadata;
 use current_platform::CURRENT_PLATFORM;
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 use super::{
     configuration::{DetectorConfig, DetectorsConfiguration},
     library::Library,
     source::download_git_repo,
 };
-use crate::scout::blockchain::BlockChain;
+use crate::{scout::blockchain::BlockChain, utils::telemetry::TracedError};
+
+#[derive(Error, Debug)]
+pub enum BuilderError {
+    #[error("\n     → Failed to build detector library: {0}")]
+    BuildError(PathBuf),
+
+    #[error("\n     → Unsupported source id: {0}")]
+    UnsupportedSourceId(SourceId),
+
+    #[error("\n     → Path source should have a local path: {0}")]
+    InvalidPathSource(SourceId),
+
+    #[error("\n     → Path could refer to `{path}`, which is outside of `{root}`")]
+    PathOutsideRoot { path: PathBuf, root: PathBuf },
+
+    #[error("\n     → Could not canonicalize {0}")]
+    CanonicalizeError(PathBuf),
+}
 
 #[derive(Debug)]
 pub struct DetectorBuilder<'a> {
@@ -66,13 +85,14 @@ impl<'a> DetectorBuilder<'a> {
         for library in libraries {
             let library_paths = library
                 .build(bc, self.verbose)
-                .with_context(|| "Failed to build library")?;
+                .map_err(BuilderError::BuildError(library.root).traced())?;
             all_library_paths.extend(library_paths);
         }
 
         Ok(all_library_paths)
     }
 
+    #[tracing::instrument(skip_all, level = "debug")]
     fn get_all_libraries(&self) -> Result<Vec<Library>> {
         let mut all_libraries = Vec::new();
 
@@ -108,10 +128,11 @@ impl<'a> DetectorBuilder<'a> {
 
         match (source_id.is_git(), source_id.is_path()) {
             (true, _) => download_git_repo(&config.dependency, self.cargo_config),
-            (_, true) => source_id.local_path().map(PathBuf::from).ok_or_else(|| {
-                anyhow::anyhow!("Path source should have a local path: {}", source_id)
-            }),
-            _ => bail!("Unsupported source id: {}", source_id),
+            (_, true) => source_id
+                .local_path()
+                .map(PathBuf::from)
+                .ok_or_else(|| BuilderError::InvalidPathSource(source_id).into()),
+            _ => Err(BuilderError::UnsupportedSourceId(source_id).into()),
         }
     }
 
@@ -127,16 +148,17 @@ impl<'a> DetectorBuilder<'a> {
         };
 
         let canonical_path = dunce::canonicalize(&path)
-            .with_context(|| format!("Could not canonicalize {path:?}"))?;
+            .map_err(BuilderError::CanonicalizeError(path.clone()).traced())?;
 
         let canonical_root = dunce::canonicalize(dependency_root)
-            .with_context(|| format!("Could not canonicalize {dependency_root:?}"))?;
+            .map_err(BuilderError::CanonicalizeError(dependency_root.clone()).traced())?;
 
         ensure!(
             canonical_path.starts_with(&canonical_root),
-            "Path could refer to `{}`, which is outside of `{}`",
-            canonical_path.to_string_lossy(),
-            canonical_root.to_string_lossy()
+            BuilderError::PathOutsideRoot {
+                path: canonical_path,
+                root: canonical_root,
+            }
         );
 
         Ok(canonical_path)

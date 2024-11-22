@@ -1,8 +1,8 @@
 use crate::{
     scout::blockchain::BlockChain,
-    utils::{cargo, env},
+    utils::{cargo, env, telemetry::TracedError},
 };
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use itertools::Itertools;
 use std::{
@@ -10,6 +10,25 @@ use std::{
     env::consts,
     path::{Path, PathBuf},
 };
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum LibraryError {
+    #[error("\n     → Expected a valid workspace directory, but '{0}' is not a directory")]
+    NotADirectory(PathBuf),
+
+    #[error("\n     → Failed to find the following compiled libraries:\n{}", .0.iter().map(|p| format!("  - {}", p.display())).collect::<Vec<_>>().join("\n"))]
+    MissingLibraries(Vec<PathBuf>),
+
+    #[error("\n     → Failed to get cargo metadata for workspace at '{0}'.")]
+    MetadataError(PathBuf),
+
+    #[error("\n     → Failed to execute cargo build at {0}.")]
+    CargoBuildError(PathBuf),
+
+    #[error("\n     → Failed to create or access directory at {0}.")]
+    FileSystemError(PathBuf),
+}
 
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
@@ -33,11 +52,9 @@ impl Library {
 
     /// Creates a library from a workspace path
     pub fn create(workspace_path: PathBuf, toolchain: String, target_dir: PathBuf) -> Result<Self> {
-        ensure!(
-            workspace_path.is_dir(),
-            "Not a directory: {}",
-            workspace_path.to_string_lossy()
-        );
+        if !workspace_path.is_dir() {
+            bail!(LibraryError::NotADirectory(workspace_path));
+        }
 
         let metadata = Self::get_package_metadata(&workspace_path)?;
 
@@ -57,7 +74,8 @@ impl Library {
             .env_remove(env::RUSTFLAGS)
             .current_dir(&self.root)
             .args(["--release"])
-            .success()?;
+            .success()
+            .map_err(LibraryError::CargoBuildError(self.root.clone()).traced())?;
 
         // Verify all libraries were built
         let compiled_library_paths = self.get_compiled_library_paths();
@@ -67,14 +85,16 @@ impl Library {
             .into_iter()
             .filter(|p| !p.exists())
             .collect_vec();
+
         if !unexistant_libraries.is_empty() {
-            anyhow::bail!("Could not determine if {:?} exist", unexistant_libraries);
+            bail!(LibraryError::MissingLibraries(unexistant_libraries));
         }
 
         // Ensure target directory exists
         let target_dir = self.target_directory();
         if !target_dir.exists() {
-            std::fs::create_dir_all(&target_dir)?;
+            std::fs::create_dir_all(&target_dir)
+                .map_err(LibraryError::FileSystemError(target_dir).traced())?;
         }
 
         Ok(compiled_library_paths)
@@ -129,12 +149,7 @@ impl Library {
             .current_dir(workspace_path)
             .no_deps()
             .exec()
-            .with_context(|| {
-                format!(
-                    "Could not get metadata for the workspace at {}",
-                    workspace_path.to_string_lossy()
-                )
-            })
+            .map_err(LibraryError::MetadataError(workspace_path.clone()).traced())
     }
 
     pub fn deduplicate_libraries(libraries: Vec<Library>) -> Vec<Library> {

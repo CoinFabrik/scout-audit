@@ -2,13 +2,13 @@
 [package]
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
+    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
     "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
+    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
+    "Federico Pinho <federico.pinho@coinfabrik.com>",
     "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
     "Víctor M. González <victor.gonzalez@coinfabrik.com>",
-    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
-    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
-    "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
 ]
 
 build = "build.rs"
@@ -57,6 +57,7 @@ strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
 terminal_color_builder = "=0.1.1"
+thiserror = "=2.0.3"
 toml = "=0.8.15"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"
