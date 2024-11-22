@@ -68,17 +68,17 @@ pub mod pallet {
 
         type WeightInfo: WeightInfo;
 
-		#[pallet::constant]
-		type Count: Get<u32>; 
+        #[pallet::constant]
+        type Count: Get<u32>;
     }
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
-	#[pallet::error]
-	pub enum Error<T> {
+    #[pallet::error]
+    pub enum Error<T> {
         VectorFull,
-	}
+    }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -97,18 +97,18 @@ pub mod pallet {
         pub fn insert_dummy(origin: OriginFor<T>, value: u32) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
-            if let Some(v) = <Dummy<T>>::get(){
-                if v.len() >= 128{
+            if let Some(v) = <Dummy<T>>::get() {
+                if v.len() >= 128 {
                     Err(Error::<T>::VectorFull)?;
                 }
             }
 
             <Dummy<T>>::mutate(|dummy| {
-                if dummy.is_none(){
+                if dummy.is_none() {
                     let mut temp = BoundedVec::<u32, T::Count>::new();
                     let _ = temp.try_push(value);
                     *dummy = Some(temp);
-                }else{
+                } else {
                     let _ = dummy.as_mut().unwrap().try_push(value);
                 }
             });
@@ -117,15 +117,13 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        pub fn set_sum(
-            origin: OriginFor<T>,
-        ) -> DispatchResult {
+        pub fn set_sum(origin: OriginFor<T>) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
             let mut new_sum = 0_u32;
 
-            if let Some(v) = <Dummy<T>>::get(){
-                for i in 0..128{
+            if let Some(v) = <Dummy<T>>::get() {
+                for i in 0..128 {
                     new_sum += v[i];
                 }
             }
@@ -139,8 +137,7 @@ pub mod pallet {
     }
 
     #[pallet::event]
-    pub enum Event<T: Config> {
-    }
+    pub enum Event<T: Config> {}
 
     #[pallet::storage]
     pub(super) type Dummy<T: Config> = StorageValue<_, BoundedVec<u32, T::Count>>;

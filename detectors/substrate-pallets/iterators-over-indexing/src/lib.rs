@@ -94,7 +94,7 @@ impl<'a, 'b> VectorAccessVisitor<'a, 'b> {
             ExprKind::Field(_, _) | ExprKind::Path(_) => {
                 let type_name = self.get_id_type(expr_id)?;
                 self.final_check(&type_name, index)
-            },
+            }
             _ => Ok(()),
         }
     }
@@ -450,5 +450,4 @@ impl<'tcx> LateLintPass<'tcx> for IteratorsOverIndexing {
             );
         }
     }
-
 }

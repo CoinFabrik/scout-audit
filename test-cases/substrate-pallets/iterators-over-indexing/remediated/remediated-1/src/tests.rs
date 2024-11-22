@@ -2,7 +2,7 @@ use crate as pallet_example_basic;
 use crate::*;
 use frame_support::{
     assert_ok, derive_impl,
-    traits::{ConstU64, ConstU32},
+    traits::{ConstU32, ConstU64},
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -94,14 +94,14 @@ fn basic_test() {
         assert_eq!(state, 42);
 
         assert_ok!(Example::insert_dummy(RuntimeOrigin::signed(1), 37_u32));
-        
+
         let state = Dummy::<Test>::get();
         assert!(state.is_some());
         let state = state.unwrap();
         assert_eq!(state.len(), 2);
         assert_eq!(*state.index(0), 42);
         assert_eq!(*state.index(1), 37);
-        
+
         let state = Sum::<Test>::get();
         assert!(state.is_some());
         let state = state.unwrap();
@@ -113,7 +113,5 @@ fn basic_test() {
         assert!(state.is_some());
         let state = state.unwrap();
         assert_eq!(state, 42 + 37);
-
-        
     });
 }
