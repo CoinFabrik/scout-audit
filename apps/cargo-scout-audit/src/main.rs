@@ -3,9 +3,10 @@ use cargo_scout_audit::{
     utils::{print::print_error, telemetry},
 };
 use clap::Parser;
+use tracing::level_filters::LevelFilter;
 
 fn main() {
-    let subscriber = telemetry::get_subscriber("scout".into(), "warn".into(), std::io::stdout);
+    let subscriber = telemetry::get_subscriber("scout".into(), LevelFilter::OFF, std::io::stdout);
     telemetry::init_subscriber(subscriber);
 
     let cli = Cli::parse();

@@ -57,6 +57,7 @@ strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
 terminal_color_builder = "=0.1.1"
+thiserror = "=2.0.3"
 toml = "=0.8.15"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"

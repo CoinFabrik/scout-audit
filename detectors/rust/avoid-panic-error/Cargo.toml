@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "panic-error"
+name = "avoid-panic-error"
 version = "0.1.0"
 
 [lib]
@@ -9,7 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 clippy_utils = { workspace = true }
 common = { workspace = true }
-dylint_internal = { workspace = true }
 dylint_linting = { workspace = true }
 if_chain = { workspace = true }
 

@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "panic-error-remediated-1"
+name = "avoid-panic-error-vulnerable-1"
 version = "0.1.0"
 
 [lib]
@@ -16,3 +16,4 @@ std = ["ink/std", "scale-info/std", "scale/std"]
 ink = { workspace = true }
 scale = { workspace = true }
 scale-info = { workspace = true }
+

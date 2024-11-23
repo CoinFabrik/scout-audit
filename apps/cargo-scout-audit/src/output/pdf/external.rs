@@ -42,7 +42,8 @@ pub fn build_library() -> Result<PathBuf> {
             )
         })?;
 
-    let ret = Library::get_compiled_library_paths(&metadata, None)
+    let ret = Library::new(PathBuf::new(), String::new(), PathBuf::new(), metadata)
+        .get_compiled_library_paths()
         .first()
         .cloned()
         .with_context(|| "Failed to determine the PDF generator's expected location")?;

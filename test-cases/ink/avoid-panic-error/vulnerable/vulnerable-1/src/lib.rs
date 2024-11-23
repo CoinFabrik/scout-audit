@@ -18,11 +18,12 @@ mod panic_error {
 
         /// Increments the stored value by the given amount.
         #[ink(message)]
-        pub fn add(&mut self, value: u32) {
+        pub fn add(&mut self, value: u32) -> Result<(), ()> {
             match self.value.checked_add(value) {
                 Some(v) => self.value = v,
                 None => panic!("Overflow error"),
             };
+            Ok(())
         }
     }
 

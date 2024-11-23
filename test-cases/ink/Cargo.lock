@@ -119,6 +119,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "avoid-panic-error-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "ink 5.0.0",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
+name = "avoid-panic-error-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "ink 5.0.0",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
 name = "avoid-unsafe-block-remediated-1"
 version = "0.1.0"
 dependencies = [
@@ -1306,24 +1324,6 @@ dependencies = [
  "bitflags",
  "paste",
  "polkavm-derive",
-]
-
-[[package]]
-name = "panic-error-remediated-1"
-version = "0.1.0"
-dependencies = [
- "ink 5.0.0",
- "parity-scale-codec",
- "scale-info",
-]
-
-[[package]]
-name = "panic-error-vulnerable-1"
-version = "0.1.0"
-dependencies = [
- "ink 5.0.0",
- "parity-scale-codec",
- "scale-info",
 ]
 
 [[package]]
