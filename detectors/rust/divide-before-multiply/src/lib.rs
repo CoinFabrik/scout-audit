@@ -38,7 +38,7 @@ pub static DIVIDE_BEFORE_MULTIPLY_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Division before multiplication might result in a loss of precision",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/divide-before-multiply",
+    help: "https://coinfabrik.github.io/scout-rust/docs/detectors/divide-before-multiply",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
