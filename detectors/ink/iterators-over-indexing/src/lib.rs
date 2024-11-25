@@ -36,10 +36,10 @@ dylint_linting::declare_late_lint! {
     LINT_MESSAGE
 }
 
-fn make_config() -> common_detectors::iterators_over_indexing::IteratorsOverIndexingConfig{
+fn make_config() -> common_detectors::iterators_over_indexing::IteratorsOverIndexingConfig {
     let mut set = HashSet::<String>::new();
     set.insert("alloc::vec::Vec".to_string());
-    common_detectors::iterators_over_indexing::IteratorsOverIndexingConfig{
+    common_detectors::iterators_over_indexing::IteratorsOverIndexingConfig {
         check_get: false,
         check_index: true,
         relevant_object_types: set,
@@ -49,7 +49,8 @@ fn make_config() -> common_detectors::iterators_over_indexing::IteratorsOverInde
 impl<'tcx> LateLintPass<'tcx> for IteratorsOverIndexing {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'_>) {
         let config = make_config();
-        let span_constant = common_detectors::iterators_over_indexing::check_expr(cx, expr, &config);
+        let span_constant =
+            common_detectors::iterators_over_indexing::check_expr(cx, expr, &config);
         for span in span_constant {
             span_lint_and_help(
                 cx,
