@@ -17,7 +17,6 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: pallet_balances::Config + frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
 
@@ -64,17 +63,12 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Balance check completed
         BalanceChecked { who: T::AccountId, amount: u32 },
-        /// Balance value was set
         BalanceSet { who: T::AccountId, value: u32 },
     }
 
     #[pallet::error]
-    pub enum Error<T> {
-        /// Generic error
-        GenericError,
-    }
+    pub enum Error<T> {}
 
     #[pallet::genesis_config]
     #[derive(frame_support::DefaultNoBound)]
