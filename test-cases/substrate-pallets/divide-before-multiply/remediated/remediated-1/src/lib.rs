@@ -90,11 +90,18 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn accumulate_dummy(origin: OriginFor<T>, increase_by: T::Balance, numerator: T::Balance, denominator: T::Balance) -> DispatchResult {
+        pub fn accumulate_dummy(
+            origin: OriginFor<T>,
+            increase_by: T::Balance,
+            numerator: T::Balance,
+            denominator: T::Balance,
+        ) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
             <Dummy<T>>::mutate(|dummy| {
-                let new_dummy = dummy.map_or(increase_by, |d| d.saturating_add(increase_by * numerator / denominator));
+                let new_dummy = dummy.map_or(increase_by, |d| {
+                    d.saturating_add(increase_by * numerator / denominator)
+                });
                 *dummy = Some(new_dummy);
             });
 

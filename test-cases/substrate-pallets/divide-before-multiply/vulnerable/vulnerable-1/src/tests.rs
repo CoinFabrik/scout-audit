@@ -81,11 +81,21 @@ fn it_works_for_optional_value() {
         let val2 = 27;
         assert_eq!(Dummy::<Test>::get(), Some(val1));
 
-        assert_ok!(Example::accumulate_dummy(RuntimeOrigin::signed(1), val2, 1, 1));
+        assert_ok!(Example::accumulate_dummy(
+            RuntimeOrigin::signed(1),
+            val2,
+            1,
+            1
+        ));
         assert_eq!(Dummy::<Test>::get(), Some(val1 + val2));
 
         <Example as OnInitialize<u64>>::on_initialize(2);
-        assert_ok!(Example::accumulate_dummy(RuntimeOrigin::signed(1), val1, 1, 1));
+        assert_ok!(Example::accumulate_dummy(
+            RuntimeOrigin::signed(1),
+            val1,
+            1,
+            1
+        ));
         assert_eq!(Dummy::<Test>::get(), Some(val1 + val2 + val1));
     });
 }
