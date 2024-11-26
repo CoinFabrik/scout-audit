@@ -175,6 +175,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-detectors"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "dylint_internal",
+ "dylint_linting",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -553,9 +562,9 @@ version = "0.1.0"
 dependencies = [
  "clippy_utils",
  "common",
+ "common-detectors",
  "dylint_internal",
  "dylint_linting",
- "if_chain",
 ]
 
 [[package]]

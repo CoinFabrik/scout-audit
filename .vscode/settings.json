@@ -8,6 +8,10 @@
     "detectors/substrate-pallets/Cargo.toml",
     "test-cases/ink/Cargo.toml",
     "test-cases/soroban/Cargo.toml",
-    "test-cases/substrate-pallets/Cargo.toml"
+    "test-cases/substrate-pallets/Cargo.toml",
+    "common/Cargo.toml",
+    "common/declarations/Cargo.toml",
+    "common/detectors/Cargo.toml",
+    "common/macros/Cargo.toml"
   ]
 }
