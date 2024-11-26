@@ -1819,6 +1819,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-divide-before-multiply-remediated-1"
+version = "27.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-divide-before-multiply-vulnerable-1"
+version = "27.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-iterators-over-indexing-remediated-1"
 version = "27.0.0"
 dependencies = [
