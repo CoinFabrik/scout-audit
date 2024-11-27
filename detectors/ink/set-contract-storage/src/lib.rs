@@ -34,9 +34,12 @@ dylint_linting::declare_late_lint! {
     LINT_MESSAGE
 }
 
-fn expr_check_owner(expr: &Expr) -> bool {
-    if let ExprKind::Field(_, ident) = expr.kind {
-        ident.as_str().contains("owner")
+fn expr_check_owner(cx: &LateContext, expr: &Expr) -> bool {
+    let expr_type = common::analysis::get_node_type_opt(cx, &expr.hir_id);
+    if let Some(expr_type) = expr_type {
+        expr_type
+            .to_string()
+            .contains("ink::ink_primitives::AccountId")
     } else {
         false
     }
@@ -51,6 +54,49 @@ fn expr_check_caller(expr: &Expr) -> bool {
     }
 }
 
+struct SetContractStorageVisitor<'tcx, 'a> {
+    span: Option<Span>,
+    cx: &'a LateContext<'tcx>,
+    unprotected: bool,
+    in_conditional: bool,
+    has_caller_in_if: bool,
+    has_owner_in_if: bool,
+    has_set_contract: bool,
+}
+
+impl<'tcx, 'a> Visitor<'tcx> for SetContractStorageVisitor<'tcx, 'a> {
+    fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
+        if self.in_conditional {
+            if let ExprKind::Binary(_, left, right) = &expr.kind {
+                self.has_owner_in_if =
+                    expr_check_owner(self.cx, right) || expr_check_owner(self.cx, left);
+                self.has_caller_in_if = expr_check_caller(right) || expr_check_caller(left);
+            }
+        }
+        if let ExprKind::If(..) = &expr.kind {
+            self.in_conditional = true;
+            walk_expr(self, expr);
+            self.in_conditional = false;
+        } else if let ExprKind::Call(callee, _) = expr.kind {
+            if_chain! {
+                if let ExprKind::Path(method_path) = &callee.kind;
+                if let QPath::Resolved(None, path) = *method_path;
+                if path.segments.len() == 2;
+                if path.segments[0].ident.name.as_str() == "env";
+                if path.segments[1].ident.name.as_str() == "set_contract_storage";
+                then {
+                    self.has_set_contract = true;
+                    if !self.in_conditional && (!self.has_owner_in_if || !self.has_caller_in_if) {
+                            self.unprotected = true;
+                            self.span = Some(expr.span);
+                    }
+                }
+            }
+        }
+        walk_expr(self, expr);
+    }
+}
+
 impl<'tcx> LateLintPass<'tcx> for SetContractStorage {
     fn check_fn(
         &mut self,
@@ -61,49 +107,9 @@ impl<'tcx> LateLintPass<'tcx> for SetContractStorage {
         _: Span,
         _: LocalDefId,
     ) {
-        struct SetContractStorage {
-            span: Option<Span>,
-            unprotected: bool,
-            in_conditional: bool,
-            has_caller_in_if: bool,
-            has_owner_in_if: bool,
-            has_set_contract: bool,
-        }
-
-        impl<'tcx> Visitor<'tcx> for SetContractStorage {
-            fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
-                if self.in_conditional {
-                    if let ExprKind::Binary(_, left, right) = &expr.kind {
-                        self.has_owner_in_if = expr_check_owner(right) || expr_check_owner(left);
-                        self.has_caller_in_if = expr_check_caller(right) || expr_check_caller(left);
-                    }
-                }
-                if let ExprKind::If(..) = &expr.kind {
-                    self.in_conditional = true;
-                    walk_expr(self, expr);
-                    self.in_conditional = false;
-                } else if let ExprKind::Call(callee, _) = expr.kind {
-                    if_chain! {
-                        if let ExprKind::Path(method_path) = &callee.kind;
-                        if let QPath::Resolved(None, path) = *method_path;
-                        if path.segments.len() == 2;
-                        if path.segments[0].ident.name.as_str() == "env";
-                        if path.segments[1].ident.name.as_str() == "set_contract_storage";
-                        then {
-                            self.has_set_contract = true;
-                            if !self.in_conditional && (!self.has_owner_in_if || !self.has_caller_in_if) {
-                                    self.unprotected = true;
-                                    self.span = Some(expr.span);
-                            }
-                        }
-                    }
-                }
-                walk_expr(self, expr);
-            }
-        }
-
-        let mut reentrant_storage = SetContractStorage {
+        let mut reentrant_storage = SetContractStorageVisitor {
             span: None,
+            cx,
             unprotected: false,
             in_conditional: false,
             has_caller_in_if: false,

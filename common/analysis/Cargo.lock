@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "analysis"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "if_chain",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -34,23 +42,6 @@ dependencies = [
  "itertools",
  "rustc-semver",
  "rustc_apfloat",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "analysis",
- "declarations",
- "macros",
-]
-
-[[package]]
-name = "declarations"
-version = "0.1.0"
-dependencies = [
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -221,14 +212,6 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "if_chain",
-]
 
 [[package]]
 name = "winnow"
