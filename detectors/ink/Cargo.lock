@@ -178,9 +178,11 @@ dependencies = [
 name = "common-detectors"
 version = "0.1.0"
 dependencies = [
+ "analysis",
  "clippy_utils",
  "dylint_internal",
  "dylint_linting",
+ "if_chain",
 ]
 
 [[package]]
@@ -1050,17 +1052,6 @@ dependencies = [
 
 [[package]]
 name = "unrestricted-transfer-from"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
-name = "unsafe-expect"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",

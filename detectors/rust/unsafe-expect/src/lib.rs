@@ -5,7 +5,7 @@ extern crate rustc_hir;
 extern crate rustc_span;
 
 use common::{
-    analysis::ConstantAnalyzer,
+    analysis::{fn_returns, ConstantAnalyzer},
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
@@ -16,7 +16,7 @@ use rustc_hir::{
     Body, FnDecl,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::Span;
+use rustc_span::{sym, Span};
 use std::collections::HashSet;
 
 const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
@@ -42,11 +42,18 @@ impl<'tcx> LateLintPass<'tcx> for UnsafeExpect {
         &mut self,
         cx: &LateContext<'tcx>,
         _: FnKind<'tcx>,
-        _: &'tcx FnDecl<'tcx>,
+        fn_decl: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
-        _: Span,
+        span: Span,
         _: LocalDefId,
     ) {
+        // If the function comes from a macro expansion or does not return a Result<(), ()> or Option<()>, we don't want to analyze it.
+        if span.from_expansion()
+            || !fn_returns(fn_decl, sym::Result) && !fn_returns(fn_decl, sym::Option)
+        {
+            return;
+        }
+
         let mut constant_analyzer = ConstantAnalyzer {
             cx,
             constants: HashSet::new(),
