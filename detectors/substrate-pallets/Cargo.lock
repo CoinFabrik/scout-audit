@@ -2831,7 +2831,6 @@ dependencies = [
  "clippy_utils",
  "common",
  "common-detectors",
- "dylint_internal",
  "dylint_linting",
  "if_chain",
 ]
