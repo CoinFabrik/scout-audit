@@ -1,46 +1,22 @@
-#![feature(rustc_private)]
 #![allow(clippy::enum_variant_names)]
 
 extern crate rustc_hir;
+extern crate rustc_lint;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
-use clippy_utils::higher::IfOrIfLet;
-use common::{
-    analysis::{fn_returns, ConstantAnalyzer},
-    declarations::{Severity, VulnerabilityClass},
-    macros::expose_lint_info,
-};
+use analysis::ConstantAnalyzer;
+use clippy_utils::{diagnostics::span_lint_and_help, higher::IfOrIfLet, is_from_proc_macro};
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
-    def_id::LocalDefId,
-    intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, LangItem, MatchSource, PathSegment, QPath,
-    UnOp,
+    intravisit::{walk_expr, Visitor},
+    BinOpKind, Expr, ExprKind, HirId, LangItem, MatchSource, PathSegment, QPath, UnOp,
 };
-use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{sym, Span, Symbol};
-use std::{collections::HashSet, hash::Hash};
+use rustc_lint::{LateContext, Lint};
+use rustc_span::{sym, Symbol};
+use std::collections::HashSet;
 
-const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
 const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
-
-#[expose_lint_info]
-pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
-    name: env!("CARGO_PKG_NAME"),
-    short_message: LINT_MESSAGE,
-    long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
-    severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-expect",
-    vulnerability_class: VulnerabilityClass::ErrorHandling,
-};
-
-dylint_linting::declare_late_lint! {
-    pub UNSAFE_EXPECT,
-    Warn,
-    LINT_MESSAGE
-}
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
@@ -123,15 +99,29 @@ impl ConditionalChecker {
 }
 
 /// Main unsafe-expect visitor
-struct UnsafeExpectVisitor<'a, 'tcx> {
+pub struct UnsafeExpectVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
+    lint: &'static Lint,
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
     conditional_checker: HashSet<ConditionalChecker>,
     checked_exprs: HashSet<HirId>,
-    linted_spans: HashSet<Span>,
 }
 
 impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
+    pub fn new(
+        cx: &'a LateContext<'tcx>,
+        lint: &'static Lint,
+        constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+    ) -> Self {
+        Self {
+            cx,
+            lint,
+            constant_analyzer,
+            conditional_checker: HashSet::new(),
+            checked_exprs: HashSet::new(),
+        }
+    }
+
     fn is_panic_inducing_call(&self, func: &Expr<'tcx>) -> bool {
         if let ExprKind::Path(QPath::Resolved(_, path)) = &func.kind {
             return PANIC_INDUCING_FUNCTIONS.iter().any(|&func| {
@@ -198,18 +188,19 @@ impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
 
     fn check_expr_for_unsafe_expect(&mut self, expr: &Expr<'tcx>) {
         if let ExprKind::MethodCall(path_segment, receiver, _, _) = &expr.kind {
-            if self.is_method_call_unsafe(path_segment, receiver)
-                && !self.linted_spans.contains(&expr.span)
-            {
+            if self.is_method_call_unsafe(path_segment, receiver) {
+                if is_from_proc_macro(self.cx, expr) {
+                    return;
+                }
+
                 span_lint_and_help(
                     self.cx,
-                    UNSAFE_EXPECT,
+                    self.lint,
                     expr.span,
-                    LINT_MESSAGE,
+                    self.lint.desc,
                     None,
                     "Please, use a custom error instead of `expect`",
                 );
-                self.linted_spans.insert(expr.span);
             }
         }
     }
@@ -266,40 +257,5 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeExpectVisitor<'a, 'tcx> {
         self.check_expr_for_unsafe_expect(expr);
 
         walk_expr(self, expr);
-    }
-}
-
-impl<'tcx> LateLintPass<'tcx> for UnsafeExpect {
-    fn check_fn(
-        &mut self,
-        cx: &LateContext<'tcx>,
-        _: FnKind<'tcx>,
-        fn_decl: &'tcx FnDecl<'tcx>,
-        body: &'tcx Body<'tcx>,
-        span: Span,
-        _: LocalDefId,
-    ) {
-        // If the function comes from a macro expansion or does not return a Result<(), ()> or Option<()>, we don't want to analyze it.
-        if span.from_expansion()
-            || !fn_returns(fn_decl, sym::Result) && !fn_returns(fn_decl, sym::Option)
-        {
-            return;
-        }
-
-        let mut constant_analyzer = ConstantAnalyzer {
-            cx,
-            constants: HashSet::new(),
-        };
-        constant_analyzer.visit_body(body);
-
-        let mut visitor = UnsafeExpectVisitor {
-            cx,
-            constant_analyzer,
-            checked_exprs: HashSet::new(),
-            conditional_checker: HashSet::new(),
-            linted_spans: HashSet::new(),
-        };
-
-        walk_expr(&mut visitor, body.value);
     }
 }

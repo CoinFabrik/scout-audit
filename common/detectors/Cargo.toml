@@ -4,9 +4,11 @@ name = "common-detectors"
 version = "0.1.0"
 
 [dependencies]
+analysis = { path = "../analysis" }
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "51a1cf0" }
 dylint_internal = "=3.1.2"
 dylint_linting = "=3.1.2"
+if_chain = "=1.0.2"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
