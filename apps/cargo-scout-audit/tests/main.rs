@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod tests {
     use anyhow::{Context, Result};
-    use cargo_scout_audit::startup::{run_scout, OutputFormat, Scout};
+    use cargo_scout_audit::{
+        cli::{OutputFormat, Scout},
+        startup::run_scout,
+    };
     use lazy_static::lazy_static;
     use std::{collections::HashMap, fs, path::PathBuf};
 
