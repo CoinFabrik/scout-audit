@@ -479,17 +479,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
 
 [[package]]
-name = "incorrect-exponentiation"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
 name = "indexmap"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
