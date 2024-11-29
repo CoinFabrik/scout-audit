@@ -66,5 +66,4 @@ pub mod pallet {
             }
         }
     }
-
 }
