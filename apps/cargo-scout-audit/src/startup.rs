@@ -1,190 +1,34 @@
 use crate::{
+    cli::Scout,
     detectors::{
         builder::DetectorBuilder,
         configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
     },
     digest,
     finding::Finding,
-    output::raw_report::RawReport,
+    output::report::Report,
     scout::{
-        blockchain::BlockChain, nightly_runner::run_scout_in_nightly, project_info::ProjectInfo,
+        blockchain::BlockChain,
+        findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
+        nightly_runner::run_scout_in_nightly,
+        project_info::ProjectInfo,
         version_checker::VersionChecker,
     },
     utils::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::{get_detectors_info, LintStore},
+        detectors_info::get_detectors_info,
         print::{print_error, print_warning},
     },
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::{core::Verbosity, GlobalContext};
 use cargo_metadata::{Metadata, MetadataCommand};
-use clap::{Parser, Subcommand, ValueEnum};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
-use serde_json::{from_str, to_string_pretty, Value};
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    io::Write,
-    path::PathBuf,
-};
+use serde_json::to_string_pretty;
+use std::{collections::HashSet, fs, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
-
-#[derive(Debug, Parser)]
-#[clap(display_name = "cargo")]
-pub struct Cli {
-    #[clap(subcommand)]
-    pub subcmd: CargoSubCommand,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum CargoSubCommand {
-    ScoutAudit(Scout),
-}
-
-#[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
-pub enum OutputFormat {
-    #[default]
-    Html,
-    Json,
-    RawJson,
-    RawSingleJson,
-    UnfilteredJson,
-    #[clap(name = "md")]
-    Markdown,
-    #[clap(name = "md-gh")]
-    MarkdownGithub,
-    Sarif,
-    Pdf,
-}
-
-#[derive(Clone, Debug, Default, Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Scout {
-    #[clap(short, long, value_name = "path", help = "Path to Cargo.toml.")]
-    pub manifest_path: Option<PathBuf>,
-
-    // Exlude detectors
-    #[clap(
-        short,
-        long,
-        value_name = "detector/s",
-        help = "Exclude the given detectors, separated by commas."
-    )]
-    pub exclude: Option<String>,
-
-    // Filter by detectors
-    #[clap(
-        short,
-        long,
-        value_name = "detector/s",
-        help = "Filter by the given detectors, separated by commas."
-    )]
-    pub filter: Option<String>,
-
-    // Select profiles in configuration
-    #[clap(
-        short,
-        long,
-        value_name = "profile",
-        help = "Filter detectors using profiles."
-    )]
-    pub profile: Option<String>,
-
-    // List all the available detectors
-    #[clap(short, long, help = "List all the available detectors")]
-    pub list_detectors: bool,
-
-    #[clap(last = true, help = "Arguments for `cargo check`.")]
-    pub args: Vec<String>,
-
-    #[clap(
-        short,
-        long,
-        value_name = "type",
-        help = "Set the output type",
-        value_delimiter = ','
-    )]
-    pub output_format: Vec<OutputFormat>,
-
-    #[clap(long, value_name = "path", help = "Path to the output file.")]
-    pub output_path: Option<PathBuf>,
-
-    #[clap(long, value_name = "path", help = "Path to detectors workspace.")]
-    pub local_detectors: Option<PathBuf>,
-
-    #[clap(
-        short,
-        long,
-        help = "Print detectors metadata",
-        default_value_t = false
-    )]
-    pub verbose: bool,
-
-    #[clap(
-        name = "toolchain",
-        long,
-        help = "Print the detectors current toolchain",
-        default_value_t = false
-    )]
-    pub toolchain: bool,
-
-    #[clap(
-        name = "metadata",
-        long,
-        help = "Print metadata information",
-        default_value_t = false
-    )]
-    pub detectors_metadata: bool,
-
-    #[clap(
-        name = "debug",
-        long,
-        help = "Analyze the project in debug build",
-        default_value_t = false
-    )]
-    pub debug: bool,
-
-    #[clap(
-        name = "src-hash",
-        long,
-        help = "Prints a hash of the sources at the time of build",
-        default_value_t = false
-    )]
-    pub src_hash: bool,
-}
-
-impl Scout {
-    fn prepare_args(&mut self) {
-        if !self.args.iter().any(|x| x.contains("--target=")) {
-            self.args.extend([
-                "--target=wasm32-unknown-unknown".to_string(),
-                "--no-default-features".to_string(),
-                "-Zbuild-std=std,core,alloc".to_string(),
-            ]);
-        }
-        if !self.debug {
-            self.args.push("--release".to_string());
-        }
-    }
-
-    fn validate(&self) -> Result<()> {
-        if self.filter.is_some() && self.exclude.is_some() {
-            bail!("The flags `--filter` and `--exclude` can't be used together");
-        }
-        if self.filter.is_some() && self.profile.is_some() {
-            bail!("The flags `--filter` and `--profile` can't be used together");
-        }
-        if let Some(path) = &self.output_path {
-            if path.is_dir() {
-                bail!("The output path can't be a directory");
-            }
-        }
-        Ok(())
-    }
-}
 
 fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
     let mut metadata_command = MetadataCommand::new();
@@ -209,90 +53,6 @@ fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
         .exec()
         .map_err(|e| {
             anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
-}
-
-pub fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {
-    let mut ret = String::new();
-    std::io::Read::read_to_string(&mut file, &mut ret)?;
-    let _ = file.close();
-    Ok(ret)
-}
-
-pub fn output_to_json(output: &str) -> Vec<Value> {
-    output
-        .lines()
-        .map(|line| from_str::<Value>(line).unwrap())
-        .collect::<Vec<Value>>()
-}
-
-//In some cases, rustc (or dylint, or clipply, or whoever) has returned the
-//package name where it should be returning the crate name. If you run into
-//problems in the future, try removing the call to this function.
-pub fn normalize_crate_name(s: &str) -> String {
-    s.replace("-", "_")
-}
-
-fn get_crates_from_output(output: &Vec<Finding>) -> HashMap<String, bool> {
-    let mut ret = HashMap::<String, bool>::new();
-
-    for finding in output {
-        let reason = finding.reason();
-        if reason != "compiler-message" {
-            continue;
-        }
-        let name = finding.package();
-        if name.is_empty() {
-            continue;
-        }
-        if let Some(previous) = ret.get(&name) {
-            if !previous {
-                continue;
-            }
-        }
-        ret.insert(name, !finding.is_compiler_error());
-    }
-
-    ret
-}
-
-fn get_crates(
-    findings: &Vec<Finding>,
-    packages: &[crate::output::report::Package],
-) -> HashMap<String, bool> {
-    let mut ret = HashMap::<String, bool>::new();
-    for package in packages.iter() {
-        ret.insert(normalize_crate_name(&package.name), true);
-    }
-    for (name, ok) in get_crates_from_output(findings).iter() {
-        if ret.contains_key(name) {
-            ret.insert(name.clone(), *ok);
-        }
-    }
-
-    ret
-}
-
-fn split_findings(
-    findings: &[Finding],
-    crates: &HashMap<String, bool>,
-) -> (Vec<Finding>, Vec<Finding>) {
-    let mut successful_findings = Vec::<Finding>::new();
-    let mut failed_findings = Vec::<Finding>::new();
-
-    for finding in findings.iter() {
-        let krate = finding.krate();
-        if krate.is_empty() {
-            continue;
-        }
-        if *crates.get(&krate).unwrap_or(&true) {
-            &mut successful_findings
-        } else {
-            &mut failed_findings
-        }
-        .push(finding.clone());
-    }
-
-    (successful_findings, failed_findings)
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -323,7 +83,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
         print_error(&format!(
-            "Failed to check for updates.\n\n     → Caused by: {}",
+            "Failed to check for scout updates.\n\n     → Caused by: {}",
             e
         ));
     }
@@ -474,7 +234,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
             .with_context(|| ("Failed to write stdout content"))?;
     } else {
         crate::output::console::render_report(&console_findings, &crates, &detectors_info)?;
-        generate_report(
+        Report::generate(
             &console_findings,
             raw_findings,
             &crates,
@@ -536,38 +296,4 @@ fn run_dylint(
     let success = dylint::run(&options).is_err();
 
     Ok((success, stdout_temp_file))
-}
-
-#[tracing::instrument(name = "GENERATE REPORT", skip_all)]
-fn generate_report(
-    findings: &Vec<Finding>,
-    raw_findings: Vec<Finding>,
-    crates: &HashMap<String, bool>,
-    project_info: ProjectInfo,
-    detectors_info: &LintStore,
-    output_path: Option<PathBuf>,
-    output_format: &[OutputFormat],
-) -> Result<()> {
-    let report = RawReport::generate_report(findings, crates, &project_info, detectors_info)?;
-
-    tracing::trace!(?output_format, "Output format");
-    tracing::trace!(?report, "Report");
-
-    for format in output_format.iter() {
-        let path = report.write_out(findings, &raw_findings, output_path.clone(), format)?;
-
-        if let Some(path) = path {
-            let path = path
-                .to_str()
-                .with_context(|| "Path conversion to string failed")?;
-            let string = OutputFormatter::new()
-                .fg()
-                .green()
-                .text_str(format!("{path} successfully generated.").as_str())
-                .print();
-            println!("{string}");
-        }
-    }
-
-    Ok(())
 }

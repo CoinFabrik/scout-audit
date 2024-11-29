@@ -1,5 +1,6 @@
 use cargo_scout_audit::{
-    startup::{run_scout, CargoSubCommand, Cli},
+    cli::{CargoSubCommand, Cli},
+    startup::run_scout,
     utils::{print::print_error, telemetry},
 };
 use clap::Parser;
