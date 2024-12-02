@@ -3,7 +3,7 @@ use crate::cli::OutputFormat;
 use crate::finding::Finding as JsonFinding;
 use crate::output::raw_report::RawReport;
 use crate::output::table::Table;
-use crate::scout::project_info::ProjectInfo;
+use crate::scout::project_info::Project;
 use crate::utils::detectors_info::{LintInfo, LintStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -110,7 +110,7 @@ impl Report {
         findings: &Vec<JsonFinding>,
         raw_findings: Vec<JsonFinding>,
         crates: &HashMap<String, bool>,
-        project_info: ProjectInfo,
+        project_info: Project,
         detectors_info: &LintStore,
         output_path: Option<PathBuf>,
         output_format: &[OutputFormat],

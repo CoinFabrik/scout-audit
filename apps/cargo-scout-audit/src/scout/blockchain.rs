@@ -1,9 +1,10 @@
 use crate::build_config::TOOLCHAIN;
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use cargo_metadata::Metadata;
 use std::collections::HashSet;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
+use thiserror::Error;
 
 #[derive(Debug, Copy, Clone, EnumIter, Display, EnumString)]
 pub enum BlockChain {
@@ -13,6 +14,12 @@ pub enum BlockChain {
     Soroban,
     #[strum(serialize = "substrate-pallets")]
     SubstratePallets,
+}
+
+#[derive(Error, Debug)]
+pub enum BlockchainError {
+    #[error("No supported dependency found in Cargo.toml.\n     → Supported dependencies:\n{0}")]
+    UnsupportedDependency(String),
 }
 
 impl BlockChain {
@@ -60,9 +67,14 @@ impl BlockChain {
         } else if immediate_dependencies.contains("frame-system") {
             Ok(BlockChain::SubstratePallets)
         } else {
-            let supported_blockchains = BlockChain::variants().join(", ");
-            Err(anyhow!("Could not find any supported blockchain dependency in the Cargo.toml file.\n   Supported blockchains include:\n   - {}\n",
-                supported_blockchains.replace(", ", "\n   - ")))
+            let supported_dependencies = BlockChain::variants()
+                .into_iter()
+                .map(|chain| format!("        - {}", chain))
+                .collect::<Vec<_>>()
+                .join("\n");
+            bail!(BlockchainError::UnsupportedDependency(
+                supported_dependencies,
+            ));
         }
     }
 }

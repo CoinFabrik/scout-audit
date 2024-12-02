@@ -1,6 +1,6 @@
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
 use crate::finding::Finding as JsonFinding;
-use crate::scout::project_info::ProjectInfo;
+use crate::scout::project_info::Project;
 use crate::utils::detectors_info::LintStore;
 use crate::utils::json::json_to_string;
 use anyhow::{Context, Result};
@@ -24,7 +24,7 @@ impl RawReport {
     pub fn generate_report(
         json_findings: &[JsonFinding],
         crates: &HashMap<String, bool>,
-        info: &ProjectInfo,
+        info: &Project,
         detector_info: &LintStore,
     ) -> Result<Report> {
         let findings = process_findings(json_findings, info, detector_info)
@@ -44,7 +44,7 @@ impl RawReport {
 
 fn process_findings(
     scout_findings: &[JsonFinding],
-    info: &ProjectInfo,
+    info: &Project,
     detector_info: &LintStore,
 ) -> Result<Vec<Finding>> {
     let mut det_map: HashMap<String, u32> = HashMap::new();
@@ -231,7 +231,7 @@ fn generate_categories(detector_info: &LintStore, findings: &[Finding]) -> Resul
 
 fn create_summary(
     detector_info: &LintStore,
-    info: &ProjectInfo,
+    info: &Project,
     findings: &[Finding],
     json_findings: &[JsonFinding],
     crates: &HashMap<String, bool>,

@@ -14,19 +14,19 @@ use crate::{scout::blockchain::BlockChain, utils::telemetry::TracedError};
 
 #[derive(Error, Debug)]
 pub enum BuilderError {
-    #[error("\n     → Failed to build detector library: {0}")]
+    #[error("Failed to build detector library (Path: {0})")]
     BuildError(PathBuf),
 
-    #[error("\n     → Unsupported source id: {0}")]
+    #[error("Unsupported source id: {0}")]
     UnsupportedSourceId(SourceId),
 
-    #[error("\n     → Path source should have a local path: {0}")]
+    #[error("Path source should have a local path: {0}")]
     InvalidPathSource(SourceId),
 
-    #[error("\n     → Path could refer to `{path}`, which is outside of `{root}`")]
+    #[error("Path could refer to '{path}', which is outside of '{root}'")]
     PathOutsideRoot { path: PathBuf, root: PathBuf },
 
-    #[error("\n     → Could not canonicalize {0}")]
+    #[error("Could not canonicalize (Path: {0})")]
     CanonicalizeError(PathBuf),
 }
 
