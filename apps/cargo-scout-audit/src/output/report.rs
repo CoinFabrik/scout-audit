@@ -1,13 +1,16 @@
 use super::{html, markdown, pdf, utils};
+use crate::cli::OutputFormat;
 use crate::finding::Finding as JsonFinding;
+use crate::output::raw_report::RawReport;
 use crate::output::table::Table;
-use crate::startup::OutputFormat;
-use crate::utils::detectors_info::LintInfo;
+use crate::scout::project_info::ProjectInfo;
+use crate::utils::detectors_info::{LintInfo, LintStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use terminal_color_builder::OutputFormatter;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {
@@ -100,6 +103,40 @@ impl Report {
             categories,
             findings,
         }
+    }
+
+    #[tracing::instrument(name = "GENERATE REPORT", skip_all)]
+    pub fn generate(
+        findings: &Vec<JsonFinding>,
+        raw_findings: Vec<JsonFinding>,
+        crates: &HashMap<String, bool>,
+        project_info: ProjectInfo,
+        detectors_info: &LintStore,
+        output_path: Option<PathBuf>,
+        output_format: &[OutputFormat],
+    ) -> Result<()> {
+        let report = RawReport::generate_report(findings, crates, &project_info, detectors_info)?;
+
+        tracing::trace!(?output_format, "Output format");
+        tracing::trace!(?report, "Report");
+
+        for format in output_format.iter() {
+            let path = report.write_out(findings, &raw_findings, output_path.clone(), format)?;
+
+            if let Some(path) = path {
+                let path = path
+                    .to_str()
+                    .with_context(|| "Path conversion to string failed")?;
+                let string = OutputFormatter::new()
+                    .fg()
+                    .green()
+                    .text_str(format!("{path} successfully generated.").as_str())
+                    .print();
+                println!("{string}");
+            }
+        }
+
+        Ok(())
     }
 
     #[tracing::instrument(name = "SAVING REPORT TO FILE", level = "debug", skip_all, fields(path = %path.display()))]
