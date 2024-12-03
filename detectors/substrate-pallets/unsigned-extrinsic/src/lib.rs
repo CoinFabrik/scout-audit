@@ -19,7 +19,8 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{Span, Symbol};
 
-const LINT_MESSAGE: &str = "Using unsigned extrinsics without fees exposes the chain to potential DoS attacks";
+const LINT_MESSAGE: &str =
+    "Using unsigned extrinsics without fees exposes the chain to potential DoS attacks";
 
 #[expose_lint_info]
 pub static UNSIGNED_EXTRINSIC_INFO: LintInfo = LintInfo {
@@ -53,8 +54,8 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsignedExtrinsicVisitor<'a, 'tcx> {
             // Check if the expression is `ensure_none`
             if let ExprKind::Call(callee, args) = &expr.kind;
             if let ExprKind::Path(QPath::Resolved(None, path)) = &callee.kind;
-            if path.segments.len() == 1;
-            if path.segments[0].ident.name == Symbol::intern("ensure_none");
+            if let Some(last_segment) = path.segments.last();
+            if last_segment.ident.name == Symbol::intern("ensure_none");
             then {
                 let first_arg_str = snippet(self.cx, args[0].span, "..");
                 span_lint_and_sugg(
