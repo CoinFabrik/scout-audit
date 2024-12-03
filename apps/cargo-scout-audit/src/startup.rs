@@ -18,7 +18,7 @@ use crate::{
         config::{open_config_and_sync_detectors, profile_enabled_detectors},
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
-        print::{print_error, print_warning},
+        print::{print_error, print_info, print_warning},
     },
 };
 use anyhow::{anyhow, bail, Context, Ok, Result};
@@ -254,6 +254,8 @@ fn run_dylint(
     opts: &Scout,
     inside_vscode: bool,
 ) -> Result<(bool, NamedTempFile)> {
+    print_info("Running scout...");
+
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
