@@ -39,7 +39,6 @@ pub mod pallet {
         #[pallet::call_index(0)]
         pub fn unsafe_check_balance(origin: OriginFor<T>, amount: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            ensure_none(who);
             assert!(
                 BalanceStorage::<T>::get().unwrap_or(0) >= amount,
                 "Insufficient balance"
