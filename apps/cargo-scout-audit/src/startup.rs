@@ -1,9 +1,6 @@
 use crate::{
     cli::Scout,
-    detectors::{
-        builder::DetectorBuilder,
-        configuration::{get_local_detectors_configuration, get_remote_detectors_configuration},
-    },
+    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
     digest,
     finding::Finding,
     output::report::Report,
@@ -11,53 +8,59 @@ use crate::{
         blockchain::BlockChain,
         findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
         nightly_runner::run_scout_in_nightly,
-        project_info::ProjectInfo,
+        project_info::Project,
         version_checker::VersionChecker,
     },
     utils::{
-        config::{open_config_and_sync_detectors, profile_enabled_detectors},
+        config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
-        print::{print_error, print_info, print_warning},
+        print::{print_error, print_info},
+        telemetry::TracedError,
     },
 };
-use anyhow::{anyhow, bail, Context, Ok, Result};
+use anyhow::{Context, Ok, Result};
 use cargo::{core::Verbosity, GlobalContext};
-use cargo_metadata::{Metadata, MetadataCommand};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::to_string_pretty;
-use std::{collections::HashSet, fs, io::Write, path::PathBuf};
+use std::{collections::HashSet, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 use terminal_color_builder::OutputFormatter;
+use thiserror::Error;
 
-fn get_project_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
-    let mut metadata_command = MetadataCommand::new();
+#[derive(Error, Debug)]
+pub enum ScoutError {
+    #[error("Failed to validate CLI options:\n     → {0}")]
+    ValidateFailed(#[source] anyhow::Error),
 
-    if let Some(manifest_path) = manifest_path {
-        if !manifest_path.ends_with("Cargo.toml") {
-            bail!(
-                "Invalid manifest path, ensure scout is being run in a Rust project, and the path is set to the Cargo.toml file.\n     → Manifest path: {:?}",
-                manifest_path
-            );
-        }
+    #[error("Failed to get project metadata:\n     → {0}")]
+    MetadataFailed(#[source] anyhow::Error),
 
-        fs::metadata(manifest_path).context(format!(
-            "Cargo.toml file not found, ensure the path is a valid file path.\n     → Manifest path: {:?}",
-            manifest_path
-        ))?;
+    #[error("Failed to get blockchain dependency:\n     → {0}")]
+    BlockchainFailed(#[source] anyhow::Error),
 
-        metadata_command.manifest_path(manifest_path);
-    }
+    #[error("Failed to create default cargo configuration")]
+    CargoConfigFailed,
 
-    metadata_command
-        .exec()
-        .map_err(|e| {
-            anyhow!("Failed to execute metadata command on this path, ensure this is a valid rust project or workspace directory.\n\n     → Caused by: {}", e.to_string())})
+    #[error("Failed to get detectors configuration:\n     → {0}")]
+    DetectorsConfigFailed(#[source] anyhow::Error),
+
+    #[error("Failed to get detector names:\n     → {0}")]
+    GetDetectorNamesFailed(#[source] anyhow::Error),
+
+    #[error("Failed to build detectors:\n     → {0}")]
+    BuildDetectorsFailed(#[source] anyhow::Error),
+
+    #[error("Failed to get project info:\n     → {0}")]
+    GetProjectInfoFailed(#[source] anyhow::Error),
+
+    #[error("Failed to run dylint:\n     → {0}")]
+    RunDylintFailed(#[source] anyhow::Error),
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
-    opts.validate()?;
+    opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
 
     if opts.src_hash {
@@ -65,8 +68,10 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
         return Ok(vec![]);
     }
 
-    let metadata = get_project_metadata(&opts.manifest_path)?;
-    let blockchain = BlockChain::get_blockchain_dependency(&metadata)?;
+    let metadata =
+        Project::get_metadata(&opts.manifest_path).map_err(ScoutError::MetadataFailed)?;
+    let blockchain =
+        BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
     let toolchain = blockchain.get_toolchain();
 
     if opts.toolchain {
@@ -82,34 +87,22 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     }
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
+        // This is not a critical error, so we don't need to bail and we don't need a ScoutError
         print_error(&format!(
-            "Failed to check for scout updates.\n\n     → Caused by: {}",
+            "Failed to check for scout updates.\n     → Caused by: {}",
             e
         ));
     }
 
-    let cargo_config =
-        GlobalContext::default().with_context(|| "Failed to create default cargo configuration")?;
+    let cargo_config = GlobalContext::default().map_err(ScoutError::CargoConfigFailed.traced())?;
     cargo_config.shell().set_verbosity(if opts.verbose {
         Verbosity::Verbose
     } else {
         Verbosity::Quiet
     });
 
-    let detectors_config = match &opts.local_detectors {
-        Some(path) => get_local_detectors_configuration(path, blockchain).map_err(|e| {
-            anyhow!(
-                "Failed to get local detectors configuration.\n\n     → Caused by: {}",
-                e
-            )
-        })?,
-        None => get_remote_detectors_configuration(blockchain).map_err(|e| {
-            anyhow!(
-                "Failed to get remote detectors configuration.\n\n     → Caused by: {}",
-                e
-            )
-        })?,
-    };
+    let detectors_config = DetectorsConfiguration::get(blockchain, &opts.local_detectors)
+        .map_err(ScoutError::DetectorsConfigFailed)?;
 
     // Instantiate detectors
     let detector_builder = DetectorBuilder::new(
@@ -122,28 +115,10 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
     let detectors_names = detector_builder
         .get_detector_names()
-        .map_err(|e| anyhow!("Failed to get detector names.\n\n     → Caused by: {}", e))?;
+        .map_err(ScoutError::GetDetectorNamesFailed)?;
 
-    let profile_detectors = match &opts.profile {
-        Some(profile) => {
-            let (config, config_path) =
-                open_config_and_sync_detectors(blockchain, &detectors_names).map_err(|err| {
-                    anyhow!(
-                    "Failed to open and synchronize configuration file.\n\n     → Caused by: {}",
-                    err
-                )
-                })?;
-
-            print_warning(&format!(
-                "Using profile '{}' to filter detectors. To edit this profile, open the configuration file at: {}",
-                profile,
-                config_path.display()
-            ));
-
-            profile_enabled_detectors(&config, profile, &config_path, &detectors_names)?
-        }
-        None => detectors_names.clone(),
-    };
+    let profile_detectors =
+        ProfileConfig::new(blockchain, detectors_names).get_profile_detectors(&opts.profile)?;
 
     if opts.list_detectors {
         list_detectors(&profile_detectors);
@@ -160,12 +135,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
     let detectors_paths = detector_builder
         .build(&blockchain, &filtered_detectors)
-        .map_err(|e| {
-            anyhow!(
-                "Failed to build detectors.\n\n     → Caused by: {}",
-                e.to_string()
-            )
-        })?;
+        .map_err(ScoutError::BuildDetectorsFailed)?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
@@ -175,14 +145,13 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
         return Ok(vec![]);
     }
 
-    let project_info = ProjectInfo::get_project_info(&metadata)
-        .map_err(|err| anyhow!("Failed to get project info.\n\n     → Caused by: {}", err))?;
+    let project_info = Project::get_info(&metadata).map_err(ScoutError::GetProjectInfoFailed)?;
 
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
     // Run dylint
     let (_successful_build, stdout) = run_dylint(detectors_paths.clone(), &opts, inside_vscode)
-        .map_err(|err| anyhow!("Failed to run dylint.\n\n     → Caused by: {}", err))?;
+        .map_err(ScoutError::RunDylintFailed)?;
 
     let raw_findings_string = temp_file_to_string(stdout)?;
     let raw_findings = output_to_json(&raw_findings_string)

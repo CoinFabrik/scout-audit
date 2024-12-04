@@ -1,9 +1,14 @@
 use crate::scout::blockchain::BlockChain;
-use anyhow::{anyhow, Context, Result};
+use crate::utils::telemetry::TracedError;
+use anyhow::{bail, Context, Ok, Result};
 use cargo::core::{Dependency, GitReference, SourceId};
 use git2::{RemoteCallbacks, Repository};
-use std::{env, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 use tempfile::TempDir;
+use thiserror::Error;
 
 // Constants
 const SCOUT_REPO_URL: &str = "https://github.com/CoinFabrik/scout-audit";
@@ -37,6 +42,24 @@ pub struct DetectorsConfiguration {
     blockchain_config: Option<DetectorConfig>,
 }
 
+#[derive(Error, Debug)]
+pub enum DetectorsConfigError {
+    #[error("Remote configuration error:\n     → {0}")]
+    Remote(#[source] anyhow::Error),
+
+    #[error("Local configuration error:\n     → {0}")]
+    Local(#[source] anyhow::Error),
+
+    #[error("Could not find suitable branch for detectors")]
+    BranchNotFound,
+
+    #[error("Failed to create git dependency:\n     → {0}")]
+    GitDependency(#[source] anyhow::Error),
+
+    #[error("Failed to create SourceId for path: {0}")]
+    SourceId(PathBuf),
+}
+
 impl DetectorsConfiguration {
     pub fn new(base_config: DetectorConfig, blockchain_config: Option<DetectorConfig>) -> Self {
         Self {
@@ -48,10 +71,58 @@ impl DetectorsConfiguration {
     pub fn iter_configs(&self) -> impl Iterator<Item = &DetectorConfig> {
         std::iter::once(&self.base_config).chain(self.blockchain_config.as_ref())
     }
+
+    pub fn get(blockchain: BlockChain, local_path: &Option<PathBuf>) -> Result<Self> {
+        let detectors_config = match &local_path {
+            Some(path) => Self::get_local_detectors_configuration(path, blockchain)
+                .map_err(DetectorsConfigError::Local)?,
+            None => Self::get_remote_detectors_configuration(blockchain)
+                .map_err(DetectorsConfigError::Remote)?,
+        };
+
+        Ok(detectors_config)
+    }
+
+    /// Returns list of detectors from remote repository.
+    #[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
+    fn get_remote_detectors_configuration(blockchain: BlockChain) -> Result<Self> {
+        let scout_version = env!("CARGO_PKG_VERSION");
+        let default_branch = format!("release/{scout_version}");
+
+        if !check_branch_exists(SCOUT_REPO_URL, &default_branch)? {
+            bail!(DetectorsConfigError::BranchNotFound);
+        }
+
+        let dependency =
+            create_git_dependency(&default_branch).map_err(DetectorsConfigError::GitDependency)?;
+        let source_id = dependency.source_id();
+
+        let base_config = DetectorConfig::with_dependency_and_path(source_id, BASE_DETECTOR_PATH)?;
+
+        let blockchain_config =
+            DetectorConfig::with_dependency_and_path(source_id, blockchain.get_detectors_path())?;
+
+        Ok(Self::new(base_config, Some(blockchain_config)))
+    }
+
+    /// Returns local detectors configuration from custom path.
+    #[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
+    fn get_local_detectors_configuration(path: &Path, blockchain: BlockChain) -> Result<Self> {
+        let source_id = SourceId::for_path(path)
+            .map_err(DetectorsConfigError::SourceId(path.to_path_buf()).traced())?;
+
+        let base_config =
+            DetectorConfig::with_dependency_and_path(source_id, LOCAL_BASE_DETECTOR_PATH)?;
+
+        let blockchain_config =
+            DetectorConfig::with_dependency_and_path(source_id, blockchain.to_string())?;
+
+        Ok(Self::new(base_config, Some(blockchain_config)))
+    }
 }
 
 #[tracing::instrument(name = "CHECK BRANCH EXISTS", skip_all, level = "debug")]
-pub fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
+fn check_branch_exists(url: &str, branch: &str) -> Result<bool> {
     // Set up temporary repository and remote
     let temp_dir = TempDir::new()?;
     let repo = Repository::init_bare(temp_dir.path())?;
@@ -79,51 +150,4 @@ fn create_git_dependency(branch: &str) -> Result<Dependency> {
 
     Dependency::parse(LIBRARY_NAME, None, source_id)
         .with_context(|| "Failed to create git dependency")
-}
-
-/// Returns list of detectors from remote repository.
-#[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
-pub fn get_remote_detectors_configuration(
-    blockchain: BlockChain,
-) -> Result<DetectorsConfiguration> {
-    let scout_version = env!("CARGO_PKG_VERSION");
-    let default_branch = format!("release/{scout_version}");
-
-    if !check_branch_exists(SCOUT_REPO_URL, &default_branch)? {
-        return Err(anyhow!("Could not find suitable branch for detectors"));
-    }
-
-    let dependency = create_git_dependency(&default_branch)?;
-    let source_id = dependency.source_id();
-
-    let base_config = DetectorConfig::with_dependency_and_path(source_id, BASE_DETECTOR_PATH)?;
-
-    let blockchain_config =
-        DetectorConfig::with_dependency_and_path(source_id, blockchain.get_detectors_path())?;
-
-    Ok(DetectorsConfiguration::new(
-        base_config,
-        Some(blockchain_config),
-    ))
-}
-
-/// Returns local detectors configuration from custom path.
-#[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
-pub fn get_local_detectors_configuration(
-    path: &Path,
-    blockchain: BlockChain,
-) -> Result<DetectorsConfiguration> {
-    let source_id = SourceId::for_path(path)
-        .with_context(|| format!("Failed to create SourceId for path: {path:?}"))?;
-
-    let base_config =
-        DetectorConfig::with_dependency_and_path(source_id, LOCAL_BASE_DETECTOR_PATH)?;
-
-    let blockchain_config =
-        DetectorConfig::with_dependency_and_path(source_id, blockchain.to_string())?;
-
-    Ok(DetectorsConfiguration::new(
-        base_config,
-        Some(blockchain_config),
-    ))
 }
