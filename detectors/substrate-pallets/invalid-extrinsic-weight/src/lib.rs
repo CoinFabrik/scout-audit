@@ -92,6 +92,10 @@ impl EarlyLintPass for InvalidExtrinsicWeight {
                     let fn_name = impl_item.ident.name.to_string();
 
                     for attr in &impl_item.attrs {
+                        if attr.is_doc_comment() {
+                            continue;
+                        }
+
                         if let Some(token_stream) = attr.tokens() {
                             let mut validator = WeightInfoValidator::new(fn_name.clone());
 
