@@ -28,6 +28,17 @@ impl Command {
         self
     }
 
+    #[cfg(windows)]
+    pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Self
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: AsRef<OsStr>,
+        V: AsRef<OsStr>,
+    {
+        self.command.envs(vars);
+        self
+    }
+
     pub fn env_remove<K: AsRef<OsStr>>(&mut self, key: K) -> &mut Self {
         self.command.env_remove(key);
         self
