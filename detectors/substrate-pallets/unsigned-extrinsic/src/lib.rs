@@ -12,15 +12,17 @@ use common::{
 use if_chain::if_chain;
 use rustc_errors::Applicability;
 use rustc_hir::{
+    def::Res,
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, ExprKind, FnDecl, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{Span, Symbol};
+use rustc_span::Span;
 
 const LINT_MESSAGE: &str =
     "Using unsigned extrinsics without fees exposes the chain to potential DoS attacks";
+const ENSURE_NONE_PATH: &str = "frame_system::ensure_none";
 
 #[expose_lint_info]
 pub static UNSIGNED_EXTRINSIC_INFO: LintInfo = LintInfo {
@@ -49,22 +51,21 @@ struct UnsignedExtrinsicVisitor<'a, 'tcx> {
 impl<'a, 'tcx> Visitor<'tcx> for UnsignedExtrinsicVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
-            // Ignore expressions from proc macros
             if !is_from_proc_macro(self.cx, expr);
-            // Check if the expression is `ensure_none`
-            if let ExprKind::Call(callee, args) = &expr.kind;
+            // Find `ensure_none` calls
+            if let ExprKind::Call(callee, [origin, ..]) = &expr.kind;
             if let ExprKind::Path(QPath::Resolved(None, path)) = &callee.kind;
-            if let Some(last_segment) = path.segments.last();
-            if last_segment.ident.name == Symbol::intern("ensure_none");
+            if let Some(segment) = path.segments.last();
+            if let Res::Def(_, def_id) = segment.res;
+            if self.cx.tcx.def_path_str(def_id).contains(ENSURE_NONE_PATH);
             then {
-                let first_arg_str = snippet(self.cx, args[0].span, "..");
                 span_lint_and_sugg(
                     self.cx,
                     UNSIGNED_EXTRINSIC,
                     expr.span,
                     LINT_MESSAGE,
                     "consider signing this extrinsic to prevent DoS attacks",
-                    format!("ensure_signed({})", first_arg_str),
+                    format!("ensure_signed({})", snippet(self.cx, origin.span, "..")),
                     Applicability::MaybeIncorrect,
                 );
             }
