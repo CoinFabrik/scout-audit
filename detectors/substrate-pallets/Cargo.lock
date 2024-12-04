@@ -1640,6 +1640,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "invalid-extrinsic-weight"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_linting",
+ "if_chain",
+]
+
+[[package]]
 name = "io-close"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
