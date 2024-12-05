@@ -23,7 +23,7 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     use windows::{core::PCWSTR, Win32::System::LibraryLoader::SetDllDirectoryW};
 
     let user_profile = env::var("USERPROFILE")
-        .map_err(|e| anyhow!("Unable to get user profile directory: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("Unable to get user profile directory: {e}"))?;
     let mut user_profile = std::path::PathBuf::from(user_profile);
     user_profile.push(".rustup");
     user_profile.push("toolchains");
