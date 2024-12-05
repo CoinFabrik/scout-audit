@@ -2841,7 +2841,7 @@ version = "0.1.0"
 dependencies = [
  "clippy_utils",
  "common",
- "dylint_internal",
+ "common-detectors",
  "dylint_linting",
  "if_chain",
 ]

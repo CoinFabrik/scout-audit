@@ -1,10 +1,8 @@
-#![allow(clippy::enum_variant_names)]
-
 extern crate rustc_hir;
 extern crate rustc_lint;
 extern crate rustc_span;
 
-use analysis::ConstantAnalyzer;
+use analysis::{get_node_type_opt, match_type_to_str, ConstantAnalyzer};
 use clippy_utils::{diagnostics::span_lint_and_help, higher::IfOrIfLet, is_from_proc_macro};
 use if_chain::if_chain;
 use rustc_hir::{
@@ -20,7 +18,7 @@ const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
-enum CheckType {
+pub enum CheckType {
     IsSome,
     IsNone,
     IsOk,
@@ -52,8 +50,8 @@ impl CheckType {
         matches!(self, Self::IsNone | Self::IsErr)
     }
 
-    /// Determines if it is safe to expect the value without further checks, i.e., the value is present.
-    fn is_safe_to_expect(self) -> bool {
+    /// Determines if it is safe to unwrap the value without further checks, i.e., the value is present.
+    fn is_safe(self) -> bool {
         matches!(self, Self::IsSome | Self::IsOk)
     }
 }
@@ -98,27 +96,39 @@ impl ConditionalChecker {
     }
 }
 
-/// Main unsafe-expect visitor
-pub struct UnsafeExpectVisitor<'a, 'tcx> {
+// Enum to represent the type being unwrapped
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum UnwrapType {
+    Option,
+    Result,
+}
+
+pub struct UnsafeChecks<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     lint: &'static Lint,
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
     conditional_checker: HashSet<ConditionalChecker>,
     checked_exprs: HashSet<HirId>,
+    returns_result_or_option: bool,
+    // Only sym::expect or sym::unwrap are supported, DO NOT USE OTHER SYMBOLS
+    checks_symbol: Symbol,
 }
 
-impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
+impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
     pub fn new(
         cx: &'a LateContext<'tcx>,
         lint: &'static Lint,
         constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+        checks_symbol: Symbol,
     ) -> Self {
         Self {
             cx,
             lint,
+            checks_symbol,
             constant_analyzer,
             conditional_checker: HashSet::new(),
             checked_exprs: HashSet::new(),
+            returns_result_or_option: false,
         }
     }
 
@@ -133,7 +143,27 @@ impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
         false
     }
 
-    fn get_expect_info(&self, receiver: &Expr<'tcx>) -> Option<HirId> {
+    fn update_conditional_checker(
+        &mut self,
+        conditional_checkers: &HashSet<ConditionalChecker>,
+        set: bool,
+    ) {
+        for checker in conditional_checkers {
+            if set {
+                self.conditional_checker.insert(*checker);
+                if checker.check_type.is_safe() {
+                    self.checked_exprs.insert(checker.checked_expr_hir_id);
+                }
+            } else {
+                if checker.check_type.is_safe() {
+                    self.checked_exprs.remove(&checker.checked_expr_hir_id);
+                }
+                self.conditional_checker.remove(checker);
+            }
+        }
+    }
+
+    fn get_check_info(&self, receiver: &Expr<'tcx>) -> Option<HirId> {
         if_chain! {
             if let ExprKind::Path(QPath::Resolved(_, path)) = &receiver.kind;
             if let Res::Local(hir_id) = path.res;
@@ -144,24 +174,17 @@ impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
         None
     }
 
-    fn update_conditional_checker(
-        &mut self,
-        conditional_checkers: &HashSet<ConditionalChecker>,
-        set: bool,
-    ) {
-        for checker in conditional_checkers {
-            if set {
-                self.conditional_checker.insert(*checker);
-                if checker.check_type.is_safe_to_expect() {
-                    self.checked_exprs.insert(checker.checked_expr_hir_id);
-                }
-            } else {
-                if checker.check_type.is_safe_to_expect() {
-                    self.checked_exprs.remove(&checker.checked_expr_hir_id);
-                }
-                self.conditional_checker.remove(checker);
+    fn is_method_call_unsafe(&self, path_segment: &PathSegment, receiver: &Expr<'tcx>) -> bool {
+        if path_segment.ident.name == self.checks_symbol {
+            if self.constant_analyzer.is_constant(receiver) {
+                return false;
             }
+
+            return self
+                .get_check_info(receiver)
+                .map_or(true, |id| !self.checked_exprs.contains(&id));
         }
+        false
     }
 
     /// Process conditional expressions to determine if they should halt execution.
@@ -171,38 +194,6 @@ impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
                 self.checked_exprs.insert(checker.checked_expr_hir_id);
             }
         });
-    }
-
-    fn is_method_call_unsafe(&self, path_segment: &PathSegment, receiver: &Expr<'tcx>) -> bool {
-        if path_segment.ident.name == sym::expect {
-            if self.constant_analyzer.is_constant(receiver) {
-                return false;
-            }
-
-            return self
-                .get_expect_info(receiver)
-                .map_or(true, |id| !self.checked_exprs.contains(&id));
-        }
-        false
-    }
-
-    fn check_expr_for_unsafe_expect(&mut self, expr: &Expr<'tcx>) {
-        if let ExprKind::MethodCall(path_segment, receiver, _, _) = &expr.kind {
-            if self.is_method_call_unsafe(path_segment, receiver) {
-                if is_from_proc_macro(self.cx, expr) {
-                    return;
-                }
-
-                span_lint_and_help(
-                    self.cx,
-                    self.lint,
-                    expr.span,
-                    self.lint.desc,
-                    None,
-                    "Please, use a custom error instead of `expect`",
-                );
-            }
-        }
     }
 
     fn check_for_try(&mut self, expr: &Expr<'tcx>) {
@@ -220,9 +211,56 @@ impl<'a, 'tcx> UnsafeExpectVisitor<'a, 'tcx> {
             }
         }
     }
+
+    fn check_expr_for_unsafe_method(&mut self, expr: &Expr<'tcx>) {
+        if_chain! {
+            if !is_from_proc_macro(self.cx, expr);
+            if let ExprKind::MethodCall(path_segment, receiver, _, _) = &expr.kind;
+            if self.is_method_call_unsafe(path_segment, receiver);
+            then {
+                let help_message = if self.checks_symbol == sym::expect {
+                    "Please, use a custom error instead of `expect`"
+                } else {
+                    self.get_help_message(self.determine_unwrap_type(receiver))
+                };
+
+                span_lint_and_help(
+                    self.cx,
+                    self.lint,
+                    expr.span,
+                    self.lint.desc,
+                    None,
+                    help_message,
+                );
+            }
+        }
+    }
+
+    fn determine_unwrap_type(&self, receiver: &Expr<'tcx>) -> UnwrapType {
+        let type_opt = get_node_type_opt(self.cx, &receiver.hir_id);
+        if let Some(type_) = type_opt {
+            if match_type_to_str(self.cx, type_, "Result") {
+                return UnwrapType::Result;
+            }
+        }
+        UnwrapType::Option
+    }
+
+    fn get_help_message(&self, unwrap_type: UnwrapType) -> &'static str {
+        match (self.returns_result_or_option, unwrap_type) {
+            (true, UnwrapType::Option) => "Consider using `ok_or` to convert Option to Result",
+            (true, UnwrapType::Result) => "Consider using the `?` operator for error propagation",
+            (false, UnwrapType::Option) => {
+                "Consider pattern matching or using `if let` instead of `unwrap`"
+            }
+            (false, UnwrapType::Result) => {
+                "Consider handling the error case explicitly or using `if let` instead of `unwrap`"
+            }
+        }
+    }
 }
 
-impl<'a, 'tcx> Visitor<'tcx> for UnsafeExpectVisitor<'a, 'tcx> {
+impl<'a, 'tcx> Visitor<'tcx> for UnsafeChecks<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
         // Check for try desugaring '?'
         self.check_for_try(expr);
@@ -254,7 +292,7 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeExpectVisitor<'a, 'tcx> {
         }
 
         // If we find an unsafe `expect`, we raise a warning
-        self.check_expr_for_unsafe_expect(expr);
+        self.check_expr_for_unsafe_method(expr);
 
         walk_expr(self, expr);
     }

@@ -1014,17 +1014,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "unsafe-unwrap"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
 name = "untrusted"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
