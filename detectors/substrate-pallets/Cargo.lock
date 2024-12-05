@@ -489,6 +489,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "unsigned-extrinsic"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_linting",
+ "if_chain",
+]
+
+[[package]]
 name = "winnow"
 version = "0.5.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
