@@ -203,6 +203,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "invalid-extrinsic-weight"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_linting",
+ "if_chain",
+]
+
+[[package]]
 name = "iterators-over-indexing"
 version = "0.1.0"
 dependencies = [
