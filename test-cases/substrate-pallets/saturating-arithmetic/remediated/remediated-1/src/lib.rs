@@ -27,9 +27,6 @@ use sp_runtime::{
 
 pub use pallet::*;
 
-#[cfg(test)]
-mod tests;
-
 pub mod weights;
 pub use weights::*;
 
