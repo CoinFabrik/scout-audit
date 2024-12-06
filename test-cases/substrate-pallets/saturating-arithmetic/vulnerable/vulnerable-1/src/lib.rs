@@ -2,7 +2,6 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use frame_support::{
