@@ -87,6 +87,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
+name = "avoid-debug-info"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_linting",
+]
+
+[[package]]
 name = "avoid-dispatcherror-other"
 version = "0.1.0"
 dependencies = [
