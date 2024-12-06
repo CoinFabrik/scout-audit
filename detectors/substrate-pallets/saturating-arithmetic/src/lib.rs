@@ -44,19 +44,19 @@ use std::{
 const LINT_MESSAGE: &str = "Saturating arithmetic may silently generate incorrect results.";
 const F: bool = false;
 const T: bool = true;
-const RELEVANT_FUNCTIONS: [(&str, bool, bool); 12] = [
-    ("saturating_add",        T, T),
-    ("saturating_add_signed", T, F),
-    ("saturating_sub",        T, T),
-    ("saturating_mul",        T, T),
-    ("saturating_div",        T, F),
-    ("saturating_pow",        T, T),
-    ("saturating_less_one",   F, T),
-    ("saturating_plus_one",   F, T),
-    ("saturating_inc",        F, T),
-    ("saturating_dec",        F, T),
-    ("saturating_accrue",     F, T),
-    ("saturating_reduce",     F, T),
+const RELEVANT_FUNCTIONS: [(&str, bool, bool, Option<&str>); 12] = [
+    ("saturating_add",        T, T, Some("checked_add")),
+    ("saturating_add_signed", T, F, Some("checked_add_signed")),
+    ("saturating_sub",        T, T, Some("checked_sub")),
+    ("saturating_mul",        T, T, Some("checked_mul")),
+    ("saturating_div",        T, F, Some("checked_div")),
+    ("saturating_pow",        T, T, None),
+    ("saturating_less_one",   F, T, None),
+    ("saturating_plus_one",   F, T, None),
+    ("saturating_inc",        F, T, None),
+    ("saturating_dec",        F, T, None),
+    ("saturating_accrue",     F, T, None),
+    ("saturating_reduce",     F, T, None),
 ];
 const IGNORED_FUNCTIONS: [&str; 1] = [
     "size_hint",
@@ -85,13 +85,15 @@ dylint_linting::declare_late_lint! {
 struct FunctionAvailability{
     pub available_on_std: bool,
     pub available_on_substrate: bool,
+    pub suggested_replacement: Option<String>,
 }
 
 impl FunctionAvailability{
-    pub fn new(available_on_std: bool, available_on_substrate: bool) -> Self{
+    pub fn new(available_on_std: bool, available_on_substrate: bool, suggested_replacement: &Option<&str>) -> Self{
         Self{
             available_on_std,
             available_on_substrate,
+            suggested_replacement: suggested_replacement.and_then(|x| Some(x.to_string()))
         }
     }
 }
@@ -107,7 +109,14 @@ impl GlobalState{
         Self{
             relevant_functions: RELEVANT_FUNCTIONS
                 .iter()
-                .map(|(x, y, z)| (x.to_string(), FunctionAvailability::new(*y, *z)))
+                .map(|(x, y, z, a)| (
+                    x.to_string(),
+                    FunctionAvailability::new(
+                        *y,
+                        *z,
+                        a
+                    )
+                ))
                 .collect(),
             ignored_functions: Self::to_hash_set(&IGNORED_FUNCTIONS[..]),
             ignored_types: Self::to_hash_set(&IGNORED_TYPES[..]),
@@ -156,20 +165,31 @@ static GLOBAL_STATE: Mutex<Option<Arc<Mutex<GlobalState>>>> = Mutex::new(None);
 fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> Option<()>{
     let (method_name, receiver, _args, _span) = expr_to_method_call(&expr.kind)?;
     let method_name_str = method_name.ident.name.as_str();
-    let _availability = GlobalState::method_is_relevant(method_name_str)?;
+    let availability = GlobalState::method_is_relevant(method_name_str)?;
     let node_type = get_node_type(cx, &receiver.hir_id);
     if GlobalState::type_is_ignored(&common::analysis::ty_to_string(cx, &node_type)){
         None?;
     }
-    span_lint_and_sugg(
-        cx,
-        SATURATING_ARITHMETIC,
-        method_name.ident.span,
-        LINT_MESSAGE,
-        "Instead of overflowing, saturating arithmetic clamps the result to the representation limit for the data type. Consider checked arithmetic instead",
-        format!("checked_{}", &method_name_str[11..]),
-        Applicability::MaybeIncorrect,
-    );
+    if let Some(replacement) = availability.suggested_replacement{
+        span_lint_and_sugg(
+            cx,
+            SATURATING_ARITHMETIC,
+            method_name.ident.span,
+            LINT_MESSAGE,
+            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead",
+            replacement,
+            Applicability::MaybeIncorrect,
+        );
+    }else{
+        span_lint_and_help(
+            cx,
+            SATURATING_ARITHMETIC,
+            method_name.ident.span,
+            LINT_MESSAGE,
+            None,
+            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead.",
+        );
+    }
     None
 }
 
