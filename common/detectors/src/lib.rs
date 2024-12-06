@@ -2,4 +2,4 @@
 #![feature(let_chains)]
 
 pub mod iterators_over_indexing;
-pub mod unsafe_expect;
+pub mod unsafe_checks;

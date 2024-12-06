@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![allow(clippy::enum_variant_names)]
 
 extern crate rustc_hir;
 extern crate rustc_span;
@@ -19,41 +18,46 @@ use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span};
 use std::collections::HashSet;
 
-const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
+const LINT_MESSAGE: &str = "Unsafe usage of `unwrap`";
 
 #[expose_lint_info]
-pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
+pub static UNSAFE_UNWRAP_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
-    long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
+    long_message: "This vulnerability class pertains to the inappropriate usage of the unwrap method in Rust, which is commonly employed for error handling. The unwrap method retrieves the inner value of an Option or Result, but if an error or None occurs, it triggers a panic and crashes the program.    ",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-rust/docs/detectors/unsafe-expect",
+    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-unwrap",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 
 dylint_linting::declare_late_lint! {
-    pub UNSAFE_EXPECT,
+    pub UNSAFE_UNWRAP,
     Warn,
     LINT_MESSAGE
 }
 
-impl<'tcx> LateLintPass<'tcx> for UnsafeExpect {
+impl<'tcx> LateLintPass<'tcx> for UnsafeUnwrap {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
         _: FnKind<'tcx>,
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
-        _: Span,
+        span: Span,
         _: LocalDefId,
     ) {
+        // If the function comes from a macro expansion we don't want to analyze it.
+        if span.from_expansion() {
+            return;
+        }
+
         let mut constant_analyzer = ConstantAnalyzer {
             cx,
             constants: HashSet::new(),
         };
         constant_analyzer.visit_body(body);
 
-        let mut visitor = UnsafeChecks::new(cx, UNSAFE_EXPECT, constant_analyzer, sym::expect);
+        let mut visitor = UnsafeChecks::new(cx, UNSAFE_UNWRAP, constant_analyzer, sym::unwrap);
 
         walk_expr(&mut visitor, body.value);
     }
