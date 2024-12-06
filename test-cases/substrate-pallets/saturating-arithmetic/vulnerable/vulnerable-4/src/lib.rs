@@ -89,17 +89,14 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn divide_dummy(origin: OriginFor<T>, divide_by: T::Balance) -> DispatchResult {
+        pub fn cube_dummy(origin: OriginFor<T>) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
             <Dummy<T>>::mutate(|dummy| {
-                let new_dummy = dummy.map_or(divide_by, |d| d.saturating_div(divide_by));
-                *dummy = Some(new_dummy);
+                *dummy = dummy.and_then(|d| Some(d.saturating_pow(3_usize)));
             });
 
-            Self::deposit_event(Event::AccumulateDummy {
-                balance: divide_by,
-            });
+            Self::deposit_event(Event::AccumulateDummy);
 
             Ok(())
         }
@@ -125,9 +122,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        AccumulateDummy {
-            balance: BalanceOf<T>,
-        },
+        AccumulateDummy,
         SetDummy {
             balance: BalanceOf<T>,
         },

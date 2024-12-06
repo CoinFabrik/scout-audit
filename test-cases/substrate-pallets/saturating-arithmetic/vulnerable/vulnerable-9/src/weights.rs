@@ -7,7 +7,7 @@ use core::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn set_dummy_benchmark() -> Weight;
-	fn cube_dummy() -> Weight;
+	fn accumulate_dummy() -> Weight;
 	fn sort_vector(x: u32, ) -> Weight;
 }
 
@@ -17,7 +17,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(19_000_000_u64, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	fn cube_dummy() -> Weight {
+	fn accumulate_dummy() -> Weight {
 		Weight::from_parts(18_000_000_u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
@@ -34,7 +34,7 @@ impl WeightInfo for () {
 		Weight::from_parts(19_000_000_u64, 0)
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
-	fn cube_dummy() -> Weight {
+	fn accumulate_dummy() -> Weight {
 		Weight::from_parts(18_000_000_u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))

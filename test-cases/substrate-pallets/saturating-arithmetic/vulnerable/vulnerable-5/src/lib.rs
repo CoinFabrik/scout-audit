@@ -89,16 +89,16 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn accumulate_dummy(origin: OriginFor<T>, decrease_by: T::Balance) -> DispatchResult {
+        pub fn decrement_dummy(origin: OriginFor<T>) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
             <Dummy<T>>::mutate(|dummy| {
-                *dummy = dummy.and_then(|d| Some(d.saturating_sub(decrease_by)));
+                if let Some(x) = dummy{
+                    *dummy = Some(x.saturating_less_one());
+                }
             });
 
-            Self::deposit_event(Event::AccumulateDummy {
-                balance: decrease_by,
-            });
+            Self::deposit_event(Event::AccumulateDummy);
 
             Ok(())
         }
@@ -124,9 +124,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        AccumulateDummy {
-            balance: BalanceOf<T>,
-        },
+        AccumulateDummy,
         SetDummy {
             balance: BalanceOf<T>,
         },
