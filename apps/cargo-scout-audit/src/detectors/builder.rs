@@ -10,23 +10,26 @@ use super::{
     library::Library,
     source::download_git_repo,
 };
-use crate::{scout::blockchain::BlockChain, utils::telemetry::TracedError};
+use crate::{
+    scout::blockchain::BlockChain,
+    utils::{print::print_info, telemetry::TracedError},
+};
 
 #[derive(Error, Debug)]
 pub enum BuilderError {
-    #[error("\n     → Failed to build detector library: {0}")]
+    #[error("Failed to build detector library (Path: {0})")]
     BuildError(PathBuf),
 
-    #[error("\n     → Unsupported source id: {0}")]
+    #[error("Unsupported source id: {0}")]
     UnsupportedSourceId(SourceId),
 
-    #[error("\n     → Path source should have a local path: {0}")]
+    #[error("Path source should have a local path: {0}")]
     InvalidPathSource(SourceId),
 
-    #[error("\n     → Path could refer to `{path}`, which is outside of `{root}`")]
+    #[error("Path could refer to '{path}', which is outside of '{root}'")]
     PathOutsideRoot { path: PathBuf, root: PathBuf },
 
-    #[error("\n     → Could not canonicalize {0}")]
+    #[error("Could not canonicalize (Path: {0})")]
     CanonicalizeError(PathBuf),
 }
 
@@ -61,12 +64,14 @@ impl<'a> DetectorBuilder<'a> {
 
     #[tracing::instrument(skip_all, level = "debug")]
     pub fn build(&self, bc: &BlockChain, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
+        print_info("Compiling detectors...");
         let all_library_paths = self.build_all_libraries(bc)?;
         self.filter_detectors(&all_library_paths, used_detectors)
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
     pub fn get_detector_names(&self) -> Result<Vec<String>> {
+        print_info("Getting detector names...");
         let mut all_names = Vec::new();
         let libraries = self.get_all_libraries()?;
 
