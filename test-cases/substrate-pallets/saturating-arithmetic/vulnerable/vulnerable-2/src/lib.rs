@@ -93,9 +93,7 @@ pub mod pallet {
                 *dummy = dummy.and_then(|d| Some(d.saturating_mul(factor)));
             });
 
-            Self::deposit_event(Event::AccumulateDummy {
-                balance: factor,
-            });
+            Self::deposit_event(Event::AccumulateDummy { balance: factor });
 
             Ok(())
         }

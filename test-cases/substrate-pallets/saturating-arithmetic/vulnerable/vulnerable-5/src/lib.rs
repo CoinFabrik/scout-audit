@@ -90,7 +90,7 @@ pub mod pallet {
             let _sender = ensure_signed(origin)?;
 
             <Dummy<T>>::mutate(|dummy| {
-                if let Some(x) = dummy{
+                if let Some(x) = dummy {
                     *dummy = Some(x.saturating_less_one());
                 }
             });

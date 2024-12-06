@@ -13,7 +13,7 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{Bounded, DispatchInfoOf, SaturatedConversion, SignedExtension, checked_pow},
+    traits::{checked_pow, Bounded, DispatchInfoOf, SaturatedConversion, SignedExtension},
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
@@ -87,7 +87,7 @@ pub mod pallet {
     pub enum Error<T> {
         IntegerOverflow,
     }
-  
+
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
@@ -97,11 +97,11 @@ pub mod pallet {
             let mut error = Ok(());
             <Dummy<T>>::mutate(|dummy| {
                 let new_dummy = dummy.and_then(|d| Some(checked_pow(d, 3_usize)));
-                if new_dummy.is_none(){
+                if new_dummy.is_none() {
                     return;
                 }
                 let new_dummy = new_dummy.unwrap();
-                if new_dummy.is_none(){
+                if new_dummy.is_none() {
                     error = Err(Error::<T>::IntegerOverflow);
                     return;
                 }
