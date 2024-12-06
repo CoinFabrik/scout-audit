@@ -4,39 +4,33 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 extern crate rustc_middle;
+extern crate rustc_errors;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+use clippy_utils::diagnostics::span_lint_and_sugg;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use rustc_hir::{
     def_id::LocalDefId,
-    intravisit::{walk_expr, walk_fn, FnKind, Visitor},
-    Body, BodyId, Expr, ExprKind, FnDecl, Mod, HirId,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, FnDecl,
 };
-use rustc_ast::{
-    NodeId,
-};
-use rustc_middle::middle::privacy::Level;
+use rustc_errors::Applicability;
 use rustc_lint::{
-    EarlyContext,
-    EarlyLintPass,
     LateContext,
     LateLintPass,
 };
 use rustc_span::Span;
 use common::analysis::{
     get_node_type,
-    is_macro_expansion,
     decomposers::*,
 };
 use std::{
-    collections::HashSet, ops::Deref, sync::{Arc, Mutex, MutexGuard}
+    collections::HashSet, ops::Deref, sync::{Arc, Mutex}
 };
 
 const LINT_MESSAGE: &str = "Saturating arithmetic may silently generate incorrect results.";
-const LINT_HELP: &str = "Instead of overflowing, saturating arithmetic clamps the result to the representation limit for the data type. Consider checked arithmetic instead.";
 const RELEVANT_FUNCTIONS: [&str; 6] = [
     "saturating_add",
     "saturating_add_signed",
@@ -124,14 +118,23 @@ static GLOBAL_STATE: Mutex<Option<Arc<Mutex<GlobalState>>>> = Mutex::new(None);
 
 fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> Option<()>{
     let (method_name, receiver, _args, _span) = expr_to_method_call(&expr.kind)?;
-    if !GlobalState::method_is_relevant(method_name.ident.name.as_str()){
+    let method_name_str = method_name.ident.name.as_str();
+    if !GlobalState::method_is_relevant(method_name_str){
         None?;        
     }
     let node_type = get_node_type(cx, &receiver.hir_id);
     if GlobalState::type_is_ignored(&common::analysis::ty_to_string(cx, &node_type)){
         None?;
     }
-    
+    span_lint_and_sugg(
+        cx,
+        SATURATING_ARITHMETIC,
+        method_name.ident.span,
+        LINT_MESSAGE,
+        "Instead of overflowing, saturating arithmetic clamps the result to the representation limit for the data type. Consider checked arithmetic instead",
+        format!("checked_{}", &method_name_str[11..]),
+        Applicability::MaybeIncorrect,
+    );
     None
 }
 
@@ -159,10 +162,10 @@ impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
         &mut self,
         cx: &LateContext<'tcx>,
         kind: FnKind<'tcx>,
-        decl: &'tcx FnDecl<'tcx>,
+        _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
         _: Span,
-        ldid: LocalDefId,
+        _: LocalDefId,
     ){
         if GlobalState::function_is_ignored(&ident(&kind)){
             return;
