@@ -81,6 +81,7 @@ dylint_linting::declare_late_lint! {
     LINT_MESSAGE
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 struct FunctionAvailability{
     pub available_on_std: bool,
@@ -153,10 +154,10 @@ impl GlobalState{
             false
         }
     }
-    pub fn function_is_ignored(name: &String) -> bool{
+    pub fn function_is_ignored(name: &str) -> bool{
         let gs = Self::get_state();
         let lock = gs.lock().unwrap();
-        lock.ignored_functions.contains(name.as_str())
+        lock.ignored_functions.contains(name)
     }
 }
 
@@ -193,7 +194,7 @@ fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) 
     None
 }
 
-fn ident<'a>(f: &FnKind<'a>) -> String{
+fn ident(f: &FnKind<'_>) -> String{
     match f{
         FnKind::ItemFn(id, _, _) => id.name.to_ident_string(),
         FnKind::Method(id, _) => id.name.to_ident_string(),
