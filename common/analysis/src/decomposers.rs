@@ -9,7 +9,7 @@ use rustc_ast::{BindingMode, Label, LitIntType, LitKind};
 use rustc_hir::{
     def::Res,
     Block, Expr, ExprField, ExprKind, HirId, LangItem, LoopSource, MatchSource, Pat, PatField,
-    PatKind, Path, QPath, StmtKind, Ty,
+    PatKind, Path, QPath, StmtKind, Ty, PathSegment,
 };
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_span::{symbol::Ident, Span};
@@ -65,6 +65,16 @@ pub fn expr_to_call<'hir>(
 ) -> Option<(&'hir Expr<'hir>, &'hir [Expr<'hir>])> {
     if let ExprKind::Call(a, b) = kind {
         Some((a, b))
+    } else {
+        None
+    }
+}
+
+pub fn expr_to_method_call<'hir>(
+    kind: &'hir ExprKind<'hir>,
+) -> Option<(&'hir PathSegment<'hir>, &'hir Expr<'hir>, &'hir [Expr<'hir>], Span)> {
+    if let ExprKind::MethodCall(a, b, c, d) = kind {
+        Some((a, b, c, *d))
     } else {
         None
     }

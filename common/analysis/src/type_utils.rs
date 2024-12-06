@@ -41,3 +41,29 @@ pub fn is_macro_expansion(span: Span) -> bool {
         || span.in_derive_expansion()
         || span.ctxt().outer_expn_data().macro_def_id.is_some()
 }
+
+/// Get the fully-qualified name of a Ty
+pub fn ty_to_string(cx: &LateContext<'_>, ty: &Ty<'_>) -> Option<String>{
+    let kind = ty.kind();
+    match kind{
+        TyKind::Bool => Some("bool".to_string()),
+        TyKind::Char => Some("char".to_string()),
+        TyKind::Int(x) => Some(x.name_str().to_string()),
+        TyKind::Uint(x) => Some(x.name_str().to_string()),
+        TyKind::Float(x) => Some(x.name_str().to_string()),
+        TyKind::Str => Some("str".to_string()),
+        TyKind::Adt(def, ..) => {
+            let type_name = cx
+                .get_def_path(def.did())
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<_>>()
+                .join("::");
+            Some(type_name)
+        },
+        _ => {
+            //dbg!(kind);
+            None
+        }
+    }
+}

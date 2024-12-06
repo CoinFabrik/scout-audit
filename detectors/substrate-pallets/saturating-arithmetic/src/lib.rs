@@ -1,0 +1,175 @@
+#![feature(rustc_private)]
+
+extern crate rustc_ast;
+extern crate rustc_hir;
+extern crate rustc_span;
+extern crate rustc_middle;
+
+use clippy_utils::diagnostics::span_lint_and_help;
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
+use rustc_hir::{
+    def_id::LocalDefId,
+    intravisit::{walk_expr, walk_fn, FnKind, Visitor},
+    Body, BodyId, Expr, ExprKind, FnDecl, Mod, HirId,
+};
+use rustc_ast::{
+    NodeId,
+};
+use rustc_middle::middle::privacy::Level;
+use rustc_lint::{
+    EarlyContext,
+    EarlyLintPass,
+    LateContext,
+    LateLintPass,
+};
+use rustc_span::Span;
+use common::analysis::{
+    get_node_type,
+    is_macro_expansion,
+    decomposers::*,
+};
+use std::{
+    collections::HashSet, ops::Deref, sync::{Arc, Mutex, MutexGuard}
+};
+
+const LINT_MESSAGE: &str = "Saturating arithmetic may silently generate incorrect results.";
+const LINT_HELP: &str = "Instead of overflowing, saturating arithmetic clamps the result to the representation limit for the data type. Consider checked arithmetic instead.";
+const RELEVANT_FUNCTIONS: [&str; 6] = [
+    "saturating_add",
+    "saturating_add_signed",
+    "saturating_sub",
+    "saturating_mul",
+    "saturating_div",
+    "saturating_pow",
+];
+const IGNORED_FUNCTIONS: [&str; 1] = [
+    "size_hint",
+];
+const IGNORED_TYPES: [&str; 1] = [
+    "sp_weights::weight_v2::Weight",
+];
+
+#[expose_lint_info]
+pub static SATURATING_ARITHMETIC_INFO: LintInfo = LintInfo {
+    name: env!("CARGO_PKG_NAME"),
+    short_message: LINT_MESSAGE,
+    long_message: LINT_MESSAGE,
+    severity: Severity::Critical,
+    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/incorrect-exponentiation",
+    vulnerability_class: VulnerabilityClass::Arithmetic,
+};
+
+dylint_linting::declare_late_lint! {
+    pub SATURATING_ARITHMETIC,
+    Warn,
+    LINT_MESSAGE
+}
+
+struct GlobalState{
+    relevant_functions: HashSet<String>,
+    ignored_functions: HashSet<String>,
+    ignored_types: HashSet<String>,
+}
+
+impl GlobalState{
+    pub fn new() -> Self{
+        GlobalState{
+            relevant_functions: Self::to_hash_set(&RELEVANT_FUNCTIONS[..]),
+            ignored_functions: Self::to_hash_set(&IGNORED_FUNCTIONS[..]),
+            ignored_types: Self::to_hash_set(&IGNORED_TYPES[..]),
+        }
+    }
+    fn to_hash_set(strings: &[&str]) -> HashSet<String>{
+        strings
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<HashSet<_>>()
+    }
+    fn get_state() -> Arc<Mutex<GlobalState>>{
+        let mut gs = GLOBAL_STATE.lock().unwrap();
+        match gs.deref(){
+            None => {
+                let ret = Arc::<Mutex<GlobalState>>::new(Mutex::<GlobalState>::new(GlobalState::new()));
+                *gs = Some(ret.clone());
+                ret
+            },
+            Some(p) => p.clone(),
+        }
+    }
+    pub fn method_is_relevant(method_name: &str) -> bool{
+        let gs = Self::get_state();
+        let lock = gs.lock().unwrap();
+        lock.relevant_functions.contains(method_name)
+    }
+    pub fn type_is_ignored(name: &Option<String>) -> bool{
+        if let Some(name) = name{
+            let gs = Self::get_state();
+            let lock = gs.lock().unwrap();
+            lock.ignored_types.contains(name.as_str())
+        }else{
+            false
+        }
+    }
+    pub fn function_is_ignored(name: &String) -> bool{
+        let gs = Self::get_state();
+        let lock = gs.lock().unwrap();
+        lock.ignored_functions.contains(name.as_str())
+    }
+}
+
+static GLOBAL_STATE: Mutex<Option<Arc<Mutex<GlobalState>>>> = Mutex::new(None);
+
+fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> Option<()>{
+    let (method_name, receiver, _args, _span) = expr_to_method_call(&expr.kind)?;
+    if !GlobalState::method_is_relevant(method_name.ident.name.as_str()){
+        None?;        
+    }
+    let node_type = get_node_type(cx, &receiver.hir_id);
+    if GlobalState::type_is_ignored(&common::analysis::ty_to_string(cx, &node_type)){
+        None?;
+    }
+    
+    None
+}
+
+fn ident<'a>(f: &FnKind<'a>) -> String{
+    match f{
+        FnKind::ItemFn(id, _, _) => id.name.to_ident_string(),
+        FnKind::Method(id, _) => id.name.to_ident_string(),
+        FnKind::Closure => "<closure>".to_string()
+    }
+}
+
+struct SaturatingFinder<'a, 'b>{
+    cx: &'b LateContext<'a>,
+}
+
+impl<'a, 'b> Visitor<'a> for SaturatingFinder<'a, 'b> {
+    fn visit_expr(&mut self, expr: &'a rustc_hir::Expr<'a>) {
+        let _ = detect_saturating_call(self.cx, expr);
+        walk_expr(self, expr);
+    }
+}
+
+impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
+    fn check_fn(
+        &mut self,
+        cx: &LateContext<'tcx>,
+        kind: FnKind<'tcx>,
+        decl: &'tcx FnDecl<'tcx>,
+        body: &'tcx Body<'tcx>,
+        _: Span,
+        ldid: LocalDefId,
+    ){
+        if GlobalState::function_is_ignored(&ident(&kind)){
+            return;
+        }
+
+        SaturatingFinder{
+            cx,
+        }.visit_expr(body.value);
+    }
+}

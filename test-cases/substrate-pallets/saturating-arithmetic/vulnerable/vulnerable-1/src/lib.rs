@@ -142,47 +142,19 @@ pub mod pallet {
     pub(super) type Dummy<T: Config> = StorageValue<_, T::Balance>;
 
     #[pallet::storage]
-    pub(super) type Bar<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
-
-    #[pallet::storage]
-    pub(super) type Foo<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
-
-    #[pallet::storage]
     pub type CountedMap<T> = CountedStorageMap<_, Blake2_128Concat, u8, u16>;
 
     #[pallet::genesis_config]
     #[derive(frame_support::DefaultNoBound)]
     pub struct GenesisConfig<T: Config> {
         pub dummy: T::Balance,
-        pub bar: Vec<(T::AccountId, T::Balance)>,
-        pub foo: T::Balance,
     }
 
     #[pallet::genesis_build]
     impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
             <Dummy<T>>::put(self.dummy);
-            for (a, b) in &self.bar {
-                <Bar<T>>::insert(a, b);
-            }
-            <Foo<T>>::put(self.foo);
         }
-    }
-}
-
-impl<T: Config> Pallet<T> {
-    #[allow(dead_code)]
-    fn accumulate_foo(origin: T::RuntimeOrigin, increase_by: T::Balance) -> DispatchResult {
-        let _sender = ensure_signed(origin)?;
-
-        let prev = Foo::<T>::get();
-        let result = Foo::<T>::mutate(|x| {
-            *x = x.saturating_add(increase_by);
-            *x
-        });
-        assert!(prev + increase_by == result);
-
-        Ok(())
     }
 }
 

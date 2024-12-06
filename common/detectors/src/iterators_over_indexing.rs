@@ -90,29 +90,18 @@ impl<'a, 'b, 'c> VectorAccessVisitor<'a, 'b, 'c> {
         match kind {
             ExprKind::Path(object_path) => {
                 if arguments.len() != 1 {
-                    return Some(());
+                    None?;
                 }
                 let index = &arguments.first().unwrap().kind;
 
                 self.handle_path(object_path, index)
             }
-            _ => Some(()),
+            _ => None,
         }
     }
 
     fn get_id_type(&mut self, id: &HirId) -> Option<String> {
-        let object_type = get_node_type(self.cx, id);
-        let kind = object_type.kind();
-        let (def, _generic_args) = type_to_adt(kind)?;
-        let type_name = self
-            .cx
-            .get_def_path(def.did())
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join("::");
-
-        Some(type_name)
+        analysis::ty_to_string(self.cx, &get_node_type(self.cx, id))
     }
 
     fn get_path_type(&mut self, object_path: &'_ QPath<'_>) -> Option<String> {
@@ -139,13 +128,13 @@ impl<'a, 'b, 'c> VectorAccessVisitor<'a, 'b, 'c> {
 
     fn final_check(&mut self, object_type: &String, index: &'a ExprKind<'a>) -> Option<()> {
         if !self.config.relevant_object_types.contains(object_type) {
-            return Some(());
+            None?;
         }
 
         if self.get_expression_id(index)? == self.index_id {
             self.has_vector_access = true;
         }
-        Some(())
+        None
     }
 }
 

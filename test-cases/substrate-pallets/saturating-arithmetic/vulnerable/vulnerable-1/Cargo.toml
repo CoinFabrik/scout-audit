@@ -15,7 +15,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { workspace = true }
 log = { workspace = true }
 scale-info = { features = ["derive"], workspace = true }
-frame-benchmarking = { optional = true, workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-balances = { workspace = true }
@@ -29,7 +28,6 @@ sp-core = { workspace = true }
 default = ["std"]
 std = [
 	"codec/std",
-	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",

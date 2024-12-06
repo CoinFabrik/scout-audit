@@ -65,8 +65,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         balances: Default::default(),
         example: pallet_example_basic::GenesisConfig {
             dummy: 42,
-            bar: alloc::vec![(1, 2), (2, 3)],
-            foo: 24,
         },
     }
     .build_storage()
@@ -87,15 +85,6 @@ fn it_works_for_optional_value() {
         <Example as OnInitialize<u64>>::on_initialize(2);
         assert_ok!(Example::accumulate_dummy(RuntimeOrigin::signed(1), val1));
         assert_eq!(Dummy::<Test>::get(), Some(val1 + val2 + val1));
-    });
-}
-
-#[test]
-fn it_works_for_default_value() {
-    new_test_ext().execute_with(|| {
-        assert_eq!(Foo::<Test>::get(), 24);
-        assert_ok!(Example::accumulate_foo(RuntimeOrigin::signed(1), 1));
-        assert_eq!(Foo::<Test>::get(), 25);
     });
 }
 
