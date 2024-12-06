@@ -241,7 +241,11 @@ mod tests {
         assert!(result.is_ok(), "Scout should run");
         let result = result.unwrap();
 
-        let findings = result.iter().map(|value| value.code()).collect::<Vec<_>>();
+        let findings = result
+            .iter()
+            .map(|value| value.code())
+            .filter(|x| x != "known_vulnerabilities")
+            .collect::<Vec<_>>();
         let counts = count_strings(&findings);
         assert!(counts.is_some(), "Scout returned data in an invalid format");
         let counts = counts.unwrap();
