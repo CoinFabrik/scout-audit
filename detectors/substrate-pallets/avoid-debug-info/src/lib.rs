@@ -70,7 +70,6 @@ impl AvoidDebugInfo {
                 )
         })
     }
-
 }
 
 impl EarlyLintPass for AvoidDebugInfo {
@@ -80,7 +79,7 @@ impl EarlyLintPass for AvoidDebugInfo {
         }
     }
     fn check_mac(&mut self, cx: &EarlyContext<'_>, mac: &MacCall) {
-        if (mac.path != sym::debug) && (mac.path != sym!(info)){
+        if (mac.path != sym::debug) && (mac.path != sym!(info)) {
             return;
         }
 

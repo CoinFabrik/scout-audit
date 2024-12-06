@@ -2,8 +2,8 @@
 
 extern crate alloc;
 
-pub use pallet::*;
 use log::{debug, info};
+pub use pallet::*;
 pub mod weights;
 pub use weights::*;
 
@@ -34,7 +34,10 @@ pub mod pallet {
 
             let stored_value = Value::<T>::get().unwrap_or_default();
 
-            debug!("Stored value: {:?}, Threshold: {:?}", stored_value, threshold);
+            debug!(
+                "Stored value: {:?}, Threshold: {:?}",
+                stored_value, threshold
+            );
             info!("Consider providing a threshold lower than the actual stored value");
 
             Self::deposit_event(Event::ValueChecked {

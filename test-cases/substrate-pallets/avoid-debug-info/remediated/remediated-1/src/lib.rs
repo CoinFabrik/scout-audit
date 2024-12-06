@@ -69,10 +69,24 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        ValueChecked { who: T::AccountId, value: u32 },
-        ValueSet { who: T::AccountId, value: u32 },
-        ValueTooLow { who: T::AccountId, stored_value: u32, threshold: u32 },
-        ValueUpdated { who: T::AccountId, old_value: u32, new_value: u32 },
+        ValueChecked {
+            who: T::AccountId,
+            value: u32,
+        },
+        ValueSet {
+            who: T::AccountId,
+            value: u32,
+        },
+        ValueTooLow {
+            who: T::AccountId,
+            stored_value: u32,
+            threshold: u32,
+        },
+        ValueUpdated {
+            who: T::AccountId,
+            old_value: u32,
+            new_value: u32,
+        },
     }
 
     #[pallet::error]
