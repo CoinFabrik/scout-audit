@@ -274,7 +274,7 @@ mod tests {
         let result = run_scout(scout_opts);
         assert!(result.is_ok(), " Scout should run");
 
-        let output = &result.unwrap().vscode_out;
+        let output = &result.unwrap().stdout_helper;
 
         let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
         assert!(
@@ -296,13 +296,13 @@ mod tests {
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
             local_detectors: Some(DETECTORS_DIR.clone()),
-            args: vec!["--metadata".to_string()],
+            detectors_metadata: true,
             ..Scout::default()
         };
         let result = run_scout(scout_opts);
         assert!(result.is_ok(), " Scout should run");
 
-        let output = &result.unwrap().vscode_out;
+        let output = &result.unwrap().stdout_helper;
 
         let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
         assert!(
