@@ -268,7 +268,7 @@ mod tests {
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
             local_detectors: Some(DETECTORS_DIR.clone()),
-            args: vec!["--".to_string(), "--message-format=json".to_string()],
+            args: vec!["--message-format=json".to_string()],
             ..Scout::default()
         };
         let result = run_scout(scout_opts);
