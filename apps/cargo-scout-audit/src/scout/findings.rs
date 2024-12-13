@@ -1,24 +1,31 @@
-use crate::finding::Finding;
+use crate::{
+    finding::Finding,
+    utils::dependencies::DependencyGraph,
+};
 use anyhow::Result;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
 use tempfile::NamedTempFile;
+use cargo_metadata::Metadata;
 
 pub fn get_crates(
     findings: &Vec<Finding>,
     packages: &[crate::output::report::Package],
-) -> HashMap<String, bool> {
+    metadata: &Metadata,
+) -> Result<HashMap<String, bool>> {
     let mut ret = HashMap::<String, bool>::new();
     for package in packages.iter() {
         ret.insert(normalize_crate_name(&package.name), true);
     }
-    for (name, ok) in get_crates_from_output(findings).iter() {
-        if ret.contains_key(name) {
-            ret.insert(name.clone(), *ok);
+    for (name, ok) in get_crates_from_output(findings, packages, metadata)?.iter() {
+        let normalized = normalize_crate_name(name);
+        let val = ret.get_mut(&normalized);
+        if let Some(val) = val{
+            *val = *ok;
         }
     }
 
-    ret
+    Ok(ret)
 }
 
 pub fn split_findings(
@@ -51,27 +58,61 @@ fn normalize_crate_name(s: &str) -> String {
     s.replace("-", "_")
 }
 
-fn get_crates_from_output(output: &Vec<Finding>) -> HashMap<String, bool> {
+fn get_crates_from_output(
+    output: &Vec<Finding>,
+    packages: &[crate::output::report::Package],
+    metadata: &Metadata,
+) -> Result<HashMap<String, bool>> {
     let mut ret = HashMap::<String, bool>::new();
+    let package_ids = packages
+        .iter()
+        .map(|x| {
+            let id = x.id.clone();
+            let name = x.name.clone();
+            (id, name)
+        })
+        .collect::<HashMap<_, _>>();
+    let mut graph = None;
 
     for finding in output {
         let reason = finding.reason();
         if reason != "compiler-message" {
             continue;
         }
-        let name = finding.package();
-        if name.is_empty() {
-            continue;
-        }
-        if let Some(previous) = ret.get(&name) {
-            if !previous {
+        let id = finding.package_id();
+        
+        let affected = if package_ids.contains_key(&id){
+            let name = finding.package();
+            if name.is_empty() {
                 continue;
             }
+            vec![name]
+        }else{
+            if graph.is_none(){
+                graph = Some(DependencyGraph::new(metadata)?);
+            }
+            graph
+                .as_ref()
+                .unwrap()
+                .list_all_dependants(&id)?
+                .iter()
+                .map(|x| package_ids.get(x))
+                .filter(|x| x.is_some())
+                .map(|x| x.unwrap().clone())
+                .collect::<Vec<_>>()
+        };
+
+        for name in affected{
+            if let Some(previous) = ret.get(&name) {
+                if !previous {
+                    continue;
+                }
+            }
+            ret.insert(name, !finding.is_compiler_error());
         }
-        ret.insert(name, !finding.is_compiler_error());
     }
 
-    ret
+    Ok(ret)
 }
 
 pub fn temp_file_to_string(mut file: NamedTempFile) -> Result<String> {

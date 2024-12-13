@@ -7,3 +7,4 @@ pub mod env;
 pub mod json;
 pub mod print;
 pub mod telemetry;
+pub mod dependencies;
