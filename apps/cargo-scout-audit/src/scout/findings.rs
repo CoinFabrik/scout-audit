@@ -1,12 +1,9 @@
-use crate::{
-    finding::Finding,
-    utils::dependencies::DependencyGraph,
-};
+use crate::{finding::Finding, utils::dependencies::DependencyGraph};
 use anyhow::Result;
+use cargo_metadata::Metadata;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
 use tempfile::NamedTempFile;
-use cargo_metadata::Metadata;
 
 pub fn get_crates(
     findings: &Vec<Finding>,
@@ -20,7 +17,7 @@ pub fn get_crates(
     for (name, ok) in get_crates_from_output(findings, packages, metadata)?.iter() {
         let normalized = normalize_crate_name(name);
         let val = ret.get_mut(&normalized);
-        if let Some(val) = val{
+        if let Some(val) = val {
             *val = *ok;
         }
     }
@@ -80,15 +77,15 @@ fn get_crates_from_output(
             continue;
         }
         let id = finding.package_id();
-        
-        let affected = if package_ids.contains_key(&id){
+
+        let affected = if package_ids.contains_key(&id) {
             let name = finding.package();
             if name.is_empty() {
                 continue;
             }
             vec![name]
-        }else{
-            if graph.is_none(){
+        } else {
+            if graph.is_none() {
                 graph = Some(DependencyGraph::new(metadata)?);
             }
             graph
@@ -102,7 +99,7 @@ fn get_crates_from_output(
                 .collect::<Vec<_>>()
         };
 
-        for name in affected{
+        for name in affected {
             if let Some(previous) = ret.get(&name) {
                 if !previous {
                     continue;

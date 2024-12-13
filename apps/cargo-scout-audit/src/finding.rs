@@ -47,7 +47,7 @@ impl Finding {
     pub fn package(&self) -> String {
         json_to_string_opt(self.value.get("target").and_then(|x| x.get("name"))).unwrap_or_default()
     }
-    pub fn package_id(&self) -> String{
+    pub fn package_id(&self) -> String {
         json_to_string_opt(self.value.get("package_id")).unwrap_or_default()
     }
     pub fn krate(&self) -> String {
