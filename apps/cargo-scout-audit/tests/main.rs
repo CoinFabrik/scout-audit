@@ -2,11 +2,9 @@
 mod tests {
     use anyhow::Result;
     use cargo_scout_audit::{
-        cli::{OutputFormat, Scout},
-        startup::run_scout,
-    };
+        cli::{OutputFormat, Scout}, startup::run_scout};
     use lazy_static::lazy_static;
-    use std::{collections::HashMap, fs, path::PathBuf};
+    use std::{collections::HashMap, fs,  path::PathBuf};
     use tempfile::TempDir;
     use uuid::Uuid;
 
@@ -248,7 +246,7 @@ mod tests {
         assert!(result.is_ok(), "Scout should run");
         let result = result.unwrap();
 
-        let findings = result
+        let findings = result.findings
             .iter()
             .map(|value| value.code())
             .filter(|x| x != "known_vulnerabilities")
@@ -263,6 +261,62 @@ mod tests {
             ("divide_before_multiply", 1_usize),
         ];
         check_counts(&counts, &expected);
+    }
+
+    #[test]
+    fn test_message_format() {
+        let contract_path = get_test_cases()
+        .iter()
+        .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
+        .unwrap()
+        .clone();
+    
+        // When
+        let scout_opts = Scout {
+            manifest_path: Some(contract_path.to_path_buf()),
+            local_detectors: Some(DETECTORS_DIR.clone()),
+            args: vec!["--".to_string(), "--message-format=json".to_string()],
+            ..Scout::default()
+        };
+        let result = run_scout(scout_opts);
+        assert!(result.is_ok(), " Scout should run");
+
+        let output = &result.unwrap().vscode_out;
+
+        let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
+        assert!(
+            json_result.is_ok(),
+            "Output should be valid JSON, got: {:?}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_metadata() {
+        let contract_path = get_test_cases()
+        .iter()
+        .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
+        .unwrap()
+        .clone();
+    
+        // When
+        let scout_opts = Scout {
+            manifest_path: Some(contract_path.to_path_buf()),
+            local_detectors: Some(DETECTORS_DIR.clone()),
+            args: vec!["--metadata".to_string()],
+            ..Scout::default()
+        };
+        let result = run_scout(scout_opts);
+        assert!(result.is_ok(), " Scout should run");
+
+        let output = &result.unwrap().vscode_out;
+
+        let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
+        assert!(
+            json_result.is_ok(),
+            "Output should be valid JSON, got: {:?}",
+            output
+        );
     }
 
     fn count_strings(strings: &[String]) -> Option<HashMap<String, usize>> {
