@@ -1,12 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use anyhow::{Context, Result};
+    use anyhow::Result;
     use cargo_scout_audit::{
         cli::{OutputFormat, Scout},
         startup::run_scout,
     };
     use lazy_static::lazy_static;
     use std::{collections::HashMap, fs, path::PathBuf};
+    use tempfile::TempDir;
+    use uuid::Uuid;
+
+    lazy_static! {
+        static ref TEST_DIR: TempDir = TempDir::new().expect("Failed to create temp directory");
+    }
 
     lazy_static! {
         static ref DETECTORS_DIR: PathBuf = {
@@ -112,13 +118,14 @@ mod tests {
         }
     }
 
-    fn test_output_fn(file: &str, format: OutputFormat) -> Result<()> {
-        test_output_format(file, &format)
-            .with_context(|| format!("Failed to test {:?} format", &format))?;
-        fs::remove_file(file)
-            .unwrap_or_else(|_| panic!("Should be able to delete the file: {}", file));
+    fn test_output_fn(base_name: &str, format: OutputFormat) -> Result<()> {
+        let unique_name = format!("{}_{}", Uuid::new_v4(), base_name);
+        let file_path = TEST_DIR.path().join(unique_name);
 
-        Ok(())
+        let result = test_output_format(&file_path.to_string_lossy(), &format);
+        let _ = fs::remove_file(&file_path);
+
+        result
     }
 
     #[test]
