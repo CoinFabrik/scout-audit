@@ -1,5 +1,3 @@
-#![feature(path_add_extension)]
-
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::process::Command;
@@ -169,8 +167,8 @@ fn hash_file<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
     Ok(format!("{:x}", result))
 }
 
-fn hash_file_allow_missing<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
-    if !std::fs::exists(&path)? {
+fn hash_file_allow_missing(path: &Path) -> std::io::Result<String> {
+    if !path.exists() {
         Ok("".into())
     } else {
         hash_file(path)
@@ -226,7 +224,7 @@ fn hash_directory<P: AsRef<Path>, const N: usize>(
 }
 
 fn write_file_lazy(path: &Path, contents: &[u8]) -> std::io::Result<()> {
-    let temporary = path.with_added_extension("tmp");
+    let temporary = path.with_extension("rs.tmp");
     {
         let mut output = File::create(&temporary)?;
         output.write_all(contents)?;
