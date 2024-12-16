@@ -2,7 +2,7 @@
 mod tests {
     use anyhow::Result;
     use cargo_scout_audit::{
-        cli::{OutputFormat, Scout}, startup::run_scout};
+        cli::{OutputFormat, Scout}, scout::findings::output_to_json, startup::run_scout, utils::json};
     use lazy_static::lazy_static;
     use std::{collections::HashMap, fs,  path::PathBuf};
     use tempfile::TempDir;
@@ -283,12 +283,16 @@ mod tests {
 
         let output = &result.unwrap().stdout_helper;
 
-        let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
-        assert!(
-            json_result.is_ok(),
-            "Output should be valid JSON, got: {:?}",
-            output
-        );
+        let json_output = output_to_json(output);
+
+        for val in json_output{
+            let json_result: Result<serde_json::Value, _> = serde_json::from_value(val);
+            assert!(
+                json_result.is_ok(),
+                "Output should be valid JSON, got: {:?}",
+                output
+            );
+        }
     }
 
     #[test]
