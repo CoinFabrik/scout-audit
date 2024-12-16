@@ -1,3 +1,5 @@
+#![feature(path_add_extension)]
+
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::process::Command;
@@ -223,8 +225,8 @@ fn hash_directory<P: AsRef<Path>, const N: usize>(
     Ok(format!("{:x}", result))
 }
 
-fn write_file_lazy(path: &str, contents: &[u8]) -> std::io::Result<()> {
-    let temporary = format!("{path}.tmp");
+fn write_file_lazy(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    let temporary = path.with_added_extension("tmp");
     {
         let mut output = File::create(&temporary)?;
         output.write_all(contents)?;
@@ -242,8 +244,10 @@ fn write_file_lazy(path: &str, contents: &[u8]) -> std::io::Result<()> {
 
 fn write_digest_file() -> std::io::Result<()> {
     let hash = hash_directory(&["./src", "./build_config"], r"\.rs$")?;
+    let out_dir = std::env::var_os("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join("digest.rs");
     write_file_lazy(
-        "src/digest.rs",
+        &dest_path,
         format!("pub const SOURCE_DIGEST: &str = \"{hash}\";").as_bytes(),
     )?;
     Ok(())
