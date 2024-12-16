@@ -15,7 +15,6 @@ pub fn build(description: &str, bc: &BlockChain, quiet: bool) -> Command {
 
 fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: &BlockChain) -> Command {
     let toolchain = &format!("+{}", bc.get_toolchain());
-
     if !quiet {
         // smoelius: Writing directly to `stderr` avoids capture by `libtest`.
         let message = format!("{verb} {description}");
@@ -31,6 +30,10 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: &Bloc
             ))
             .expect("Could not write to stderr");
     }
+    call_cargo(&[subcommand], quiet, Some(toolchain))
+}
+
+pub fn call_cargo(subcommand: &[&str], quiet: bool, toolchain: Option<&str>) -> Command {
     let mut command = Command::new("cargo");
     #[cfg(windows)]
     {
@@ -45,7 +48,13 @@ fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: &Bloc
         .unwrap();
         command.envs(vec![("PATH", new_path)]);
     }
-    command.args([toolchain, subcommand]);
+    if let Some(toolchain) = toolchain {
+        let mut temp = vec![toolchain];
+        temp.extend_from_slice(subcommand);
+        command.args(&temp);
+    } else {
+        command.args(subcommand);
+    }
     if quiet {
         command.stderr(Stdio::null());
     }

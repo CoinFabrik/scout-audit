@@ -2,11 +2,8 @@ name: Test Scout Audit
 
 on:
   pull_request:
-    branches:
-      - "*"
     paths:
       - "apps/cargo-scout-audit/**"
-      - "scout-audit-dylint-linting/**"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +18,6 @@ jobs:
     outputs:
       linux_status: ${{ steps.run-tests.outputs.linux_status }}
       macos_status: ${{ steps.run-tests.outputs.macos_status }}
-      toolchain: ${{ steps.get-toolchain.outputs.toolchain }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -49,14 +45,13 @@ jobs:
         run: cargo install --path .
 
       - name: Install clippy-sarif and cargo-nextest
-        run: |
-          cargo install clippy-sarif cargo-nextest --locked
+        run: cargo install clippy-sarif cargo-nextest --locked
 
       - name: Run tests and set output
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
-          if cargo nextest run --all --all-features -j1; then
+          if cargo nextest run --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT

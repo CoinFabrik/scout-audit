@@ -11,8 +11,6 @@ authors = [
     "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
 ]
 
-
-
 build = "build.rs"
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
@@ -22,7 +20,7 @@ license = "MIT"
 name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.2.20"
+version = "0.3.0"
 
 [lib]
 path = "src/lib.rs"
@@ -34,7 +32,6 @@ path = "src/main.rs"
 [dependencies]
 ansi_term = "=0.12.1"
 anyhow = "=1.0.86"
-axum = "=0.7.4"
 cargo = "=0.80.0"
 cargo_metadata = "=0.18.1"
 chrono = { version = "=0.4.38", features = ["serde"] }
@@ -44,7 +41,6 @@ current_platform = "=0.2.0"
 dunce = "=1.0.4"
 dylint = "=3.1.2"
 git2 = "=0.18.3"
-headless_chrome = {version = "=1.0.14", features = ["fetch"]}
 home = "=0.5.9"
 itertools = "=0.13.0"
 lazy_static = "=1.5.0"
@@ -61,10 +57,21 @@ strum_macros = "=0.26.4"
 tempfile = "=3.10.1"
 tera = { version = "=1.20.0", features = ["builtins"] }
 terminal_color_builder = "=0.1.1"
-tokio = { version = "=1.39.2", features = ["full"] }
+thiserror = "=2.0.3"
 toml = "=0.8.15"
 tracing = "=0.1.40"
 tracing-bunyan-formatter = "=0.3.9"
 tracing-log = "=0.2.0"
 tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
 webbrowser = "=1.0.1"
+
+[dev-dependencies]
+uuid = { version = "1.3.1", features = ["v4"] }
+
+[build-dependencies]
+regex = "*"
+sha2 = "0.10.8"
+walkdir = "2.5.0"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.58.0", features = ["Win32_System_LibraryLoader"] }

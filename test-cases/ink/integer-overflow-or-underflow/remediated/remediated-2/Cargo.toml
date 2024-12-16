@@ -1,0 +1,18 @@
+[package]
+edition = "2021"
+name = "integer-overflow-or-underflow-remediated-2"
+version = "0.1.0"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+__ink_dylint_Constructor = []
+__ink_dylint_Storage = []
+default = ["std"]
+std = ["ink/std", "scale-info/std", "scale/std"]
+
+[dependencies]
+ink = { workspace = true }
+scale = { workspace = true }
+scale-info = { workspace = true }

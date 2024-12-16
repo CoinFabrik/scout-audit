@@ -14,12 +14,11 @@ target/
 *.pdb
 
 # Ignore Cargo.lock of library files
-test-cases/**/Cargo.lock
-detectors/**/Cargo.lock
-scout-audit-internal/Cargo.lock
+/detectors/**/Cargo.lock
+/test-cases/**/Cargo.lock
 
 #ignore test generated files
-test-cases/**/test_snapshots/**
+/test-cases/**/test_snapshots/*
 
 # -------------------------------------------------------------------------------------
 # -------------------------------------- Misc -----------------------------------------
@@ -40,6 +39,7 @@ node_modules
 # Editors
 .vscode/
 .idea/
+!/detectors/*/.vscode/
 !/.vscode/
 
 # Generated files by Scout-Audit
@@ -51,3 +51,10 @@ report.md
 # Python virtual environment
 env/
 venv/
+!/detectors/ink/.vscode/
+__pycache__
+
+.vs
+/scripts/cs/run-tests/bin/
+/scripts/cs/run-tests/obj/
+launchSettings.json

@@ -1,15 +1,25 @@
-use crate::build_config::{INK_TOOLCHAIN, SOROBAN_TOOLCHAIN};
-use anyhow::{anyhow, Result};
+use crate::build_config::TOOLCHAIN;
+use anyhow::{bail, Result};
 use cargo_metadata::Metadata;
 use std::collections::HashSet;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
+use thiserror::Error;
 
 #[derive(Debug, Copy, Clone, EnumIter, Display, EnumString)]
 pub enum BlockChain {
+    #[strum(serialize = "ink")]
     Ink,
+    #[strum(serialize = "soroban")]
     Soroban,
-    SubstratePallet,
+    #[strum(serialize = "substrate-pallets")]
+    SubstratePallets,
+}
+
+#[derive(Error, Debug)]
+pub enum BlockchainError {
+    #[error("No supported dependency found in Cargo.toml.\n     → Supported dependencies:\n{0}")]
+    UnsupportedDependency(String),
 }
 
 impl BlockChain {
@@ -17,19 +27,19 @@ impl BlockChain {
         Self::iter().map(|e| e.to_string()).collect()
     }
 
-    pub fn get_detectors_url(&self) -> &str {
+    pub fn get_detectors_path(&self) -> &str {
         match self {
-            BlockChain::Ink => "https://github.com/CoinFabrik/scout",
-            BlockChain::Soroban => "https://github.com/CoinFabrik/scout-soroban",
-            BlockChain::SubstratePallet => "https://github.com/CoinFabrik/scout-substrate",
+            BlockChain::Ink => "detectors/ink",
+            BlockChain::Soroban => "detectors/soroban",
+            BlockChain::SubstratePallets => "detectors/substrate-pallets",
         }
     }
 
     pub fn get_toolchain(&self) -> &str {
         match self {
-            BlockChain::Ink => INK_TOOLCHAIN,
-            BlockChain::Soroban => SOROBAN_TOOLCHAIN,
-            BlockChain::SubstratePallet => INK_TOOLCHAIN,
+            BlockChain::Ink => TOOLCHAIN,
+            BlockChain::Soroban => TOOLCHAIN,
+            BlockChain::SubstratePallets => TOOLCHAIN,
         }
     }
 
@@ -55,11 +65,16 @@ impl BlockChain {
         } else if immediate_dependencies.contains("ink") {
             Ok(BlockChain::Ink)
         } else if immediate_dependencies.contains("frame-system") {
-            Ok(BlockChain::SubstratePallet)
+            Ok(BlockChain::SubstratePallets)
         } else {
-            let supported_blockchains = BlockChain::variants().join(", ");
-            Err(anyhow!("Could not find any supported blockchain dependency in the Cargo.toml file.\n   Supported blockchains include:\n   - {}\n",
-                supported_blockchains.replace(", ", "\n   - ")))
+            let supported_dependencies = BlockChain::variants()
+                .into_iter()
+                .map(|chain| format!("        - {}", chain))
+                .collect::<Vec<_>>()
+                .join("\n");
+            bail!(BlockchainError::UnsupportedDependency(
+                supported_dependencies,
+            ));
         }
     }
 }

@@ -1,8 +1,0 @@
-[package]
-name = "scout-audit-clippy-wrappers"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "51a1cf0" }
-clippy-wrapper-print-error = { path = "../clippy-wrapper-print-error" }

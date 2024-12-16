@@ -1,0 +1,176 @@
+#![no_std]
+
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, Env, String};
+
+#[derive(Clone, Debug)]
+#[contracttype]
+pub struct TokenMetadata {
+    pub decimals: u32,
+    pub name: String,
+    pub symbol: String,
+    pub admin: Address,
+}
+
+#[derive(Clone, Default)]
+#[contracttype]
+pub struct AllowanceFromSpender {
+    pub amount: i128,
+    pub expiration_ledger: u32,
+}
+
+#[derive(Clone)]
+#[contracttype]
+pub enum DataKey {
+    Balance(Address),
+    TokenMetadata,
+    AllowanceFromSpender(Address, Address),
+}
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum TIIError {
+    AlreadyInitialized = 1,
+    NotInitialized = 2,
+}
+
+#[contract]
+pub struct TokenInterfaceInference;
+
+#[contractimpl]
+impl TokenInterfaceInference {
+    pub fn initialize(
+        env: Env,
+        admin: Address,
+        decimals: u32,
+        name: String,
+        symbol: String,
+    ) -> Result<(), TIIError> {
+        let current_token_metadata: Option<TokenMetadata> =
+            env.storage().instance().get(&DataKey::TokenMetadata);
+        if current_token_metadata.is_some() {
+            return Err(TIIError::AlreadyInitialized);
+        } else {
+            env.storage().instance().set(
+                &DataKey::TokenMetadata,
+                &TokenMetadata {
+                    decimals,
+                    name,
+                    symbol,
+                    admin,
+                },
+            );
+        }
+
+        Ok(())
+    }
+
+    pub fn get_metadata(env: Env) -> TokenMetadata {
+        env.storage()
+            .instance()
+            .get(&DataKey::TokenMetadata)
+            .unwrap()
+    }
+
+    pub fn mint(env: Env, to: Address, amount: i128) {
+        Self::get_metadata(env.clone()).admin.require_auth();
+        let previous_balance: i128 = env
+            .clone()
+            .storage()
+            .instance()
+            .get(&DataKey::Balance(to.clone()))
+            .unwrap_or(0);
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(to), &(previous_balance + amount));
+    }
+
+    pub fn transfer(env: Env, from: Address, to: Address, amount: i128) {
+        from.require_auth();
+        let from_balance = Self::balance(env.clone(), from.clone());
+        let to_balance = Self::balance(env.clone(), to.clone());
+        assert!(from_balance >= amount);
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(from), &(from_balance - amount));
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(to), &(to_balance + amount));
+    }
+
+    pub fn balance(env: Env, id: Address) -> i128 {
+        env.storage()
+            .instance()
+            .get(&DataKey::Balance(id))
+            .unwrap_or(0)
+    }
+
+    pub fn burn(env: Env, from: Address, amount: i128) {
+        from.require_auth();
+        let from_balance = Self::balance(env.clone(), from.clone());
+        assert!(from_balance >= amount);
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(from), &(from_balance - amount));
+    }
+
+    pub fn approve(
+        env: Env,
+        from: Address,
+        spender: Address,
+        amount: i128,
+        expiration_ledger: u32,
+    ) {
+        from.require_auth();
+        assert!(env.ledger().sequence() < expiration_ledger || amount == 0);
+        env.storage().instance().set(
+            &DataKey::AllowanceFromSpender(from, spender),
+            &AllowanceFromSpender {
+                amount,
+                expiration_ledger,
+            },
+        );
+    }
+
+    pub fn transfer_from(env: Env, spender: Address, from: Address, to: Address, amount: i128) {
+        let spender_allowance = Self::allowance(env.clone(), from.clone(), spender.clone());
+        assert!(spender_allowance >= amount);
+
+        let from_balance = Self::balance(env.clone(), from.clone());
+        let to_balance = Self::balance(env.clone(), to.clone());
+        assert!(from_balance >= amount);
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(from.clone()), &(from_balance - amount));
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(to.clone()), &(to_balance + amount));
+
+        let mut allowance = Self::get_allowance(env.clone(), from.clone(), spender.clone());
+        allowance.amount -= amount;
+
+        env.storage()
+            .instance()
+            .set(&DataKey::AllowanceFromSpender(from, spender), &allowance);
+    }
+
+    pub fn allowance(env: Env, from: Address, spender: Address) -> i128 {
+        let allowance = Self::get_allowance(env.clone(), from, spender);
+        if allowance.expiration_ledger < env.ledger().sequence() {
+            0
+        } else {
+            allowance.amount
+        }
+    }
+
+    pub fn decimal(env: Env) -> u32 {
+        Self::get_metadata(env).decimals
+    }
+
+    fn get_allowance(env: Env, from: Address, spender: Address) -> AllowanceFromSpender {
+        env.storage()
+            .instance()
+            .get(&DataKey::AllowanceFromSpender(from, spender))
+            .unwrap_or_default()
+    }
+}
