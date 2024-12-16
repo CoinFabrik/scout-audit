@@ -1,14 +1,13 @@
-use anyhow::{anyhow, bail, Context, Result};
-use cargo_metadata::{camino::Utf8PathBuf, Metadata, MetadataCommand};
+use anyhow::{bail, Context, Result};
+use cargo_metadata::{camino::Utf8PathBuf, Metadata};
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{fs, path::PathBuf};
-use thiserror::Error;
+use std::path::PathBuf;
 
-use crate::{output::report::Package, utils::telemetry::TracedError};
+use crate::output::report::Package;
 
 #[derive(Debug)]
-pub struct Project {
+pub struct ProjectInfo {
     pub name: String,
     pub date: String,
     pub workspace_root: PathBuf,
@@ -19,45 +18,14 @@ lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"(^|\s)\w").expect("Invalid regex");
 }
 
-#[derive(Error, Debug)]
-pub enum MetadataError {
-    #[error("Invalid manifest path. Ensure scout is being run in a Rust project. (Path: {0})")]
-    InvalidManifestPath(PathBuf),
-
-    #[error("Failed to access Cargo.toml file. (Path: {0})")]
-    CargoTomlAccessError(PathBuf),
-
-    #[error("Failed to execute metadata command, ensure this is a valid rust project or workspace directory.")]
-    MetadataCommandFailed,
-}
-
-impl Project {
-    pub fn get_metadata(manifest_path: &Option<PathBuf>) -> Result<Metadata> {
-        let mut metadata_command = MetadataCommand::new();
-
-        if let Some(manifest_path) = manifest_path {
-            if !manifest_path.ends_with("Cargo.toml") {
-                bail!(MetadataError::InvalidManifestPath(manifest_path.clone()));
-            }
-
-            fs::metadata(manifest_path)
-                .map_err(MetadataError::CargoTomlAccessError(manifest_path.clone()).traced())?;
-
-            metadata_command.manifest_path(manifest_path);
-        }
-
-        metadata_command
-            .exec()
-            .map_err(MetadataError::MetadataCommandFailed.traced())
-    }
-
+impl ProjectInfo {
     #[tracing::instrument(name = "GET PROJECT INFO", skip_all)]
-    pub fn get_info(metadata: &Metadata) -> Result<Self> {
+    pub fn get_project_info(metadata: &Metadata) -> Result<Self> {
         let packages = Self::collect_packages(metadata)?;
         let project_name = Self::format_project_name(&metadata.workspace_root)?;
         let date = chrono::Local::now().format("%Y-%m-%d").to_string();
 
-        let project_info = Project {
+        let project_info = ProjectInfo {
             name: project_name,
             date,
             workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
@@ -88,7 +56,9 @@ impl Project {
                 .packages
                 .iter()
                 .find(|p| &p.id == package_id)
-                .with_context(|| format!("Package ID '{package_id}' not found in the workspace"))?;
+                .with_context(|| {
+                    format!("Package ID '{}' not found in the workspace", package_id)
+                })?;
             let manifest_path = &package.manifest_path;
             let absolute_path: PathBuf = manifest_path.clone().into();
 
@@ -109,7 +79,6 @@ impl Project {
 
             packages.push(Package {
                 name: package.name.clone(),
-                id: package_id.to_string(),
                 absolute_path,
                 relative_path,
             });
@@ -120,7 +89,7 @@ impl Project {
     fn format_project_name(workspace_root: &Utf8PathBuf) -> Result<String> {
         workspace_root
             .file_name()
-            .ok_or_else(|| anyhow!("Invalid workspace root"))
+            .ok_or_else(|| anyhow::anyhow!("Invalid workspace root"))
             .map(|name| {
                 let project_name = name.replace('-', " ");
                 NAME_REGEX

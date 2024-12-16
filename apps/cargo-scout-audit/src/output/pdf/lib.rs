@@ -1,7 +1,7 @@
 use super::generator::{generate_body, generate_header, generate_summary};
-use crate::output::pdf::external::{build_library, call};
 use crate::output::report::Report;
 use anyhow::{Context, Result};
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 use std::io::Write;
 use std::path::Path;
 use tempfile::{Builder, NamedTempFile};
@@ -30,17 +30,12 @@ fn generate_temp_html(report: &Report) -> Result<NamedTempFile> {
 
 pub fn generate_pdf(path: &Path, report: &Report) -> Result<()> {
     let temp_html = generate_temp_html(report)?;
-    let library = build_library()?;
+    let browser = Browser::new(LaunchOptionsBuilder::default().headless(true).build()?)?;
+    let tab = browser.new_tab()?;
     let url = "file:///".to_string() + temp_html.path().to_str().unwrap();
-    let output_path = path
-        .as_os_str()
-        .to_str()
-        .with_context(|| "Failed to get output path for PDF")?;
-    let result = call(&library, &url, output_path)?;
+    tab.navigate_to(url.as_str())?;
+    tab.wait_until_navigated()?;
+    std::fs::write(path, tab.print_to_pdf(None)?)?;
     let _ = temp_html.close();
-    if result {
-        Ok(())
-    } else {
-        None.with_context(|| "PDF generation failed")
-    }
+    Ok(())
 }

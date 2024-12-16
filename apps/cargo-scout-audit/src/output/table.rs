@@ -1,4 +1,4 @@
-use crate::{finding::Finding, utils::detectors_info::LintStore};
+use crate::{output::raw_report::json_to_string_opt, utils::detectors_info::LintInfo};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -645,23 +645,24 @@ pub(crate) fn prepare_tera_for_table_render_html(
 }
 
 fn count_findings(
-    findings: &[Finding],
+    findings: &[Value],
     crate_to_find: &String,
-    detectors_info: &LintStore,
+    detectors_info: &HashMap<String, LintInfo>,
 ) -> [usize; 4] {
     let mut ret = [0_usize; 4];
 
     let mut ignored = 0;
     for finding in findings.iter() {
-        let krate = finding.package();
-        if krate != *crate_to_find {
+        let krate = json_to_string_opt(finding.get("crate"));
+        if krate.is_none() || krate.unwrap() != *crate_to_find {
             continue;
         }
-        let code = finding.code();
-        if code.is_empty() {
+        let code = json_to_string_opt(finding.get("code").and_then(|x| x.get("code")));
+        if code.is_none() {
             continue;
         }
-        let detector = detectors_info.find_by_id(&code);
+        let code = code.unwrap();
+        let detector = detectors_info.get(&code);
         if detector.is_none() {
             continue;
         }
@@ -679,9 +680,9 @@ fn count_findings(
 }
 
 pub(crate) fn construct_table(
-    findings: &[Finding],
+    findings: &[Value],
     crates: &HashMap<String, bool>,
-    detectors_info: &LintStore,
+    detectors_info: &HashMap<String, LintInfo>,
 ) -> Table {
     let mut header = Row::from_strs(&[
         "Crate",

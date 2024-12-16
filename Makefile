@@ -1,23 +1,35 @@
 ci: fmt lint test
+ci-check: fmt-check lint test
 
-test: test-ink test-soroban test-substrate
+fmt: fmt-rust
+fmt-check: fmt-rust-check
+lint: lint-cargo-scout-audit lint-detectors lint-scout-audit-internal
 
-fmt:
+fmt-rust:
 	@echo "Formatting Rust code..."
-	@python3 scripts/run-fmt.py
+	@./scripts/list-cargo-directories.sh | ./scripts/run-cargo-fmt.sh
 
-lint:
+fmt-rust-check:
+	@echo "Checking Rust code formatting..."
+	@./scripts/list-cargo-directories.sh | ./scripts/run-cargo-fmt.sh --check
+
+lint-cargo-scout-audit:
 	@echo "Linting cargo-scout-audit..."
-	@python3 scripts/run-clippy.py
+	@cd apps/cargo-scout-audit && cargo clippy --all --all-features --quiet -- -D warnings
 
-test-ink:
-	@echo "Running ink tests..."
-	@python3 scripts/find-test-cases.py -b=ink --format=list | xargs -I {} python3 scripts/run-tests.py --detector={}
+lint-detectors:
+	@echo "Linting detectors..."
+	@cd detectors && ../scripts/list-cargo-directories.sh | ../scripts/run-cargo-clippy.sh
 
-test-soroban:
-	@echo "Running soroban tests..."
-	@python3 scripts/find-test-cases.py -b=soroban --format=list | xargs -I {} python3 scripts/run-tests.py --detector={}
+lint-scout-audit-internal:
+	@echo "Linting scout-audit-internal..."
+	@cd scout-audit-internal && cargo clippy --all --all-features --quiet -- -D warnings
 
-test-substrate:
-	@echo "Running substrate tests..."
-	@python3 scripts/find-test-cases.py -b=substrate-pallets --format=list | xargs -I {} python3 scripts/run-tests.py --detector={}
+test:
+	@echo "Running tests..."
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'not test(/tests::slow/)'
+	
+test-e2e:
+	@echo "Running e2e test..."
+	@cd apps/cargo-scout-audit && cargo nextest run -E 'test(/^tests::slow/)'
+	
