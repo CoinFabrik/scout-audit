@@ -41,6 +41,7 @@ pub struct Summary {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Package {
     pub name: String,
+    pub id: String,
     pub relative_path: PathBuf,
     pub absolute_path: PathBuf,
 }

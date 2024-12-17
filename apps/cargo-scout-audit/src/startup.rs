@@ -150,7 +150,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
     // Run dylint
-    let (_successful_build, stdout) = run_dylint(detectors_paths.clone(), &opts, inside_vscode)
+    let (_, stdout) = run_dylint(detectors_paths.clone(), &opts, inside_vscode)
         .map_err(ScoutError::RunDylintFailed)?;
 
     let raw_findings_string = temp_file_to_string(stdout)?;
@@ -158,7 +158,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
         .into_iter()
         .map(Finding::new)
         .collect::<Vec<_>>();
-    let crates = get_crates(&raw_findings, &project_info.packages);
+    let crates = get_crates(&raw_findings, &project_info.packages, &metadata)?;
     let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
     let findings = raw_findings
         .iter()
