@@ -3,7 +3,6 @@ mod tests {
     use anyhow::Result;
     use cargo_scout_audit::{
         cli::{OutputFormat, Scout},
-        scout::findings::output_to_json,
         startup::run_scout,
     };
     use lazy_static::lazy_static;
@@ -277,17 +276,14 @@ mod tests {
             .output()
             .unwrap();
 
-        let scout_stdout = std::str::from_utf8(&scout_output.stdout).unwrap();
+        let output = std::str::from_utf8(&scout_output.stdout).unwrap();
+        let output = output
+            .lines()
+            .map(|line| serde_json::from_str::<serde_json::Value>(line))
+            .collect::<Vec<_>>();
         assert!(
-            !scout_stdout.contains("[INFO]"),
-            "Output should not contain info prints",
-        );
-        let json_result: Result<serde_json::Value, _> =
-            serde_json::from_slice(&scout_output.stdout);
-        assert!(
-            json_result.is_ok(),
-            "Output should be valid JSON, got: {:?}",
-            scout_stdout
+            output.iter().all(|x| x.is_ok()),
+            "Output should be valid JSON",
         );
     }
 
@@ -301,10 +297,6 @@ mod tests {
             .output()
             .unwrap();
         let scout_stdout = std::str::from_utf8(&scout_output.stdout).unwrap();
-        assert!(
-            !scout_stdout.contains("[INFO]"),
-            "Output should not contain info prints",
-        );
         let json_result: Result<serde_json::Value, _> =
             serde_json::from_slice(&scout_output.stdout);
         assert!(
