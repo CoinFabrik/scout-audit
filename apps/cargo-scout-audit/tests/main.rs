@@ -5,7 +5,6 @@ mod tests {
         cli::{OutputFormat, Scout},
         scout::findings::output_to_json,
         startup::run_scout,
-        utils::json,
     };
     use lazy_static::lazy_static;
     use std::{collections::HashMap, fs,  path::PathBuf};
@@ -270,61 +269,48 @@ mod tests {
 
     #[test]
     fn test_message_format() {
-        let contract_path = get_test_cases()
-            .iter()
-            .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
-            .unwrap()
-            .clone();
+        let path = "tests/contracts/substrate-pallets/";
 
-        // When
-        let scout_opts = Scout {
-            manifest_path: Some(contract_path.to_path_buf()),
-            local_detectors: Some(DETECTORS_DIR.clone()),
-            args: vec!["--message-format=json".to_string()],
-            ..Scout::default()
-        };
-        let result = run_scout(scout_opts);
-        assert!(result.is_ok(), " Scout should run");
+        let scout_output = Command::new("cargo")
+            .args(["scout-audit", "--", "--message-format=json"])
+            .current_dir(path)
+            .output()
+            .unwrap();
 
-        let output = &result.unwrap().stdout_helper;
-
-        let json_output = output_to_json(output);
-
-        for val in json_output {
-            let json_result: Result<serde_json::Value, _> = serde_json::from_value(val);
-            assert!(
-                json_result.is_ok(),
-                "Output should be valid JSON, got: {:?}",
-                output
-            );
-        }
+        let scout_stdout = std::str::from_utf8(&scout_output.stdout).unwrap();
+        assert!(
+            !scout_stdout.contains("[INFO]"),
+            "Output should not contain info prints",
+        );
+        let json_result: Result<serde_json::Value, _> =
+            serde_json::from_slice(&scout_output.stdout);
+        assert!(
+            json_result.is_ok(),
+            "Output should be valid JSON, got: {:?}",
+            scout_stdout
+        );
     }
 
     #[test]
     fn test_metadata() {
-        let contract_path = get_test_cases()
-            .iter()
-            .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
-            .unwrap()
-            .clone();
+        let path = "tests/contracts/substrate-pallets/";
 
-        // When
-        let scout_opts = Scout {
-            manifest_path: Some(contract_path.to_path_buf()),
-            local_detectors: Some(DETECTORS_DIR.clone()),
-            detectors_metadata: true,
-            ..Scout::default()
-        };
-        let result = run_scout(scout_opts);
-        assert!(result.is_ok(), " Scout should run");
-
-        let output = &result.unwrap().stdout_helper;
-
-        let json_result: Result<serde_json::Value, _> = serde_json::from_str(output);
+        let scout_output = Command::new("cargo")
+            .args(["scout-audit", "--metadata"])
+            .current_dir(path)
+            .output()
+            .unwrap();
+        let scout_stdout = std::str::from_utf8(&scout_output.stdout).unwrap();
+        assert!(
+            !scout_stdout.contains("[INFO]"),
+            "Output should not contain info prints",
+        );
+        let json_result: Result<serde_json::Value, _> =
+            serde_json::from_slice(&scout_output.stdout);
         assert!(
             json_result.is_ok(),
             "Output should be valid JSON, got: {:?}",
-            output
+            scout_stdout
         );
     }
 
