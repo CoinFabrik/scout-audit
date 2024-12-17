@@ -2,7 +2,11 @@
 mod tests {
     use anyhow::Result;
     use cargo_scout_audit::{
-        cli::{OutputFormat, Scout}, scout::findings::output_to_json, startup::run_scout, utils::json};
+        cli::{OutputFormat, Scout},
+        scout::findings::output_to_json,
+        startup::run_scout,
+        utils::json,
+    };
     use lazy_static::lazy_static;
     use std::{collections::HashMap, fs,  path::PathBuf};
     use tempfile::TempDir;
@@ -246,7 +250,8 @@ mod tests {
         assert!(result.is_ok(), "Scout should run");
         let result = result.unwrap();
 
-        let findings = result.findings
+        let findings = result
+            .findings
             .iter()
             .map(|value| value.code())
             .filter(|x| x != "known_vulnerabilities")
@@ -266,11 +271,11 @@ mod tests {
     #[test]
     fn test_message_format() {
         let contract_path = get_test_cases()
-        .iter()
-        .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
-        .unwrap()
-        .clone();
-    
+            .iter()
+            .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
+            .unwrap()
+            .clone();
+
         // When
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
@@ -285,7 +290,7 @@ mod tests {
 
         let json_output = output_to_json(output);
 
-        for val in json_output{
+        for val in json_output {
             let json_result: Result<serde_json::Value, _> = serde_json::from_value(val);
             assert!(
                 json_result.is_ok(),
@@ -298,11 +303,11 @@ mod tests {
     #[test]
     fn test_metadata() {
         let contract_path = get_test_cases()
-        .iter()
-        .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
-        .unwrap()
-        .clone();
-    
+            .iter()
+            .find(|y| y.to_str().unwrap().contains("substrate-pallets"))
+            .unwrap()
+            .clone();
+
         // When
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),

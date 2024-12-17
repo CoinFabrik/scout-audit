@@ -59,20 +59,26 @@ pub enum ScoutError {
 }
 
 #[derive(Default)]
-pub struct ScoutResult{
+pub struct ScoutResult {
     pub findings: Vec<Finding>,
     pub stdout_helper: String,
 }
 
-impl ScoutResult{
-    pub fn new(findings: Vec<Finding>, stdout_helper: String) -> Self{
-        Self { findings, stdout_helper }
+impl ScoutResult {
+    pub fn new(findings: Vec<Finding>, stdout_helper: String) -> Self {
+        Self {
+            findings,
+            stdout_helper,
+        }
     }
-    pub fn from_stdout(stdout_helper: String) -> Self{
+    pub fn from_stdout(stdout_helper: String) -> Self {
         dbg!(&stdout_helper);
-        Self { findings: Vec::new(), stdout_helper }
+        Self {
+            findings: Vec::new(),
+            stdout_helper,
+        }
     }
-    pub fn from_string<T: std::fmt::Display>(s: T) -> Self{
+    pub fn from_string<T: std::fmt::Display>(s: T) -> Self {
         Self::from_stdout(format!("{}\n", s))
     }
 }
