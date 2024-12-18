@@ -9,7 +9,7 @@ pub fn print_error(message: &str) {
 }
 
 pub fn print_info(message: &str) {
-    println!("{}", pretty_info(message));
+    eprintln!("{}", pretty_info(message));
 }
 
 pub fn pretty_warning(message: &str) -> String {
