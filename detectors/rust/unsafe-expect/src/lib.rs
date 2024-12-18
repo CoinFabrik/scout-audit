@@ -9,7 +9,7 @@ use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
-use common_detectors::unsafe_expect::UnsafeExpectVisitor;
+use common_detectors::unsafe_checks::UnsafeChecks;
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
@@ -60,7 +60,7 @@ impl<'tcx> LateLintPass<'tcx> for UnsafeExpect {
         };
         constant_analyzer.visit_body(body);
 
-        let mut visitor = UnsafeExpectVisitor::new(cx, UNSAFE_EXPECT, constant_analyzer);
+        let mut visitor = UnsafeChecks::new(cx, UNSAFE_EXPECT, constant_analyzer, sym::expect);
 
         walk_expr(&mut visitor, body.value);
     }

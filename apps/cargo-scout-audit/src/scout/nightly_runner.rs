@@ -1,5 +1,5 @@
-#![allow(unused_imports)]
-use anyhow::{anyhow, Context, Result};
+use crate::utils::print::{print_error, print_info};
+use anyhow::{Context, Result};
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
 use std::{
@@ -7,8 +7,6 @@ use std::{
     path::Path,
     process::{Child, Command},
 };
-
-use crate::utils::print::print_error;
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
@@ -25,7 +23,7 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     use windows::{core::PCWSTR, Win32::System::LibraryLoader::SetDllDirectoryW};
 
     let user_profile = env::var("USERPROFILE")
-        .map_err(|e| anyhow!("Unable to get user profile directory: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("Unable to get user profile directory: {e}"))?;
     let mut user_profile = std::path::PathBuf::from(user_profile);
     user_profile.push(".rustup");
     user_profile.push("toolchains");
@@ -40,6 +38,7 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     unsafe {
         let _ = SetDllDirectoryW(PCWSTR(directory.as_ptr()));
     }
+    print_info("Re-running scout with nightly toolchain...");
     return Ok(None);
 }
 
@@ -72,5 +71,6 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     let child = command
         .spawn()
         .with_context(|| "Failed to spawn scout with nightly toolchain")?;
+    print_info("Re-running scout with nightly toolchain...");
     Ok(Some(child))
 }

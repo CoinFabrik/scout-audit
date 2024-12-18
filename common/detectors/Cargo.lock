@@ -7,7 +7,9 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",
+ "dylint_linting",
  "if_chain",
+ "paste",
 ]
 
 [[package]]

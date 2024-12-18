@@ -1,5 +1,8 @@
 #![feature(rustc_private)]
 
+pub use paste;
+pub use dylint_linting;
+
 mod function_call_visitor;
 pub use function_call_visitor::FunctionCallVisitor;
 
@@ -17,3 +20,6 @@ pub use type_utils::*;
 
 mod token_interface_utils;
 pub use token_interface_utils::*;
+
+pub mod decomposers;
+pub mod double_pass;

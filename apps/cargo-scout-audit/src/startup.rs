@@ -15,7 +15,7 @@ use crate::{
         config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
-        print::print_error,
+        print::{print_error, print_info},
         telemetry::TracedError,
     },
 };
@@ -223,6 +223,8 @@ fn run_dylint(
     opts: &Scout,
     inside_vscode: bool,
 ) -> Result<(bool, NamedTempFile)> {
+    print_info("Running scout...");
+
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()

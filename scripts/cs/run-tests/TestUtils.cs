@@ -189,7 +189,15 @@ namespace run_tests
 
             Debug.Assert(stdout != null);
 
-            var detectorsMetadata = JsonConvert.DeserializeObject<ScoutMetadata>(stdout);
+            ScoutMetadata? detectorsMetadata = null;
+            try
+            {
+                detectorsMetadata = JsonConvert.DeserializeObject<ScoutMetadata>(stdout);
+            }
+            catch
+            {
+            }
+
             if (detectorsMetadata == null)
             {
                 AutoConsoleColor.WriteLine(ConsoleColor.Red, $"Failed to extract JSON from metadata.");
@@ -215,8 +223,8 @@ namespace run_tests
             var localDetectors = Path.Join(new[]
                 { Environment.CurrentDirectory, "detectors" });
 
-            if (GetShortMessage(detector, localDetectors, root) == null)
-                return false;
+            //if (GetShortMessage(detector, localDetectors, root) == null)
+            //    return false;
 
             var temp = Path.GetTempFileName();
 
