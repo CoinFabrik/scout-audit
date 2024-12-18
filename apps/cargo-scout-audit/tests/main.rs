@@ -279,7 +279,7 @@ mod tests {
         let output = std::str::from_utf8(&scout_output.stdout).unwrap();
         let output = output
             .lines()
-            .map(|line| serde_json::from_str::<serde_json::Value>(line))
+            .map(serde_json::from_str::<serde_json::Value>)
             .collect::<Vec<_>>();
         assert!(
             output.iter().all(|x| x.is_ok()),
