@@ -6,7 +6,7 @@ mod tests {
         startup::run_scout,
     };
     use lazy_static::lazy_static;
-    use std::{collections::HashMap, fs,  path::PathBuf};
+    use std::{collections::HashMap, fs, path::PathBuf, process::Command};
     use tempfile::TempDir;
     use uuid::Uuid;
 
