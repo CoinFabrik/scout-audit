@@ -1,5 +1,5 @@
 use crate::scout::blockchain::BlockChain;
-use crate::utils::telemetry::TracedError;
+use crate::utils::logger::TracedError;
 use anyhow::{bail, Context, Ok, Result};
 use cargo::core::{Dependency, GitReference, SourceId};
 use git2::{RemoteCallbacks, Repository};

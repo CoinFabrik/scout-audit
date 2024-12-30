@@ -15,8 +15,8 @@ use crate::{
         config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
+        logger::TracedError,
         print::{print_error, print_info},
-        telemetry::TracedError,
     },
 };
 use anyhow::{Context, Ok, Result};
@@ -195,6 +195,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     } else {
         (successful_findings, raw_findings_string)
     };
+
     // Generate report
     if inside_vscode {
         std::io::stdout()

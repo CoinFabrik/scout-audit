@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::env;
 use thiserror::Error;
 
-use crate::utils::telemetry::TracedError;
+use crate::utils::logger::TracedError;
 
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -5,7 +5,7 @@ use regex::Regex;
 use std::{fs, path::PathBuf};
 use thiserror::Error;
 
-use crate::{output::report::Package, utils::telemetry::TracedError};
+use crate::{output::report::Package, utils::logger::TracedError};
 
 #[derive(Debug)]
 pub struct Project {
