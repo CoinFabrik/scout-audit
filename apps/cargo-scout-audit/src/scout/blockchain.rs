@@ -8,6 +8,7 @@ use thiserror::Error;
 
 #[derive(Debug, Deserialize, Serialize, Copy, Clone, EnumIter, Display, EnumString)]
 #[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum BlockChain {
     Ink,
     Soroban,

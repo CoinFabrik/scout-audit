@@ -9,6 +9,7 @@ use crate::{
         findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
         nightly_runner::run_scout_in_nightly,
         project_info::Project,
+        telemetry::TelemetryClient,
         version_checker::VersionChecker,
     },
     utils::{
@@ -214,6 +215,11 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
             &opts.output_format,
         )?;
     }
+
+    // Send telemetry data
+    let client_type = TelemetryClient::detect_client_type(&opts.args);
+    let telemetry_client = TelemetryClient::new(blockchain, client_type);
+    let _ = telemetry_client.send_report();
 
     Ok(console_findings)
 }
