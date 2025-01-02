@@ -12,7 +12,7 @@ use super::{
 };
 use crate::{
     scout::blockchain::BlockChain,
-    utils::{print::print_info, logger::TracedError},
+    utils::{logger::TracedError, print::print_info},
 };
 
 #[derive(Error, Debug)]
