@@ -8,10 +8,18 @@ extern crate rustc_span;
 use common::{
     declarations::{ Severity, VulnerabilityClass },
     macros::expose_lint_info,
-    analysis::get_node_type_opt,
+    analysis::{ get_node_type_opt, get_receiver_ident_name },
 };
 use if_chain::if_chain;
-use rustc_hir::{ def, intravisit::{ walk_expr, Visitor }, Expr, ExprKind, BinOpKind, Param };
+use rustc_hir::{
+    def,
+    intravisit::{ walk_expr, Visitor },
+    Expr,
+    ExprKind,
+    BinOpKind,
+    Param,
+    PatKind,
+};
 use rustc_lint::{ LateContext, LateLintPass };
 use rustc_middle::{
     mir::{
@@ -49,24 +57,47 @@ dylint_linting::impl_late_lint! {
 }
 
 #[derive(Default)]
-pub struct EqualAddresses {}
+pub struct EqualAddresses {
+    pub param_infos: Vec<ParamInfo>,
+}
 impl EqualAddresses {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            param_infos: Vec::new(),
+        }
+    }
+    pub fn add_param_info(&mut self, param_name: &str, def_path: &str, span: Span) {
+        self.param_infos.push(ParamInfo {
+            param_name: param_name.to_string(),
+            def_path: def_path.to_string(),
+            span,
+        });
     }
 }
-
+#[derive(Debug)]
+pub struct ParamInfo {
+    pub param_name: String,
+    pub def_path: String,
+    pub span: Span,
+}
+#[derive(Debug, Clone)]
+pub struct TerminateInfo {
+    pub param_names: [String; 2],
+    pub def_path: String,
+    pub is_checked: bool,
+}
 struct EqualAddressesFinder<'tcx, 'tcx_ref> {
     cx: &'tcx_ref LateContext<'tcx>,
     terminate_contract_span: Option<Span>,
     terminate_contract_def_id: Option<DefId>,
     caller_def_id: Option<DefId>,
-    acc_id_params: Vec<&'tcx Param<'tcx>>,
+    possible_terminate: Option<TerminateInfo>,
 }
 
 struct CallersAndTerminates<'tcx> {
     callers: Vec<(&'tcx BasicBlockData<'tcx>, BasicBlock)>,
     terminates: Vec<(&'tcx BasicBlockData<'tcx>, BasicBlock)>,
+    terminates_info: Vec<TerminateInfo>,
 }
 
 impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
@@ -83,6 +114,13 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
                         then {
                             self.terminate_contract_span = Some(expr.span);
                             self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
+                            let rvalue = get_receiver_ident_name(rvalue);
+                            let lvalue = get_receiver_ident_name(lvalue);
+                            self.possible_terminate = Some(TerminateInfo {
+                                param_names: [rvalue.to_string(),lvalue.to_string()],
+                                def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
+                                is_checked: false
+                            }); 
                         }
                     );
                 }
@@ -97,18 +135,19 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
 fn find_caller_and_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
     caller_def_id: Option<DefId>,
-    terminate_def_id: Option<DefId>
+    terminate_def_id: Option<DefId>,
+    possible_terminate: Option<TerminateInfo>
 ) -> CallersAndTerminates {
     let mut callers_vec = CallersAndTerminates {
         callers: vec![],
         terminates: vec![],
+        terminates_info: vec![],
     };
     for (bb, bb_data) in bbs.iter().enumerate() {
         if bb_data.terminator.as_ref().is_none() {
             continue;
         }
         let terminator = bb_data.terminator.clone().unwrap();
-
         if let TerminatorKind::Call { func, .. } = &terminator.kind {
             if
                 let Operand::Constant(fn_const) = func &&
@@ -119,6 +158,11 @@ fn find_caller_and_terminate_in_mir<'tcx>(
                     callers_vec.callers.push((bb_data, BasicBlock::from_usize(bb)));
                 }
                 if terminate_def_id.is_some_and(|d| &d == def) {
+                    if possible_terminate.is_some() {
+                        let mut terminate_info = possible_terminate.clone().unwrap();
+                        terminate_info.is_checked = true;
+                        callers_vec.terminates_info.push(terminate_info);
+                    }
                     callers_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
                 }
             }
@@ -310,50 +354,81 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             terminate_contract_def_id: None,
             terminate_contract_span: None,
             caller_def_id: None,
-            acc_id_params: Vec::default(),
+            possible_terminate: None,
         };
-        //let mut acc_id_params = Vec::default();
 
         // Look for function params with AccountId type
         let mir_body = cx.tcx.optimized_mir(localdef);
         for (arg, hir_param) in mir_body.args_iter().zip(body.params.iter()) {
-            if mir_body.local_decls[arg].ty.to_string() == "<T as frame_system::Config>::AccountId" {
-                utf_storage.acc_id_params.push(hir_param);
-            } else if
+            if
                 mir_body.local_decls[arg].ty.to_string() ==
-                "<T as frame_system::Config>::RuntimeOrigin"
+                    "<T as frame_system::Config>::AccountId" ||
+                mir_body.local_decls[arg].ty.to_string() ==
+                    "<T as frame_system::Config>::RuntimeOrigin"
             {
-                utf_storage.acc_id_params.push(hir_param);
+                let fn_name = &cx.tcx.def_path_str(localdef);
+                let mut param_name = "";
+                if let PatKind::Binding(_, _, ident, _) = &hir_param.pat.kind {
+                    param_name = ident.name.as_str();
+                }
+                self.add_param_info(
+                    param_name,
+                    fn_name,
+                    mir_body.local_decls[arg].source_info.span
+                );
             }
         }
 
         walk_expr(&mut utf_storage, body.value);
-        //let mir_body = cx.tcx.optimized_mir(localdef);
-
-        if utf_storage.acc_id_params.len() > 1 {
-            dbg!("{:?}", utf_storage.acc_id_params.len());
-            dbg!("{:?}", localdef);
-        }
 
         let caller_and_terminate = find_caller_and_terminate_in_mir(
             &mir_body.basic_blocks,
             utf_storage.caller_def_id,
-            utf_storage.terminate_contract_def_id
+            utf_storage.terminate_contract_def_id,
+            utf_storage.possible_terminate
         );
-
         if !caller_and_terminate.terminates.is_empty() {
-            dbg!("{:?}", &caller_and_terminate.terminates);
-            dbg!("{:?}", localdef);
-            dbg!("{:?}", &caller_and_terminate.callers);
+            //dbg!("{:?}", localdef);
+            //dbg!("{:?}", &caller_and_terminate.terminates);
+            //dbg!("{:?}", &caller_and_terminate.terminates_info);
+            //dbg!("{:?}", &self.param_infos);
+
             if caller_and_terminate.callers.is_empty() {
-                for terminate in caller_and_terminate.terminates {
-                    if let TerminatorKind::Call { fn_span, .. } = terminate.0.terminator().kind {
-                        clippy_utils::diagnostics::span_lint(
-                            cx,
-                            EQUAL_ADDRESSES,
-                            fn_span,
-                            LINT_MESSAGE
-                        );
+                for _terminate in caller_and_terminate.terminates {
+                    for term_info in &caller_and_terminate.terminates_info {
+                        let mut span = self.param_infos[0].span;
+                        // itero sobre los 2 parametros de la comparacion binaria, con el all me aseguro de que si en algun caso no se encuentran los nombres dentro
+                        //de la lista de parametros de funcion, va a retornar false. Solo retorna true si coinciden tanto los nombres como la funcion a la que pertenecen
+                        let res = term_info.param_names.iter().all(|param_name| {
+                            //Si el param_name de term_info coincide con param_name de param_info (osea from = from)
+                            if
+                                let Some(param_info) = self.param_infos
+                                    .iter()
+                                    .find(|p| p.param_name == *param_name)
+                            {
+                                //checkeo si pertenecen a la misma funcion, si es asi va a devolver true en este caso
+                                //dbg!("{:?},{:?}", param_info, param_name);
+                                let func = param_info.def_path == term_info.def_path;
+                                //guardo el span
+                                if func {
+                                    span = param_info.span;
+                                }
+                                func
+                            } else {
+                                false
+                            }
+                        });
+                        dbg!("{:?}", term_info.is_checked);
+
+                        dbg!("{:?}", res);
+                        if !res {
+                            clippy_utils::diagnostics::span_lint(
+                                cx,
+                                EQUAL_ADDRESSES,
+                                span,
+                                LINT_MESSAGE
+                            );
+                        }
                     }
                 }
             } else {

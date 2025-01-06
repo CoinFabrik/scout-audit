@@ -29,18 +29,23 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn set_balance(origin: OriginFor<T>, to: T::AccountId, amount: u32) -> DispatchResult {
-            let from = ensure_signed(origin)?;
+        pub fn set_balance(
+            origin: OriginFor<T>,
+            from: T::AccountId,
+            to: T::AccountId,
+            amount: u32
+        ) -> DispatchResult {
+            let orig = ensure_signed(origin)?;
 
             let sender_balance = Self::balance_of(&from);
+            //let a = orig != from;
             ensure!(sender_balance >= amount, "Insufficient balance");
 
             //if amount > 0 {
             ensure!(from != to, "Same addresses");
-            //return Err(Error::<T>::SameAddresses.into());
+            //    return Err(Error::<T>::SameAddresses.into());
             //}
             let recipient_balance = Self::balance_of(&to);
-
             // Perform the transfer by updating balances.
             Balance::<T>::insert(&from, sender_balance - amount);
             Balance::<T>::insert(&to, recipient_balance + amount);
