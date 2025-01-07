@@ -59,19 +59,41 @@ dylint_linting::impl_late_lint! {
 #[derive(Default)]
 pub struct EqualAddresses {
     pub param_infos: Vec<ParamInfo>,
+    pub term_infos: Vec<TerminateInfo>,
 }
 impl EqualAddresses {
     pub fn new() -> Self {
         Self {
             param_infos: Vec::new(),
+            term_infos: Vec::new(),
         }
     }
-    pub fn add_param_info(&mut self, param_name: &str, def_path: &str, span: Span) {
+    pub fn add_param_info(
+        &mut self,
+        param_name: &str,
+        def_path: &str,
+        span: Span,
+        is_checked: bool
+    ) {
         self.param_infos.push(ParamInfo {
             param_name: param_name.to_string(),
             def_path: def_path.to_string(),
             span,
+            is_checked,
         });
+    }
+    pub fn add_term_info(&mut self, param_names: [String; 2], def_path: String) {
+        self.term_infos.push(TerminateInfo {
+            param_names,
+            def_path,
+        });
+    }
+    pub fn update_param_info(&mut self, def_path: String) {
+        for param_info in self.param_infos.iter_mut() {
+            if param_info.def_path == def_path {
+                param_info.is_checked = true;
+            }
+        }
     }
 }
 #[derive(Debug)]
@@ -79,12 +101,12 @@ pub struct ParamInfo {
     pub param_name: String,
     pub def_path: String,
     pub span: Span,
+    pub is_checked: bool,
 }
 #[derive(Debug, Clone)]
 pub struct TerminateInfo {
     pub param_names: [String; 2],
     pub def_path: String,
-    pub is_checked: bool,
 }
 struct EqualAddressesFinder<'tcx, 'tcx_ref> {
     cx: &'tcx_ref LateContext<'tcx>,
@@ -116,10 +138,11 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
                             self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
                             let rvalue = get_receiver_ident_name(rvalue);
                             let lvalue = get_receiver_ident_name(lvalue);
+                            //dbg!("HOLA, {:?}", expr.hir_id);
+
                             self.possible_terminate = Some(TerminateInfo {
                                 param_names: [rvalue.to_string(),lvalue.to_string()],
                                 def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
-                                is_checked: false
                             }); 
                         }
                     );
@@ -160,7 +183,7 @@ fn find_caller_and_terminate_in_mir<'tcx>(
                 if terminate_def_id.is_some_and(|d| &d == def) {
                     if possible_terminate.is_some() {
                         let mut terminate_info = possible_terminate.clone().unwrap();
-                        terminate_info.is_checked = true;
+                        /*terminate_info.is_checked = true; */
                         callers_vec.terminates_info.push(terminate_info);
                     }
                     callers_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
@@ -362,9 +385,9 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         for (arg, hir_param) in mir_body.args_iter().zip(body.params.iter()) {
             if
                 mir_body.local_decls[arg].ty.to_string() ==
-                    "<T as frame_system::Config>::AccountId" ||
+                "<T as frame_system::Config>::AccountId" /* ||
                 mir_body.local_decls[arg].ty.to_string() ==
-                    "<T as frame_system::Config>::RuntimeOrigin"
+                    "<T as frame_system::Config>::RuntimeOrigin" */
             {
                 let fn_name = &cx.tcx.def_path_str(localdef);
                 let mut param_name = "";
@@ -374,12 +397,17 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                 self.add_param_info(
                     param_name,
                     fn_name,
-                    mir_body.local_decls[arg].source_info.span
+                    mir_body.local_decls[arg].source_info.span,
+                    false
                 );
             }
         }
 
         walk_expr(&mut utf_storage, body.value);
+        let possible_term: Option<TerminateInfo> = utf_storage.possible_terminate.clone();
+        //dbg!("{:?}", possible_term);
+        //dbg!("{:?},{:?}", localdef, body.value.hir_id);
+        let func_hir_id = utf_storage.cx.tcx.def_path_str(body.value.hir_id.owner);
 
         let caller_and_terminate = find_caller_and_terminate_in_mir(
             &mir_body.basic_blocks,
@@ -394,60 +422,56 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             //dbg!("{:?}", &self.param_infos);
 
             if caller_and_terminate.callers.is_empty() {
-                for _terminate in caller_and_terminate.terminates {
-                    for term_info in &caller_and_terminate.terminates_info {
+                for terminate in caller_and_terminate.terminates {
+                    //dbg!("{:?}", cx.tcx.def_path_str(localdef));
+                    if
+                        !self.param_infos.is_empty() &&
+                        self.param_infos
+                            .iter()
+                            .any(|param_info| { func_hir_id.to_string() == param_info.def_path })
+                    {
                         let mut span = self.param_infos[0].span;
-                        // itero sobre los 2 parametros de la comparacion binaria, con el all me aseguro de que si en algun caso no se encuentran los nombres dentro
-                        //de la lista de parametros de funcion, va a retornar false. Solo retorna true si coinciden tanto los nombres como la funcion a la que pertenecen
-                        let res = term_info.param_names.iter().all(|param_name| {
-                            //Si el param_name de term_info coincide con param_name de param_info (osea from = from)
-                            if
-                                let Some(param_info) = self.param_infos
-                                    .iter()
-                                    .find(|p| p.param_name == *param_name)
-                            {
-                                //checkeo si pertenecen a la misma funcion, si es asi va a devolver true en este caso
-                                //dbg!("{:?},{:?}", param_info, param_name);
-                                let func = param_info.def_path == term_info.def_path;
-                                //guardo el span
-                                if func {
-                                    span = param_info.span;
-                                }
-                                func
-                            } else {
-                                false
-                            }
-                        });
-                        dbg!("{:?}", term_info.is_checked);
+                        let mut def_path = self.param_infos[0].def_path.clone();
 
-                        dbg!("{:?}", res);
-                        if !res {
-                            clippy_utils::diagnostics::span_lint(
-                                cx,
-                                EQUAL_ADDRESSES,
-                                span,
-                                LINT_MESSAGE
-                            );
+                        //dbg!("{:?}", &caller_and_terminate.terminates_info);
+
+                        let res = self.param_infos.iter().all(|param_info| {
+                            caller_and_terminate.terminates_info.iter().any(|terminate_info| {
+                                // Verifica si el param_name está en param_names
+                                let equal_name = terminate_info.param_names.contains(
+                                    &param_info.param_name
+                                );
+                                // Verifica si el def_path coincide
+                                let equal_func = terminate_info.def_path == param_info.def_path;
+                                if equal_func && !equal_name {
+                                    span = param_info.span;
+                                    def_path = terminate_info.def_path.clone();
+                                }
+                                equal_func && equal_name
+                            })
+                        });
+                        //dbg!("{:?}", res);
+                        if res {
+                            self.update_param_info(def_path);
                         }
                     }
                 }
-            } else {
-                let unchecked_places = navigate_trough_basicblocks(
-                    &mir_body.basic_blocks,
-                    BasicBlock::from_u32(0),
-                    &caller_and_terminate,
-                    false,
-                    &mut vec![]
-                );
-                for place in unchecked_places {
-                    clippy_utils::diagnostics::span_lint(
-                        cx,
-                        EQUAL_ADDRESSES,
-                        place.1,
-                        LINT_MESSAGE
-                    );
-                }
             }
+        } else if
+            //If there is no terminator and the function has more than two parameters of type address, indicates that the check is not performed.
+            self.param_infos.len() >= 2 &&
+            self.param_infos
+                .iter()
+                //The function name must be different to allow analysis of the parameters once the function analysis is complete
+                .any(|param_info| { func_hir_id.to_string() != param_info.def_path })
+        {
+            self.param_infos.iter().for_each(|p| {
+                dbg!("AAAAAAA {:?}, {:?}", p.is_checked, &p.def_path);
+
+                if !p.is_checked && p.def_path.contains("Pallet") {
+                    clippy_utils::diagnostics::span_lint(cx, EQUAL_ADDRESSES, p.span, LINT_MESSAGE)
+                }
+            });
         }
     }
 }
