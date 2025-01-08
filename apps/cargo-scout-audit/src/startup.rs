@@ -58,14 +58,39 @@ pub enum ScoutError {
     RunDylintFailed(#[source] anyhow::Error),
 }
 
+#[derive(Default)]
+pub struct ScoutResult {
+    pub findings: Vec<Finding>,
+    pub stdout_helper: String,
+}
+
+impl ScoutResult {
+    pub fn new(findings: Vec<Finding>, stdout_helper: String) -> Self {
+        Self {
+            findings,
+            stdout_helper,
+        }
+    }
+    pub fn from_stdout(stdout_helper: String) -> Self {
+        dbg!(&stdout_helper);
+        Self {
+            findings: Vec::new(),
+            stdout_helper,
+        }
+    }
+    pub fn from_string<T: std::fmt::Display>(s: T) -> Self {
+        Self::from_stdout(format!("{}\n", s))
+    }
+}
+
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
-pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
+pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
 
     if opts.src_hash {
         println!("{}", digest::SOURCE_DIGEST);
-        return Ok(vec![]);
+        return Ok(ScoutResult::from_string(digest::SOURCE_DIGEST));
     }
 
     let metadata =
@@ -76,14 +101,14 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
     if opts.toolchain {
         println!("{}", toolchain);
-        return Ok(vec![]);
+        return Ok(ScoutResult::from_string(toolchain));
     }
 
     if let Some(mut child) = run_scout_in_nightly(toolchain)? {
         child
             .wait()
             .with_context(|| "Failed to wait for nightly child process")?;
-        return Ok(vec![]);
+        return Ok(ScoutResult::default());
     }
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
@@ -122,7 +147,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
 
     if opts.list_detectors {
         list_detectors(&profile_detectors);
-        return Ok(vec![]);
+        return Ok(ScoutResult::default());
     }
 
     let filtered_detectors = if let Some(filter) = &opts.filter {
@@ -140,9 +165,9 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
-        let json = to_string_pretty(&detectors_info);
-        println!("{}", json.unwrap());
-        return Ok(vec![]);
+        let metadata = to_string_pretty(&detectors_info).unwrap();
+        println!("{}", metadata);
+        return Ok(ScoutResult::from_string(metadata));
     }
 
     let project_info = Project::get_info(&metadata).map_err(ScoutError::GetProjectInfoFailed)?;
@@ -173,7 +198,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
             .text_str("Nothing was analyzed. Check your build system for errors.")
             .print();
         println!("{}", string);
-        return Ok(vec![]);
+        return Ok(ScoutResult::from_string(&string));
     }
 
     let (successful_findings, _failed_findings) = split_findings(&findings, &crates);
@@ -214,7 +239,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
         )?;
     }
 
-    Ok(console_findings)
+    Ok(ScoutResult::new(console_findings, output_string_vscode))
 }
 
 #[tracing::instrument(name = "RUN DYLINT", skip_all)]
