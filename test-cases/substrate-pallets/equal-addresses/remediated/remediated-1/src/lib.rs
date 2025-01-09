@@ -35,12 +35,15 @@ pub mod pallet {
             to: T::AccountId,
             amount: u32
         ) -> DispatchResult {
+            let origin = ensure_signed(origin)?;
+
             let sender_balance = Self::balance_of(&from);
 
             ensure!(sender_balance >= amount, "Insufficient balance");
 
             // Vulnerable because doesn't check origin
             ensure!(from != to, "Same addresses");
+            ensure!(from != origin, "Same addresses");
 
             let recipient_balance = Self::balance_of(&to);
             // Perform the transfer by updating balances.
@@ -59,7 +62,14 @@ pub mod pallet {
             from1: T::AccountId,
             amount: u32
         ) -> DispatchResult {
+            let origin1 = ensure_signed(origin1)?;
+
             let sender_balance = Self::balance_of(&from1);
+
+            //ensure!(from1 != origin1, "Same addresses");
+            if from1 == origin1 {
+                return Err(Error::<T>::SameAddresses.into());
+            }
 
             ensure!(sender_balance >= amount, "Insufficient balance");
 

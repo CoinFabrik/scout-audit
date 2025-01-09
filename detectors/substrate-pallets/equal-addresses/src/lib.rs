@@ -4,6 +4,7 @@
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
+extern crate rustc_error_messages;
 
 use common::{
     declarations::{ Severity, VulnerabilityClass },
@@ -20,6 +21,7 @@ use rustc_hir::{
     Param,
     PatKind,
 };
+use rustc_error_messages::MultiSpan;
 use rustc_lint::{ LateContext, LateLintPass };
 use rustc_middle::{
     mir::{
@@ -113,7 +115,7 @@ struct EqualAddressesFinder<'tcx, 'tcx_ref> {
     terminate_contract_span: Option<Span>,
     terminate_contract_def_id: Option<DefId>,
     caller_def_id: Option<DefId>,
-    possible_terminate: Option<TerminateInfo>,
+    possible_terminate: Vec<Option<TerminateInfo>>,
 }
 
 struct CallersAndTerminates<'tcx> {
@@ -126,7 +128,7 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
         match expr.kind {
             ExprKind::Binary(op, rvalue, lvalue) => {
-                if BinOpKind::Ne == op.node {
+                if BinOpKind::Ne == op.node || BinOpKind::Eq == op.node {
                     let rtype = get_node_type_opt(self.cx, &rvalue.hir_id).unwrap();
                     let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
 
@@ -138,12 +140,10 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
                             self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
                             let rvalue = get_receiver_ident_name(rvalue);
                             let lvalue = get_receiver_ident_name(lvalue);
-                            //dbg!("HOLA, {:?}", expr.hir_id);
-
-                            self.possible_terminate = Some(TerminateInfo {
+                            self.possible_terminate.push(Some(TerminateInfo {
                                 param_names: [rvalue.to_string(),lvalue.to_string()],
                                 def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
-                            }); 
+                            })); 
                         }
                     );
                 }
@@ -159,7 +159,7 @@ fn find_caller_and_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
     caller_def_id: Option<DefId>,
     terminate_def_id: Option<DefId>,
-    possible_terminate: Option<TerminateInfo>
+    possible_terminate: Vec<Option<TerminateInfo>>
 ) -> CallersAndTerminates {
     let mut callers_vec = CallersAndTerminates {
         callers: vec![],
@@ -181,10 +181,12 @@ fn find_caller_and_terminate_in_mir<'tcx>(
                     callers_vec.callers.push((bb_data, BasicBlock::from_usize(bb)));
                 }
                 if terminate_def_id.is_some_and(|d| &d == def) {
-                    if possible_terminate.is_some() {
-                        let mut terminate_info = possible_terminate.clone().unwrap();
-                        /*terminate_info.is_checked = true; */
-                        callers_vec.terminates_info.push(terminate_info);
+                    if !possible_terminate.is_empty() {
+                        possible_terminate.iter().for_each(|terminate_info| {
+                            if let Some(ref info) = terminate_info {
+                                callers_vec.terminates_info.push(info.clone());
+                            }
+                        });
                     }
                     callers_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
                 }
@@ -377,7 +379,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             terminate_contract_def_id: None,
             terminate_contract_span: None,
             caller_def_id: None,
-            possible_terminate: None,
+            possible_terminate: Vec::default(),
         };
 
         // Look for function params with AccountId type
@@ -385,9 +387,9 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         for (arg, hir_param) in mir_body.args_iter().zip(body.params.iter()) {
             if
                 mir_body.local_decls[arg].ty.to_string() ==
-                "<T as frame_system::Config>::AccountId" /* ||
+                    "<T as frame_system::Config>::AccountId" ||
                 mir_body.local_decls[arg].ty.to_string() ==
-                    "<T as frame_system::Config>::RuntimeOrigin" */
+                    "<T as frame_system::Config>::RuntimeOrigin"
             {
                 let fn_name = &cx.tcx.def_path_str(localdef);
                 let mut param_name = "";
@@ -404,9 +406,6 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         }
 
         walk_expr(&mut utf_storage, body.value);
-        let possible_term: Option<TerminateInfo> = utf_storage.possible_terminate.clone();
-        //dbg!("{:?}", possible_term);
-        //dbg!("{:?},{:?}", localdef, body.value.hir_id);
         let func_hir_id = utf_storage.cx.tcx.def_path_str(body.value.hir_id.owner);
 
         let caller_and_terminate = find_caller_and_terminate_in_mir(
@@ -416,14 +415,8 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             utf_storage.possible_terminate
         );
         if !caller_and_terminate.terminates.is_empty() {
-            //dbg!("{:?}", localdef);
-            //dbg!("{:?}", &caller_and_terminate.terminates);
-            //dbg!("{:?}", &caller_and_terminate.terminates_info);
-            //dbg!("{:?}", &self.param_infos);
-
             if caller_and_terminate.callers.is_empty() {
                 for terminate in caller_and_terminate.terminates {
-                    //dbg!("{:?}", cx.tcx.def_path_str(localdef));
                     if
                         !self.param_infos.is_empty() &&
                         self.param_infos
@@ -433,15 +426,13 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                         let mut span = self.param_infos[0].span;
                         let mut def_path = self.param_infos[0].def_path.clone();
 
-                        //dbg!("{:?}", &caller_and_terminate.terminates_info);
-
                         let res = self.param_infos.iter().all(|param_info| {
                             caller_and_terminate.terminates_info.iter().any(|terminate_info| {
-                                // Verifica si el param_name está en param_names
+                                // Checks if param_name is in param_names
                                 let equal_name = terminate_info.param_names.contains(
                                     &param_info.param_name
                                 );
-                                // Verifica si el def_path coincide
+                                // Checks if def_path is the same
                                 let equal_func = terminate_info.def_path == param_info.def_path;
                                 if equal_func && !equal_name {
                                     span = param_info.span;
@@ -450,7 +441,6 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                                 equal_func && equal_name
                             })
                         });
-                        //dbg!("{:?}", res);
                         if res {
                             self.update_param_info(def_path);
                         }
@@ -465,13 +455,34 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                 //The function name must be different to allow analysis of the parameters once the function analysis is complete
                 .any(|param_info| { func_hir_id.to_string() != param_info.def_path })
         {
-            self.param_infos.iter().for_each(|p| {
-                dbg!("AAAAAAA {:?}, {:?}", p.is_checked, &p.def_path);
+            let mut spans = vec![];
 
-                if !p.is_checked && p.def_path.contains("Pallet") {
-                    clippy_utils::diagnostics::span_lint(cx, EQUAL_ADDRESSES, p.span, LINT_MESSAGE)
+            let first_def_path = self.param_infos.first().unwrap().def_path.clone();
+
+            // Once the warning of the function is emmited, the element of the array must be deleted, if not, it would be appearing in others functions
+            self.param_infos.retain(|p| {
+                if p.def_path.contains("pallet::Call") {
+                    false
+                } else if !p.is_checked && p.def_path == *first_def_path {
+                    spans.push(p.span);
+                    false
+                } else if p.is_checked {
+                    false
+                } else {
+                    true
                 }
             });
+            if !spans.is_empty() {
+                clippy_utils::diagnostics::span_lint(
+                    cx,
+                    EQUAL_ADDRESSES,
+                    MultiSpan::from_spans(spans),
+                    LINT_MESSAGE
+                )
+            }
+            // If len == 1, there is only one parameter in the function that is an address
+        } else if self.param_infos.len() == 1 {
+            self.param_infos.clear();
         }
     }
 }
