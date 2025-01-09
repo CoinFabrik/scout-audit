@@ -1,0 +1,24 @@
+{
+  "id": "detectors/substrate/empty-expect",
+  "title": "Empty expect",
+  "description": "Description",
+  "source": "@site/docs/detectors/substrate/empty-expect.md",
+  "sourceDirName": "detectors/substrate",
+  "slug": "/detectors/substrate/empty-expect",
+  "permalink": "/docs/detectors/substrate/empty-expect",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/empty-expect.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Avoid DispatchError::Other()",
+    "permalink": "/docs/detectors/substrate/avoid-dispatch-error-other"
+  },
+  "next": {
+    "title": "Known vulnerabilities",
+    "permalink": "/docs/detectors/substrate/known-vulnerabilities"
+  }
+}

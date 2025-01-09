@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/overflow-check",
+  "title": "Overflow-check",
+  "description": "What it does",
+  "source": "@site/docs/detectors/soroban/4-overflow-check.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/overflow-check",
+  "permalink": "/docs/detectors/soroban/overflow-check",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/4-overflow-check.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 4,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unsafe expect",
+    "permalink": "/docs/detectors/soroban/unsafe-expect"
+  },
+  "next": {
+    "title": "Insufficiently random values",
+    "permalink": "/docs/detectors/soroban/insufficiently-random-values"
+  }
+}

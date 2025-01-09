@@ -1,0 +1,24 @@
+{
+  "id": "scout-github-action",
+  "title": "Scout GitHub Action",
+  "description": "At CoinFabrik, we understand the importance of ensuring code quality and security in every step of the development process. That's why we've developed a GitHub action to integrate Scout into the CI/CD pipeline.",
+  "source": "@site/docs/scout-github-action.md",
+  "sourceDirName": ".",
+  "slug": "/scout-github-action",
+  "permalink": "/docs/scout-github-action",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/scout-github-action.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Known vulnerabilities",
+    "permalink": "/docs/detectors/substrate/known-vulnerabilities"
+  },
+  "next": {
+    "title": "vs-code-extension",
+    "permalink": "/docs/vs-code-extension"
+  }
+}

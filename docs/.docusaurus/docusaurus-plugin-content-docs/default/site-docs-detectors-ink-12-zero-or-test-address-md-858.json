@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/zero-or-test-address",
+  "title": "Zero or test address",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/12-zero-or-test-address.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/zero-or-test-address",
+  "permalink": "/docs/detectors/ink/zero-or-test-address",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/12-zero-or-test-address.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 12,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Delegate call",
+    "permalink": "/docs/detectors/ink/delegate-call"
+  },
+  "next": {
+    "title": "Insuficciently random values",
+    "permalink": "/docs/detectors/ink/insufficiently-random-values"
+  }
+}

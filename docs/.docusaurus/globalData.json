@@ -1,0 +1,372 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/docs",
+          "mainDocId": "intro",
+          "docs": [
+            {
+              "id": "detectors/detectors-intro",
+              "path": "/docs/detectors/detectors-intro",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/assert-violation",
+              "path": "/docs/detectors/ink/assert-violation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/avoid-autokey-upgradable",
+              "path": "/docs/detectors/ink/avoid-autokey-upgradable",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/avoid-core-mem-forget",
+              "path": "/docs/detectors/ink/avoid-core-mem-forget",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/avoid-format-string",
+              "path": "/docs/detectors/ink/avoid-format-string",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/avoid-unsafe-block",
+              "path": "/docs/detectors/ink/avoid-unsafe-block",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/buffering-unsized-types",
+              "path": "/docs/detectors/ink/buffering-unsized-types",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/delegate-call",
+              "path": "/docs/detectors/ink/delegate-call",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/divide-before-multiply",
+              "path": "/docs/detectors/ink/divide-before-multiply",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/dont-use-instantiate-contract-v1",
+              "path": "/docs/detectors/ink/dont-use-instantiate-contract-v1",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/dont-use-invoke-contract-v1",
+              "path": "/docs/detectors/ink/dont-use-invoke-contract-v1",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/dos-unbounded-operation",
+              "path": "/docs/detectors/ink/dos-unbounded-operation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/dos-unexpected-revert-with-vector",
+              "path": "/docs/detectors/ink/dos-unexpected-revert-with-vector",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/incorrect-exponentiation",
+              "path": "/docs/detectors/ink/incorrect-exponentiation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/ink-version",
+              "path": "/docs/detectors/ink/ink-version",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/insufficiently-random-values",
+              "path": "/docs/detectors/ink/insufficiently-random-values",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/integer-overflow-or-underflow",
+              "path": "/docs/detectors/ink/integer-overflow-or-underflow",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/iterators-over-indexing",
+              "path": "/docs/detectors/ink/iterators-over-indexing",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/lazy-delegate",
+              "path": "/docs/detectors/ink/lazy-delegate",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/lazy-values-not-set",
+              "path": "/docs/detectors/ink/lazy-values-not-set",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/non-payable-transferred-value",
+              "path": "/docs/detectors/ink/non-payable-transferred-value",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/panic-error",
+              "path": "/docs/detectors/ink/panic-error",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/reentrancy",
+              "path": "/docs/detectors/ink/reentrancy",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/set-contract-storage",
+              "path": "/docs/detectors/ink/set-contract-storage",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unprotected-mapping-operation",
+              "path": "/docs/detectors/ink/unprotected-mapping-operation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unprotected-self-destruct",
+              "path": "/docs/detectors/ink/unprotected-self-destruct",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unprotected-set-code-hash",
+              "path": "/docs/detectors/ink/unprotected-set-code-hash",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unrestricted-transfer-from",
+              "path": "/docs/detectors/ink/unrestricted-transfer-from",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unsafe-expect",
+              "path": "/docs/detectors/ink/unsafe-expect",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unsafe-unwrap",
+              "path": "/docs/detectors/ink/unsafe-unwrap",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/unused-return-enum",
+              "path": "/docs/detectors/ink/unused-return-enum",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/vec-could-be-mapping",
+              "path": "/docs/detectors/ink/vec-could-be-mapping",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/warning-sr25519-verify",
+              "path": "/docs/detectors/ink/warning-sr25519-verify",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/ink/zero-or-test-address",
+              "path": "/docs/detectors/ink/zero-or-test-address",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/markdown-features",
+              "path": "/docs/detectors/markdown-features"
+            },
+            {
+              "id": "detectors/soroban/assert-violation",
+              "path": "/docs/detectors/soroban/assert-violation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/avoid-core-mem-forget",
+              "path": "/docs/detectors/soroban/avoid-core-mem-forget",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/avoid-panic-error",
+              "path": "/docs/detectors/soroban/avoid-panic-error",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/avoid-unsafe-block",
+              "path": "/docs/detectors/soroban/avoid-unsafe-block",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/divide-before-multiply",
+              "path": "/docs/detectors/soroban/divide-before-multiply",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/dos-unbounded-operation",
+              "path": "/docs/detectors/soroban/dos-unbounded-operation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/dos-unexpected-revert-with-vector",
+              "path": "/docs/detectors/soroban/dos-unexpected-revert-with-vector",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/incorrect-exponentiation",
+              "path": "/docs/detectors/soroban/incorrect-exponentiation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/insufficiently-random-values",
+              "path": "/docs/detectors/soroban/insufficiently-random-values",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/integer-overflow -or-underflow",
+              "path": "/docs/detectors/soroban/integer-overflow -or-underflow",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/iterators-over-indexing",
+              "path": "/docs/detectors/soroban/iterators-over-indexing",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/overflow-check",
+              "path": "/docs/detectors/soroban/overflow-check",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/set-contract-storage",
+              "path": "/docs/detectors/soroban/set-contract-storage",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/soroban-version",
+              "path": "/docs/detectors/soroban/soroban-version",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/storage-change-events",
+              "path": "/docs/detectors/soroban/storage-change-events",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/token-interface-events",
+              "path": "/docs/detectors/soroban/token-interface-events",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unprotected-mapping-operation",
+              "path": "/docs/detectors/soroban/unprotected-mapping-operation",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unprotected-update-current-contract-wasm",
+              "path": "/docs/detectors/soroban/unprotected-update-current-contract-wasm",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unrestricted-transfer-from",
+              "path": "/docs/detectors/soroban/unrestricted-transfer-from",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unsafe-expect",
+              "path": "/docs/detectors/soroban/unsafe-expect",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unsafe-map-get",
+              "path": "/docs/detectors/soroban/unsafe-map-get",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unsafe-unwrap",
+              "path": "/docs/detectors/soroban/unsafe-unwrap",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/soroban/unused-return-enum",
+              "path": "/docs/detectors/soroban/unused-return-enum",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/substrate/avoid-debug-info",
+              "path": "/docs/detectors/substrate/avoid-debug-info",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/substrate/avoid-dispatch-error-other",
+              "path": "/docs/detectors/substrate/avoid-dispatch-error-other",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/substrate/empty-expect",
+              "path": "/docs/detectors/substrate/empty-expect",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/substrate/known-vulnerabilities",
+              "path": "/docs/detectors/substrate/known-vulnerabilities",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/command-line-interface",
+              "path": "/docs/features/command-line-interface",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/profiles",
+              "path": "/docs/features/profiles",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/scout-github-action",
+              "path": "/docs/features/scout-github-action",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/toggle-detections",
+              "path": "/docs/features/toggle-detections",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/vs-code-extension",
+              "path": "/docs/features/vs-code-extension",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "intro",
+              "path": "/docs/intro",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "learning/scout-soroban-examples",
+              "path": "/docs/learning/scout-soroban-examples",
+              "sidebar": "tutorialSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "tutorialSidebar": {
+              "link": {
+                "path": "/docs/intro",
+                "label": "Getting Started"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}
