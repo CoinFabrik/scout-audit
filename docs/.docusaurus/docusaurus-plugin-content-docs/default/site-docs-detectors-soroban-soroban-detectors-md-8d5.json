@@ -1,0 +1,28 @@
+{
+  "id": "detectors/soroban/soroban-detectors",
+  "title": "Soroban Detectors",
+  "description": "Test...",
+  "source": "@site/docs/detectors/soroban/soroban-detectors.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/soroban-detectors",
+  "permalink": "/docs/detectors/soroban/soroban-detectors",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/soroban-detectors.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "soroban-detectors",
+    "title": "Soroban Detectors",
+    "sidebar_class_name": "hidden"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Token interface events",
+    "permalink": "/docs/detectors/soroban/token-interface-events"
+  },
+  "next": {
+    "title": "Avoid debug!() info!()",
+    "permalink": "/docs/detectors/substrate/avoid-debug-info"
+  }
+}

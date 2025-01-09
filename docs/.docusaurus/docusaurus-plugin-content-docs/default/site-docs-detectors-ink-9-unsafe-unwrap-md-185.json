@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/unsafe-unwrap",
+  "title": "Unsafe unwrap",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/9-unsafe-unwrap.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/unsafe-unwrap",
+  "permalink": "/docs/detectors/ink/unsafe-unwrap",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/9-unsafe-unwrap.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unsafe expect",
+    "permalink": "/docs/detectors/ink/unsafe-expect"
+  },
+  "next": {
+    "title": "Divide before multiply",
+    "permalink": "/docs/detectors/ink/divide-before-multiply"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "detectors/soroban/README",
+  "title": "Detectors",
+  "description": "In this section we introduce our set of detectors powered by Dylint - a Rust linting tool.",
+  "source": "@site/docs/detectors/soroban/README.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/",
+  "permalink": "/docs/detectors/soroban/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/README.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unsafe expect",
+    "permalink": "/docs/detectors/soroban/unsafe-expect"
+  },
+  "next": {
+    "title": "Overflow-check",
+    "permalink": "/docs/detectors/soroban/overflow-check"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/unrestricted-transfer-from",
+  "title": "Unrestricted Transfer From",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/14-unrestricted-transfer-from.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/unrestricted-transfer-from",
+  "permalink": "/docs/detectors/ink/unrestricted-transfer-from",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/14-unrestricted-transfer-from.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 14,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Insuficciently random values",
+    "permalink": "/docs/detectors/ink/insufficiently-random-values"
+  },
+  "next": {
+    "title": "Assert violation",
+    "permalink": "/docs/detectors/ink/assert-violation"
+  }
+}

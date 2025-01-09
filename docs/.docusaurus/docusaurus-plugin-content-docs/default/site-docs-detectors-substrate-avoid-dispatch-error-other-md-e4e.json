@@ -1,0 +1,24 @@
+{
+  "id": "detectors/substrate/avoid-dispatch-error-other",
+  "title": "Avoid DispatchError::Other()",
+  "description": "Description",
+  "source": "@site/docs/detectors/substrate/avoid-dispatch-error-other.md",
+  "sourceDirName": "detectors/substrate",
+  "slug": "/detectors/substrate/avoid-dispatch-error-other",
+  "permalink": "/docs/detectors/substrate/avoid-dispatch-error-other",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/avoid-dispatch-error-other.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Avoid debug!() info!()",
+    "permalink": "/docs/detectors/substrate/avoid-debug-info"
+  },
+  "next": {
+    "title": "Empty expect",
+    "permalink": "/docs/detectors/substrate/empty-expect"
+  }
+}
