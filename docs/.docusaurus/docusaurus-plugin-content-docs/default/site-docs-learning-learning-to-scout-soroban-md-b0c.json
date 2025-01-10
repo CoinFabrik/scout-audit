@@ -1,0 +1,24 @@
+{
+  "id": "learning/learning-to-scout-soroban",
+  "title": "Learning to Scout Soroban",
+  "description": "This video series explores some of the key issues detected by Scout in Soroban smart contracts.",
+  "source": "@site/docs/learning/learning-to-scout-soroban.md",
+  "sourceDirName": "learning",
+  "slug": "/learning/learning-to-scout-soroban",
+  "permalink": "/docs/learning/learning-to-scout-soroban",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/learning/learning-to-scout-soroban.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Toggle detections on and off",
+    "permalink": "/docs/features/toggle-detections"
+  },
+  "next": {
+    "title": "Soroban Smart Contracts Examples",
+    "permalink": "/docs/learning/scout-soroban-examples"
+  }
+}

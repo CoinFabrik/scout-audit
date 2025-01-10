@@ -49,17 +49,17 @@
     },
     "content": "content---markdown-page-393-028"
   },
-  "/docs-5d0": {
+  "/docs-7bd": {
     "__comp": "__comp---theme-docs-root-5-e-9-0b6",
     "__context": {
       "plugin": "plugin---docsaba-d7c"
     }
   },
-  "/docs-249": {
+  "/docs-357": {
     "__comp": "__comp---theme-doc-version-roota-7-b-5de",
     "__props": "__props---docs-005-788"
   },
-  "/docs-8ed": {
+  "/docs-c10": {
     "__comp": "__comp---theme-doc-roota-94-67a"
   },
   "/docs/detectors/detectors-intro-275": {
@@ -306,9 +306,17 @@
     "__comp": "__comp---theme-doc-item-178-a40",
     "content": "content---docs-detectors-substrate-empty-expecte-43-386"
   },
+  "/docs/detectors/substrate/invalid-extrinsic-weight-a48": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-invalid-extrinsic-weight-970-7d1"
+  },
   "/docs/detectors/substrate/known-vulnerabilities-e7b": {
     "__comp": "__comp---theme-doc-item-178-a40",
     "content": "content---docs-detectors-substrate-known-vulnerabilities-3-bd-91c"
+  },
+  "/docs/detectors/substrate/unsigned-extrinsic-d95": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-unsigned-extrinsicee-8-dcf"
   },
   "/docs/features/command-line-interface-fc4": {
     "__comp": "__comp---theme-doc-item-178-a40",
@@ -333,6 +341,10 @@
   "/docs/intro-61d": {
     "__comp": "__comp---theme-doc-item-178-a40",
     "content": "content---docs-intro-0-e-3-be1"
+  },
+  "/docs/learning/learning-to-scout-soroban-964": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-learning-learning-to-scout-sorobanb-0-c-ab6"
   },
   "/docs/learning/scout-soroban-examples-bfc": {
     "__comp": "__comp---theme-doc-item-178-a40",

@@ -315,8 +315,18 @@
               "sidebar": "tutorialSidebar"
             },
             {
+              "id": "detectors/substrate/invalid-extrinsic-weight",
+              "path": "/docs/detectors/substrate/invalid-extrinsic-weight",
+              "sidebar": "tutorialSidebar"
+            },
+            {
               "id": "detectors/substrate/known-vulnerabilities",
               "path": "/docs/detectors/substrate/known-vulnerabilities",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "detectors/substrate/unsigned-extrinsic",
+              "path": "/docs/detectors/substrate/unsigned-extrinsic",
               "sidebar": "tutorialSidebar"
             },
             {
@@ -347,6 +357,11 @@
             {
               "id": "intro",
               "path": "/docs/intro",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "learning/learning-to-scout-soroban",
+              "path": "/docs/learning/learning-to-scout-soroban",
               "sidebar": "tutorialSidebar"
             },
             {

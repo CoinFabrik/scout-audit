@@ -17,8 +17,8 @@
   },
   "sidebar": "tutorialSidebar",
   "previous": {
-    "title": "Known vulnerabilities",
-    "permalink": "/docs/detectors/substrate/known-vulnerabilities"
+    "title": "Unsigned extrinsic",
+    "permalink": "/docs/detectors/substrate/unsigned-extrinsic"
   },
   "next": {
     "title": "Profile configuration",
