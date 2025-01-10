@@ -10,7 +10,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{ pallet_prelude::*, traits::BuildGenesisConfig };
+    use frame_support::{pallet_prelude::*, traits::BuildGenesisConfig};
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
@@ -33,7 +33,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             from: T::AccountId,
             to: T::AccountId,
-            amount: u32
+            amount: u32,
         ) -> DispatchResult {
             let origin = ensure_signed(origin)?;
             let sender_balance = Self::balance_of(&from);

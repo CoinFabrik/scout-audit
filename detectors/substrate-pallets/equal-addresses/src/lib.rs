@@ -7,19 +7,22 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use common::{
-    analysis::{ get_node_type_opt, get_receiver_ident_name },
-    declarations::{ Severity, VulnerabilityClass },
+    analysis::{get_node_type_opt, get_receiver_ident_name},
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
 use rustc_error_messages::MultiSpan;
-use rustc_hir::{ intravisit::{ walk_expr, Visitor }, BinOpKind, Expr, ExprKind, PatKind };
-use rustc_lint::{ LateContext, LateLintPass };
+use rustc_hir::{
+    intravisit::{walk_expr, Visitor},
+    BinOpKind, Expr, ExprKind, PatKind,
+};
+use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
-    mir::{ BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, TerminatorKind },
+    mir::{BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, TerminatorKind},
     ty::TyKind,
 };
-use rustc_span::{ def_id::DefId, Span };
+use rustc_span::{def_id::DefId, Span};
 
 const LINT_MESSAGE: &str =
     "Not checking for a difference in the addresses could lead to unexpected behavior or security vulnerabilities";
@@ -58,7 +61,7 @@ impl EqualAddresses {
         param_name: &str,
         def_path: &str,
         span: Span,
-        is_checked: bool
+        is_checked: bool,
     ) {
         self.param_infos.push(ParamInfo {
             param_name: param_name.to_string(),
@@ -113,19 +116,19 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
                 let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
 
                 if_chain!(
-                        if rtype.to_string() == "<T as frame_system::Config>::AccountId";
-                        if ltype.to_string() == "<T as frame_system::Config>::AccountId";
-                        then {
-                            self.terminate_contract_span = Some(expr.span);
-                            self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
-                            let rvalue = get_receiver_ident_name(rvalue);
-                            let lvalue = get_receiver_ident_name(lvalue);
-                            self.possible_terminate.push(Some(TerminateInfo {
-                                param_names: [rvalue.to_string(),lvalue.to_string()],
-                                def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
-                            }));
-                        }
-                    );
+                    if rtype.to_string() == "<T as frame_system::Config>::AccountId";
+                    if ltype.to_string() == "<T as frame_system::Config>::AccountId";
+                    then {
+                        self.terminate_contract_span = Some(expr.span);
+                        self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
+                        let rvalue = get_receiver_ident_name(rvalue);
+                        let lvalue = get_receiver_ident_name(lvalue);
+                        self.possible_terminate.push(Some(TerminateInfo {
+                            param_names: [rvalue.to_string(),lvalue.to_string()],
+                            def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
+                        }));
+                    }
+                );
             }
         }
 
@@ -136,7 +139,7 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
 fn find_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
     terminate_def_id: Option<DefId>,
-    possible_terminate: Vec<Option<TerminateInfo>>
+    possible_terminate: Vec<Option<TerminateInfo>>,
 ) -> Terminates {
     let mut terminates_vec = Terminates {
         terminates: vec![],
@@ -148,21 +151,21 @@ fn find_terminate_in_mir<'tcx>(
         }
         let terminator = bb_data.terminator.clone().unwrap();
         if let TerminatorKind::Call { func, .. } = &terminator.kind {
-            if
-                let Operand::Constant(fn_const) = func &&
-                let Const::Val(_const_val, ty) = fn_const.const_ &&
-                let TyKind::FnDef(def, _subs) = ty.kind()
+            if let Operand::Constant(fn_const) = func
+                && let Const::Val(_const_val, ty) = fn_const.const_
+                && let TyKind::FnDef(def, _subs) = ty.kind()
+                && terminate_def_id.is_some_and(|d| &d == def)
             {
-                if terminate_def_id.is_some_and(|d| &d == def) {
-                    if !possible_terminate.is_empty() {
-                        possible_terminate.iter().for_each(|terminate_info| {
-                            if let Some(ref info) = terminate_info {
-                                terminates_vec.terminates_info.push(info.clone());
-                            }
-                        });
-                    }
-                    terminates_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
+                if !possible_terminate.is_empty() {
+                    possible_terminate.iter().for_each(|terminate_info| {
+                        if let Some(ref info) = terminate_info {
+                            terminates_vec.terminates_info.push(info.clone());
+                        }
+                    });
                 }
+                terminates_vec
+                    .terminates
+                    .push((bb_data, BasicBlock::from_usize(bb)));
             }
         }
     }
@@ -177,7 +180,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         _: &'tcx rustc_hir::FnDecl<'tcx>,
         body: &'tcx rustc_hir::Body<'tcx>,
         _: Span,
-        localdef: rustc_span::def_id::LocalDefId
+        localdef: rustc_span::def_id::LocalDefId,
     ) {
         let mut utf_storage = EqualAddressesFinder {
             cx,
@@ -189,11 +192,9 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         // Look for function params with AccountId type
         let mir_body = cx.tcx.optimized_mir(localdef);
         for (arg, hir_param) in mir_body.args_iter().zip(body.params.iter()) {
-            if
-                mir_body.local_decls[arg].ty.to_string() ==
-                    "<T as frame_system::Config>::AccountId" ||
-                mir_body.local_decls[arg].ty.to_string() ==
-                    "<T as frame_system::Config>::RuntimeOrigin"
+            if mir_body.local_decls[arg].ty.to_string() == "<T as frame_system::Config>::AccountId"
+                || mir_body.local_decls[arg].ty.to_string()
+                    == "<T as frame_system::Config>::RuntimeOrigin"
             {
                 let fn_name = &cx.tcx.def_path_str(localdef);
                 let mut param_name = "";
@@ -204,7 +205,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                     param_name,
                     fn_name,
                     mir_body.local_decls[arg].source_info.span,
-                    false
+                    false,
                 );
             }
         }
@@ -215,12 +216,14 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         let terminate = find_terminate_in_mir(
             &mir_body.basic_blocks,
             utf_storage.terminate_contract_def_id,
-            utf_storage.possible_terminate
+            utf_storage.possible_terminate,
         );
-        if
-            !terminate.terminates.is_empty() &&
-            !self.param_infos.is_empty() &&
-            self.param_infos.iter().any(|param_info| func_hir_id == param_info.def_path)
+        if !terminate.terminates.is_empty()
+            && !self.param_infos.is_empty()
+            && self
+                .param_infos
+                .iter()
+                .any(|param_info| func_hir_id == param_info.def_path)
         {
             let mut span = self.param_infos[0].span;
             let mut def_path = self.param_infos[0].def_path.clone();
@@ -242,12 +245,13 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                 self.update_param_info(def_path);
             }
         } else if
-            //If there is no terminator and the function has more than two parameters of type address, indicates that the check is not performed.
-            self.param_infos.len() >= 2 &&
-            self.param_infos
+        //If there is no terminator and the function has more than two parameters of type address, indicates that the check is not performed.
+        self.param_infos.len() >= 2
+            && self
+                .param_infos
                 .iter()
                 //The function name must be different to allow analysis of the parameters once the function analysis is complete
-                .any(|param_info| func_hir_id.to_string() != param_info.def_path)
+                .any(|param_info| func_hir_id != param_info.def_path)
         {
             let mut spans = vec![];
 
@@ -260,10 +264,8 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                 } else if !p.is_checked && p.def_path == *first_def_path {
                     spans.push(p.span);
                     false
-                } else if p.is_checked {
-                    false
                 } else {
-                    true
+                    !p.is_checked
                 }
             });
             if !spans.is_empty() {
@@ -271,7 +273,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
                     cx,
                     EQUAL_ADDRESSES,
                     MultiSpan::from_spans(spans),
-                    LINT_MESSAGE
+                    LINT_MESSAGE,
                 )
             }
             // If len == 1, there is only one parameter in the function that is an address
