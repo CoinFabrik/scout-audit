@@ -6,9 +6,7 @@ use strum::EnumIter;
 
 use super::blockchain::BlockChain;
 
-// TODO: Change to the new telemetry endpoint
-// const SCOUT_TELEMETRY_URL: &str = "https://telemetry.coinfabrik.com/scout";
-const SCOUT_TELEMETRY_URL: &str = "http://190.104.235.53:38522";
+const SCOUT_TELEMETRY_URL: &str = "http://scout-api.coinfabrik.com";
 
 pub struct TelemetryClient {
     report: ReportDto,
