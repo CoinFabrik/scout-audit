@@ -113,7 +113,7 @@ export default {
           "title": "More",
           "items": [
             {
-              "label": "Web Site",
+              "label": "Website",
               "to": "https://www.coinfabrik.com/"
             },
             {
