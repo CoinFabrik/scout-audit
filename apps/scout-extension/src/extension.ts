@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import commandExists from "command-exists";
-import toml from "toml";
+import { parse, type TomlTable } from "@iarna/toml";
 import fs from "fs/promises";
 import path from "path";
 
 const RUST_ANALYZER_CONFIG = "rust-analyzer.check.overrideCommand";
 const CARGO_TOML = "Cargo.toml";
 
-interface CargoToml {
+interface CargoToml extends TomlTable {
   dependencies?: Record<string, unknown>;
 }
 
@@ -90,7 +90,9 @@ async function readAndParseCargoToml(): Promise<CargoToml | null> {
   const cargoTomlPath = path.join(workspaceFolders[0].uri.fsPath, CARGO_TOML);
   try {
     const cargoToml = await fs.readFile(cargoTomlPath, "utf-8");
-    return toml.parse(cargoToml) as CargoToml;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const parsed = parse(cargoToml);
+    return parsed as CargoToml;
   } catch (error) {
     await vscode.window.showErrorMessage(
       `Failed to parse Cargo.toml: ${

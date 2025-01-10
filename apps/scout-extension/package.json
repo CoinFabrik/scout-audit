@@ -2,7 +2,7 @@
   "name": "scout-audit",
   "displayName": "Scout Audit",
   "description": "Smart contract linter",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "repository": "https://github.com/CoinFabrik/scout-audit",
   "homepage": "https://www.coinfabrik.com/products/scout/",
   "engines": {
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "command-exists": "^1.2.9",
-    "toml": "^3.0.0",
+    "@iarna/toml": "^3.0.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
