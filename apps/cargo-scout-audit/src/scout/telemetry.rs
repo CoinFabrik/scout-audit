@@ -6,7 +6,7 @@ use strum::EnumIter;
 
 use super::blockchain::BlockChain;
 
-const SCOUT_TELEMETRY_URL: &str = "http://scout-api.coinfabrik.com";
+const SCOUT_TELEMETRY_URL: &str = "https://scout-api.coinfabrik.com";
 
 pub struct TelemetryClient {
     report: ReportDto,
