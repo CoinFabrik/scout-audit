@@ -1,39 +1,22 @@
 #![feature(rustc_private)]
 #![feature(let_chains)]
 
+extern crate rustc_error_messages;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
-extern crate rustc_error_messages;
 
 use common::{
+    analysis::{ get_node_type_opt, get_receiver_ident_name },
     declarations::{ Severity, VulnerabilityClass },
     macros::expose_lint_info,
-    analysis::{ get_node_type_opt, get_receiver_ident_name },
 };
 use if_chain::if_chain;
-use rustc_hir::{
-    def,
-    intravisit::{ walk_expr, Visitor },
-    Expr,
-    ExprKind,
-    BinOpKind,
-    Param,
-    PatKind,
-};
 use rustc_error_messages::MultiSpan;
+use rustc_hir::{ intravisit::{ walk_expr, Visitor }, BinOpKind, Expr, ExprKind, PatKind };
 use rustc_lint::{ LateContext, LateLintPass };
 use rustc_middle::{
-    mir::{
-        BasicBlock,
-        BasicBlockData,
-        BasicBlocks,
-        Const,
-        Operand,
-        Place,
-        StatementKind,
-        TerminatorKind,
-    },
+    mir::{ BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, TerminatorKind },
     ty::TyKind,
 };
 use rustc_span::{ def_id::DefId, Span };
@@ -114,25 +97,22 @@ struct EqualAddressesFinder<'tcx, 'tcx_ref> {
     cx: &'tcx_ref LateContext<'tcx>,
     terminate_contract_span: Option<Span>,
     terminate_contract_def_id: Option<DefId>,
-    caller_def_id: Option<DefId>,
     possible_terminate: Vec<Option<TerminateInfo>>,
 }
 
-struct CallersAndTerminates<'tcx> {
-    callers: Vec<(&'tcx BasicBlockData<'tcx>, BasicBlock)>,
+struct Terminates<'tcx> {
     terminates: Vec<(&'tcx BasicBlockData<'tcx>, BasicBlock)>,
     terminates_info: Vec<TerminateInfo>,
 }
 
 impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
-        match expr.kind {
-            ExprKind::Binary(op, rvalue, lvalue) => {
-                if BinOpKind::Ne == op.node || BinOpKind::Eq == op.node {
-                    let rtype = get_node_type_opt(self.cx, &rvalue.hir_id).unwrap();
-                    let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
+        if let ExprKind::Binary(op, rvalue, lvalue) = expr.kind {
+            if BinOpKind::Ne == op.node || BinOpKind::Eq == op.node {
+                let rtype = get_node_type_opt(self.cx, &rvalue.hir_id).unwrap();
+                let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
 
-                    if_chain!(
+                if_chain!(
                         if rtype.to_string() == "<T as frame_system::Config>::AccountId";
                         if ltype.to_string() == "<T as frame_system::Config>::AccountId";
                         then {
@@ -143,26 +123,22 @@ impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
                             self.possible_terminate.push(Some(TerminateInfo {
                                 param_names: [rvalue.to_string(),lvalue.to_string()],
                                 def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
-                            })); 
+                            }));
                         }
                     );
-                }
             }
-            _ => {}
         }
 
         walk_expr(self, expr);
     }
 }
 
-fn find_caller_and_terminate_in_mir<'tcx>(
+fn find_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
-    caller_def_id: Option<DefId>,
     terminate_def_id: Option<DefId>,
     possible_terminate: Vec<Option<TerminateInfo>>
-) -> CallersAndTerminates {
-    let mut callers_vec = CallersAndTerminates {
-        callers: vec![],
+) -> Terminates {
+    let mut terminates_vec = Terminates {
         terminates: vec![],
         terminates_info: vec![],
     };
@@ -177,191 +153,20 @@ fn find_caller_and_terminate_in_mir<'tcx>(
                 let Const::Val(_const_val, ty) = fn_const.const_ &&
                 let TyKind::FnDef(def, _subs) = ty.kind()
             {
-                if caller_def_id.is_some_and(|d| &d == def) {
-                    callers_vec.callers.push((bb_data, BasicBlock::from_usize(bb)));
-                }
                 if terminate_def_id.is_some_and(|d| &d == def) {
                     if !possible_terminate.is_empty() {
                         possible_terminate.iter().for_each(|terminate_info| {
                             if let Some(ref info) = terminate_info {
-                                callers_vec.terminates_info.push(info.clone());
+                                terminates_vec.terminates_info.push(info.clone());
                             }
                         });
                     }
-                    callers_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
+                    terminates_vec.terminates.push((bb_data, BasicBlock::from_usize(bb)));
                 }
             }
         }
     }
-    callers_vec
-}
-
-fn navigate_trough_basicblocks<'tcx>(
-    bbs: &'tcx BasicBlocks<'tcx>,
-    bb: BasicBlock,
-    caller_and_terminate: &CallersAndTerminates<'tcx>,
-    after_comparison: bool,
-    tainted_places: &mut Vec<Place<'tcx>>
-) -> Vec<(Place<'tcx>, Span)> {
-    let mut ret_vec = Vec::<(Place, Span)>::new();
-    if bbs[bb].terminator.is_none() {
-        return ret_vec;
-    }
-    for statement in &bbs[bb].statements {
-        if let StatementKind::Assign(assign) = &statement.kind {
-            match &assign.1 {
-                | rustc_middle::mir::Rvalue::Ref(_, _, origplace)
-                | rustc_middle::mir::Rvalue::AddressOf(_, origplace)
-                | rustc_middle::mir::Rvalue::Len(origplace)
-                | rustc_middle::mir::Rvalue::CopyForDeref(origplace) => {
-                    if
-                        tainted_places
-                            .clone()
-                            .into_iter()
-                            .any(|place| place == *origplace)
-                    {
-                        tainted_places.push(assign.0);
-                    }
-                }
-                rustc_middle::mir::Rvalue::Use(
-                    Operand::Copy(origplace) | Operand::Move(origplace),
-                ) => {
-                    if
-                        tainted_places
-                            .clone()
-                            .into_iter()
-                            .any(|place| place == *origplace)
-                    {
-                        tainted_places.push(assign.0);
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-    let kind = &bbs[bb].terminator().kind;
-    match kind {
-        TerminatorKind::SwitchInt { discr, targets } => {
-            let comparison_with_caller = match discr {
-                Operand::Copy(place) | Operand::Move(place) => {
-                    after_comparison ||
-                        tainted_places.iter().any(|tainted_place| tainted_place == place)
-                }
-                Operand::Constant(_cons) => after_comparison,
-            };
-            for target in targets.all_targets() {
-                ret_vec.append(
-                    &mut navigate_trough_basicblocks(
-                        bbs,
-                        *target,
-                        caller_and_terminate,
-                        comparison_with_caller,
-                        tainted_places
-                    )
-                );
-            }
-            return ret_vec;
-        }
-        TerminatorKind::Call { destination, args, target, fn_span, .. } => {
-            for arg in args {
-                match arg.node {
-                    Operand::Copy(origplace) | Operand::Move(origplace) => {
-                        if
-                            tainted_places
-                                .clone()
-                                .into_iter()
-                                .any(|place| place == origplace)
-                        {
-                            tainted_places.push(*destination);
-                        }
-                    }
-                    Operand::Constant(_) => {}
-                }
-            }
-            for caller in &caller_and_terminate.callers {
-                if caller.1 == bb {
-                    tainted_places.push(*destination);
-                }
-            }
-            for terminate in &caller_and_terminate.terminates {
-                if terminate.1 == bb && !after_comparison {
-                    ret_vec.push((*destination, *fn_span));
-                }
-            }
-            if target.is_some() {
-                ret_vec.append(
-                    &mut navigate_trough_basicblocks(
-                        bbs,
-                        target.unwrap(),
-                        caller_and_terminate,
-                        after_comparison,
-                        tainted_places
-                    )
-                );
-            }
-        }
-        | TerminatorKind::Assert { target, .. }
-        | TerminatorKind::Goto { target, .. }
-        | TerminatorKind::Drop { target, .. } => {
-            ret_vec.append(
-                &mut navigate_trough_basicblocks(
-                    bbs,
-                    *target,
-                    caller_and_terminate,
-                    after_comparison,
-                    tainted_places
-                )
-            );
-        }
-        TerminatorKind::Yield { resume, .. } => {
-            ret_vec.append(
-                &mut navigate_trough_basicblocks(
-                    bbs,
-                    *resume,
-                    caller_and_terminate,
-                    after_comparison,
-                    tainted_places
-                )
-            );
-        }
-        TerminatorKind::FalseEdge { real_target, .. } => {
-            ret_vec.append(
-                &mut navigate_trough_basicblocks(
-                    bbs,
-                    *real_target,
-                    caller_and_terminate,
-                    after_comparison,
-                    tainted_places
-                )
-            );
-        }
-        TerminatorKind::FalseUnwind { real_target, .. } => {
-            ret_vec.append(
-                &mut navigate_trough_basicblocks(
-                    bbs,
-                    *real_target,
-                    caller_and_terminate,
-                    after_comparison,
-                    tainted_places
-                )
-            );
-        }
-        TerminatorKind::InlineAsm { targets, .. } => {
-            targets.iter().for_each(|target| {
-                ret_vec.append(
-                    &mut navigate_trough_basicblocks(
-                        bbs,
-                        *target,
-                        caller_and_terminate,
-                        after_comparison,
-                        tainted_places
-                    )
-                );
-            });
-        }
-        _ => {}
-    }
-    ret_vec
+    terminates_vec
 }
 
 impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
@@ -378,7 +183,6 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             cx,
             terminate_contract_def_id: None,
             terminate_contract_span: None,
-            caller_def_id: None,
             possible_terminate: Vec::default(),
         };
 
@@ -408,44 +212,34 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
         walk_expr(&mut utf_storage, body.value);
         let func_hir_id = utf_storage.cx.tcx.def_path_str(body.value.hir_id.owner);
 
-        let caller_and_terminate = find_caller_and_terminate_in_mir(
+        let terminate = find_terminate_in_mir(
             &mir_body.basic_blocks,
-            utf_storage.caller_def_id,
             utf_storage.terminate_contract_def_id,
             utf_storage.possible_terminate
         );
-        if !caller_and_terminate.terminates.is_empty() {
-            if caller_and_terminate.callers.is_empty() {
-                for terminate in caller_and_terminate.terminates {
-                    if
-                        !self.param_infos.is_empty() &&
-                        self.param_infos
-                            .iter()
-                            .any(|param_info| { func_hir_id.to_string() == param_info.def_path })
-                    {
-                        let mut span = self.param_infos[0].span;
-                        let mut def_path = self.param_infos[0].def_path.clone();
+        if
+            !terminate.terminates.is_empty() &&
+            !self.param_infos.is_empty() &&
+            self.param_infos.iter().any(|param_info| func_hir_id == param_info.def_path)
+        {
+            let mut span = self.param_infos[0].span;
+            let mut def_path = self.param_infos[0].def_path.clone();
 
-                        let res = self.param_infos.iter().all(|param_info| {
-                            caller_and_terminate.terminates_info.iter().any(|terminate_info| {
-                                // Checks if param_name is in param_names
-                                let equal_name = terminate_info.param_names.contains(
-                                    &param_info.param_name
-                                );
-                                // Checks if def_path is the same
-                                let equal_func = terminate_info.def_path == param_info.def_path;
-                                if equal_func && !equal_name {
-                                    span = param_info.span;
-                                    def_path = terminate_info.def_path.clone();
-                                }
-                                equal_func && equal_name
-                            })
-                        });
-                        if res {
-                            self.update_param_info(def_path);
-                        }
+            let res = self.param_infos.iter().all(|param_info| {
+                terminate.terminates_info.iter().any(|terminate_info| {
+                    // Checks if param_name is in param_names
+                    let equal_name = terminate_info.param_names.contains(&param_info.param_name);
+                    // Checks if def_path is the same
+                    let equal_func = terminate_info.def_path == param_info.def_path;
+                    if equal_func && !equal_name {
+                        span = param_info.span;
+                        def_path = terminate_info.def_path.clone();
                     }
-                }
+                    equal_func && equal_name
+                })
+            });
+            if res {
+                self.update_param_info(def_path);
             }
         } else if
             //If there is no terminator and the function has more than two parameters of type address, indicates that the check is not performed.
@@ -453,7 +247,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
             self.param_infos
                 .iter()
                 //The function name must be different to allow analysis of the parameters once the function analysis is complete
-                .any(|param_info| { func_hir_id.to_string() != param_info.def_path })
+                .any(|param_info| func_hir_id.to_string() != param_info.def_path)
         {
             let mut spans = vec![];
 
@@ -461,7 +255,7 @@ impl<'tcx> LateLintPass<'tcx> for EqualAddresses {
 
             // Once the warning of the function is emmited, the element of the array must be deleted, if not, it would be appearing in others functions
             self.param_infos.retain(|p| {
-                if p.def_path.contains("pallet::Call") {
+                if p.def_path.contains("new_call_variant_") {
                     false
                 } else if !p.is_checked && p.def_path == *first_def_path {
                     spans.push(p.span);

@@ -29,25 +29,20 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn set_balance(
-            origin: OriginFor<T>,
-            from: T::AccountId,
-            to: T::AccountId,
+        pub fn check_balance(
+            origin1: OriginFor<T>,
+            from1: T::AccountId,
             amount: u32
         ) -> DispatchResult {
-            let origin = ensure_signed(origin)?;
-            let sender_balance = Self::balance_of(&from);
+            let origin1 = ensure_signed(origin1)?;
+
+            let sender_balance = Self::balance_of(&from1);
+
+            if from1 == origin1 {
+                return Err(Error::<T>::SameAddresses.into());
+            }
 
             ensure!(sender_balance >= amount, "Insufficient balance");
-
-            // Vulnerable because doesn't check origin
-            ensure!(from != to, "Same addresses");
-
-            let recipient_balance = Self::balance_of(&to);
-            Balance::<T>::insert(&from, sender_balance - amount);
-            Balance::<T>::insert(&to, recipient_balance + amount);
-
-            Self::deposit_event(Event::Transfer { from, to, amount });
 
             Ok(())
         }

@@ -55,26 +55,6 @@ pub mod pallet {
 
             Ok(())
         }
-
-        #[pallet::call_index(1)]
-        pub fn check_balance(
-            origin1: OriginFor<T>,
-            from1: T::AccountId,
-            amount: u32
-        ) -> DispatchResult {
-            let origin1 = ensure_signed(origin1)?;
-
-            let sender_balance = Self::balance_of(&from1);
-
-            //ensure!(from1 != origin1, "Same addresses");
-            if from1 == origin1 {
-                return Err(Error::<T>::SameAddresses.into());
-            }
-
-            ensure!(sender_balance >= amount, "Insufficient balance");
-
-            Ok(())
-        }
     }
 
     #[pallet::event]
