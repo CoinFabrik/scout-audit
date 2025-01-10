@@ -2,7 +2,7 @@
 
 This section provides a detailed description of the issues detected by Scout Audit for each supported technology—Ink!, Soroban, and Substrate Pallets. It also includes guidance on how to address these issues to make your code more robust and secure.
 
-## Issue Severity
+## Issue severity
 
 This severity classification, although arbitrary, has been used in hundreds of security audits and helps to understand the issues detected by Scout.
 
@@ -12,9 +12,9 @@ This severity classification, although arbitrary, has been used in hundreds of s
 - **Minor**: These issues represent problems that are relatively small or difficult to exploit, but might be exploited in combination with other issues. These kinds of issues do not block deployments in production environments. They should be taken into account and fixed when possible.
 - **Enhancement**: This class relates to issues stemming from deviations from best practices or stylistic conventions, which could escalate into higher-priority issues due to other changes. For instance, these issues may lead to development errors in future updates.
 
-## Issue Category
+## Issue category
 
-Below is a taxonomy of issues commonly identified in smart contract audits. While there are many "top vulnerability" lists for Ethereum/Solidity smart contracts, the list provided here is used by the Coinfabrik Audit Team during source code security audits for various platforms, including Ethereum/Solidity, Stacks/Clarity, Algorand/PyTEAL/TEAL, Solana/Rust, and others.
+Below is a taxonomy of issues commonly identified in smart contract audits. While there are many "top vulnerabilities/issues" lists for Ethereum/Solidity smart contracts, the list provided here is used by the [Coinfabrik Audit Team](https://www.coinfabrik.com/services/smart-contract-audits/) during source code security audits for various platforms, including Ethereum/Solidity, Stacks/Clarity, Algorand/PyTEAL/TEAL, Solana/Rust, and others.
 
 The team discusses the creation of the list in this [blogpost](https://blog.coinfabrik.com/analysis-categories/).
 
@@ -36,4 +36,4 @@ The team discusses the creation of the list in this [blogpost](https://blog.coin
 | Upgradability                  | Proxy patterns and upgradable smart contracts.                                                    |
 | Validations and error handling | Handling of errors, exceptions and parameters.                                                    |
 
-We used the above Vulnerability Categories, along with common examples of vulnerabilities detected within each category in other blockchains, as a guideline for finding and developing vulnerable examples smart contracts.
+We used the above categories, along with common examples of security issues detected within each category in other blockchains, as a guideline for finding and developing vulnerable examples smart contracts.

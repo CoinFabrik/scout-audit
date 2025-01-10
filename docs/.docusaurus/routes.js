@@ -44,15 +44,15 @@ export default [
   },
   {
     path: '/docs',
-    component: ComponentCreator('/docs', '5d0'),
+    component: ComponentCreator('/docs', '7bd'),
     routes: [
       {
         path: '/docs',
-        component: ComponentCreator('/docs', '249'),
+        component: ComponentCreator('/docs', '357'),
         routes: [
           {
             path: '/docs',
-            component: ComponentCreator('/docs', '8ed'),
+            component: ComponentCreator('/docs', 'c10'),
             routes: [
               {
                 path: '/docs/detectors/detectors-intro',
@@ -420,8 +420,20 @@ export default [
                 sidebar: "tutorialSidebar"
               },
               {
+                path: '/docs/detectors/substrate/invalid-extrinsic-weight',
+                component: ComponentCreator('/docs/detectors/substrate/invalid-extrinsic-weight', 'a48'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
                 path: '/docs/detectors/substrate/known-vulnerabilities',
                 component: ComponentCreator('/docs/detectors/substrate/known-vulnerabilities', 'e7b'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/docs/detectors/substrate/unsigned-extrinsic',
+                component: ComponentCreator('/docs/detectors/substrate/unsigned-extrinsic', 'd95'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
@@ -458,6 +470,12 @@ export default [
               {
                 path: '/docs/intro',
                 component: ComponentCreator('/docs/intro', '61d'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/docs/learning/learning-to-scout-soroban',
+                component: ComponentCreator('/docs/learning/learning-to-scout-soroban', '964'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },

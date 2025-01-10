@@ -37,7 +37,7 @@ pub fn accumulate_dummy(origin: OriginFor<T>, increase_by: T::Balance) -> Dispat
 
 In this code, using `DispatchError::Other("increase_by is too large")` creates a vague error message that does not clearly identify the problem. This generic error handling approach reduces the ability to effectively monitor and debug the code, hindering developers from quickly identifying and resolving the issue.
 
-The vulnerable code example can be found [`here`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-dispatcherror-other/vulnerable/vulnerable-1).
+The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-dispatcherror-other/vulnerable/vulnerable-1).
 
 ## Remediation
 
@@ -65,4 +65,4 @@ pub fn accumulate_dummy(origin: OriginFor<T>, increase_by: T::Balance) -> Dispat
 }
 ```
 
-The remediated code example can be found [`here`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-dispatcherror-other/remediated/remediated-1).
+The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-dispatcherror-other/remediated/remediated-1).

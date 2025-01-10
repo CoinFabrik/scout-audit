@@ -36,7 +36,7 @@ pub fn unsafe_check_value(origin: OriginFor<T>, threshold: u32) -> DispatchResul
 
 The `unsafe_check_value` function logs data and provides a suggestion using `debug!()` and `info!()` macros. These macros, while helpful during development, are inefficient in production because they increase gas costs due to unnecessary resource consumption.
 
-The vulnerable code example can be found [`here`](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/vulnerable/vulnerable-1).
+The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/vulnerable/vulnerable-1).
 
 ## Remediation
 
@@ -64,4 +64,4 @@ pub fn unsafe_check_value(origin: OriginFor<T>, threshold: u32) -> DispatchResul
 }
 ```
 
-The remediated code example can be found [`here`](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/remediated/remediated-1).
+The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/remediated/remediated-1).

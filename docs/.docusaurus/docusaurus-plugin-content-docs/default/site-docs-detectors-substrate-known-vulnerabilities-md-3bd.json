@@ -14,11 +14,11 @@
   "frontMatter": {},
   "sidebar": "tutorialSidebar",
   "previous": {
-    "title": "Empty expect",
-    "permalink": "/docs/detectors/substrate/empty-expect"
+    "title": "Invalid extrinsic weight",
+    "permalink": "/docs/detectors/substrate/invalid-extrinsic-weight"
   },
   "next": {
-    "title": "Command Line Interface (CLI)",
-    "permalink": "/docs/features/command-line-interface"
+    "title": "Unsigned extrinsic",
+    "permalink": "/docs/detectors/substrate/unsigned-extrinsic"
   }
 }

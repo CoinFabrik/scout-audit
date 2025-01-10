@@ -1,0 +1,24 @@
+{
+  "id": "detectors/substrate/unsigned-extrinsic",
+  "title": "Unsigned extrinsic",
+  "description": "Description",
+  "source": "@site/docs/detectors/substrate/unsigned-extrinsic.md",
+  "sourceDirName": "detectors/substrate",
+  "slug": "/detectors/substrate/unsigned-extrinsic",
+  "permalink": "/docs/detectors/substrate/unsigned-extrinsic",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/unsigned-extrinsic.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Known vulnerabilities",
+    "permalink": "/docs/detectors/substrate/known-vulnerabilities"
+  },
+  "next": {
+    "title": "Command Line Interface (CLI)",
+    "permalink": "/docs/features/command-line-interface"
+  }
+}
