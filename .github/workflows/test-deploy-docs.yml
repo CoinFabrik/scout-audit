@@ -1,0 +1,76 @@
+name: Test Deploy Docs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+  workflow_dispatch:
+
+jobs:
+  test-deploy:
+    name: Test deployment
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+    defaults:
+      run:
+        working-directory: ./docs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('./docs/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test build website
+        id: build
+        run: pnpm build
+
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [test-deploy]
+    steps:
+      - name: Find Comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "📘 **Documentation Test Summary** 📘"
+
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            📘 **Documentation Test Summary** 📘
+
+            ${{ (needs.test-deploy.outputs.status == 'success' && '✅ The test build of the documentation has completed successfully!' || '') }}
+            ${{ (needs.test-deploy.outputs.status == 'success' && '📝 The changes will be published upon merge to the main branch.' || '') }}
+            ${{ (needs.test-deploy.outputs.status != 'success' && '🚨 There was an issue with the test build of the documentation, please check the logs for more details.' || '') }}
