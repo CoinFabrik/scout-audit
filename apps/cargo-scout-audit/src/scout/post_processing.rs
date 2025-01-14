@@ -99,10 +99,7 @@ fn should_include_finding(finding: &Finding, cache: &FindingsCache) -> bool {
             }
         } else {
             !file_findings.unnecessary_allows.iter().any(|allow| {
-                allow
-                    .allowed_lint
-                    .as_ref()
-                    .map_or(false, |lint| lint == &current_finding.detector)
+                (allow.allowed_lint.as_ref() == Some(&current_finding.detector))
                     && spans_overlap(allow.span, current_finding.span)
             })
         }
