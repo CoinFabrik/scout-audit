@@ -14,8 +14,8 @@
   "frontMatter": {},
   "sidebar": "tutorialSidebar",
   "previous": {
-    "title": "Empty expect",
-    "permalink": "/docs/detectors/substrate/empty-expect"
+    "title": "Equal addresses",
+    "permalink": "/docs/detectors/substrate/equal-addresses"
   },
   "next": {
     "title": "Known vulnerabilities",

@@ -311,6 +311,11 @@
               "sidebar": "tutorialSidebar"
             },
             {
+              "id": "detectors/substrate/equal-addresses",
+              "path": "/docs/detectors/substrate/equal-addresses",
+              "sidebar": "tutorialSidebar"
+            },
+            {
               "id": "detectors/substrate/invalid-extrinsic-weight",
               "path": "/docs/detectors/substrate/invalid-extrinsic-weight",
               "sidebar": "tutorialSidebar"

@@ -44,15 +44,15 @@ export default [
   },
   {
     path: '/docs',
-    component: ComponentCreator('/docs', 'df5'),
+    component: ComponentCreator('/docs', '1c8'),
     routes: [
       {
         path: '/docs',
-        component: ComponentCreator('/docs', '3f3'),
+        component: ComponentCreator('/docs', '239'),
         routes: [
           {
             path: '/docs',
-            component: ComponentCreator('/docs', 'a47'),
+            component: ComponentCreator('/docs', '1fd'),
             routes: [
               {
                 path: '/docs/detectors/detectors-intro',
@@ -411,6 +411,12 @@ export default [
               {
                 path: '/docs/detectors/substrate/empty-expect',
                 component: ComponentCreator('/docs/detectors/substrate/empty-expect', 'f36'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/docs/detectors/substrate/equal-addresses',
+                component: ComponentCreator('/docs/detectors/substrate/equal-addresses', '3ca'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
