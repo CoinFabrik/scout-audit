@@ -49,17 +49,17 @@
     },
     "content": "content---markdown-page-393-028"
   },
-  "/docs-df5": {
+  "/docs-1c8": {
     "__comp": "__comp---theme-docs-root-5-e-9-0b6",
     "__context": {
       "plugin": "plugin---docsaba-d7c"
     }
   },
-  "/docs-3f3": {
+  "/docs-239": {
     "__comp": "__comp---theme-doc-version-roota-7-b-5de",
     "__props": "__props---docs-005-788"
   },
-  "/docs-a47": {
+  "/docs-1fd": {
     "__comp": "__comp---theme-doc-roota-94-67a"
   },
   "/docs/detectors/detectors-intro-275": {
@@ -301,6 +301,10 @@
   "/docs/detectors/substrate/empty-expect-f36": {
     "__comp": "__comp---theme-doc-item-178-a40",
     "content": "content---docs-detectors-substrate-empty-expecte-43-386"
+  },
+  "/docs/detectors/substrate/equal-addresses-3ca": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-equal-addresses-896-61b"
   },
   "/docs/detectors/substrate/invalid-extrinsic-weight-a48": {
     "__comp": "__comp---theme-doc-item-178-a40",
