@@ -10,7 +10,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{pallet_prelude::*, traits::BuildGenesisConfig};
+    use frame_support::{ pallet_prelude::*, traits::BuildGenesisConfig };
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
@@ -29,20 +29,16 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn check_balance(
-            origin1: OriginFor<T>,
-            from1: T::AccountId,
-            amount: u32,
-        ) -> DispatchResult {
-            let origin1 = ensure_signed(origin1)?;
+        pub fn check_balance(origin: OriginFor<T>, from: T::AccountId) -> DispatchResult {
+            let origin = ensure_signed(origin)?;
 
-            let sender_balance = Self::balance_of(&from1);
-
-            if from1 == origin1 {
+            if from == origin {
                 return Err(Error::<T>::SameAddresses.into());
             }
+            let user_balance = Self::balance_of(&origin);
+            let sender_balance = Self::balance_of(&from);
 
-            ensure!(sender_balance >= amount, "Insufficient balance");
+            ensure!(sender_balance >= user_balance, "Insufficient balance");
 
             Ok(())
         }
