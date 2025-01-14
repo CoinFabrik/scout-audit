@@ -31,16 +31,6 @@ jobs:
           key: ${{ runner.os }}-test-scout-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-test-scout-
 
-      - name: Install dependencies
-        run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y wkhtmltopdf
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            curl -L -o wkhtmltopdf.pkg https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg
-            sudo installer -pkg wkhtmltopdf.pkg -target /
-          fi
-
       - name: Install local scout
         working-directory: apps/cargo-scout-audit
         run: cargo install --path .
