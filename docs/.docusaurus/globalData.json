@@ -181,10 +181,6 @@
               "sidebar": "tutorialSidebar"
             },
             {
-              "id": "detectors/markdown-features",
-              "path": "/docs/detectors/markdown-features"
-            },
-            {
               "id": "detectors/soroban/assert-violation",
               "path": "/docs/detectors/soroban/assert-violation",
               "sidebar": "tutorialSidebar"
