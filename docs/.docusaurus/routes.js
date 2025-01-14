@@ -44,15 +44,15 @@ export default [
   },
   {
     path: '/docs',
-    component: ComponentCreator('/docs', '7bd'),
+    component: ComponentCreator('/docs', 'df5'),
     routes: [
       {
         path: '/docs',
-        component: ComponentCreator('/docs', '357'),
+        component: ComponentCreator('/docs', '3f3'),
         routes: [
           {
             path: '/docs',
-            component: ComponentCreator('/docs', 'c10'),
+            component: ComponentCreator('/docs', 'a47'),
             routes: [
               {
                 path: '/docs/detectors/detectors-intro',
@@ -257,11 +257,6 @@ export default [
                 component: ComponentCreator('/docs/detectors/ink/zero-or-test-address', 'e00'),
                 exact: true,
                 sidebar: "tutorialSidebar"
-              },
-              {
-                path: '/docs/detectors/markdown-features',
-                component: ComponentCreator('/docs/detectors/markdown-features', '071'),
-                exact: true
               },
               {
                 path: '/docs/detectors/soroban/assert-violation',
