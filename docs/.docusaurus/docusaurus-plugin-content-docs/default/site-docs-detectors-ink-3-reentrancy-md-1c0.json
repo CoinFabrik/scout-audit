@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/reentrancy",
+  "title": "Reentrancy",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/3-reentrancy.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/reentrancy",
+  "permalink": "/docs/detectors/ink/reentrancy",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/3-reentrancy.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Set contract storage",
+    "permalink": "/docs/detectors/ink/set-contract-storage"
+  },
+  "next": {
+    "title": "Panic error",
+    "permalink": "/docs/detectors/ink/panic-error"
+  }
+}

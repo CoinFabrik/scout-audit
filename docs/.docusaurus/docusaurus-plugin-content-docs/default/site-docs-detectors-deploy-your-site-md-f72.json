@@ -1,0 +1,18 @@
+{
+  "id": "detectors/deploy-your-site",
+  "title": "Deploy your site",
+  "description": "Docusaurus is a static-site-generator (also called Jamstack).",
+  "source": "@site/docs/detectors/deploy-your-site.md",
+  "sourceDirName": "detectors",
+  "slug": "/detectors/deploy-your-site",
+  "permalink": "/docs/detectors/deploy-your-site",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/deploy-your-site.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  }
+}

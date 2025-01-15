@@ -1,0 +1,360 @@
+{
+  "/__docusaurus/debug-5ff": {
+    "__comp": "__comp---theme-debug-config-23-a-2ff",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/config-5ba": {
+    "__comp": "__comp---theme-debug-config-23-a-2ff",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/content-a2b": {
+    "__comp": "__comp---theme-debug-contentba-8-ce7",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    },
+    "__props": "__props---docusaurus-debug-content-3-c-0-be2"
+  },
+  "/__docusaurus/debug/globalData-c3c": {
+    "__comp": "__comp---theme-debug-global-dataede-0fa",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/metadata-156": {
+    "__comp": "__comp---theme-debug-site-metadata-68-e-3d4",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/registry-88c": {
+    "__comp": "__comp---theme-debug-registry-679-501",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/routes-000": {
+    "__comp": "__comp---theme-debug-routes-946-699",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/markdown-page-3d7": {
+    "__comp": "__comp---theme-mdx-page-1-f-3-b90",
+    "__context": {
+      "plugin": "plugin---markdown-pagea-74-7b5"
+    },
+    "content": "content---markdown-page-393-028"
+  },
+  "/docs-1c8": {
+    "__comp": "__comp---theme-docs-root-5-e-9-0b6",
+    "__context": {
+      "plugin": "plugin---docsaba-d7c"
+    }
+  },
+  "/docs-239": {
+    "__comp": "__comp---theme-doc-version-roota-7-b-5de",
+    "__props": "__props---docs-005-788"
+  },
+  "/docs-1fd": {
+    "__comp": "__comp---theme-doc-roota-94-67a"
+  },
+  "/docs/detectors/detectors-intro-275": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-detectors-intro-8-dd-30c"
+  },
+  "/docs/detectors/ink/assert-violation-4a2": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-assert-violationd-69-8d2"
+  },
+  "/docs/detectors/ink/avoid-autokey-upgradable-2fa": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-avoid-autokey-upgradabled-76-da0"
+  },
+  "/docs/detectors/ink/avoid-core-mem-forget-caf": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-avoid-core-mem-forgete-10-57a"
+  },
+  "/docs/detectors/ink/avoid-format-string-3ee": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-avoid-format-stringe-8-b-260"
+  },
+  "/docs/detectors/ink/avoid-unsafe-block-c78": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-avoid-unsafe-block-672-b9e"
+  },
+  "/docs/detectors/ink/buffering-unsized-types-f71": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-buffering-unsized-types-845-d0d"
+  },
+  "/docs/detectors/ink/delegate-call-860": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-delegate-callf-95-040"
+  },
+  "/docs/detectors/ink/divide-before-multiply-03f": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-divide-before-multiply-451-aed"
+  },
+  "/docs/detectors/ink/dont-use-instantiate-contract-v1-dbf": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-dont-use-instantiate-contract-v-184-d-477"
+  },
+  "/docs/detectors/ink/dont-use-invoke-contract-v1-cb9": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-dont-use-invoke-contract-v-1169-cbf"
+  },
+  "/docs/detectors/ink/dos-unbounded-operation-885": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-dos-unbounded-operationd-58-a17"
+  },
+  "/docs/detectors/ink/dos-unexpected-revert-with-vector-637": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-dos-unexpected-revert-with-vector-329-9b0"
+  },
+  "/docs/detectors/ink/incorrect-exponentiation-296": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-incorrect-exponentiation-6-a-1-d34"
+  },
+  "/docs/detectors/ink/ink-version-0eb": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-ink-versionba-1-abe"
+  },
+  "/docs/detectors/ink/insufficiently-random-values-f09": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-insufficiently-random-values-54-a-ac6"
+  },
+  "/docs/detectors/ink/integer-overflow-or-underflow-e87": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-integer-overflow-or-underflow-7-b-9-5b0"
+  },
+  "/docs/detectors/ink/iterators-over-indexing-b62": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-iterators-over-indexingaa-4-7d7"
+  },
+  "/docs/detectors/ink/lazy-delegate-e47": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-lazy-delegate-55-a-bdb"
+  },
+  "/docs/detectors/ink/lazy-values-not-set-1f9": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-lazy-values-not-setff-2-2d4"
+  },
+  "/docs/detectors/ink/non-payable-transferred-value-fd1": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-non-payable-transferred-value-07-c-4fc"
+  },
+  "/docs/detectors/ink/panic-error-65b": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-panic-error-48-b-738"
+  },
+  "/docs/detectors/ink/reentrancy-9c2": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-reentrancy-1-c-0-4ec"
+  },
+  "/docs/detectors/ink/set-contract-storage-bca": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-set-contract-storage-3-e-0-487"
+  },
+  "/docs/detectors/ink/unprotected-mapping-operation-283": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unprotected-mapping-operation-148-6bb"
+  },
+  "/docs/detectors/ink/unprotected-self-destruct-10d": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unprotected-self-destruct-3-e-9-667"
+  },
+  "/docs/detectors/ink/unprotected-set-code-hash-8ec": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unprotected-set-code-hashf-7-c-1c3"
+  },
+  "/docs/detectors/ink/unrestricted-transfer-from-87c": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unrestricted-transfer-fromd-77-468"
+  },
+  "/docs/detectors/ink/unsafe-expect-3e7": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unsafe-expect-2-f-2-588"
+  },
+  "/docs/detectors/ink/unsafe-unwrap-7fd": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unsafe-unwrap-185-da6"
+  },
+  "/docs/detectors/ink/unused-return-enum-10c": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-unused-return-enum-13-b-9d3"
+  },
+  "/docs/detectors/ink/vec-could-be-mapping-6e8": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-vec-could-be-mapping-95-a-61c"
+  },
+  "/docs/detectors/ink/warning-sr25519-verify-60f": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-warning-sr-25519-verify-28-f-173"
+  },
+  "/docs/detectors/ink/zero-or-test-address-e00": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-ink-zero-or-test-address-858-b5d"
+  },
+  "/docs/detectors/soroban/assert-violation-9a3": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-assert-violation-52-b-d35"
+  },
+  "/docs/detectors/soroban/avoid-core-mem-forget-e1f": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-avoid-core-mem-forget-4-fe-05d"
+  },
+  "/docs/detectors/soroban/avoid-panic-error-48e": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-avoid-panic-errorfd-7-bf9"
+  },
+  "/docs/detectors/soroban/avoid-unsafe-block-7e4": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-avoid-unsafe-block-2-d-4-4bd"
+  },
+  "/docs/detectors/soroban/divide-before-multiply-058": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-divide-before-multiply-0-ac-191"
+  },
+  "/docs/detectors/soroban/dos-unbounded-operation-6dc": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-dos-unbounded-operationbcc-63b"
+  },
+  "/docs/detectors/soroban/dos-unexpected-revert-with-vector-c45": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-dos-unexpected-revert-with-vector-4-ad-9f9"
+  },
+  "/docs/detectors/soroban/incorrect-exponentiation-5fd": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-incorrect-exponentiation-95-f-999"
+  },
+  "/docs/detectors/soroban/insufficiently-random-values-3a6": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-insufficiently-random-valuesbcc-f50"
+  },
+  "/docs/detectors/soroban/integer-overflow -or-underflow-642": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-integer-overflow-or-underflow-76-a-966"
+  },
+  "/docs/detectors/soroban/iterators-over-indexing-de9": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-iterators-over-indexing-89-f-ec4"
+  },
+  "/docs/detectors/soroban/overflow-check-a4f": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-overflow-checkd-8-f-db5"
+  },
+  "/docs/detectors/soroban/set-contract-storage-f72": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-set-contract-storage-174-4dd"
+  },
+  "/docs/detectors/soroban/soroban-version-ad5": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-soroban-versiond-02-51b"
+  },
+  "/docs/detectors/soroban/storage-change-events-3f5": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-storage-change-events-014-5fb"
+  },
+  "/docs/detectors/soroban/token-interface-events-3f2": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-token-interface-events-1-af-444"
+  },
+  "/docs/detectors/soroban/unprotected-mapping-operation-9c7": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unprotected-mapping-operation-051-d30"
+  },
+  "/docs/detectors/soroban/unprotected-update-current-contract-wasm-161": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unprotected-update-current-contract-wasme-5-d-0d4"
+  },
+  "/docs/detectors/soroban/unrestricted-transfer-from-e3a": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unrestricted-transfer-from-575-ce8"
+  },
+  "/docs/detectors/soroban/unsafe-expect-4e4": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unsafe-expecta-65-1d6"
+  },
+  "/docs/detectors/soroban/unsafe-map-get-03c": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unsafe-map-get-6-c-8-d7e"
+  },
+  "/docs/detectors/soroban/unsafe-unwrap-f3d": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unsafe-unwrapd-75-ea3"
+  },
+  "/docs/detectors/soroban/unused-return-enum-e08": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-soroban-unused-return-enum-22-d-0c2"
+  },
+  "/docs/detectors/substrate/avoid-debug-info-5d5": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-avoid-debug-infoa-5-b-6f3"
+  },
+  "/docs/detectors/substrate/avoid-dispatch-error-other-bbe": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-avoid-dispatch-error-othere-4-e-bcb"
+  },
+  "/docs/detectors/substrate/empty-expect-f36": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-empty-expecte-43-386"
+  },
+  "/docs/detectors/substrate/equal-addresses-3ca": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-equal-addresses-896-61b"
+  },
+  "/docs/detectors/substrate/invalid-extrinsic-weight-a48": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-invalid-extrinsic-weight-970-7d1"
+  },
+  "/docs/detectors/substrate/known-vulnerabilities-e7b": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-known-vulnerabilities-3-bd-91c"
+  },
+  "/docs/detectors/substrate/unsigned-extrinsic-d95": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-detectors-substrate-unsigned-extrinsicee-8-dcf"
+  },
+  "/docs/features/command-line-interface-fc4": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-features-command-line-interfacef-3-f-fab"
+  },
+  "/docs/features/profiles-3bb": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-features-profiles-247-154"
+  },
+  "/docs/features/scout-github-action-d34": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-features-scout-github-actioncf-8-87b"
+  },
+  "/docs/features/toggle-detections-fd1": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-features-toggle-detections-30-d-3a2"
+  },
+  "/docs/features/vs-code-extension-977": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-features-vs-code-extension-08-c-f14"
+  },
+  "/docs/intro-61d": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-intro-0-e-3-be1"
+  },
+  "/docs/learning/learning-to-scout-soroban-964": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-learning-learning-to-scout-sorobanb-0-c-ab6"
+  },
+  "/docs/learning/scout-soroban-examples-bfc": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-learning-scout-soroban-examples-37-b-4c2"
+  },
+  "/-2e1": {
+    "__comp": "__comp---site-src-pages-index-jsc-4-f-f99",
+    "__context": {
+      "plugin": "plugin---markdown-pagea-74-7b5"
+    },
+    "config": "config---5-e-9-4f3"
+  }
+}

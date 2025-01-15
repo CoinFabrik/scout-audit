@@ -1,0 +1,27 @@
+{
+  "id": "features/toggle-detections",
+  "title": "Toggle detections on and off",
+  "description": "In addition to enabling and disabling detectors, Scout allows users to toggle individual detections on or off. This feature is useful for disabling detections that are false positives or not relevant to the analyzed codebase.",
+  "source": "@site/docs/features/toggle-detections.md",
+  "sourceDirName": "features",
+  "slug": "/features/toggle-detections",
+  "permalink": "/docs/features/toggle-detections",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/toggle-detections.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 50,
+  "frontMatter": {
+    "sidebar_position": 50
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Scout VS Code Extension",
+    "permalink": "/docs/features/vs-code-extension"
+  },
+  "next": {
+    "title": "Learning to Scout Soroban",
+    "permalink": "/docs/learning/learning-to-scout-soroban"
+  }
+}

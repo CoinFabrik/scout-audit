@@ -1,0 +1,27 @@
+{
+  "id": "features/command-line-interface",
+  "title": "Command Line Interface (CLI)",
+  "description": "The command line interface is designed to allow you to run Scout on an entire project. It is especially useful for auditing or performing a final review of your code.",
+  "source": "@site/docs/features/command-line-interface.md",
+  "sourceDirName": "features",
+  "slug": "/features/command-line-interface",
+  "permalink": "/docs/features/command-line-interface",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/command-line-interface.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 10,
+  "frontMatter": {
+    "sidebar_position": 10
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unsigned extrinsic",
+    "permalink": "/docs/detectors/substrate/unsigned-extrinsic"
+  },
+  "next": {
+    "title": "Profile configuration",
+    "permalink": "/docs/features/profiles"
+  }
+}
