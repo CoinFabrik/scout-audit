@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/20-incorrect-exponentiation.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/incorrect-exponentiation",
-  "permalink": "/docs/detectors/soroban/incorrect-exponentiation",
+  "permalink": "/scout-audit/docs/detectors/soroban/incorrect-exponentiation",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/20-incorrect-exponentiation.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Unsafe map get",
-    "permalink": "/docs/detectors/soroban/unsafe-map-get"
+    "permalink": "/scout-audit/docs/detectors/soroban/unsafe-map-get"
   },
   "next": {
     "title": "Integer overflow or underflow",
-    "permalink": "/docs/detectors/soroban/integer-overflow -or-underflow"
+    "permalink": "/scout-audit/docs/detectors/soroban/integer-overflow -or-underflow"
   }
 }

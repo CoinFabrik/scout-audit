@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/25-buffering-unsized-types.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/buffering-unsized-types",
-  "permalink": "/docs/detectors/ink/buffering-unsized-types",
+  "permalink": "/scout-audit/docs/detectors/ink/buffering-unsized-types",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/25-buffering-unsized-types.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Incorrect Exponentiation",
-    "permalink": "/docs/detectors/ink/incorrect-exponentiation"
+    "permalink": "/scout-audit/docs/detectors/ink/incorrect-exponentiation"
   },
   "next": {
     "title": "Avoid Unsafe Block",
-    "permalink": "/docs/detectors/ink/avoid-unsafe-block"
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-unsafe-block"
   }
 }

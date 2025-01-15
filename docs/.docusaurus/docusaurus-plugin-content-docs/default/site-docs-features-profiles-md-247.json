@@ -5,7 +5,7 @@
   "source": "@site/docs/features/profiles.md",
   "sourceDirName": "features",
   "slug": "/features/profiles",
-  "permalink": "/docs/features/profiles",
+  "permalink": "/scout-audit/docs/features/profiles",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/profiles.md",
@@ -18,10 +18,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Command Line Interface (CLI)",
-    "permalink": "/docs/features/command-line-interface"
+    "permalink": "/scout-audit/docs/features/command-line-interface"
   },
   "next": {
     "title": "CI/CD Integration",
-    "permalink": "/docs/features/scout-github-action"
+    "permalink": "/scout-audit/docs/features/scout-github-action"
   }
 }

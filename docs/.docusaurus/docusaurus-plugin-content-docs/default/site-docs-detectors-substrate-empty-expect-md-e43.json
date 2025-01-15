@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/substrate/empty-expect.md",
   "sourceDirName": "detectors/substrate",
   "slug": "/detectors/substrate/empty-expect",
-  "permalink": "/docs/detectors/substrate/empty-expect",
+  "permalink": "/scout-audit/docs/detectors/substrate/empty-expect",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/empty-expect.md",
@@ -15,10 +15,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Avoid DispatchError::Other()",
-    "permalink": "/docs/detectors/substrate/avoid-dispatch-error-other"
+    "permalink": "/scout-audit/docs/detectors/substrate/avoid-dispatch-error-other"
   },
   "next": {
     "title": "Equal addresses",
-    "permalink": "/docs/detectors/substrate/equal-addresses"
+    "permalink": "/scout-audit/docs/detectors/substrate/equal-addresses"
   }
 }

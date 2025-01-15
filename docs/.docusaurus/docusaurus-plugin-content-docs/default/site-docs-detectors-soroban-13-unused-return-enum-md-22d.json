@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/13-unused-return-enum.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/unused-return-enum",
-  "permalink": "/docs/detectors/soroban/unused-return-enum",
+  "permalink": "/scout-audit/docs/detectors/soroban/unused-return-enum",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/13-unused-return-enum.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Soroban version",
-    "permalink": "/docs/detectors/soroban/soroban-version"
+    "permalink": "/scout-audit/docs/detectors/soroban/soroban-version"
   },
   "next": {
     "title": "Iterators over indexing",
-    "permalink": "/docs/detectors/soroban/iterators-over-indexing"
+    "permalink": "/scout-audit/docs/detectors/soroban/iterators-over-indexing"
   }
 }

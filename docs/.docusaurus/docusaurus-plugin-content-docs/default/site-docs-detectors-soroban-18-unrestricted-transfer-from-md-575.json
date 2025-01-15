@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/18-unrestricted-transfer-from.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/unrestricted-transfer-from",
-  "permalink": "/docs/detectors/soroban/unrestricted-transfer-from",
+  "permalink": "/scout-audit/docs/detectors/soroban/unrestricted-transfer-from",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/18-unrestricted-transfer-from.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "DoS unexpected revert with vector",
-    "permalink": "/docs/detectors/soroban/dos-unexpected-revert-with-vector"
+    "permalink": "/scout-audit/docs/detectors/soroban/dos-unexpected-revert-with-vector"
   },
   "next": {
     "title": "Unsafe map get",
-    "permalink": "/docs/detectors/soroban/unsafe-map-get"
+    "permalink": "/scout-audit/docs/detectors/soroban/unsafe-map-get"
   }
 }

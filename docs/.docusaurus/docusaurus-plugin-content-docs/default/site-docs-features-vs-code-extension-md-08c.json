@@ -5,7 +5,7 @@
   "source": "@site/docs/features/vs-code-extension.md",
   "sourceDirName": "features",
   "slug": "/features/vs-code-extension",
-  "permalink": "/docs/features/vs-code-extension",
+  "permalink": "/scout-audit/docs/features/vs-code-extension",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/vs-code-extension.md",
@@ -18,10 +18,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "CI/CD Integration",
-    "permalink": "/docs/features/scout-github-action"
+    "permalink": "/scout-audit/docs/features/scout-github-action"
   },
   "next": {
     "title": "Toggle detections on and off",
-    "permalink": "/docs/features/toggle-detections"
+    "permalink": "/scout-audit/docs/features/toggle-detections"
   }
 }

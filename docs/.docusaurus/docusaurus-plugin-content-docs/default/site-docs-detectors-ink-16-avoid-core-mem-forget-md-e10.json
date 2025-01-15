@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/16-avoid-core-mem-forget.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/avoid-core-mem-forget",
-  "permalink": "/docs/detectors/ink/avoid-core-mem-forget",
+  "permalink": "/scout-audit/docs/detectors/ink/avoid-core-mem-forget",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/16-avoid-core-mem-forget.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Assert violation",
-    "permalink": "/docs/detectors/ink/assert-violation"
+    "permalink": "/scout-audit/docs/detectors/ink/assert-violation"
   },
   "next": {
     "title": "Avoid fromat! macro usage",
-    "permalink": "/docs/detectors/ink/avoid-format-string"
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-format-string"
   }
 }

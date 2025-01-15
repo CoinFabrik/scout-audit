@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/26-avoid-unsafe-block.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/avoid-unsafe-block",
-  "permalink": "/docs/detectors/ink/avoid-unsafe-block",
+  "permalink": "/scout-audit/docs/detectors/ink/avoid-unsafe-block",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/26-avoid-unsafe-block.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Buffering Unsized Types",
-    "permalink": "/docs/detectors/ink/buffering-unsized-types"
+    "permalink": "/scout-audit/docs/detectors/ink/buffering-unsized-types"
   },
   "next": {
     "title": "Warning sr25519_verify",
-    "permalink": "/docs/detectors/ink/warning-sr25519-verify"
+    "permalink": "/scout-audit/docs/detectors/ink/warning-sr25519-verify"
   }
 }

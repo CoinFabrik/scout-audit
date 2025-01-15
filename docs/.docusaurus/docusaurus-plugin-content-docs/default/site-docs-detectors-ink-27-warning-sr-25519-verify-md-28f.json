@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/27-warning-sr25519-verify.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/warning-sr25519-verify",
-  "permalink": "/docs/detectors/ink/warning-sr25519-verify",
+  "permalink": "/scout-audit/docs/detectors/ink/warning-sr25519-verify",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/27-warning-sr25519-verify.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Avoid Unsafe Block",
-    "permalink": "/docs/detectors/ink/avoid-unsafe-block"
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-unsafe-block"
   },
   "next": {
     "title": "Lazy values get and not set",
-    "permalink": "/docs/detectors/ink/lazy-values-not-set"
+    "permalink": "/scout-audit/docs/detectors/ink/lazy-values-not-set"
   }
 }
