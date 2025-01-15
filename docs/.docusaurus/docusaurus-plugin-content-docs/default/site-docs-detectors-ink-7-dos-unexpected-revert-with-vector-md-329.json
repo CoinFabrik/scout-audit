@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/7-dos-unexpected-revert-with-vector.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/dos-unexpected-revert-with-vector",
-  "permalink": "/docs/detectors/ink/dos-unexpected-revert-with-vector",
+  "permalink": "/scout-audit/docs/detectors/ink/dos-unexpected-revert-with-vector",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/7-dos-unexpected-revert-with-vector.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "DoS unbounded operation",
-    "permalink": "/docs/detectors/ink/dos-unbounded-operation"
+    "permalink": "/scout-audit/docs/detectors/ink/dos-unbounded-operation"
   },
   "next": {
     "title": "Unsafe expect",
-    "permalink": "/docs/detectors/ink/unsafe-expect"
+    "permalink": "/scout-audit/docs/detectors/ink/unsafe-expect"
   }
 }

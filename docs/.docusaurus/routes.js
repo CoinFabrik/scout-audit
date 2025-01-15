@@ -3,486 +3,486 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 
 export default [
   {
-    path: '/__docusaurus/debug',
-    component: ComponentCreator('/__docusaurus/debug', '5ff'),
+    path: '/scout-audit/__docusaurus/debug',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug', 'a27'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/config',
-    component: ComponentCreator('/__docusaurus/debug/config', '5ba'),
+    path: '/scout-audit/__docusaurus/debug/config',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/config', '3af'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/content',
-    component: ComponentCreator('/__docusaurus/debug/content', 'a2b'),
+    path: '/scout-audit/__docusaurus/debug/content',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/content', '432'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/globalData',
-    component: ComponentCreator('/__docusaurus/debug/globalData', 'c3c'),
+    path: '/scout-audit/__docusaurus/debug/globalData',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/globalData', '89f'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/metadata',
-    component: ComponentCreator('/__docusaurus/debug/metadata', '156'),
+    path: '/scout-audit/__docusaurus/debug/metadata',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/metadata', '94a'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/registry',
-    component: ComponentCreator('/__docusaurus/debug/registry', '88c'),
+    path: '/scout-audit/__docusaurus/debug/registry',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/registry', 'c71'),
     exact: true
   },
   {
-    path: '/__docusaurus/debug/routes',
-    component: ComponentCreator('/__docusaurus/debug/routes', '000'),
+    path: '/scout-audit/__docusaurus/debug/routes',
+    component: ComponentCreator('/scout-audit/__docusaurus/debug/routes', '95a'),
     exact: true
   },
   {
-    path: '/markdown-page',
-    component: ComponentCreator('/markdown-page', '3d7'),
+    path: '/scout-audit/markdown-page',
+    component: ComponentCreator('/scout-audit/markdown-page', '500'),
     exact: true
   },
   {
-    path: '/docs',
-    component: ComponentCreator('/docs', '1c8'),
+    path: '/scout-audit/docs',
+    component: ComponentCreator('/scout-audit/docs', 'f92'),
     routes: [
       {
-        path: '/docs',
-        component: ComponentCreator('/docs', '239'),
+        path: '/scout-audit/docs',
+        component: ComponentCreator('/scout-audit/docs', '16e'),
         routes: [
           {
-            path: '/docs',
-            component: ComponentCreator('/docs', '1fd'),
+            path: '/scout-audit/docs',
+            component: ComponentCreator('/scout-audit/docs', '1e3'),
             routes: [
               {
-                path: '/docs/detectors/detectors-intro',
-                component: ComponentCreator('/docs/detectors/detectors-intro', '275'),
+                path: '/scout-audit/docs/detectors/detectors-intro',
+                component: ComponentCreator('/scout-audit/docs/detectors/detectors-intro', '4d5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/assert-violation',
-                component: ComponentCreator('/docs/detectors/ink/assert-violation', '4a2'),
+                path: '/scout-audit/docs/detectors/ink/assert-violation',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/assert-violation', '7b8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/avoid-autokey-upgradable',
-                component: ComponentCreator('/docs/detectors/ink/avoid-autokey-upgradable', '2fa'),
+                path: '/scout-audit/docs/detectors/ink/avoid-autokey-upgradable',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/avoid-autokey-upgradable', '116'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/avoid-core-mem-forget',
-                component: ComponentCreator('/docs/detectors/ink/avoid-core-mem-forget', 'caf'),
+                path: '/scout-audit/docs/detectors/ink/avoid-core-mem-forget',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/avoid-core-mem-forget', 'bcc'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/avoid-format-string',
-                component: ComponentCreator('/docs/detectors/ink/avoid-format-string', '3ee'),
+                path: '/scout-audit/docs/detectors/ink/avoid-format-string',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/avoid-format-string', 'c37'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/avoid-unsafe-block',
-                component: ComponentCreator('/docs/detectors/ink/avoid-unsafe-block', 'c78'),
+                path: '/scout-audit/docs/detectors/ink/avoid-unsafe-block',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/avoid-unsafe-block', 'ac2'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/buffering-unsized-types',
-                component: ComponentCreator('/docs/detectors/ink/buffering-unsized-types', 'f71'),
+                path: '/scout-audit/docs/detectors/ink/buffering-unsized-types',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/buffering-unsized-types', 'c77'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/delegate-call',
-                component: ComponentCreator('/docs/detectors/ink/delegate-call', '860'),
+                path: '/scout-audit/docs/detectors/ink/delegate-call',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/delegate-call', '698'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/divide-before-multiply',
-                component: ComponentCreator('/docs/detectors/ink/divide-before-multiply', '03f'),
+                path: '/scout-audit/docs/detectors/ink/divide-before-multiply',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/divide-before-multiply', 'b29'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/dont-use-instantiate-contract-v1',
-                component: ComponentCreator('/docs/detectors/ink/dont-use-instantiate-contract-v1', 'dbf'),
+                path: '/scout-audit/docs/detectors/ink/dont-use-instantiate-contract-v1',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/dont-use-instantiate-contract-v1', 'd84'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/dont-use-invoke-contract-v1',
-                component: ComponentCreator('/docs/detectors/ink/dont-use-invoke-contract-v1', 'cb9'),
+                path: '/scout-audit/docs/detectors/ink/dont-use-invoke-contract-v1',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/dont-use-invoke-contract-v1', 'dfb'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/dos-unbounded-operation',
-                component: ComponentCreator('/docs/detectors/ink/dos-unbounded-operation', '885'),
+                path: '/scout-audit/docs/detectors/ink/dos-unbounded-operation',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/dos-unbounded-operation', '115'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/dos-unexpected-revert-with-vector',
-                component: ComponentCreator('/docs/detectors/ink/dos-unexpected-revert-with-vector', '637'),
+                path: '/scout-audit/docs/detectors/ink/dos-unexpected-revert-with-vector',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/dos-unexpected-revert-with-vector', 'aae'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/incorrect-exponentiation',
-                component: ComponentCreator('/docs/detectors/ink/incorrect-exponentiation', '296'),
+                path: '/scout-audit/docs/detectors/ink/incorrect-exponentiation',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/incorrect-exponentiation', '32f'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/ink-version',
-                component: ComponentCreator('/docs/detectors/ink/ink-version', '0eb'),
+                path: '/scout-audit/docs/detectors/ink/ink-version',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/ink-version', '904'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/insufficiently-random-values',
-                component: ComponentCreator('/docs/detectors/ink/insufficiently-random-values', 'f09'),
+                path: '/scout-audit/docs/detectors/ink/insufficiently-random-values',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/insufficiently-random-values', '537'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/integer-overflow-or-underflow',
-                component: ComponentCreator('/docs/detectors/ink/integer-overflow-or-underflow', 'e87'),
+                path: '/scout-audit/docs/detectors/ink/integer-overflow-or-underflow',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/integer-overflow-or-underflow', 'b1b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/iterators-over-indexing',
-                component: ComponentCreator('/docs/detectors/ink/iterators-over-indexing', 'b62'),
+                path: '/scout-audit/docs/detectors/ink/iterators-over-indexing',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/iterators-over-indexing', '2c6'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/lazy-delegate',
-                component: ComponentCreator('/docs/detectors/ink/lazy-delegate', 'e47'),
+                path: '/scout-audit/docs/detectors/ink/lazy-delegate',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/lazy-delegate', 'b99'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/lazy-values-not-set',
-                component: ComponentCreator('/docs/detectors/ink/lazy-values-not-set', '1f9'),
+                path: '/scout-audit/docs/detectors/ink/lazy-values-not-set',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/lazy-values-not-set', '8b0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/non-payable-transferred-value',
-                component: ComponentCreator('/docs/detectors/ink/non-payable-transferred-value', 'fd1'),
+                path: '/scout-audit/docs/detectors/ink/non-payable-transferred-value',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/non-payable-transferred-value', '494'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/panic-error',
-                component: ComponentCreator('/docs/detectors/ink/panic-error', '65b'),
+                path: '/scout-audit/docs/detectors/ink/panic-error',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/panic-error', '14e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/reentrancy',
-                component: ComponentCreator('/docs/detectors/ink/reentrancy', '9c2'),
+                path: '/scout-audit/docs/detectors/ink/reentrancy',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/reentrancy', 'b0f'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/set-contract-storage',
-                component: ComponentCreator('/docs/detectors/ink/set-contract-storage', 'bca'),
+                path: '/scout-audit/docs/detectors/ink/set-contract-storage',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/set-contract-storage', 'a17'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unprotected-mapping-operation',
-                component: ComponentCreator('/docs/detectors/ink/unprotected-mapping-operation', '283'),
+                path: '/scout-audit/docs/detectors/ink/unprotected-mapping-operation',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unprotected-mapping-operation', '9ca'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unprotected-self-destruct',
-                component: ComponentCreator('/docs/detectors/ink/unprotected-self-destruct', '10d'),
+                path: '/scout-audit/docs/detectors/ink/unprotected-self-destruct',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unprotected-self-destruct', '58d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unprotected-set-code-hash',
-                component: ComponentCreator('/docs/detectors/ink/unprotected-set-code-hash', '8ec'),
+                path: '/scout-audit/docs/detectors/ink/unprotected-set-code-hash',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unprotected-set-code-hash', 'ba4'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unrestricted-transfer-from',
-                component: ComponentCreator('/docs/detectors/ink/unrestricted-transfer-from', '87c'),
+                path: '/scout-audit/docs/detectors/ink/unrestricted-transfer-from',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unrestricted-transfer-from', '4a8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unsafe-expect',
-                component: ComponentCreator('/docs/detectors/ink/unsafe-expect', '3e7'),
+                path: '/scout-audit/docs/detectors/ink/unsafe-expect',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unsafe-expect', 'd11'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unsafe-unwrap',
-                component: ComponentCreator('/docs/detectors/ink/unsafe-unwrap', '7fd'),
+                path: '/scout-audit/docs/detectors/ink/unsafe-unwrap',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unsafe-unwrap', '45b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/unused-return-enum',
-                component: ComponentCreator('/docs/detectors/ink/unused-return-enum', '10c'),
+                path: '/scout-audit/docs/detectors/ink/unused-return-enum',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/unused-return-enum', '27c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/vec-could-be-mapping',
-                component: ComponentCreator('/docs/detectors/ink/vec-could-be-mapping', '6e8'),
+                path: '/scout-audit/docs/detectors/ink/vec-could-be-mapping',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/vec-could-be-mapping', '56d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/warning-sr25519-verify',
-                component: ComponentCreator('/docs/detectors/ink/warning-sr25519-verify', '60f'),
+                path: '/scout-audit/docs/detectors/ink/warning-sr25519-verify',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/warning-sr25519-verify', 'f66'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/ink/zero-or-test-address',
-                component: ComponentCreator('/docs/detectors/ink/zero-or-test-address', 'e00'),
+                path: '/scout-audit/docs/detectors/ink/zero-or-test-address',
+                component: ComponentCreator('/scout-audit/docs/detectors/ink/zero-or-test-address', '955'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/assert-violation',
-                component: ComponentCreator('/docs/detectors/soroban/assert-violation', '9a3'),
+                path: '/scout-audit/docs/detectors/soroban/assert-violation',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/assert-violation', '5e5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/avoid-core-mem-forget',
-                component: ComponentCreator('/docs/detectors/soroban/avoid-core-mem-forget', 'e1f'),
+                path: '/scout-audit/docs/detectors/soroban/avoid-core-mem-forget',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/avoid-core-mem-forget', 'f0d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/avoid-panic-error',
-                component: ComponentCreator('/docs/detectors/soroban/avoid-panic-error', '48e'),
+                path: '/scout-audit/docs/detectors/soroban/avoid-panic-error',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/avoid-panic-error', '6d8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/avoid-unsafe-block',
-                component: ComponentCreator('/docs/detectors/soroban/avoid-unsafe-block', '7e4'),
+                path: '/scout-audit/docs/detectors/soroban/avoid-unsafe-block',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/avoid-unsafe-block', 'd9b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/divide-before-multiply',
-                component: ComponentCreator('/docs/detectors/soroban/divide-before-multiply', '058'),
+                path: '/scout-audit/docs/detectors/soroban/divide-before-multiply',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/divide-before-multiply', 'dbd'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/dos-unbounded-operation',
-                component: ComponentCreator('/docs/detectors/soroban/dos-unbounded-operation', '6dc'),
+                path: '/scout-audit/docs/detectors/soroban/dos-unbounded-operation',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/dos-unbounded-operation', '9bf'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/dos-unexpected-revert-with-vector',
-                component: ComponentCreator('/docs/detectors/soroban/dos-unexpected-revert-with-vector', 'c45'),
+                path: '/scout-audit/docs/detectors/soroban/dos-unexpected-revert-with-vector',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/dos-unexpected-revert-with-vector', 'ec7'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/incorrect-exponentiation',
-                component: ComponentCreator('/docs/detectors/soroban/incorrect-exponentiation', '5fd'),
+                path: '/scout-audit/docs/detectors/soroban/incorrect-exponentiation',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/incorrect-exponentiation', '320'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/insufficiently-random-values',
-                component: ComponentCreator('/docs/detectors/soroban/insufficiently-random-values', '3a6'),
+                path: '/scout-audit/docs/detectors/soroban/insufficiently-random-values',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/insufficiently-random-values', '467'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/integer-overflow -or-underflow',
-                component: ComponentCreator('/docs/detectors/soroban/integer-overflow -or-underflow', '642'),
+                path: '/scout-audit/docs/detectors/soroban/integer-overflow -or-underflow',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/integer-overflow -or-underflow', 'a4a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/iterators-over-indexing',
-                component: ComponentCreator('/docs/detectors/soroban/iterators-over-indexing', 'de9'),
+                path: '/scout-audit/docs/detectors/soroban/iterators-over-indexing',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/iterators-over-indexing', 'a88'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/overflow-check',
-                component: ComponentCreator('/docs/detectors/soroban/overflow-check', 'a4f'),
+                path: '/scout-audit/docs/detectors/soroban/overflow-check',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/overflow-check', '0f5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/set-contract-storage',
-                component: ComponentCreator('/docs/detectors/soroban/set-contract-storage', 'f72'),
+                path: '/scout-audit/docs/detectors/soroban/set-contract-storage',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/set-contract-storage', '5ab'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/soroban-version',
-                component: ComponentCreator('/docs/detectors/soroban/soroban-version', 'ad5'),
+                path: '/scout-audit/docs/detectors/soroban/soroban-version',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/soroban-version', 'a0c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/storage-change-events',
-                component: ComponentCreator('/docs/detectors/soroban/storage-change-events', '3f5'),
+                path: '/scout-audit/docs/detectors/soroban/storage-change-events',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/storage-change-events', '76b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/token-interface-events',
-                component: ComponentCreator('/docs/detectors/soroban/token-interface-events', '3f2'),
+                path: '/scout-audit/docs/detectors/soroban/token-interface-events',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/token-interface-events', '60c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unprotected-mapping-operation',
-                component: ComponentCreator('/docs/detectors/soroban/unprotected-mapping-operation', '9c7'),
+                path: '/scout-audit/docs/detectors/soroban/unprotected-mapping-operation',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unprotected-mapping-operation', '725'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unprotected-update-current-contract-wasm',
-                component: ComponentCreator('/docs/detectors/soroban/unprotected-update-current-contract-wasm', '161'),
+                path: '/scout-audit/docs/detectors/soroban/unprotected-update-current-contract-wasm',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unprotected-update-current-contract-wasm', 'c9a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unrestricted-transfer-from',
-                component: ComponentCreator('/docs/detectors/soroban/unrestricted-transfer-from', 'e3a'),
+                path: '/scout-audit/docs/detectors/soroban/unrestricted-transfer-from',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unrestricted-transfer-from', 'aac'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unsafe-expect',
-                component: ComponentCreator('/docs/detectors/soroban/unsafe-expect', '4e4'),
+                path: '/scout-audit/docs/detectors/soroban/unsafe-expect',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unsafe-expect', 'f78'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unsafe-map-get',
-                component: ComponentCreator('/docs/detectors/soroban/unsafe-map-get', '03c'),
+                path: '/scout-audit/docs/detectors/soroban/unsafe-map-get',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unsafe-map-get', '7b1'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unsafe-unwrap',
-                component: ComponentCreator('/docs/detectors/soroban/unsafe-unwrap', 'f3d'),
+                path: '/scout-audit/docs/detectors/soroban/unsafe-unwrap',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unsafe-unwrap', 'ae1'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/soroban/unused-return-enum',
-                component: ComponentCreator('/docs/detectors/soroban/unused-return-enum', 'e08'),
+                path: '/scout-audit/docs/detectors/soroban/unused-return-enum',
+                component: ComponentCreator('/scout-audit/docs/detectors/soroban/unused-return-enum', 'de3'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/avoid-debug-info',
-                component: ComponentCreator('/docs/detectors/substrate/avoid-debug-info', '5d5'),
+                path: '/scout-audit/docs/detectors/substrate/avoid-debug-info',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/avoid-debug-info', '263'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/avoid-dispatch-error-other',
-                component: ComponentCreator('/docs/detectors/substrate/avoid-dispatch-error-other', 'bbe'),
+                path: '/scout-audit/docs/detectors/substrate/avoid-dispatch-error-other',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/avoid-dispatch-error-other', 'a3e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/empty-expect',
-                component: ComponentCreator('/docs/detectors/substrate/empty-expect', 'f36'),
+                path: '/scout-audit/docs/detectors/substrate/empty-expect',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/empty-expect', '0a4'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/equal-addresses',
-                component: ComponentCreator('/docs/detectors/substrate/equal-addresses', '3ca'),
+                path: '/scout-audit/docs/detectors/substrate/equal-addresses',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/equal-addresses', 'a85'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/invalid-extrinsic-weight',
-                component: ComponentCreator('/docs/detectors/substrate/invalid-extrinsic-weight', 'a48'),
+                path: '/scout-audit/docs/detectors/substrate/invalid-extrinsic-weight',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/invalid-extrinsic-weight', '21c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/known-vulnerabilities',
-                component: ComponentCreator('/docs/detectors/substrate/known-vulnerabilities', 'e7b'),
+                path: '/scout-audit/docs/detectors/substrate/known-vulnerabilities',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/known-vulnerabilities', '0c7'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/detectors/substrate/unsigned-extrinsic',
-                component: ComponentCreator('/docs/detectors/substrate/unsigned-extrinsic', 'd95'),
+                path: '/scout-audit/docs/detectors/substrate/unsigned-extrinsic',
+                component: ComponentCreator('/scout-audit/docs/detectors/substrate/unsigned-extrinsic', 'aa6'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/features/command-line-interface',
-                component: ComponentCreator('/docs/features/command-line-interface', 'fc4'),
+                path: '/scout-audit/docs/features/command-line-interface',
+                component: ComponentCreator('/scout-audit/docs/features/command-line-interface', 'a20'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/features/profiles',
-                component: ComponentCreator('/docs/features/profiles', '3bb'),
+                path: '/scout-audit/docs/features/profiles',
+                component: ComponentCreator('/scout-audit/docs/features/profiles', 'bd9'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/features/scout-github-action',
-                component: ComponentCreator('/docs/features/scout-github-action', 'd34'),
+                path: '/scout-audit/docs/features/scout-github-action',
+                component: ComponentCreator('/scout-audit/docs/features/scout-github-action', 'c7b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/features/toggle-detections',
-                component: ComponentCreator('/docs/features/toggle-detections', 'fd1'),
+                path: '/scout-audit/docs/features/toggle-detections',
+                component: ComponentCreator('/scout-audit/docs/features/toggle-detections', '9d1'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/features/vs-code-extension',
-                component: ComponentCreator('/docs/features/vs-code-extension', '977'),
+                path: '/scout-audit/docs/features/vs-code-extension',
+                component: ComponentCreator('/scout-audit/docs/features/vs-code-extension', '6b5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/intro',
-                component: ComponentCreator('/docs/intro', '61d'),
+                path: '/scout-audit/docs/intro',
+                component: ComponentCreator('/scout-audit/docs/intro', '1d6'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/learning/learning-to-scout-soroban',
-                component: ComponentCreator('/docs/learning/learning-to-scout-soroban', '964'),
+                path: '/scout-audit/docs/learning/learning-to-scout-soroban',
+                component: ComponentCreator('/scout-audit/docs/learning/learning-to-scout-soroban', '9cf'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/learning/scout-soroban-examples',
-                component: ComponentCreator('/docs/learning/scout-soroban-examples', 'bfc'),
+                path: '/scout-audit/docs/learning/scout-soroban-examples',
+                component: ComponentCreator('/scout-audit/docs/learning/scout-soroban-examples', 'c4a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }
@@ -493,8 +493,8 @@ export default [
     ]
   },
   {
-    path: '/',
-    component: ComponentCreator('/', '2e1'),
+    path: '/scout-audit/',
+    component: ComponentCreator('/scout-audit/', 'd1f'),
     exact: true
   },
   {

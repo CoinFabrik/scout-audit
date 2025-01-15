@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/substrate/invalid-extrinsic-weight.md",
   "sourceDirName": "detectors/substrate",
   "slug": "/detectors/substrate/invalid-extrinsic-weight",
-  "permalink": "/docs/detectors/substrate/invalid-extrinsic-weight",
+  "permalink": "/scout-audit/docs/detectors/substrate/invalid-extrinsic-weight",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/invalid-extrinsic-weight.md",
@@ -15,10 +15,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Equal addresses",
-    "permalink": "/docs/detectors/substrate/equal-addresses"
+    "permalink": "/scout-audit/docs/detectors/substrate/equal-addresses"
   },
   "next": {
     "title": "Known vulnerabilities",
-    "permalink": "/docs/detectors/substrate/known-vulnerabilities"
+    "permalink": "/scout-audit/docs/detectors/substrate/known-vulnerabilities"
   }
 }

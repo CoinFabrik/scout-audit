@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/7-avoid-core-mem-forget.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/avoid-core-mem-forget",
-  "permalink": "/docs/detectors/soroban/avoid-core-mem-forget",
+  "permalink": "/scout-audit/docs/detectors/soroban/avoid-core-mem-forget",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/7-avoid-core-mem-forget.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Unprotected update current contract wasm",
-    "permalink": "/docs/detectors/soroban/unprotected-update-current-contract-wasm"
+    "permalink": "/scout-audit/docs/detectors/soroban/unprotected-update-current-contract-wasm"
   },
   "next": {
     "title": "Set contract storage",
-    "permalink": "/docs/detectors/soroban/set-contract-storage"
+    "permalink": "/scout-audit/docs/detectors/soroban/set-contract-storage"
   }
 }

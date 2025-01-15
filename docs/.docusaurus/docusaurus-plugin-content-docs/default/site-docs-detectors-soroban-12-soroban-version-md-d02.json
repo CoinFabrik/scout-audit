@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/12-soroban-version.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/soroban-version",
-  "permalink": "/docs/detectors/soroban/soroban-version",
+  "permalink": "/scout-audit/docs/detectors/soroban/soroban-version",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/12-soroban-version.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "DoS unbounded operation",
-    "permalink": "/docs/detectors/soroban/dos-unbounded-operation"
+    "permalink": "/scout-audit/docs/detectors/soroban/dos-unbounded-operation"
   },
   "next": {
     "title": "Unused return enum",
-    "permalink": "/docs/detectors/soroban/unused-return-enum"
+    "permalink": "/scout-audit/docs/detectors/soroban/unused-return-enum"
   }
 }

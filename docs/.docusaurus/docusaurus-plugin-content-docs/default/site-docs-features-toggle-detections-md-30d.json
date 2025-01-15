@@ -5,7 +5,7 @@
   "source": "@site/docs/features/toggle-detections.md",
   "sourceDirName": "features",
   "slug": "/features/toggle-detections",
-  "permalink": "/docs/features/toggle-detections",
+  "permalink": "/scout-audit/docs/features/toggle-detections",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/toggle-detections.md",
@@ -18,10 +18,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Scout VS Code Extension",
-    "permalink": "/docs/features/vs-code-extension"
+    "permalink": "/scout-audit/docs/features/vs-code-extension"
   },
   "next": {
     "title": "Learning to Scout Soroban",
-    "permalink": "/docs/learning/learning-to-scout-soroban"
+    "permalink": "/scout-audit/docs/learning/learning-to-scout-soroban"
   }
 }

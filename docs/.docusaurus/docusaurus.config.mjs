@@ -8,7 +8,7 @@ export default {
   "tagline": "Smart Contracts Security Analysis Tool",
   "favicon": "img/favicon.ico",
   "url": "https://your-docusaurus-site.example.com",
-  "baseUrl": "/",
+  "baseUrl": "/scout-audit/",
   "organizationName": "CoinFabrik",
   "projectName": "scout-audit",
   "onBrokenLinks": "throw",

@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/substrate/avoid-debug-info.md",
   "sourceDirName": "detectors/substrate",
   "slug": "/detectors/substrate/avoid-debug-info",
-  "permalink": "/docs/detectors/substrate/avoid-debug-info",
+  "permalink": "/scout-audit/docs/detectors/substrate/avoid-debug-info",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/avoid-debug-info.md",
@@ -15,10 +15,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Token interface events",
-    "permalink": "/docs/detectors/soroban/token-interface-events"
+    "permalink": "/scout-audit/docs/detectors/soroban/token-interface-events"
   },
   "next": {
     "title": "Avoid DispatchError::Other()",
-    "permalink": "/docs/detectors/substrate/avoid-dispatch-error-other"
+    "permalink": "/scout-audit/docs/detectors/substrate/avoid-dispatch-error-other"
   }
 }

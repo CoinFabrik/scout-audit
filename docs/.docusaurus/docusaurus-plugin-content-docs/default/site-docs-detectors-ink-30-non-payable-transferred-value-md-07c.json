@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/30-non-payable-transferred-value.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/non-payable-transferred-value",
-  "permalink": "/docs/detectors/ink/non-payable-transferred-value",
+  "permalink": "/scout-audit/docs/detectors/ink/non-payable-transferred-value",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/30-non-payable-transferred-value.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Avoid AutoKey Upgradable",
-    "permalink": "/docs/detectors/ink/avoid-autokey-upgradable"
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-autokey-upgradable"
   },
   "next": {
     "title": "Vec could be mapping",
-    "permalink": "/docs/detectors/ink/vec-could-be-mapping"
+    "permalink": "/scout-audit/docs/detectors/ink/vec-could-be-mapping"
   }
 }

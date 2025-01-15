@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/8-set-contract-storage.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/set-contract-storage",
-  "permalink": "/docs/detectors/soroban/set-contract-storage",
+  "permalink": "/scout-audit/docs/detectors/soroban/set-contract-storage",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/8-set-contract-storage.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Avoid core::mem::forget usage",
-    "permalink": "/docs/detectors/soroban/avoid-core-mem-forget"
+    "permalink": "/scout-audit/docs/detectors/soroban/avoid-core-mem-forget"
   },
   "next": {
     "title": "Avoid panic error",
-    "permalink": "/docs/detectors/soroban/avoid-panic-error"
+    "permalink": "/scout-audit/docs/detectors/soroban/avoid-panic-error"
   }
 }

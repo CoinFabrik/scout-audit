@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/soroban/2-unsafe-unwrap.md",
   "sourceDirName": "detectors/soroban",
   "slug": "/detectors/soroban/unsafe-unwrap",
-  "permalink": "/docs/detectors/soroban/unsafe-unwrap",
+  "permalink": "/scout-audit/docs/detectors/soroban/unsafe-unwrap",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/2-unsafe-unwrap.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Divide before multiply",
-    "permalink": "/docs/detectors/soroban/divide-before-multiply"
+    "permalink": "/scout-audit/docs/detectors/soroban/divide-before-multiply"
   },
   "next": {
     "title": "Unsafe expect",
-    "permalink": "/docs/detectors/soroban/unsafe-expect"
+    "permalink": "/scout-audit/docs/detectors/soroban/unsafe-expect"
   }
 }

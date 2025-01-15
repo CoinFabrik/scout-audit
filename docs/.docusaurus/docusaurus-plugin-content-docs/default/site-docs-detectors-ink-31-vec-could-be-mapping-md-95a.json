@@ -5,7 +5,7 @@
   "source": "@site/docs/detectors/ink/31-vec-could-be-mapping.md",
   "sourceDirName": "detectors/ink",
   "slug": "/detectors/ink/vec-could-be-mapping",
-  "permalink": "/docs/detectors/ink/vec-could-be-mapping",
+  "permalink": "/scout-audit/docs/detectors/ink/vec-could-be-mapping",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/31-vec-could-be-mapping.md",
@@ -16,10 +16,10 @@
   "sidebar": "tutorialSidebar",
   "previous": {
     "title": "Non payable transferred value",
-    "permalink": "/docs/detectors/ink/non-payable-transferred-value"
+    "permalink": "/scout-audit/docs/detectors/ink/non-payable-transferred-value"
   },
   "next": {
     "title": "Don't use invoke_contract_v1",
-    "permalink": "/docs/detectors/ink/dont-use-invoke-contract-v1"
+    "permalink": "/scout-audit/docs/detectors/ink/dont-use-invoke-contract-v1"
   }
 }
