@@ -14,7 +14,6 @@ jobs:
   docker-release:
     name: Release to Docker Hub
     runs-on: ${{ matrix.os }}
-    if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
     strategy:
       matrix:
         os: [ubuntu-latest]
