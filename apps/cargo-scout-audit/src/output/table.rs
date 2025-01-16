@@ -1,5 +1,6 @@
 use crate::{finding::Finding, utils::detectors_info::LintStore};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
@@ -324,24 +325,21 @@ impl Table {
     }
 }
 
-static mut COLOR_MAP: once_cell::sync::Lazy<Mutex<HashMap<String, Color>>> =
-    once_cell::sync::Lazy::new(|| {
-        let mut ret = HashMap::<String, Color>::new();
-        ret.insert("info".into(), Color::Blue);
-        ret.insert("header".into(), Color::Green);
-        ret.insert("warning".into(), Color::Yellow);
-        ret.insert("important".into(), Color::Red);
-        ret.insert("error".into(), Color::Red);
-        Mutex::new(ret)
-    });
+static COLOR_MAP: Lazy<Mutex<HashMap<String, Color>>> = Lazy::new(|| {
+    let mut ret = HashMap::new();
+    ret.insert("info".into(), Color::Blue);
+    ret.insert("header".into(), Color::Green);
+    ret.insert("warning".into(), Color::Yellow);
+    ret.insert("important".into(), Color::Red);
+    ret.insert("error".into(), Color::Red);
+    Mutex::new(ret)
+});
 
 fn map_importance(importance: &String) -> Color {
-    unsafe {
-        if let Some(c) = COLOR_MAP.lock().unwrap().get(importance) {
-            *c
-        } else {
-            Color::Default
-        }
+    if let Some(c) = COLOR_MAP.lock().unwrap().get(importance) {
+        *c
+    } else {
+        Color::Default
     }
 }
 
@@ -495,9 +493,7 @@ fn set_color_maps(values: &HashMap<String, Value>) -> Result<Value, tera::Error>
                 _ => None,
             };
             if let Some(c) = c {
-                unsafe {
-                    COLOR_MAP.lock().unwrap().insert(k.clone(), c);
-                }
+                COLOR_MAP.lock().unwrap().insert(k.clone(), c);
             }
         }
     }
