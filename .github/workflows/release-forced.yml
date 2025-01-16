@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - force-docker-release-20250116
+
+env:
+  PYTHONUNBUFFERED: 1
+  REGISTRY: coinfabrik
+  IMAGE_NAME: scout
+
+jobs:
+  docker-release:
+    name: Release to Docker Hub
+    runs-on: ${{ matrix.os }}
+    if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        platform: [linux/amd64, linux/arm64]
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get scout version
+        id: scout-version
+        run: |
+          version=$(cat apps/cargo-scout-audit/Cargo.toml | grep '^version' | head -1 | awk -F '"' '{print $2}')
+          echo "Version extracted: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Set platform-specific tag prefix
+        id: set-tag-prefix
+        run: |
+          if [[ "${{ matrix.platform }}" == "linux/arm64" ]]; then
+            echo "tag_prefix=-arm64" >> $GITHUB_OUTPUT
+          else
+            echo "tag_prefix=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha
+          cache-to: type=gha
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:${{ steps.scout-version.outputs.version }},
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}${{ steps.set-tag-prefix.outputs.tag_prefix }}:latest
