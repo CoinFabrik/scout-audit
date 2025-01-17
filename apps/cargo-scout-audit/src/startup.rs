@@ -58,6 +58,9 @@ pub enum ScoutError {
     RunDylintFailed(#[source] anyhow::Error),
 }
 
+    pub fn problems_found(&self) -> bool{
+        !self.findings.is_empty()
+    }
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
@@ -209,7 +212,7 @@ pub fn run_scout(mut opts: Scout) -> Result<Vec<Finding>> {
             &crates,
             project_info,
             &detectors_info,
-            opts.output_path,
+            opts.output_path.clone(),
             &opts.output_format,
         )?;
     }
