@@ -15,14 +15,16 @@ fn main() {
     match cli.subcmd {
         CargoSubCommand::ScoutAudit(opts) => {
             let cicd = opts.cicd;
-            match run_scout(opts){
-                Ok(result) => {
-                    std::process::exit(if cicd && result.problems_found(){ 1 }else{ 0 })
-                },
+            match run_scout(opts) {
+                Ok(result) => std::process::exit(if cicd && result.problems_found() {
+                    1
+                } else {
+                    0
+                }),
                 Err(e) => {
                     print_error(e.to_string().trim());
                     std::process::exit(1);
-                },
+                }
             }
         }
     }

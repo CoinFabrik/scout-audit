@@ -130,8 +130,12 @@ pub struct Scout {
         help = "Prints a hash of the sources at the time of build"
     )]
     pub src_hash: bool,
-    
-    #[clap(name = "cicd", long, help = "Report the analysis result via the status code")]
+
+    #[clap(
+        name = "cicd",
+        long,
+        help = "Report the analysis result via the status code"
+    )]
     pub cicd: bool,
 }
 
