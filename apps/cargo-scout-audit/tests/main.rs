@@ -249,6 +249,7 @@ mod tests {
         let result = result.unwrap();
 
         let findings = result
+            .findings
             .iter()
             .map(|value| value.code())
             .filter(|x| x != "known_vulnerabilities")
