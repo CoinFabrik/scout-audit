@@ -89,6 +89,6 @@ impl VersionChecker {
             command.cyan()
         );
 
-        println!("{}", message.yellow());
+        eprintln!("{}", message.yellow());
     }
 }
