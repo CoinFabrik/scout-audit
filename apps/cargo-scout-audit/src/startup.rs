@@ -67,15 +67,16 @@ impl ScoutResult {
     pub fn new(findings: Vec<Finding>) -> Self {
         Self { findings }
     }
-    pub fn problems_found(&self) -> bool {
-        !self.findings.is_empty()
-    }
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
+
+    if let Some(path) = opts.get_fail_path(){
+        let _ = std::fs::File::create(path);
+    }
 
     if opts.src_hash {
         println!("{}", digest::SOURCE_DIGEST);
@@ -228,6 +229,12 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             opts.output_path.clone(),
             &opts.output_format,
         )?;
+    }
+
+    if let Some(path) = opts.get_fail_path(){
+        if console_findings.is_empty(){
+            let _ = std::fs::remove_file(path);
+        }
     }
 
     Ok(ScoutResult::new(console_findings))
