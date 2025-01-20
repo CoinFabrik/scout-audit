@@ -134,9 +134,10 @@ pub struct Scout {
     #[clap(
         name = "cicd",
         long,
-        help = "Report the analysis result via the status code"
+        help = "Report the analysis result via a file",
+        value_hint = clap::ValueHint::FilePath,
     )]
-    pub cicd: bool,
+    pub cicd: Option<PathBuf>,
 }
 
 impl Scout {
@@ -180,5 +181,12 @@ impl Scout {
         }
 
         Ok(())
+    }
+
+    pub fn get_fail_path(&self) -> Option<PathBuf>{
+        match &self.cicd{
+            None => None,
+            Some(path) => Some(path.join("FAIL")),
+        }
     }
 }
