@@ -3,9 +3,16 @@ import commandExists from "command-exists";
 import fs from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
+import { disposeStatusBar, initStatusBar, updateStatusBar } from "./utils/ui";
+import {
+  getMessageFromLint,
+  getScoutMetadata,
+  getSeverityFromMetadata,
+  scoutMetadata,
+} from "./utils/metadata";
 
 const CARGO_TOML = "Cargo.toml";
-const EXTENSION_NAME = "scout-audit";
+export const EXTENSION_NAME = "scout-audit";
 
 interface CompilerMessage {
   reason: string;
@@ -29,13 +36,28 @@ interface CompilerMessage {
   };
 }
 
+function parseCompilerMessage(value: unknown): CompilerMessage {
+  const msg = value as CompilerMessage;
+
+  if (
+    typeof msg?.reason !== "string" ||
+    typeof msg?.message?.rendered !== "string" ||
+    typeof msg?.message?.message !== "string" ||
+    typeof msg?.message?.level !== "string" ||
+    !Array.isArray(msg?.message?.spans)
+  ) {
+    throw new Error("Invalid compiler message format");
+  }
+
+  return msg;
+}
+
 interface CargoProject {
   root: string;
 }
 
 let diagnosticCollection: vscode.DiagnosticCollection;
-let outputChannel: vscode.OutputChannel;
-let statusBarItem: vscode.StatusBarItem;
+export let outputChannel: vscode.OutputChannel;
 
 async function checkRelevantDependencies(
   workspaceRoot: string
@@ -70,29 +92,11 @@ async function checkRelevantDependencies(
   }
 }
 
-function updateStatusBar(active: boolean) {
-  if (active) {
-    statusBarItem.text = "$(shield) Scout Audit";
-    statusBarItem.tooltip = "Scout Audit is active - Click to run manual audit";
-    statusBarItem.command = `${EXTENSION_NAME}.run`;
-  } else {
-    statusBarItem.text = "$(shield-x) Scout Audit";
-    statusBarItem.tooltip =
-      "Scout Audit is inactive - No relevant dependencies found";
-    statusBarItem.command = undefined;
-  }
-  statusBarItem.show();
-}
-
 export async function activate(context: vscode.ExtensionContext) {
   try {
     outputChannel = vscode.window.createOutputChannel(EXTENSION_NAME);
-    statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right,
-      1000
-    );
+    initStatusBar(context);
 
-    context.subscriptions.push(outputChannel, statusBarItem);
     outputChannel.appendLine("Scout Audit extension activated");
 
     if (!(await isWorkspaceValid())) {
@@ -100,24 +104,24 @@ export async function activate(context: vscode.ExtensionContext) {
       await vscode.window.showErrorMessage(
         "Invalid workspace: Cargo.toml not found."
       );
-      updateStatusBar(false);
+      updateStatusBar("error");
       return;
     }
 
     const projectRoot = getProjectWorkspaceRoot();
     if (!projectRoot) {
       outputChannel.appendLine("Could not determine project root");
-      updateStatusBar(false);
+      updateStatusBar("inactive");
       return;
     }
 
     if (!(await checkRelevantDependencies(projectRoot))) {
-      updateStatusBar(false);
+      updateStatusBar("inactive");
       return;
     }
 
     if (!(await checkAndInstallScout())) {
-      updateStatusBar(false);
+      updateStatusBar("error");
       return;
     }
 
@@ -143,7 +147,7 @@ export async function activate(context: vscode.ExtensionContext) {
       })
     );
 
-    updateStatusBar(true);
+    updateStatusBar("active");
     outputChannel.show(true);
   } catch (error) {
     const errorMessage = `Activation error: ${
@@ -151,7 +155,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }`;
     outputChannel.appendLine(errorMessage);
     await vscode.window.showErrorMessage(errorMessage);
-    updateStatusBar(false);
+    updateStatusBar("error");
   }
 }
 
@@ -216,8 +220,9 @@ async function runScout() {
   }
   outputChannel.appendLine(`Workspace root: ${workspaceRoot}`);
 
-  statusBarItem.text = "$(sync~spin) Scout Audit";
-  statusBarItem.tooltip = "Scout Audit is running...";
+  await getScoutMetadata(projectWorkspaceRoot);
+
+  updateStatusBar("loading");
 
   return new Promise<void>((resolve) => {
     const scout = spawn(
@@ -241,7 +246,7 @@ async function runScout() {
           outputChannel.appendLine(
             `Scout audit failed with code ${code ?? "unknown"}`
           );
-          updateStatusBar(true);
+          updateStatusBar("error");
           resolve();
           return;
         }
@@ -252,7 +257,8 @@ async function runScout() {
           if (!line.trim()) return;
 
           try {
-            const message = JSON.parse(line) as CompilerMessage;
+            const parsed = JSON.parse(line) as unknown;
+            const message = parseCompilerMessage(parsed);
 
             if (message.reason !== "compiler-message" || !message.message)
               return;
@@ -263,6 +269,14 @@ async function runScout() {
             message.message.spans.forEach((span) => {
               if (!span.file_name) return;
 
+              // Skip if we don't have metadata for this lint
+              if (
+                message.message.code &&
+                !scoutMetadata?.lints[message.message.code.code]
+              ) {
+                return;
+              }
+
               const targetFileName = path.join(workspaceRoot, span.file_name);
               const range = new vscode.Range(
                 span.line_start - 1,
@@ -271,10 +285,11 @@ async function runScout() {
                 span.column_end - 1
               );
 
-              const severity =
-                message.message.level === "error"
-                  ? vscode.DiagnosticSeverity.Error
-                  : vscode.DiagnosticSeverity.Warning;
+              const severity = message.message.code
+                ? getSeverityFromMetadata(message.message.code.code)
+                : message.message.level === "error"
+                ? vscode.DiagnosticSeverity.Error
+                : vscode.DiagnosticSeverity.Warning;
 
               const diagnostic = new vscode.Diagnostic(
                 range,
@@ -282,10 +297,13 @@ async function runScout() {
                 severity
               );
 
-              if (message.message.code) {
+              if (message.message.code?.code) {
+                diagnostic.message = getMessageFromLint(
+                  message.message.code.code
+                );
                 diagnostic.code = String(message.message.code.code);
               }
-              diagnostic.source = "Scout";
+              diagnostic.source = "Scout Audit";
 
               const diagnostics = diagnosticMap.get(targetFileName) || [];
               diagnostics.push(diagnostic);
@@ -307,14 +325,14 @@ async function runScout() {
         }
 
         outputChannel.appendLine(`Scout finished successfully`);
-        updateStatusBar(true);
+        updateStatusBar("active");
       } catch (error) {
         const errorMsg = `Error processing Scout output: ${
           error instanceof Error ? error.message : String(error)
         }`;
         outputChannel.appendLine(errorMsg);
         console.error(errorMsg);
-        updateStatusBar(true);
+        updateStatusBar("error");
       }
       resolve();
     });
@@ -330,9 +348,7 @@ export function deactivate() {
   if (outputChannel) {
     outputChannel.dispose();
   }
-  if (statusBarItem) {
-    statusBarItem.dispose();
-  }
+  disposeStatusBar();
 }
 
 async function checkAndInstallScout(): Promise<boolean> {
