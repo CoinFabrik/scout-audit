@@ -42,7 +42,7 @@ jobs:
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
-          if cargo nextest run --all --all-features; then
+          if cargo +nightly-2024-07-11 nextest run --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
