@@ -24,7 +24,7 @@ pub static AVOID_FORMAT_STRING_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "The format! macro is used to create a String from a given set of arguments. This macro is not recommended, it is better to use a custom error type enum.    ",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-format-string",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/avoid-format-string",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

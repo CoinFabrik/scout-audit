@@ -26,7 +26,7 @@ pub static BUFFERING_UNSIZED_TYPES_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-considerations",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/vec-considerations",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

@@ -24,7 +24,7 @@ pub static WARNING_SR25519_VERIFY_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Medium,
-    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/warning-sr25519-verify",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/warning-sr25519-verify",
     vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 

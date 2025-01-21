@@ -31,7 +31,7 @@ pub static ZERO_OR_TEST_ADDRESS_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "The assignment of the zero address to a variable in a smart contract represents a critical vulnerability because it can lead to loss of control over the contract. This stems from the fact that the zero address does not have an associated private key, which means it's impossible to claim ownership, rendering any contract assets or functions permanently inaccessible.    ",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/zero-or-test-address",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/zero-or-test-address",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

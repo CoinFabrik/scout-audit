@@ -33,7 +33,7 @@ pub static UNPROTECTED_UPDATE_CURRENT_CONTRACT_WASM_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "If users are allowed to call update_current_contract_wasm, they can intentionally modify the contract behaviour, leading to the loss of all associated data/tokens and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-update-current-contract-wasm",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/unprotected-update-current-contract-wasm",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

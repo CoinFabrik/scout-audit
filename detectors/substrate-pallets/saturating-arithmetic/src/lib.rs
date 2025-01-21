@@ -52,7 +52,7 @@ pub static SATURATING_ARITHMETIC_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/incorrect-exponentiation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/incorrect-exponentiation",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 

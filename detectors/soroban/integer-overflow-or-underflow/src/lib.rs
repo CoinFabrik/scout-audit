@@ -25,7 +25,7 @@ pub static INTEGER_OVERFLOW_OR_UNDERFLOW_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "An overflow/underflow is typically caught and generates an error. When it is not caught, the operation will result in an inexact result which could lead to serious problems.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/vulnerabilities/integer-overflow-or-underflow",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/integer-overflow-or-underflow",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 

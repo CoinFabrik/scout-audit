@@ -24,7 +24,7 @@ pub static SOROBAN_VERSION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/soroban-version",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/soroban-version",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

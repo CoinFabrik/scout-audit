@@ -26,7 +26,7 @@ pub static DOS_UNBOUNDED_OPERATION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "In order to prevent a single transaction from consuming all the gas in a block, unbounded operations must be avoided. This includes loops that do not have a bounded number of iterations, and recursive calls.    ",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unbounded-operation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/dos-unbounded-operation",
     vulnerability_class: VulnerabilityClass::DoS,
 };
 

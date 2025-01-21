@@ -27,7 +27,7 @@ pub static AVOID_AUTOKEY_UPGRADABLE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts. This could lead to a locked contract after an upgrade.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/avoid-autokey-upgradable",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/avoid-autokey-upgradable",
     vulnerability_class: VulnerabilityClass::Upgradability,
 };
 

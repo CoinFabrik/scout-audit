@@ -31,7 +31,7 @@ pub static UNPROTECTED_SELF_DESTRUCT_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "If users are allowed to call terminate_contract, they can intentionally or accidentally destroy the contract, leading to the loss of all associated data and functionalities given by this contract or by others that depend on it. To prevent this, the function should be restricted to administrators or authorized users only.    ",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-self-destruct",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/unprotected-self-destruct",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

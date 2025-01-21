@@ -34,7 +34,7 @@ pub static UNSIGNED_EXTRINSIC_INFO: LintInfo = LintInfo {
                    extrinsics with appropriate fee mechanisms unless there's a specific security reason \
                    for allowing unsigned transactions.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-substrate/docs/detectors/unsigned-extrinsic",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/unsigned-extrinsic",
     vulnerability_class: VulnerabilityClass::DoS,
 };
 

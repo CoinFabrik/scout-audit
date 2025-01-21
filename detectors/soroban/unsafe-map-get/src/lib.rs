@@ -28,7 +28,7 @@ pub static UNSAFE_MAP_GET_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "This vulnerability class pertains to the inappropriate usage of the get method for Map in soroban",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unsafe-map-get",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/unsafe-map-get",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

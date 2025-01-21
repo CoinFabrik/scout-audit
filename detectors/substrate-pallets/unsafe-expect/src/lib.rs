@@ -27,7 +27,7 @@ pub static UNSAFE_EXPECT_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "In Rust, the expect method is commonly used for error handling. It retrieves the value from a Result or Option and panics with a specified error message if an error occurs. However, using expect can lead to unexpected program crashes.    ",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-rust/docs/detectors/unsafe-expect",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/unsafe-expect",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

@@ -25,7 +25,7 @@ pub static AVOID_PANIC_ERROR_INFO: LintInfo = LintInfo {
         "Using panic! in functions that return Result defeats the purpose of error handling. \
         Consider propagating the error using ? or return Err() instead.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/detectors/avoid-panic-error",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/avoid-panic-error",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

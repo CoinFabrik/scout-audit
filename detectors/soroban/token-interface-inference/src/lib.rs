@@ -33,7 +33,7 @@ pub static TOKEN_INTERFACE_INFERENCE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Implementing the Token Interface trait helps to ensure proper compliance of the SEP-41 standard.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-inference",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/token-interface-inference",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
