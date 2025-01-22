@@ -88,7 +88,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
 
-    if let Some(path) = opts.get_fail_path(){
+    if let Some(path) = opts.get_fail_path() {
         let _ = std::fs::File::create(path);
     }
 
@@ -251,8 +251,8 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let telemetry_client = TelemetryClient::new(blockchain, client_type);
     let _ = telemetry_client.send_report();
 
-    if let Some(path) = opts.get_fail_path(){
-        if console_findings.is_empty(){
+    if let Some(path) = opts.get_fail_path() {
+        if console_findings.is_empty() {
             let _ = std::fs::remove_file(path);
         }
     }

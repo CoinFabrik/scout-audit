@@ -13,14 +13,12 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.subcmd {
-        CargoSubCommand::ScoutAudit(opts) => {
-            match run_scout(opts) {
-                Ok(_) => std::process::exit(0),
-                Err(e) => {
-                    print_error(e.to_string().trim());
-                    std::process::exit(1);
-                }
+        CargoSubCommand::ScoutAudit(opts) => match run_scout(opts) {
+            Ok(_) => std::process::exit(0),
+            Err(e) => {
+                print_error(e.to_string().trim());
+                std::process::exit(1);
             }
-        }
+        },
     }
 }
