@@ -1,18 +1,17 @@
 use crate::build_config::TOOLCHAIN;
 use anyhow::{bail, Result};
 use cargo_metadata::Metadata;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter, EnumString};
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use thiserror::Error;
 
-#[derive(Debug, Copy, Clone, EnumIter, Display, EnumString)]
+#[derive(Debug, Deserialize, Serialize, Copy, Clone, EnumIter, Display, EnumString)]
+#[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum BlockChain {
-    #[strum(serialize = "ink")]
     Ink,
-    #[strum(serialize = "soroban")]
     Soroban,
-    #[strum(serialize = "substrate-pallets")]
     SubstratePallets,
 }
 

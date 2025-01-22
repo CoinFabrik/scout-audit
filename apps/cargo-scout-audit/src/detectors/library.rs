@@ -1,6 +1,6 @@
 use crate::{
     scout::blockchain::BlockChain,
-    utils::{cargo, env, telemetry::TracedError},
+    utils::{cargo, env, logger::TracedError},
 };
 use anyhow::{bail, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};

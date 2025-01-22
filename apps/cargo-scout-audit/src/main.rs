@@ -1,14 +1,14 @@
 use cargo_scout_audit::{
     cli::{CargoSubCommand, Cli},
     startup::run_scout,
-    utils::{print::print_error, telemetry},
+    utils::{logger, print::print_error},
 };
 use clap::Parser;
 use tracing::level_filters::LevelFilter;
 
 fn main() {
-    let subscriber = telemetry::get_subscriber("scout".into(), LevelFilter::OFF, std::io::stdout);
-    telemetry::init_subscriber(subscriber);
+    let subscriber = logger::get_subscriber("scout".into(), LevelFilter::OFF, std::io::stdout);
+    logger::init_subscriber(subscriber);
 
     let cli = Cli::parse();
 

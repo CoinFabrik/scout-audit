@@ -9,14 +9,15 @@ use crate::{
         findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
         nightly_runner::run_scout_in_nightly,
         project_info::Project,
+        telemetry::TelemetryClient,
         version_checker::VersionChecker,
     },
     utils::{
         config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
+        logger::TracedError,
         print::{print_error, print_info},
-        telemetry::TracedError,
     },
 };
 use anyhow::{Context, Ok, Result};
@@ -219,6 +220,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     } else {
         (successful_findings, raw_findings_string)
     };
+
     // Generate report
     if inside_vscode {
         std::io::stdout()
@@ -237,6 +239,11 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             &opts.output_format,
         )?;
     }
+
+    // Send telemetry data
+    let client_type = TelemetryClient::detect_client_type(&opts.args);
+    let telemetry_client = TelemetryClient::new(blockchain, client_type);
+    let _ = telemetry_client.send_report();
 
     Ok(ScoutResult::new(console_findings, output_string_vscode))
 }
