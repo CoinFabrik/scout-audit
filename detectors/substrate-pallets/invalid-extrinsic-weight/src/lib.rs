@@ -23,7 +23,7 @@ pub static INVALID_EXTRINSIC_WEIGHT_INFO: LintInfo = LintInfo {
                     Each extrinsic must have its own dedicated weight calculation to accurately reflect its resource consumption. \
                     Reusing weight calculations from other functions can lead to incorrect resource estimation and potential issues in production.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/invalid-weight-info",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/invalid-weight-info",
     vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 

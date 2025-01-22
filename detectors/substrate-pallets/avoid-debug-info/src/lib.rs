@@ -27,7 +27,7 @@ pub static AVOID_DEBUG_INFO_INFO: LintInfo = LintInfo {
     Instead, consider emitting structured events with emit! to log relevant data more efficiently \
     and reduce unnecessary gas costs.",
     severity: Severity::Minor,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate-pallets/avoid-debug-info",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/avoid-debug-info",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
