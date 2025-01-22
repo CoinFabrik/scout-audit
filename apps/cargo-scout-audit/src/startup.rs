@@ -224,7 +224,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         std::io::stdout()
             .lock()
             .write_all(output_string_vscode.as_bytes())
-            .with_context(|| ("Failed to write stdout content"))?;
+            .with_context(|| "Failed to write stdout content")?;
     } else {
         crate::output::console::render_report(&console_findings, &crates, &detectors_info)?;
         Report::generate(
@@ -257,7 +257,7 @@ fn run_dylint(
 
     // Initialize temporary file for stdout
     let stdout_temp_file =
-        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
+        NamedTempFile::new().with_context(|| "Failed to create stdout temporary file")?;
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
@@ -277,6 +277,7 @@ fn run_dylint(
             lib_paths: detectors_paths,
             ..Default::default()
         },
+        no_deps: true,
         args,
         ..Default::default()
     };
