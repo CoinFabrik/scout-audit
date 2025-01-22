@@ -103,6 +103,11 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
     let toolchain = blockchain.get_toolchain();
 
+    // Send telemetry data
+    let client_type = TelemetryClient::detect_client_type(&opts.args);
+    let telemetry_client = TelemetryClient::new(blockchain, client_type);
+    let _ = telemetry_client.send_report();
+
     if opts.toolchain {
         println!("{}", toolchain);
         return Ok(ScoutResult::from_string(toolchain));
@@ -245,11 +250,6 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             &opts.output_format,
         )?;
     }
-
-    // Send telemetry data
-    let client_type = TelemetryClient::detect_client_type(&opts.args);
-    let telemetry_client = TelemetryClient::new(blockchain, client_type);
-    let _ = telemetry_client.send_report();
 
     if let Some(path) = opts.get_fail_path() {
         if console_findings.is_empty() {
