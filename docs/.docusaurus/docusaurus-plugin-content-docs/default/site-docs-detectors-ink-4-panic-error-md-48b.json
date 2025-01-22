@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/panic-error",
+  "title": "Panic error",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/4-panic-error.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/panic-error",
+  "permalink": "/scout-audit/docs/detectors/ink/panic-error",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/4-panic-error.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 4,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Reentrancy",
+    "permalink": "/scout-audit/docs/detectors/ink/reentrancy"
+  },
+  "next": {
+    "title": "Unused return enum",
+    "permalink": "/scout-audit/docs/detectors/ink/unused-return-enum"
+  }
+}

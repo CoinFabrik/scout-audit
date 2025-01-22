@@ -1,0 +1,27 @@
+{
+  "id": "features/scout-github-action",
+  "title": "CI/CD Integration",
+  "description": "At CoinFabrik, we understand the importance of ensuring code quality and security in every step of the development process. That's why we've developed a GitHub action to integrate Scout into the CI/CD pipeline.",
+  "source": "@site/docs/features/scout-github-action.md",
+  "sourceDirName": "features",
+  "slug": "/features/scout-github-action",
+  "permalink": "/scout-audit/docs/features/scout-github-action",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/features/scout-github-action.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 30,
+  "frontMatter": {
+    "sidebar_position": 30
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Profile configuration",
+    "permalink": "/scout-audit/docs/features/profiles"
+  },
+  "next": {
+    "title": "Scout VS Code Extension",
+    "permalink": "/scout-audit/docs/features/vs-code-extension"
+  }
+}

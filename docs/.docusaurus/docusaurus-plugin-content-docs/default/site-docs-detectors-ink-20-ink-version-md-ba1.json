@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/ink-version",
+  "title": "Ink! version",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/20-ink-version.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/ink-version",
+  "permalink": "/scout-audit/docs/detectors/ink/ink-version",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/20-ink-version.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 20,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Iterators over indexing",
+    "permalink": "/scout-audit/docs/detectors/ink/iterators-over-indexing"
+  },
+  "next": {
+    "title": "Unprotected set code hash",
+    "permalink": "/scout-audit/docs/detectors/ink/unprotected-set-code-hash"
+  }
+}

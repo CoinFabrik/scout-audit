@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/dos-unbounded-operation",
+  "title": "DoS unbounded operation",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/6-dos-unbounded-operation.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/dos-unbounded-operation",
+  "permalink": "/scout-audit/docs/detectors/ink/dos-unbounded-operation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/6-dos-unbounded-operation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 6,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unused return enum",
+    "permalink": "/scout-audit/docs/detectors/ink/unused-return-enum"
+  },
+  "next": {
+    "title": "DoS unexpected revert with vector",
+    "permalink": "/scout-audit/docs/detectors/ink/dos-unexpected-revert-with-vector"
+  }
+}

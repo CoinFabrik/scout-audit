@@ -1,0 +1,23 @@
+{
+  "id": "intro",
+  "title": "Getting Started",
+  "description": "Start scouting your project for security issues in less than 5 minutes.",
+  "source": "@site/docs/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/scout-audit/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/intro.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "Scout Audit Detectors",
+    "permalink": "/scout-audit/docs/detectors/detectors-intro"
+  }
+}

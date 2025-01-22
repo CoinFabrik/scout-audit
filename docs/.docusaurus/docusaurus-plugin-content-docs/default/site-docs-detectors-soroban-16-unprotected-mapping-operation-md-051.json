@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/unprotected-mapping-operation",
+  "title": "Unprotected mapping operation",
+  "description": "Description",
+  "source": "@site/docs/detectors/soroban/16-unprotected-mapping-operation.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/unprotected-mapping-operation",
+  "permalink": "/scout-audit/docs/detectors/soroban/unprotected-mapping-operation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/16-unprotected-mapping-operation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 16,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Assert violation",
+    "permalink": "/scout-audit/docs/detectors/soroban/assert-violation"
+  },
+  "next": {
+    "title": "DoS unexpected revert with vector",
+    "permalink": "/scout-audit/docs/detectors/soroban/dos-unexpected-revert-with-vector"
+  }
+}

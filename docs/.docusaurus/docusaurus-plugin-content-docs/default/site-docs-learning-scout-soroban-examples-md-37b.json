@@ -1,0 +1,20 @@
+{
+  "id": "learning/scout-soroban-examples",
+  "title": "Soroban Smart Contracts Examples",
+  "description": "In the context of Scout's development, we engaged developers without Soroban experience to create a series of smart contracts within tight time constraints, encouraging them to introduce errors.",
+  "source": "@site/docs/learning/scout-soroban-examples.md",
+  "sourceDirName": "learning",
+  "slug": "/learning/scout-soroban-examples",
+  "permalink": "/scout-audit/docs/learning/scout-soroban-examples",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/learning/scout-soroban-examples.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Learning to Scout Soroban",
+    "permalink": "/scout-audit/docs/learning/learning-to-scout-soroban"
+  }
+}

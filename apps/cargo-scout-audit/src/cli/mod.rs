@@ -132,6 +132,14 @@ pub struct Scout {
         help = "Prints a hash of the sources at the time of build"
     )]
     pub src_hash: bool,
+
+    #[clap(
+        name = "cicd",
+        long,
+        help = "Report the analysis result via a file",
+        value_hint = clap::ValueHint::FilePath,
+    )]
+    pub cicd: Option<PathBuf>,
 }
 
 impl Scout {
@@ -176,5 +184,12 @@ impl Scout {
         }
 
         Ok(())
+    }
+
+    pub fn get_fail_path(&self) -> Option<PathBuf>{
+        match &self.cicd{
+            None => None,
+            Some(path) => Some(path.join("FAIL")),
+        }
     }
 }

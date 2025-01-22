@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/unused-return-enum",
+  "title": "Unused return enum",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/5-unused-return-enum.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/unused-return-enum",
+  "permalink": "/scout-audit/docs/detectors/ink/unused-return-enum",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/5-unused-return-enum.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Panic error",
+    "permalink": "/scout-audit/docs/detectors/ink/panic-error"
+  },
+  "next": {
+    "title": "DoS unbounded operation",
+    "permalink": "/scout-audit/docs/detectors/ink/dos-unbounded-operation"
+  }
+}

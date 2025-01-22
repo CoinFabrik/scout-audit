@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/assert-violation",
+  "title": "Assert violation",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/15-assert-violation.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/assert-violation",
+  "permalink": "/scout-audit/docs/detectors/ink/assert-violation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/15-assert-violation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 15,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unrestricted Transfer From",
+    "permalink": "/scout-audit/docs/detectors/ink/unrestricted-transfer-from"
+  },
+  "next": {
+    "title": "Avoid core::mem::forget usage",
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-core-mem-forget"
+  }
+}

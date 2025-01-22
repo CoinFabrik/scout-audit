@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/assert-violation",
+  "title": "Assert violation",
+  "description": "Description",
+  "source": "@site/docs/detectors/soroban/15-assert-violation.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/assert-violation",
+  "permalink": "/scout-audit/docs/detectors/soroban/assert-violation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/15-assert-violation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 15,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Iterators over indexing",
+    "permalink": "/scout-audit/docs/detectors/soroban/iterators-over-indexing"
+  },
+  "next": {
+    "title": "Unprotected mapping operation",
+    "permalink": "/scout-audit/docs/detectors/soroban/unprotected-mapping-operation"
+  }
+}

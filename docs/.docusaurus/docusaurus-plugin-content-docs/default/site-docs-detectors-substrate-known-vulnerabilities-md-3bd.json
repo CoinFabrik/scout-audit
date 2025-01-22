@@ -1,0 +1,24 @@
+{
+  "id": "detectors/substrate/known-vulnerabilities",
+  "title": "Known vulnerabilities",
+  "description": "Description",
+  "source": "@site/docs/detectors/substrate/known-vulnerabilities.md",
+  "sourceDirName": "detectors/substrate",
+  "slug": "/detectors/substrate/known-vulnerabilities",
+  "permalink": "/scout-audit/docs/detectors/substrate/known-vulnerabilities",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/known-vulnerabilities.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Invalid extrinsic weight",
+    "permalink": "/scout-audit/docs/detectors/substrate/invalid-extrinsic-weight"
+  },
+  "next": {
+    "title": "Unsigned extrinsic",
+    "permalink": "/scout-audit/docs/detectors/substrate/unsigned-extrinsic"
+  }
+}

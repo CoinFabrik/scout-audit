@@ -1,0 +1,24 @@
+{
+  "id": "detectors/substrate/equal-addresses",
+  "title": "Equal addresses",
+  "description": "Description",
+  "source": "@site/docs/detectors/substrate/equal-addresses.md",
+  "sourceDirName": "detectors/substrate",
+  "slug": "/detectors/substrate/equal-addresses",
+  "permalink": "/scout-audit/docs/detectors/substrate/equal-addresses",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/substrate/equal-addresses.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Empty expect",
+    "permalink": "/scout-audit/docs/detectors/substrate/empty-expect"
+  },
+  "next": {
+    "title": "Invalid extrinsic weight",
+    "permalink": "/scout-audit/docs/detectors/substrate/invalid-extrinsic-weight"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/iterators-over-indexing",
+  "title": "Iterators over indexing",
+  "description": "Description",
+  "source": "@site/docs/detectors/soroban/14-iterators-over-indexing.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/iterators-over-indexing",
+  "permalink": "/scout-audit/docs/detectors/soroban/iterators-over-indexing",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/14-iterators-over-indexing.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 14,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unused return enum",
+    "permalink": "/scout-audit/docs/detectors/soroban/unused-return-enum"
+  },
+  "next": {
+    "title": "Assert violation",
+    "permalink": "/scout-audit/docs/detectors/soroban/assert-violation"
+  }
+}

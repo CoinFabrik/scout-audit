@@ -20,7 +20,7 @@ use crate::{
         print::{print_error, print_info},
     },
 };
-use anyhow::{Context, Ok, Result};
+use anyhow::{anyhow, Context, Ok, Result};
 use cargo::{core::Verbosity, GlobalContext};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use serde_json::to_string_pretty;
@@ -87,6 +87,10 @@ impl ScoutResult {
 pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
+
+    if let Some(path) = opts.get_fail_path(){
+        let _ = std::fs::File::create(path);
+    }
 
     if opts.src_hash {
         println!("{}", digest::SOURCE_DIGEST);
@@ -198,7 +202,9 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             .text_str("Nothing was analyzed. Check your build system for errors.")
             .print();
         println!("{}", string);
-        return Ok(ScoutResult::from_string(&string));
+        return Err(anyhow!(
+            "Nothing was analyzed. Check your build system for errors."
+        ));
     }
 
     let (successful_findings, _failed_findings) = split_findings(&findings, &crates);
@@ -235,7 +241,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             &crates,
             project_info,
             &detectors_info,
-            opts.output_path,
+            opts.output_path.clone(),
             &opts.output_format,
         )?;
     }
@@ -244,6 +250,12 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let client_type = TelemetryClient::detect_client_type(&opts.args);
     let telemetry_client = TelemetryClient::new(blockchain, client_type);
     let _ = telemetry_client.send_report();
+
+    if let Some(path) = opts.get_fail_path(){
+        if console_findings.is_empty(){
+            let _ = std::fs::remove_file(path);
+        }
+    }
 
     Ok(ScoutResult::new(console_findings, output_string_vscode))
 }

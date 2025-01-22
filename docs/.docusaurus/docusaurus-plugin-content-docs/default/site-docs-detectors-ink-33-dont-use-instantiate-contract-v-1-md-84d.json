@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/dont-use-instantiate-contract-v1",
+  "title": "Don't use instantiate_contract_v1",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/33-dont-use-instantiate-contract-v1.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/dont-use-instantiate-contract-v1",
+  "permalink": "/scout-audit/docs/detectors/ink/dont-use-instantiate-contract-v1",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/33-dont-use-instantiate-contract-v1.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 33,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Don't use invoke_contract_v1",
+    "permalink": "/scout-audit/docs/detectors/ink/dont-use-invoke-contract-v1"
+  },
+  "next": {
+    "title": "Divide before multiply",
+    "permalink": "/scout-audit/docs/detectors/soroban/divide-before-multiply"
+  }
+}

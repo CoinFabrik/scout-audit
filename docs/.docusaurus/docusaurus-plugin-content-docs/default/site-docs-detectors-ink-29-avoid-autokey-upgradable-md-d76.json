@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/avoid-autokey-upgradable",
+  "title": "Avoid AutoKey Upgradable",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/29-avoid-autokey-upgradable.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/avoid-autokey-upgradable",
+  "permalink": "/scout-audit/docs/detectors/ink/avoid-autokey-upgradable",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/29-avoid-autokey-upgradable.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 29,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Lazy values get and not set",
+    "permalink": "/scout-audit/docs/detectors/ink/lazy-values-not-set"
+  },
+  "next": {
+    "title": "Non payable transferred value",
+    "permalink": "/scout-audit/docs/detectors/ink/non-payable-transferred-value"
+  }
+}

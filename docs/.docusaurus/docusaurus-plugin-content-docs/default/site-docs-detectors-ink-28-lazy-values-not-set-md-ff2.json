@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/lazy-values-not-set",
+  "title": "Lazy values get and not set",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/28-lazy-values-not-set.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/lazy-values-not-set",
+  "permalink": "/scout-audit/docs/detectors/ink/lazy-values-not-set",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/28-lazy-values-not-set.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 28,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Warning sr25519_verify",
+    "permalink": "/scout-audit/docs/detectors/ink/warning-sr25519-verify"
+  },
+  "next": {
+    "title": "Avoid AutoKey Upgradable",
+    "permalink": "/scout-audit/docs/detectors/ink/avoid-autokey-upgradable"
+  }
+}

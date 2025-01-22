@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/insufficiently-random-values",
+  "title": "Insuficciently random values",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/13-insufficiently-random-values.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/insufficiently-random-values",
+  "permalink": "/scout-audit/docs/detectors/ink/insufficiently-random-values",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/13-insufficiently-random-values.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 13,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Zero or test address",
+    "permalink": "/scout-audit/docs/detectors/ink/zero-or-test-address"
+  },
+  "next": {
+    "title": "Unrestricted Transfer From",
+    "permalink": "/scout-audit/docs/detectors/ink/unrestricted-transfer-from"
+  }
+}

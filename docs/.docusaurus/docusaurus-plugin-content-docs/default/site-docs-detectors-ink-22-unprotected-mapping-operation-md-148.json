@@ -1,0 +1,25 @@
+{
+  "id": "detectors/ink/unprotected-mapping-operation",
+  "title": "Unprotected Mapping Operation",
+  "description": "What it does",
+  "source": "@site/docs/detectors/ink/22-unprotected-mapping-operation.md",
+  "sourceDirName": "detectors/ink",
+  "slug": "/detectors/ink/unprotected-mapping-operation",
+  "permalink": "/scout-audit/docs/detectors/ink/unprotected-mapping-operation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/ink/22-unprotected-mapping-operation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 22,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unprotected set code hash",
+    "permalink": "/scout-audit/docs/detectors/ink/unprotected-set-code-hash"
+  },
+  "next": {
+    "title": "Lazy storage on delegate",
+    "permalink": "/scout-audit/docs/detectors/ink/lazy-delegate"
+  }
+}

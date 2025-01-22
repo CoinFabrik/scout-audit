@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/dos-unexpected-revert-with-vector",
+  "title": "DoS unexpected revert with vector",
+  "description": "Description",
+  "source": "@site/docs/detectors/soroban/17-dos-unexpected-revert-with-vector.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/dos-unexpected-revert-with-vector",
+  "permalink": "/scout-audit/docs/detectors/soroban/dos-unexpected-revert-with-vector",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/17-dos-unexpected-revert-with-vector.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 17,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Unprotected mapping operation",
+    "permalink": "/scout-audit/docs/detectors/soroban/unprotected-mapping-operation"
+  },
+  "next": {
+    "title": "Unrestricted transfer from",
+    "permalink": "/scout-audit/docs/detectors/soroban/unrestricted-transfer-from"
+  }
+}

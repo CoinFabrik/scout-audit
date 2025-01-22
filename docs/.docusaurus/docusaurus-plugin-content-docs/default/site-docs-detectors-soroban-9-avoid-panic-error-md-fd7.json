@@ -1,0 +1,25 @@
+{
+  "id": "detectors/soroban/avoid-panic-error",
+  "title": "Avoid panic error",
+  "description": "Description",
+  "source": "@site/docs/detectors/soroban/9-avoid-panic-error.md",
+  "sourceDirName": "detectors/soroban",
+  "slug": "/detectors/soroban/avoid-panic-error",
+  "permalink": "/scout-audit/docs/detectors/soroban/avoid-panic-error",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/detectors/soroban/9-avoid-panic-error.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Set contract storage",
+    "permalink": "/scout-audit/docs/detectors/soroban/set-contract-storage"
+  },
+  "next": {
+    "title": "Avoid unsafe block",
+    "permalink": "/scout-audit/docs/detectors/soroban/avoid-unsafe-block"
+  }
+}
