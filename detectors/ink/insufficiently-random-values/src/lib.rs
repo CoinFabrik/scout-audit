@@ -18,7 +18,7 @@ pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Using block attributes like block_timestamp or block_number for random number generation in ink! Substrate smart contracts is not recommended due to the predictability of these values. Block attributes are publicly visible and deterministic, making it easy for malicious actors to anticipate their values and manipulate outcomes to their advantage.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/insufficiently-random-values",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/insufficiently-random-values",
     vulnerability_class: VulnerabilityClass::BlockAttributes,
 };
 

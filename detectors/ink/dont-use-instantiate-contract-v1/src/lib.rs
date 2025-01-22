@@ -25,7 +25,7 @@ pub static DONT_USE_INSTANTIATE_CONTRACT_V1_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Enhancement,
-    help: "https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dont-use-instantiate-contract-v1",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/dont-use-instantiate-contract-v1",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

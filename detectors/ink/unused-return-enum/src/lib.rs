@@ -23,7 +23,7 @@ pub static UNUSED_RETURN_ENUM_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Ink! messages can return a Result enum with a custom error type. This is useful for the caller to know what went wrong when the message fails. The definition of the Result type enum consists of two variants: Ok and Err. If any of the variants is not used, the code could be simplified or it could imply a bug.    ",
     severity: Severity::Minor,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unused-return-enum",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/unused-return-enum",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

@@ -31,7 +31,7 @@ pub static VEC_COULD_BE_MAPPING_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "This vector could be a mapping. Consider changing it, because you are using `find` method in a vector of tuples",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/vec-could-be-mapping",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/vec-could-be-mapping",
     vulnerability_class: VulnerabilityClass::GasUsage,
 };
 

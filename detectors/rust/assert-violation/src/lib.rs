@@ -21,7 +21,7 @@ pub static ASSERT_VIOLATION_ERROR_INFO: LintInfo = LintInfo {
     long_message: "Using assert! macro in production code can cause unexpected panics. \
                     This violates best practices for smart contract error handling.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/detectors/assert-violation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/assert-violation",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

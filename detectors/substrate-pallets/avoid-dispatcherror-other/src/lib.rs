@@ -23,7 +23,7 @@ pub static AVOID_DISPATCHERROR_OTHER_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Avoid using DispatchError::Other for error codes, as it makes writing smart contracts more difficult.",
     severity: Severity::Enhancement,
-    help: "TODO",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/avoid-dispatcherror-other",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

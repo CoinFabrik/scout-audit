@@ -22,7 +22,7 @@ pub static LAZY_DELEGATE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "A bug in ink! causes delegated calls to not modify the caller's storage unless Lazy with ManualKey or Mapping is used.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-delegate",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/lazy-delegate",
     vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 

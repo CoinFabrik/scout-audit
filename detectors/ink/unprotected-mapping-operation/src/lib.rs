@@ -33,7 +33,7 @@ pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Modifying mappings with an arbitrary key given by the user could lead to unintented modifications of critical data, modifying data belonging to other users, causing denial of service, unathorized access, and other potential issues.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/unprotected-mapping-operation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/unprotected-mapping-operation",
     vulnerability_class: VulnerabilityClass::ErrorHandling,
 };
 

@@ -32,7 +32,7 @@ pub static LAZY_VALUES_NOT_SET_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "When a get is performed, a copy of the value is received; if that copy is modified, the new value must be set afterwards.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/lazy-values-not-set",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/lazy-values-not-set",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

@@ -24,7 +24,7 @@ pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "In ink! the function set_contract_storage(key: &K, value: &V) can be used to modify the contract storage under a given key. When a smart contract uses this function, the contract needs to check if the caller should be able to alter this storage. If this does not happen, an arbitary caller may modify balances and other relevant contract storage.    ",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/set-contract-storage",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/set-contract-storage",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

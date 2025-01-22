@@ -25,7 +25,7 @@ pub static DELEGATE_CALL_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "It is important to validate and restrict delegate calls to trusted contracts, implement proper access control mechanisms, and carefully review external contracts to prevent unauthorized modifications, unexpected behavior, and potential exploits.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/delegate-call",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/delegate-call",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

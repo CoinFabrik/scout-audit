@@ -21,7 +21,7 @@ pub static INK_VERSION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Using a older version of ink! can be dangerous, as it may have bugs or security issues. Use the latest version available.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/ink-version",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/ink-version",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
