@@ -72,7 +72,6 @@ impl ScoutResult {
         }
     }
     pub fn from_stdout(stdout_helper: String) -> Self {
-        dbg!(&stdout_helper);
         Self {
             findings: Vec::new(),
             stdout_helper,
