@@ -4,8 +4,8 @@
 
 - Category: `DoS`
 - Severity: `Critical`
-- Detectors: [`unsigned-extrinsic`](https://github.com/CoinFabrik/scout-audit/tree/develop/detectors/substrate-pallets/unsigned-extrinsic)
-- Test Cases: [`unsigned-extrinsic-1`](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/unsigned-extrinsic)
+- Detectors: [`unsigned-extrinsic`](https://github.com/CoinFabrik/scout-audit/tree/main/detectors/substrate-pallets/unsigned-extrinsic)
+- Test Cases: [`unsigned-extrinsic-1`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/unsigned-extrinsic)
 
 Unsigned extrinsics allow transactions to be submitted without any associated fees or signatures. This can be exploited by malicious actors to flood the network with transactions at no cost, potentially causing denial of service. Consider using signed extrinsics with appropriate fee mechanisms unless there's a specific security reason for allowing unsigned transactions.
 
@@ -27,7 +27,7 @@ impl<T: Config> Pallet<T> {
 
 The `unsafe_call` function uses `ensure_none(origin)?`, which allows only unsigned transactions (i.e., where the origin is `None`). While this might seem harmless for internal runtime logic, it becomes problematic if this function is inadvertently exposed or misused.
 
-The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/unsigned-extrinsic/vulnerable/vulnerable-1).
+The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/unsigned-extrinsic/vulnerable/vulnerable-1).
 
 ## Remediation
 
@@ -45,4 +45,4 @@ impl<T: Config> Pallet<T> {
 }
 ```
 
-The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/unsigned-extrinsic/remediated/remediated-1).
+The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/unsigned-extrinsic/remediated/remediated-1).

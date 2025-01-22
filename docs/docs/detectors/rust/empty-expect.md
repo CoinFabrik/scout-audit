@@ -5,7 +5,6 @@
 - Category: `Best Practices`
 - Severity: `Medium`
 - Detectors: [`empty-expect`](https://github.com/CoinFabrik/scout-audit/tree/main/detectors/rust/empty-expect)
-- Test Cases: [`empty-expect-1`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/empty-expect)
 
 An empty `.expect()` creates a panic without any explanatory message, leaving developers without information to diagnose the error or trace its origin. This lack of clarity can lead to longer resolution times, poor maintenance practices, and potentially even security issues if sensitive operations fail without explanation.
 

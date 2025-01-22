@@ -4,8 +4,7 @@
 
 - Category: `Error Handling`
 - Severity: `Minor`
-- Detectors: equal-addresses
-- Test Cases: equal-addresses-1 equal-addresses-2
+- Detectors: [equal-addresses](https://github.com/CoinFabrik/scout-audit/blob/main/detectors/substrate-pallets/equal-addresses/src/lib.rs)
 
 Functions that receive two addresses as parameters should include a check to ensure they are not the same. This ensures that the addresses represent distinct entities within the system
 

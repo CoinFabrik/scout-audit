@@ -4,8 +4,7 @@
 
 - Category: `Best Practices`
 - Severity: `Minor`
-- Detectors: [`avoid-debug-info`](https://github.com/CoinFabrik/scout-audit/tree/develop/detectors/substrate-pallets/avoid-debug-info)
-- Test Cases: [`avoid-debug-info-1`](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info)
+- Detectors: [`avoid-debug-info`](https://github.com/CoinFabrik/scout-audit/tree/main/detectors/substrate-pallets/avoid-debug-info)
 
 The use of debugging macros, such as `debug!()` and `info!()`, is useful during development and testing; however, these macros are not recommended for production and are considered a bad practice. Additionally, each operation that stores data in memory requires the virtual machine to perform additional work, which increases the gas costs needed for the transaction. Instead, consider using events emitting to log relevant data more efficiently and reduce unnecessary gas costs.
 
@@ -36,7 +35,7 @@ pub fn unsafe_check_value(origin: OriginFor<T>, threshold: u32) -> DispatchResul
 
 The `unsafe_check_value` function logs data and provides a suggestion using `debug!()` and `info!()` macros. These macros, while helpful during development, are inefficient in production because they increase gas costs due to unnecessary resource consumption.
 
-The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/vulnerable/vulnerable-1).
+The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-debug-info/vulnerable/vulnerable-1).
 
 ## Remediation
 
@@ -64,4 +63,4 @@ pub fn unsafe_check_value(origin: OriginFor<T>, threshold: u32) -> DispatchResul
 }
 ```
 
-The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/avoid-debug-info/remediated/remediated-1).
+The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/avoid-debug-info/remediated/remediated-1).
