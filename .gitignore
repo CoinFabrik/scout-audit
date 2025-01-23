@@ -59,3 +59,6 @@ __pycache__
 /scripts/cs/run-tests/obj/
 launchSettings.json
 basic.tar
+
+# Auto-generated documenration files
+.docusaurus

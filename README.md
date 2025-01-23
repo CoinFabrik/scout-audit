@@ -1,12 +1,12 @@
 # Scout: Security Analysis Tool
 
-![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green)
+![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green) [![Test Detectors](https://github.com/CoinFabrik/scout-audit/actions/workflows/test-detectors-pr.yml/badge.svg)](https://github.com/CoinFabrik/scout-audit/actions/workflows/test-detectors-pr.yml)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/CoinFabrik/scout/c1eb3073f85b051dc9ce2fa0ab1ebab4bde0914e/assets/scout.png" alt="Scout in a Dark Forest" width="300" center  />
 </p>
 
-Scout is an extensible open-source tool intended to assist [ink!](https://use.ink/smart-contracts-polkadot/) and [Soroban](https://stellar.org/soroban) smart contract developers and auditors detect common security issues and deviations from best practices.
+Scout is an extensible open-source tool intended to assist [ink!](https://use.ink/smart-contracts-polkadot/), [Soroban](https://stellar.org/soroban) and [Substrate](https://substrate.io/) developers and auditors detect common security issues and deviations from best practices.
 
 This tool will help developers write secure and more robust smart contracts.
 
@@ -30,7 +30,7 @@ cargo scout-audit
 
 :warning: Make sure that your smart contracts compile properly. Scout won't run if any compilation errors exist.
 
-For more information on Scout's installation and usage, please refer to Scout's documentation for [ink!](https://github.com/CoinFabrik/scout) or [Soroban](https://github.com/CoinFabrik/scout-soroban).
+For more information on Scout's installation and usage, please refer to [Scout's documentation](https://coinfabrik.github.io/scout-audit/docs/intro).
 
 ## Output formats
 
@@ -78,19 +78,20 @@ In order to run the tests for a particular test-case, run the same command on th
 
 ## Detectors
 
-Detectors available for Scout are the ones available for Scout in its [ink!](https://github.com/CoinFabrik/scout?tab=readme-ov-file#detectors) and [Soroban](https://github.com/CoinFabrik/scout-soroban?tab=readme-ov-file#detectors) versions.                                                                                              
+Refer to Scout's [documentation site](https://coinfabrik.github.io/scout-audit/docs/intro) for a full list of the detectors for Ink, Soroban and Substrate.
 
 ## Acknowledgements
 
 Scout is an open source vulnerability analyzer developed by [CoinFabrik's](https://www.coinfabrik.com/) Research and Development team.
 
-We received support through grants from both the [Web3 Foundation Grants Program](https://github.com/w3f/Grants-Program/tree/master), the [Aleph Zero Ecosystem Funding Program](https://alephzero.org/ecosystem-funding-program) and the [Stellar Community Fund](https://communityfund.stellar.org).
+We received support through grants from both the [Web3 Foundation Grants Program](https://github.com/w3f/Grants-Program/tree/master), the [Aleph Zero Ecosystem Funding Program](https://alephzero.org/ecosystem-funding-program), the [Stellar Community Fund](https://communityfund.stellar.org) and [Polkadot Assurance Legion](https://polkadotassurance.com/).
 
 | Grant Program | Description |
 |---------------|-------------|
 | ![Web3 Foundation](https://raw.githubusercontent.com/CoinFabrik/scout/main/assets/web3-foundation.png) | **Proof of Concept:** We collaborated with the [Laboratory on Foundations and Tools for Software Engineering (LaFHIS)](https://lafhis.dc.uba.ar/) at the [University of Buenos Aires](https://www.uba.ar/internacionales/index.php?lang=en) to establish analysis techniques and tools for our detectors, as well as to create an initial list of vulnerability classes and code examples. [View Grant](https://github.com/CoinFabrik/web3-grant) \| [Application Form](https://github.com/w3f/Grants-Program/blob/master/applications/ScoutCoinFabrik.md).<br><br>**Prototype:** We built a functioning prototype using linting detectors built with [Dylint](https://github.com/trailofbits/dylint) and expanded the list of vulnerability classes, detectors, and test cases. [View Prototype](https://coinfabrik.github.io/scout/) \| [Application Form](https://github.com/w3f/Grants-Program/blob/master/applications/ScoutCoinFabrik_2.md). |
 | ![Aleph Zero](https://raw.githubusercontent.com/CoinFabrik/scout/main/assets/aleph-zero.png) | We improved the precision and number of detectors for the tool with a multi-phase approach. This included a manual vulnerability analysis of projects within the Aleph Zero ecosystem, comprehensive testing of the tool on leading projects, and refining its detection accuracy. |
 | ![Stellar Community Fund](img/stellar.png) | We added support for Stellar's smart contract language, Soroban. We included various output formats, such as an HTML report, improved the tool's precision and recall, and added a GitHub action to run the tool with pull requests.|
+| ![PAL](img/PAL_logo.svg) | We added support for Substrate pallets in all of Scout's features: CLI, VS Code extension and GitHub Action. |
 
 ## About CoinFabrik
 
