@@ -43,7 +43,7 @@ jobs:
 
       - name: Install dependencies and vsce
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install 
           pnpm install -g vsce
 
       - name: Build extension

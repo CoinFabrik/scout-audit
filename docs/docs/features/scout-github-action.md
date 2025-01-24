@@ -36,6 +36,15 @@ jobs:
       - uses: mshick/add-pr-comment@v2.8.2
         with:
           message-path: ${{ github.workspace }}/report.md
+
+      # Optional: Add the following step to block the merge of the commit if Scout finds any issues.
+
+      - name: Check for error
+        run: |
+          if [ -f "${{ github.workspace }}/FAIL" ]; then
+            echo "Error: Scout found issues."
+            exit 1
+          fi
 ```
 
 ## Considerations
