@@ -6,25 +6,20 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::{span_lint_and_help, span_lint_and_sugg};
-use common::analysis::{decomposers::*, get_node_type};
-use common::{
-    declarations::{Severity, VulnerabilityClass},
-    macros::expose_lint_info,
-};
+use clippy_utils::diagnostics::{ span_lint_and_help, span_lint_and_sugg };
+use common::analysis::{ decomposers::*, get_node_type };
+use common::{ declarations::{ Severity, VulnerabilityClass }, macros::expose_lint_info };
 use rustc_errors::Applicability;
 use rustc_hir::{
     def_id::LocalDefId,
-    intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, FnDecl,
+    intravisit::{ walk_expr, FnKind, Visitor },
+    Body,
+    Expr,
+    FnDecl,
 };
-use rustc_lint::{LateContext, LateLintPass};
+use rustc_lint::{ LateContext, LateLintPass };
 use rustc_span::Span;
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-    sync::{Arc, Mutex},
-};
+use std::{ collections::{ HashMap, HashSet }, ops::Deref, sync::{ Arc, Mutex } };
 
 const LINT_MESSAGE: &str = "Saturating arithmetic may silently generate incorrect results.";
 const F: bool = false;
@@ -74,7 +69,7 @@ impl FunctionAvailability {
     pub fn new(
         available_on_std: bool,
         available_on_substrate: bool,
-        suggested_replacement: &Option<&str>,
+        suggested_replacement: &Option<&str>
     ) -> Self {
         Self {
             available_on_std,
@@ -93,8 +88,7 @@ struct GlobalState {
 impl GlobalState {
     pub fn new() -> Self {
         Self {
-            relevant_functions: RELEVANT_FUNCTIONS
-                .iter()
+            relevant_functions: RELEVANT_FUNCTIONS.iter()
                 .map(|(x, y, z, a)| (x.to_string(), FunctionAvailability::new(*y, *z, a)))
                 .collect(),
             ignored_functions: Self::to_hash_set(&IGNORED_FUNCTIONS[..]),
@@ -111,8 +105,9 @@ impl GlobalState {
         let mut gs = GLOBAL_STATE.lock().unwrap();
         match gs.deref() {
             None => {
-                let ret =
-                    Arc::<Mutex<GlobalState>>::new(Mutex::<GlobalState>::new(GlobalState::new()));
+                let ret = Arc::<Mutex<GlobalState>>::new(
+                    Mutex::<GlobalState>::new(GlobalState::new())
+                );
                 *gs = Some(ret.clone());
                 ret
             }
@@ -158,7 +153,7 @@ fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) 
             LINT_MESSAGE,
             "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead",
             replacement,
-            Applicability::MaybeIncorrect,
+            Applicability::MaybeIncorrect
         );
     } else {
         span_lint_and_help(
@@ -167,7 +162,7 @@ fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) 
             method_name.ident.span,
             LINT_MESSAGE,
             None,
-            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead.",
+            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead."
         );
     }
     None
@@ -200,12 +195,12 @@ impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
         _: Span,
-        _: LocalDefId,
+        _: LocalDefId
     ) {
         if GlobalState::function_is_ignored(&ident(&kind)) {
             return;
         }
 
-        SaturatingFinder { cx }.visit_expr(body.value);
+        (SaturatingFinder { cx }).visit_expr(body.value);
     }
 }
