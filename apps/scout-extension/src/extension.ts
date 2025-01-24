@@ -66,7 +66,7 @@ async function checkRelevantDependencies(
     const cargoTomlPath = path.join(workspaceRoot, CARGO_TOML);
     const content = await fs.readFile(cargoTomlPath, "utf-8");
     const relevantDependencies = ["ink", "frame-system", "soroban-sdk"];
-    const sections = ["dependencies", "dev-dependencies", "build-dependencies"];
+    const sections = ["dependencies", "dev-dependencies", "build-dependencies", "workspace.dependencies"];
 
     for (const dep of relevantDependencies) {
       if (
