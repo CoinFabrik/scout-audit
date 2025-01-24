@@ -13,7 +13,9 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",
+ "dylint_linting",
  "if_chain",
+ "paste",
 ]
 
 [[package]]
@@ -438,17 +440,6 @@ name = "if_chain"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
-
-[[package]]
-name = "incorrect-exponentiation"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
 
 [[package]]
 name = "indexmap"
@@ -1004,17 +995,6 @@ dependencies = [
 
 [[package]]
 name = "unsafe-map-get"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
-name = "unsafe-unwrap"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",

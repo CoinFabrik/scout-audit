@@ -42,6 +42,8 @@ jobs:
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
+          rustup install nightly-2024-07-11
+          rustup default nightly-2024-07-11
           if cargo nextest run --all --all-features; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else

@@ -3,6 +3,8 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::utils::print::print_info;
+
 #[derive(Debug, Parser)]
 #[clap(display_name = "cargo")]
 pub struct Cli {
@@ -156,6 +158,7 @@ impl Scout {
     }
 
     pub fn validate(&self) -> Result<()> {
+        print_info("Validating CLI arguments...");
         if let Some(path) = &self.output_path {
             if path.is_dir() {
                 bail!(CliError::OutputPathIsDirectory(path.clone()));
@@ -183,10 +186,7 @@ impl Scout {
         Ok(())
     }
 
-    pub fn get_fail_path(&self) -> Option<PathBuf>{
-        match &self.cicd{
-            None => None,
-            Some(path) => Some(path.join("FAIL")),
-        }
+    pub fn get_fail_path(&self) -> Option<PathBuf> {
+        self.cicd.as_ref().map(|path| path.join("FAIL"))
     }
 }

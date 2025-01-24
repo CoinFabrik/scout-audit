@@ -23,7 +23,7 @@ pub static KNOWN_VULNERABILITIES_INFO: LintInfo = LintInfo {
     long_message:
         "Using dependencies with known vulnerabilities can expose your project to security risks",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/known-vulnerabilities",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/known-vulnerabilities",
     vulnerability_class: VulnerabilityClass::KnownBugs,
 };
 

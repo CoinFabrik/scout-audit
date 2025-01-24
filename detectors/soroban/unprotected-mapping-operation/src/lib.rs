@@ -34,7 +34,7 @@ pub static UNPROTECTED_MAPPING_OPERATION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "This mapping operation is called without access control on a different key than the caller's address",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unprotected-mapping-operation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/unprotected-mapping-operation",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

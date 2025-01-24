@@ -28,7 +28,7 @@ pub static TOKEN_INTERFACE_EVENTS_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Not emiting the established events breaks compatibility with the token standard and can lead to interoperability problems between the contract and its observers",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/token-interface-events",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/token-interface-events",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

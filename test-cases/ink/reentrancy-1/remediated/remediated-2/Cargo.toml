@@ -10,6 +10,7 @@ path = "src/lib.rs"
 __ink_dylint_Constructor = []
 __ink_dylint_Storage = []
 default = ["std"]
+ink-as-dependency = []
 std = ["ink/std"]
 
 [dependencies]

@@ -6,43 +6,23 @@
 
 Scout is an extensible open-source tool intended to assist smart contract developers and auditors detect common security issues and deviations from best practices. This is the vscode extension for Scout.
 
-Visit [Scout's website](https://www.coinfabrik.com/products/scout/) to learn more about the project, currently available for [Polkadot's ink!](https://github.com/coinfabrik/scout) and [Stellar's Soroban](https://github.com/CoinFabrik/scout-soroban) smart contract languages.
+Visit [Scout's website](https://www.coinfabrik.com/products/scout/) to learn more about the project, currently available for [ink!](https://use.ink/smart-contracts-polkadot/), [Soroban](https://stellar.org/soroban) and [Substrate](https://substrate.io/).
 
 ## Features
 
-- Detection of common security issues and deviations from best practices.
-- Line squiggles and hover messages to highlight issues.
+Detection of common security issues and deviations from best practices.
+
+Visit [Scout's documentation](https://coinfabrik.github.io/scout-audit/docs/intro) for the full list of detectors.
 
 ## Requirements
 
 Before installing the extension, make sure you have the following requirements:
 
-- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) extension installed.
-- Rust components installed.
-- For Polkadot's ink! version, have [cargo-scout-audit](https://github.com/CoinFabrik/scout) installed.
-- For Stellar's Soroban version, have [cargo-scout-audit-soroban](https://github.com/CoinFabrik/scout-soroban) installed.
+- [Scout Audit](https://github.com/CoinFabrik/scout-audit) installed.
 
-## Release Notes
+## Getting started
 
-### 0.1.3
-
-Fix description and resources.
-
-### 0.1.2
-
-Building upon our commitment to enhancing smart contract security, we are thrilled to announce version 0.1.2 of our Scout vscode extension. This latest update introduces support for [Soroban](https://soroban.stellar.org/) smart contracts on the [Stellar](https://stellar.org/) blockchain, showcasing Scout's expanding versatility and capability to adapt to different Rust-based blockchain environments.
-
-In this release, we are proud to present [12 new detectors and vulnerability classes](https://github.com/CoinFabrik/scout-soroban) specifically tailored for Soroban smart contracts, each accompanied by comprehensive test cases. This significant addition not only extends our coverage to another vital blockchain platform but also reinforces Scout's role as a critical tool in the smart contract development and auditing process.
-
-### 0.1.1
-
-Fix icon.
-
-### 0.1.0
-
-We're excited to announce the initial release of Scout, the vscode extension. This release lays the groundwork for smart contract developers and auditors, to efficiently identify common security issues and deviations from best practices within their ink! smart contracts.
-
-We include in this release [14 detectors and vulnerablity classes with multiple test-cases](https://github.com/CoinFabrik/scout).
+Visit [Scout's documentation](https://coinfabrik.github.io/scout-audit/docs/intro) for more details on the extension and the usage of Scout.
 
 ## About CoinFabrik
 

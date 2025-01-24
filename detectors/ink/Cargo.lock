@@ -13,7 +13,9 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",
+ "dylint_linting",
  "if_chain",
+ "paste",
 ]
 
 [[package]]
@@ -1030,17 +1032,6 @@ dependencies = [
 
 [[package]]
 name = "unrestricted-transfer-from"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
- "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
-name = "unsafe-unwrap"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",

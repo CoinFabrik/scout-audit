@@ -1,6 +1,6 @@
 use crate::{
     scout::blockchain::BlockChain,
-    utils::{cargo, env, telemetry::TracedError},
+    utils::{cargo, env, logger::TracedError},
 };
 use anyhow::{bail, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
@@ -161,7 +161,7 @@ impl Library {
                 .root
                 .ancestors()
                 .find(|p| {
-                    get_path_str(p).map_or(false, |name| {
+                    get_path_str(p).is_some_and(|name| {
                         name == "rust" || BlockChain::variants().contains(&name.to_string())
                     })
                 })

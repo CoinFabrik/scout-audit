@@ -28,7 +28,7 @@ pub static UNNECESSARY_LINT_ALLOW_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "The `#[scout_allow]` attribute may be unnecessary. Consider removing it if the lint is no longer triggered.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-lint-allow",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/unnecessary-lint-allow",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

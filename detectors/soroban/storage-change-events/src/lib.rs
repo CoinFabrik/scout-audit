@@ -28,7 +28,7 @@ pub static STORAGE_CHANGE_EVENTS_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/storage-change-events",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/storage-change-events",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

@@ -21,7 +21,7 @@ pub static INSUFFICIENTLY_RANDOM_VALUES_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/insufficiently-random-values",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/insufficiently-random-values",
     vulnerability_class: VulnerabilityClass::BlockAttributes,
 };
 

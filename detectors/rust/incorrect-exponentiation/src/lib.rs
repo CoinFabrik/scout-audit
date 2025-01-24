@@ -25,7 +25,7 @@ pub static INCORRECT_EXPONENTIATION_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/incorrect-exponentiation",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/incorrect-exponentiation",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
@@ -45,16 +45,20 @@ impl<'tcx> LateLintPass<'tcx> for IncorrectExponentiation {
         _: Span,
         _: LocalDefId,
     ) {
-        struct IncorrectExponentiationStorage {
+        struct IncorrectExponentiationVisitor {
             span: Vec<Span>,
-            incorrect_exponentiation: bool,
         }
 
-        impl<'tcx> Visitor<'tcx> for IncorrectExponentiationStorage {
+        impl<'tcx> Visitor<'tcx> for IncorrectExponentiationVisitor {
             fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
+                if let ExprKind::AssignOp(binop, _, _) = &expr.kind {
+                    if binop.node == rustc_hir::BinOpKind::BitXor {
+                        self.span.push(expr.span);
+                    }
+                }
+
                 if let ExprKind::Binary(op, _, _) = &expr.kind {
                     if op.node == rustc_hir::BinOpKind::BitXor {
-                        self.incorrect_exponentiation = true;
                         self.span.push(expr.span);
                     }
                 }
@@ -63,24 +67,19 @@ impl<'tcx> LateLintPass<'tcx> for IncorrectExponentiation {
             }
         }
 
-        let mut expon_storage = IncorrectExponentiationStorage {
-            span: Vec::new(),
-            incorrect_exponentiation: false,
-        };
+        let mut exponentiation_visitor = IncorrectExponentiationVisitor { span: Vec::new() };
 
-        walk_expr(&mut expon_storage, body.value);
+        walk_expr(&mut exponentiation_visitor, body.value);
 
-        if expon_storage.incorrect_exponentiation {
-            for span in expon_storage.span.iter() {
-                span_lint_and_help(
-                    cx,
-                    INCORRECT_EXPONENTIATION,
-                    *span,
-                    LINT_MESSAGE,
-                    None,
-                    LINT_HELP,
-                );
-            }
+        for span in exponentiation_visitor.span.iter() {
+            span_lint_and_help(
+                cx,
+                INCORRECT_EXPONENTIATION,
+                *span,
+                LINT_MESSAGE,
+                None,
+                LINT_HELP,
+            );
         }
     }
 }

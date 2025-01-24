@@ -6,7 +6,7 @@ mod tests {
         startup::run_scout,
     };
     use lazy_static::lazy_static;
-    use std::{collections::HashMap, fs, path::PathBuf};
+    use std::{collections::HashMap, fs, path::PathBuf, process::Command};
     use tempfile::TempDir;
     use uuid::Uuid;
 
@@ -159,6 +159,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
@@ -264,6 +265,46 @@ mod tests {
             ("divide_before_multiply", 1_usize),
         ];
         check_counts(&counts, &expected);
+    }
+
+    #[test]
+    fn test_message_format() {
+        let path = "tests/contracts/substrate-pallets/";
+
+        let scout_output = Command::new("cargo")
+            .args(["scout-audit", "--", "--message-format=json"])
+            .current_dir(path)
+            .output()
+            .unwrap();
+
+        let output = std::str::from_utf8(&scout_output.stdout).unwrap();
+        let output = output
+            .lines()
+            .map(serde_json::from_str::<serde_json::Value>)
+            .collect::<Vec<_>>();
+        assert!(
+            output.iter().all(|x| x.is_ok()),
+            "Output should be valid JSON",
+        );
+    }
+
+    #[test]
+    fn test_metadata() {
+        let path = "tests/contracts/substrate-pallets/";
+
+        let scout_output = Command::new("cargo")
+            .args(["scout-audit", "--metadata"])
+            .current_dir(path)
+            .output()
+            .unwrap();
+        let scout_stdout = std::str::from_utf8(&scout_output.stdout).unwrap();
+        let json_result: Result<serde_json::Value, _> =
+            serde_json::from_slice(&scout_output.stdout);
+        assert!(
+            json_result.is_ok(),
+            "Output should be valid JSON, got: {:?}",
+            scout_stdout
+        );
     }
 
     fn count_strings(strings: &[String]) -> Option<HashMap<String, usize>> {

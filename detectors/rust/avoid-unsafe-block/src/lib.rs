@@ -22,7 +22,7 @@ pub static AVOID_UNSAFE_BLOCK_INFO: LintInfo = LintInfo {
                   and should be avoided. Unsafe blocks can lead to undefined behavior, memory \
                   corruption, and security vulnerabilities.",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-rust/docs/vulnerabilities/avoid-unsafe-block",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/avoid-unsafe-block",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

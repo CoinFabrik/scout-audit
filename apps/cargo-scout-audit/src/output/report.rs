@@ -208,13 +208,13 @@ impl Report {
                 let html_path = output_path.unwrap_or_else(|| PathBuf::from("report.html"));
                 self.save_to_file(&html_path, html)?;
 
-                // Open the HTML report in the default web browser
-                webbrowser::open(
+                // Open the HTML report in the default web browser.
+                // Ignore the error if this fails (the user may not even have graphics).
+                let _ = webbrowser::open(
                     html_path
                         .to_str()
                         .with_context(|| "Path conversion to string failed")?,
-                )
-                .with_context(|| "Failed to open HTML report")?;
+                );
 
                 Ok(Some(html_path))
             }

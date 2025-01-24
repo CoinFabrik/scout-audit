@@ -30,7 +30,7 @@ pub static SET_CONTRACT_STORAGE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Functions using keys as variables without proper access control or input sanitation can allow users to perform changes in arbitrary memory locations.",
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/set-contract-storage",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/set-contract-storage",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 

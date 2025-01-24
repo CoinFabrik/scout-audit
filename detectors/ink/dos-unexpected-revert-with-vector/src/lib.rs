@@ -35,7 +35,7 @@ pub static DOS_UNEXPECTED_REVERT_WITH_VECTOR_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "It occurs by preventing transactions by other users from being successfully executed forcing the blockchain state to revert to its original state.",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout/docs/vulnerabilities/dos-unexpected-revert-with-vector",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/dos-unexpected-revert-with-vector",
     vulnerability_class: VulnerabilityClass::DoS,
 };
 

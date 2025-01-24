@@ -29,7 +29,7 @@ pub static EMPTY_EXPECT_INFO: LintInfo = LintInfo {
     long_message: "Using `expect` with an empty string makes error diagnosis \
         harder as it provides no context about what went wrong",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-rust/docs/detectors/empty-expect",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/empty-expect",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 

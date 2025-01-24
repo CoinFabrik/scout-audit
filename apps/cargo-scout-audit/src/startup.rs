@@ -9,14 +9,15 @@ use crate::{
         findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
         nightly_runner::run_scout_in_nightly,
         project_info::Project,
+        telemetry::TelemetryClient,
         version_checker::VersionChecker,
     },
     utils::{
         config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
         detectors_info::get_detectors_info,
-        print::print_error,
-        telemetry::TracedError,
+        logger::TracedError,
+        print::{print_error, print_info},
     },
 };
 use anyhow::{anyhow, Context, Ok, Result};
@@ -61,11 +62,24 @@ pub enum ScoutError {
 #[derive(Default)]
 pub struct ScoutResult {
     pub findings: Vec<Finding>,
+    pub stdout_helper: String,
 }
 
 impl ScoutResult {
-    pub fn new(findings: Vec<Finding>) -> Self {
-        Self { findings }
+    pub fn new(findings: Vec<Finding>, stdout_helper: String) -> Self {
+        Self {
+            findings,
+            stdout_helper,
+        }
+    }
+    pub fn from_stdout(stdout_helper: String) -> Self {
+        Self {
+            findings: Vec::new(),
+            stdout_helper,
+        }
+    }
+    pub fn from_string<T: std::fmt::Display>(s: T) -> Self {
+        Self::from_stdout(format!("{}\n", s))
     }
 }
 
@@ -74,13 +88,13 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
     opts.prepare_args();
 
-    if let Some(path) = opts.get_fail_path(){
+    if let Some(path) = opts.get_fail_path() {
         let _ = std::fs::File::create(path);
     }
 
     if opts.src_hash {
         println!("{}", digest::SOURCE_DIGEST);
-        return Ok(ScoutResult::default());
+        return Ok(ScoutResult::from_string(digest::SOURCE_DIGEST));
     }
 
     let metadata =
@@ -89,9 +103,14 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
     let toolchain = blockchain.get_toolchain();
 
+    // Send telemetry data
+    let client_type = TelemetryClient::detect_client_type(&opts.args);
+    let telemetry_client = TelemetryClient::new(blockchain, client_type);
+    let _ = telemetry_client.send_report();
+
     if opts.toolchain {
         println!("{}", toolchain);
-        return Ok(ScoutResult::default());
+        return Ok(ScoutResult::from_string(toolchain));
     }
 
     if let Some(mut child) = run_scout_in_nightly(toolchain)? {
@@ -155,9 +174,9 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let detectors_info = get_detectors_info(&detectors_paths)?;
 
     if opts.detectors_metadata {
-        let json = to_string_pretty(&detectors_info);
-        println!("{}", json.unwrap());
-        return Ok(ScoutResult::default());
+        let metadata = to_string_pretty(&detectors_info).unwrap();
+        println!("{}", metadata);
+        return Ok(ScoutResult::from_string(metadata));
     }
 
     let project_info = Project::get_info(&metadata).map_err(ScoutError::GetProjectInfoFailed)?;
@@ -212,12 +231,13 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     } else {
         (successful_findings, raw_findings_string)
     };
+
     // Generate report
     if inside_vscode {
         std::io::stdout()
             .lock()
             .write_all(output_string_vscode.as_bytes())
-            .with_context(|| ("Failed to write stdout content"))?;
+            .with_context(|| "Failed to write stdout content")?;
     } else {
         crate::output::console::render_report(&console_findings, &crates, &detectors_info)?;
         Report::generate(
@@ -231,13 +251,13 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         )?;
     }
 
-    if let Some(path) = opts.get_fail_path(){
-        if console_findings.is_empty(){
+    if let Some(path) = opts.get_fail_path() {
+        if console_findings.is_empty() {
             let _ = std::fs::remove_file(path);
         }
     }
 
-    Ok(ScoutResult::new(console_findings))
+    Ok(ScoutResult::new(console_findings, output_string_vscode))
 }
 
 #[tracing::instrument(name = "RUN DYLINT", skip_all)]
@@ -246,6 +266,8 @@ fn run_dylint(
     opts: &Scout,
     inside_vscode: bool,
 ) -> Result<(bool, NamedTempFile)> {
+    print_info("Running scout...");
+
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -254,7 +276,7 @@ fn run_dylint(
 
     // Initialize temporary file for stdout
     let stdout_temp_file =
-        NamedTempFile::new().with_context(|| ("Failed to create stdout temporary file"))?;
+        NamedTempFile::new().with_context(|| "Failed to create stdout temporary file")?;
     let pipe_stdout = Some(stdout_temp_file.path().to_string_lossy().into_owned());
 
     // Get the manifest path
@@ -274,6 +296,7 @@ fn run_dylint(
             lib_paths: detectors_paths,
             ..Default::default()
         },
+        no_deps: true,
         args,
         ..Default::default()
     };

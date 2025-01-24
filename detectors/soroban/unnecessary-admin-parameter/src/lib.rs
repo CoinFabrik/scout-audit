@@ -31,7 +31,7 @@ pub static UNNECESSARY_ADMIN_PARAMETER_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "This function has an admin parameter that might be unnecessary. Consider retrieving the admin from storage instead.",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-soroban/docs/detectors/unnecessary-admin-parameter",
+    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/unnecessary-admin-parameter",
     vulnerability_class: VulnerabilityClass::Authorization,
 };
 
