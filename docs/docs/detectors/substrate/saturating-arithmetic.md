@@ -1,4 +1,4 @@
-# Incorrect exponentiation
+# Saturating arithmetic
 
 ## Description
 
