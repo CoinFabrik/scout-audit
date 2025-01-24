@@ -26,7 +26,8 @@ pub static ITERATORS_OVER_INDEXING_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Instead, use an iterator or index to `.len()`.",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/iterators-over-indexing",
+    help:
+        "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/iterators-over-indexing",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 

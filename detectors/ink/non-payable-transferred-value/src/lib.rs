@@ -26,7 +26,8 @@ pub static NON_PAYABLE_TRANSFERRED_VALUE_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "",
     severity: Severity::Enhancement,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/non-payable-transferred-value",
+    help:
+        "https://coinfabrik.github.io/scout-audit/docs/detectors/ink/non-payable-transferred-value",
     vulnerability_class: VulnerabilityClass::BestPractices,
 };
 
