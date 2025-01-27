@@ -6,20 +6,25 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::{ span_lint_and_help, span_lint_and_sugg };
-use common::analysis::{ decomposers::*, get_node_type };
-use common::{ declarations::{ Severity, VulnerabilityClass }, macros::expose_lint_info };
+use clippy_utils::diagnostics::{span_lint_and_help, span_lint_and_sugg};
+use common::analysis::{decomposers::*, get_node_type};
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_errors::Applicability;
 use rustc_hir::{
     def_id::LocalDefId,
-    intravisit::{ walk_expr, FnKind, Visitor },
-    Body,
-    Expr,
-    FnDecl,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, FnDecl,
 };
-use rustc_lint::{ LateContext, LateLintPass };
+use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
-use std::{ collections::{ HashMap, HashSet }, ops::Deref, sync::{ Arc, Mutex } };
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Deref,
+    sync::{Arc, Mutex},
+};
 
 const LINT_MESSAGE: &str = "Saturating arithmetic may silently generate incorrect results.";
 const F: bool = false;
@@ -47,7 +52,8 @@ pub static SATURATING_ARITHMETIC_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: LINT_MESSAGE,
     severity: Severity::Critical,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/incorrect-exponentiation",
+    help:
+        "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/incorrect-exponentiation",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
@@ -69,7 +75,7 @@ impl FunctionAvailability {
     pub fn new(
         available_on_std: bool,
         available_on_substrate: bool,
-        suggested_replacement: &Option<&str>
+        suggested_replacement: &Option<&str>,
     ) -> Self {
         Self {
             available_on_std,
@@ -88,7 +94,8 @@ struct GlobalState {
 impl GlobalState {
     pub fn new() -> Self {
         Self {
-            relevant_functions: RELEVANT_FUNCTIONS.iter()
+            relevant_functions: RELEVANT_FUNCTIONS
+                .iter()
                 .map(|(x, y, z, a)| (x.to_string(), FunctionAvailability::new(*y, *z, a)))
                 .collect(),
             ignored_functions: Self::to_hash_set(&IGNORED_FUNCTIONS[..]),
@@ -105,9 +112,8 @@ impl GlobalState {
         let mut gs = GLOBAL_STATE.lock().unwrap();
         match gs.deref() {
             None => {
-                let ret = Arc::<Mutex<GlobalState>>::new(
-                    Mutex::<GlobalState>::new(GlobalState::new())
-                );
+                let ret =
+                    Arc::<Mutex<GlobalState>>::new(Mutex::<GlobalState>::new(GlobalState::new()));
                 *gs = Some(ret.clone());
                 ret
             }
@@ -195,7 +201,7 @@ impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
         _: Span,
-        _: LocalDefId
+        _: LocalDefId,
     ) {
         if GlobalState::function_is_ignored(&ident(&kind)) {
             return;

@@ -10,9 +10,12 @@ extern crate rustc_type_ir;
 use std::collections::HashSet;
 
 use clippy_utils::diagnostics::span_lint_and_help;
-use common::{ declarations::{ Severity, VulnerabilityClass }, macros::expose_lint_info };
+use common::{
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
+};
 use rustc_hir::Expr;
-use rustc_lint::{ LateContext, LateLintPass };
+use rustc_lint::{LateContext, LateLintPass};
 
 const LINT_MESSAGE: &str =
     "Hardcoding an index could lead to panic if the top bound is out of bounds.";
@@ -23,7 +26,8 @@ pub static ITERATORS_OVER_INDEXING_INFO: LintInfo = LintInfo {
     short_message: LINT_MESSAGE,
     long_message: "Instead, use an iterator or index to `.len()`.",
     severity: Severity::Medium,
-    help: "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/iterators-over-indexing",
+    help:
+        "https://coinfabrik.github.io/scout-audit/docs/detectors/substrate/iterators-over-indexing",
     vulnerability_class: VulnerabilityClass::Arithmetic,
 };
 
@@ -46,11 +50,8 @@ fn make_config() -> common_detectors::iterators_over_indexing::IteratorsOverInde
 impl<'tcx> LateLintPass<'tcx> for IteratorsOverIndexing {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'_>) {
         let config = make_config();
-        let span_constant = common_detectors::iterators_over_indexing::check_expr(
-            cx,
-            expr,
-            &config
-        );
+        let span_constant =
+            common_detectors::iterators_over_indexing::check_expr(cx, expr, &config);
         for span in span_constant {
             span_lint_and_help(
                 cx,
@@ -58,7 +59,7 @@ impl<'tcx> LateLintPass<'tcx> for IteratorsOverIndexing {
                 span,
                 LINT_MESSAGE,
                 None,
-                "Instead, use an iterator or index to `.len()`."
+                "Instead, use an iterator or index to `.len()`.",
             );
         }
     }
