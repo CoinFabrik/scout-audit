@@ -1,7 +1,11 @@
 use anyhow::{Context, Result};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    env, fs,
+    path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use strum::EnumIter;
 
 use super::blockchain::BlockChain;
