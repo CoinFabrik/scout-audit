@@ -3,6 +3,7 @@ name: General Rust
 on:
   pull_request:
     paths:
+      - ".github/workflows/**"
       - "apps/cargo-scout-audit/**"
       - "detectors/**"
       - "test-cases/**"
