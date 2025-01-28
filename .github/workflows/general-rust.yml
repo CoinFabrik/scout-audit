@@ -82,8 +82,10 @@ jobs:
             ./apps/cargo-scout-audit/target
           key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
 
-      - name: Update Rust Toolchain
-        run: rustup update
+      - name: Update Rust Toolchain and default to nightly
+        run: |
+          rustup update
+          rustup default nightly
 
       - name: Install cargo-udeps
         run: cargo install cargo-udeps
