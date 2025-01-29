@@ -42,3 +42,16 @@ cargo scout-audit
 💡 Scout supports Cargo Workspaces. When run on a workspace, Scout will be executed on all packages specified as members of the workspace.
 
 ⚠️ Make sure that your smart contracts compile properly. Scout won't run if any compilation errors exist.
+
+## Privacy
+
+Scout Audit includes telemetry to track usage, but your data remains completely secure.
+
+All reports sent to Scout are stored locally and can be viewed at:
+`$HOME/.scout-audit/telemetry/reports`
+
+To disable telemetry, navigate to:
+`$HOME/.scout-audit/telemetry`, open `user_id.txt`, and replace its content with DONOTTRACK.
+
+If you want to permanently delete your data from Scout's database, visit:
+`https://scout-api.coinfabrik.com/user/delete/<your-user-id>`.
