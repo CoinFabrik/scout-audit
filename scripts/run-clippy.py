@@ -7,7 +7,8 @@ commands = [
     ("detectors/soroban",            "cargo clippy --all-targets --all-features -- -D warnings"  ),
     ("detectors/substrate-pallets",  "cargo clippy --all-targets --all-features -- -D warnings"  ),
     ("test-cases/ink",               "cargo clippy -- -D warnings -A clippy::new_without_default"),
-    ("test-cases/soroban",           "cargo clippy --all-targets --all-features -- -D warnings"  ),
+    # Temporary fix for soroban issue with `used_linker`
+    ("test-cases/soroban",           "cargo +nightly-2024-07-11 clippy --all-targets --all-features -- -D warnings"  ),
     ("test-cases/substrate-pallets", "cargo clippy --all-targets --all-features -- -D warnings"  ),
 ]
 
