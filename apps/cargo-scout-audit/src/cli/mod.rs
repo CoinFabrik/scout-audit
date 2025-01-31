@@ -187,9 +187,6 @@ impl Scout {
     }
 
     pub fn get_fail_path(&self) -> Option<PathBuf> {
-        match &self.cicd {
-            None => None,
-            Some(path) => Some(path.join("FAIL")),
-        }
+        self.cicd.as_ref().map(|path| path.join("FAIL"))
     }
 }
