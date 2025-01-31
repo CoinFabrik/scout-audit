@@ -5,4 +5,4 @@ set -e -o pipefail
 cd "$INPUT_TARGET"
 
 # Run cargo scout-audit with the provided arguments
-cargo scout-audit $INPUT_SCOUT_ARGS
+cargo scout-audit --local-detectors /scout-audit/detectors $INPUT_SCOUT_ARGS
