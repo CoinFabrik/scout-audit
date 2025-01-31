@@ -38,6 +38,11 @@ jobs:
       - name: Install clippy-sarif and cargo-nextest
         run: cargo install clippy-sarif cargo-nextest --locked
 
+      - name: Disable telemetry
+        run: |
+          mkdir -p ~/.scout-audit/telemetry
+          echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
+          
       - name: Run tests and set output
         id: run-tests
         working-directory: apps/cargo-scout-audit
