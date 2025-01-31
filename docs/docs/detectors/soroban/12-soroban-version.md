@@ -15,7 +15,6 @@ Using an old version of Soroban can be dangerous, as it may have bugs or securit
 
 ## Issue example
 
-
 Consider the following `Cargo.toml`:
 
 ```toml
@@ -29,7 +28,6 @@ Consider the following `Cargo.toml`:
 Problems can arise if the version is not updated to the latest available.
 
 The code example can be found [here](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/soroban-version/soroban-version-1/vulnerable-example).
-
 
 ## Remediated example
 
@@ -50,7 +48,6 @@ Warns you if you are using an old version of Soroban in the `Cargo.toml`.
 
 ## References
 
+- [Latest Soroban SDK](https://crates.io/crates/soroban-sdk)
 - [Floating Pragma](https://swcregistry.io/docs/SWC-103/)
 - [outdated Compiler Version](https://swcregistry.io/docs/SWC-102/)
-
-
