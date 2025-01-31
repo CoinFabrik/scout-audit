@@ -66,9 +66,8 @@ impl Library {
         ))
     }
 
-    /// Builds the library and returns its path.
-    pub fn build(&self, bc: &BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
-        // Build entire workspace
+    #[cfg(not(feature = "docker_container"))]
+    fn build_workspace(&self, bc: &BlockChain, verbose: bool) -> Result<()>{
         cargo::build("detectors", bc, !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
@@ -76,6 +75,33 @@ impl Library {
             .args(["--release"])
             .success()
             .map_err(LibraryError::CargoBuildError(self.root.clone()).traced())?;
+        Ok(())
+    }
+    
+    #[cfg(feature = "docker_container")]
+    fn build_workspace(&self, _: &BlockChain, _: bool) -> Result<()>{
+        Ok(())
+    }
+
+    #[cfg(not(feature = "docker_container"))]
+    fn create_target_directory(&self) -> Result<()>{
+        let target_dir = self.target_directory();
+        if !target_dir.exists() {
+            std::fs::create_dir_all(&target_dir)
+                .map_err(LibraryError::FileSystemError(target_dir).traced())?;
+        }
+        Ok(())
+    }
+    
+    #[cfg(feature = "docker_container")]
+    fn create_target_directory(&self) -> Result<()>{
+        Ok(())
+    }
+
+    /// Builds the library and returns its path.
+    pub fn build(&self, bc: &BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
+        // Build entire workspace
+        self.build_workspace(bc, verbose)?;
 
         // Verify all libraries were built
         let compiled_library_paths = self.get_compiled_library_paths();
@@ -90,12 +116,7 @@ impl Library {
             bail!(LibraryError::MissingLibraries(unexistant_libraries));
         }
 
-        // Ensure target directory exists
-        let target_dir = self.target_directory();
-        if !target_dir.exists() {
-            std::fs::create_dir_all(&target_dir)
-                .map_err(LibraryError::FileSystemError(target_dir).traced())?;
-        }
+        self.create_target_directory()?;
 
         Ok(compiled_library_paths)
     }

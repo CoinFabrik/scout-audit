@@ -74,3 +74,6 @@ walkdir = "2.5.0"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "=0.58.0", features = ["Win32_System_LibraryLoader"] }
+
+[features]
+docker_container = []
