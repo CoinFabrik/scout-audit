@@ -1,7 +1,6 @@
-use crate::{
-    scout::blockchain::BlockChain,
-    utils::{cargo, env, logger::TracedError},
-};
+#[cfg(not(feature = "docker_container"))]
+use crate::utils::{cargo, env};
+use crate::{scout::blockchain::BlockChain, utils::logger::TracedError};
 use anyhow::{bail, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use itertools::Itertools;
@@ -67,7 +66,7 @@ impl Library {
     }
 
     #[cfg(not(feature = "docker_container"))]
-    fn build_workspace(&self, bc: &BlockChain, verbose: bool) -> Result<()>{
+    fn build_workspace(&self, bc: &BlockChain, verbose: bool) -> Result<()> {
         cargo::build("detectors", bc, !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
@@ -77,14 +76,14 @@ impl Library {
             .map_err(LibraryError::CargoBuildError(self.root.clone()).traced())?;
         Ok(())
     }
-    
+
     #[cfg(feature = "docker_container")]
-    fn build_workspace(&self, _: &BlockChain, _: bool) -> Result<()>{
+    fn build_workspace(&self, _: &BlockChain, _: bool) -> Result<()> {
         Ok(())
     }
 
     #[cfg(not(feature = "docker_container"))]
-    fn create_target_directory(&self) -> Result<()>{
+    fn create_target_directory(&self) -> Result<()> {
         let target_dir = self.target_directory();
         if !target_dir.exists() {
             std::fs::create_dir_all(&target_dir)
@@ -92,9 +91,9 @@ impl Library {
         }
         Ok(())
     }
-    
+
     #[cfg(feature = "docker_container")]
-    fn create_target_directory(&self) -> Result<()>{
+    fn create_target_directory(&self) -> Result<()> {
         Ok(())
     }
 
