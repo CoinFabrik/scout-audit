@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "apps/cargo-scout-audit/**"
-  workflow_dispatch: 
+  workflow_dispatch:
 
 env:
   PYTHONUNBUFFERED: 1
@@ -14,26 +14,8 @@ env:
   IMAGE_NAME: scout
 
 jobs:
-  filter-paths:
-    name: Filter modified paths by PR
-    runs-on: ubuntu-latest
-    outputs:
-      scout-audit: ${{ steps.filter.outputs.scout_audit }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Filter Paths
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            scout_audit:
-              - 'apps/cargo-scout-audit/**'
-
   test-release:
     name: Test dry-run release
-    needs: filter-paths
     runs-on: ubuntu-latest
     outputs:
       scout-audit: ${{ steps.scout-audit.outputs.result }}
@@ -53,7 +35,6 @@ jobs:
 
       - name: Test Scout Audit
         id: scout-audit
-        if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
         run: |
           python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
           echo "result=success" >> $GITHUB_OUTPUT
@@ -61,8 +42,6 @@ jobs:
   test-docker-release:
     name: Release to Docker Hub
     runs-on: ${{ matrix.os }}
-    needs: filter-paths
-    if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -119,7 +98,7 @@ jobs:
     name: Comment on PR about release status
     runs-on: ubuntu-latest
     if: ${{ always() }}
-    needs: [filter-paths, test-release, test-docker-release]
+    needs: [test-release, test-docker-release]
     steps:
       - name: Find existing comment
         id: find_comment
@@ -137,7 +116,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## 🚀 Release Dry-Run Summary
-            | Crate | Release Status | Dry Run Status |
-            | --- | --- | --- |
-            | [cargo-scout-audit](https://crates.io/crates/cargo-scout-audit) | ${{ needs.filter-paths.outputs.scout-audit == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.scout-audit == 'true' && (needs.test-release.outputs.scout-audit == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
-            | [scout-docker](https://hub.docker.com/repository/docker/coinfabrik/scout/general) | ${{ needs.filter-paths.outputs.scout-audit == 'true' && '🟢 Releasing' || '🔴 Not Releasing' }} | ${{ needs.filter-paths.outputs.scout-audit == 'true' && (needs.test-docker-release.outputs.docker-release == 'success' && '✅ Successful' || '❌ Failed') || 'N/A' }} |
+            | Crate | Dry Run Status |
+            | --- | --- |
+            | [cargo-scout-audit](https://crates.io/crates/cargo-scout-audit) | ${{ needs.test-release.outputs.scout-audit == 'success' && '✅ Successful' || '❌ Failed' }} |
+            | [scout-docker](https://hub.docker.com/repository/docker/coinfabrik/scout/general) | ${{ needs.test-docker-release.outputs.docker-release == 'success' && '✅ Successful' || '❌ Failed' }} |
