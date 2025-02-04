@@ -1,3 +1,4 @@
+extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_lint;
 extern crate rustc_span;
@@ -5,6 +6,7 @@ extern crate rustc_span;
 use analysis::{get_node_type_opt, match_type_to_str, ConstantAnalyzer};
 use clippy_utils::{diagnostics::span_lint_and_help, higher::IfOrIfLet, is_from_proc_macro};
 use if_chain::if_chain;
+use rustc_ast::LitKind;
 use rustc_hir::{
     def::Res,
     intravisit::{walk_expr, Visitor},
@@ -18,14 +20,14 @@ const PANIC_INDUCING_FUNCTIONS: [&str; 2] = ["panic", "bail"];
 
 /// Represents the type of check performed on method call expressions to determine their safety or behavior.
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
-pub enum CheckType {
+pub enum OptionResultCheckType {
     IsSome,
     IsNone,
     IsOk,
     IsErr,
 }
 
-impl CheckType {
+impl OptionResultCheckType {
     fn from_method_name(name: Symbol) -> Option<Self> {
         match name.as_str() {
             "is_some" => Some(Self::IsSome),
@@ -56,10 +58,76 @@ impl CheckType {
     }
 }
 
+/// Represents types of arithmetic comparisons that can be performed
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
+pub enum ArithmeticCheckType {
+    GreaterThan,
+    LessThan,
+    GreaterThanEq,
+    LessThanEq,
+    Equal,
+    NotEqual,
+    NonZero, // For division safety
+}
+
+impl ArithmeticCheckType {
+    fn from_binop(op: BinOpKind) -> Option<Self> {
+        match op {
+            BinOpKind::Gt => Some(Self::GreaterThan),
+            BinOpKind::Lt => Some(Self::LessThan),
+            BinOpKind::Ge => Some(Self::GreaterThanEq),
+            BinOpKind::Le => Some(Self::LessThanEq),
+            BinOpKind::Eq => Some(Self::Equal),
+            BinOpKind::Ne => Some(Self::NotEqual),
+            _ => None,
+        }
+    }
+
+    fn implies_safe_operation(
+        &self,
+        left: HirId,
+        right: HirId,
+        op_left: HirId,
+        op_right: HirId,
+        op_name: &str,
+    ) -> bool {
+        let exact_match = left == op_left && right == op_right;
+        let reverse_match = left == op_right && right == op_left;
+
+        match (self, op_name) {
+            (Self::GreaterThan | Self::GreaterThanEq, "checked_sub") => exact_match,
+            (Self::LessThan | Self::LessThanEq, "checked_sub") => reverse_match,
+
+            (Self::NonZero, "checked_div") => {
+                // For != 0, order doesn't matter
+                right == op_right || left == op_right
+            }
+            (Self::GreaterThan | Self::GreaterThanEq, "checked_div") => {
+                // For > 0 or >= 1, order matters! The variable must be on the left
+                left == op_right
+            }
+            (Self::LessThan | Self::LessThanEq, "checked_div") => {
+                // For 0 < x, order matters! The variable must be on the right
+                right == op_right
+            }
+
+            _ => false,
+        }
+    }
+}
+
+/// Represents an arithmetic safety check between two expressions
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
+struct ArithmeticCheck {
+    left_operand: HirId,
+    right_operand: HirId,
+    check_type: ArithmeticCheckType,
+}
+
 /// Represents a conditional checker that is used to analyze `if` or `if let` expressions.
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 struct ConditionalChecker {
-    check_type: CheckType,
+    check_type: OptionResultCheckType,
     checked_expr_hir_id: HirId,
 }
 
@@ -68,7 +136,7 @@ impl ConditionalChecker {
     fn handle_condition(condition: &Expr<'_>, inverse: bool) -> HashSet<Self> {
         if_chain! {
             if let ExprKind::MethodCall(path_segment, receiver, _, _) = condition.kind;
-            if let Some(check_type) = CheckType::from_method_name(path_segment.ident.name);
+            if let Some(check_type) = OptionResultCheckType::from_method_name(path_segment.ident.name);
             if let ExprKind::Path(QPath::Resolved(_, checked_expr_path)) = receiver.kind;
             if let Res::Local(checked_expr_hir_id) = checked_expr_path.res;
             then {
@@ -109,6 +177,7 @@ pub struct UnsafeChecks<'a, 'tcx> {
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
     conditional_checker: HashSet<ConditionalChecker>,
     checked_exprs: HashSet<HirId>,
+    arithmetic_checks: HashSet<ArithmeticCheck>,
     returns_result_or_option: bool,
     // Only sym::expect or sym::unwrap are supported, DO NOT USE OTHER SYMBOLS
     checks_symbol: Symbol,
@@ -128,6 +197,7 @@ impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
             constant_analyzer,
             conditional_checker: HashSet::new(),
             checked_exprs: HashSet::new(),
+            arithmetic_checks: HashSet::new(),
             returns_result_or_option: false,
         }
     }
@@ -178,6 +248,42 @@ impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
         if path_segment.ident.name == self.checks_symbol {
             if self.constant_analyzer.is_constant(receiver) {
                 return false;
+            }
+
+            // Analyze checked operations
+            if_chain! {
+                if let ExprKind::MethodCall(method_path, recv, args, _) = &receiver.kind;
+                let method_name = method_path.ident.name.as_str();
+                if method_name.starts_with("checked_");
+                then {
+                    // For division, first check if the divisor is a constant non-zero value
+                    if_chain! {
+                        if method_name == "checked_div";
+                        if let Some(right_expr) = args.first();
+                        if self.constant_analyzer.is_constant(right_expr);
+                        then {
+                            return false;
+                        }
+                    }
+
+                    // Check if the checked operation is safe
+                    if_chain! {
+                        if let Some(left_id) = self.get_expr_id(recv);
+                        if let Some(right_expr) = args.first();
+                        if let Some(right_id) = self.get_expr_id(right_expr);
+                        then {
+                            return !self.arithmetic_checks.iter().any(|check| {
+                                check.check_type.implies_safe_operation(
+                                    check.left_operand,
+                                    check.right_operand,
+                                    left_id,
+                                    right_id,
+                                    method_name,
+                                )
+                            });
+                        }
+                    }
+                }
             }
 
             return self
@@ -258,6 +364,50 @@ impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
             }
         }
     }
+    fn get_expr_id(&self, expr: &Expr<'_>) -> Option<HirId> {
+        match &expr.kind {
+            ExprKind::Path(QPath::Resolved(_, path)) => {
+                if let Res::Local(id) = path.res {
+                    return Some(id);
+                }
+            }
+            ExprKind::Lit(lit) => {
+                if let LitKind::Int(_, _) = lit.node {
+                    return Some(expr.hir_id);
+                }
+            }
+            _ => return None,
+        }
+        None
+    }
+
+    fn handle_arithmetic_condition(&mut self, condition: &Expr<'tcx>) {
+        if_chain! {
+            if let ExprKind::Binary(op, left, right) = &condition.kind;
+            if let Some(check_type) = ArithmeticCheckType::from_binop(op.node);
+            if let Some(left_id) = self.get_expr_id(left);
+            if let Some(right_id) = self.get_expr_id(right);
+            then {
+                let check_type = match check_type {
+                    // 1. x != 0 or 0 != x -> NonZero (order doesn't matter)
+                    ArithmeticCheckType::NotEqual if self.constant_analyzer.is_constant(right) ||
+                                                   self.constant_analyzer.is_constant(left) => {
+                        ArithmeticCheckType::NonZero
+                    }
+                    // 2. x > 0 or x >= 1 -> only if constant is on right
+                    ArithmeticCheckType::GreaterThan | ArithmeticCheckType::GreaterThanEq
+                        if self.constant_analyzer.is_constant(right) => check_type,
+                    _ => check_type,
+                };
+
+                self.arithmetic_checks.insert(ArithmeticCheck {
+                    left_operand: left_id,
+                    right_operand: right_id,
+                    check_type,
+                });
+            }
+        }
+    }
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for UnsafeChecks<'a, 'tcx> {
@@ -276,6 +426,16 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeChecks<'a, 'tcx> {
             }
         }
 
+        if !self.arithmetic_checks.is_empty() {
+            match &expr.kind {
+                ExprKind::Ret(..) => self.handle_if_expressions(),
+                ExprKind::Call(func, _) if self.is_panic_inducing_call(func) => {
+                    self.handle_if_expressions()
+                }
+                _ => {}
+            }
+        }
+
         // Find `if` or `if let` expressions
         if let Some(IfOrIfLet {
             cond,
@@ -283,11 +443,14 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeChecks<'a, 'tcx> {
             r#else: _,
         }) = IfOrIfLet::hir(expr)
         {
-            // If we are interested in the condition (if it is a CheckType) we traverse the body.
+            self.handle_arithmetic_condition(cond);
+
             let conditional_checker = ConditionalChecker::from_expression(cond);
             self.update_conditional_checker(&conditional_checker, true);
             walk_expr(self, if_expr);
             self.update_conditional_checker(&conditional_checker, false);
+
+            self.arithmetic_checks.clear();
             return;
         }
 
