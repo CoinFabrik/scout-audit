@@ -17,7 +17,7 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
@@ -211,10 +211,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
         }
 
         // Gather all compile-time variables in the function
-        let mut constant_analyzer = ConstantAnalyzer {
-            cx,
-            constants: HashSet::new(),
-        };
+        let mut constant_analyzer = ConstantAnalyzer::new(cx);
         constant_analyzer.visit_body(body);
 
         // Analyze the function for integer overflow/underflow
