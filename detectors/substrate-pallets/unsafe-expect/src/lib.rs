@@ -17,7 +17,6 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span};
-use std::collections::HashMap;
 
 const LINT_MESSAGE: &str = "Unsafe usage of `expect`";
 
