@@ -1,8 +1,14 @@
 use anyhow::{Context, Result};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path::PathBuf};
+use std::{
+    env, fs,
+    path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use strum::EnumIter;
+
+use crate::cli::Scout;
 
 use super::blockchain::BlockChain;
 
@@ -79,9 +85,11 @@ impl TelemetryClient {
             .join("user_id.txt");
 
         // Read user ID from file
-        if let Ok(user_id) = fs::read_to_string(&user_id_path) {
-            if !user_id.trim().is_empty() {
-                return user_id;
+        if let Ok(content) = fs::read_to_string(&user_id_path) {
+            if let Some(last_line) = content.lines().last() {
+                if !last_line.trim().is_empty() {
+                    return last_line.to_string();
+                }
             }
         }
 
@@ -96,7 +104,18 @@ impl TelemetryClient {
         // Request new user ID from server
         match Self::request_new_user_id() {
             Ok(user_id) => {
-                if let Err(e) = fs::write(&user_id_path, &user_id) {
+                let file_content = format!(
+                    "# This file is used by Scout to gather anonymous usage data. You can see the\n\
+                     # last few reports that have been sent in the reports/ subdirectory.\n\
+                     #\n\
+                     # View your data at: https://scout-api.coinfabrik.com/report/data/{}\n\
+                     # Delete your data at: https://scout-api.coinfabrik.com/user/delete/{}\n\
+                     # To opt-out of telemetry, replace the following line with DONOTTRACK\n\
+                     {}",
+                    user_id, user_id, user_id
+                );
+
+                if let Err(e) = fs::write(&user_id_path, file_content) {
                     tracing::error!("Failed to cache user ID: {}", e);
                 }
                 user_id
@@ -122,11 +141,11 @@ impl TelemetryClient {
         Ok(new_user.user_id)
     }
 
-    pub fn detect_client_type(args: &[String]) -> ClientType {
-        if args.contains(&"--message-format=json".to_string()) {
-            ClientType::Vscode
-        } else if args.contains(&"--cicd".to_string()) {
+    pub fn detect_client_type(opts: &Scout) -> ClientType {
+        if opts.cicd.is_some() {
             ClientType::Cicd
+        } else if opts.args.contains(&"--message-format=json".to_string()) {
+            ClientType::Vscode
         } else {
             ClientType::Cli
         }
@@ -144,6 +163,17 @@ impl TelemetryClient {
             .json(&self.report)
             .send()
             .context("Failed to send telemetry report")?;
+
+        let reports_dir = get_home_directory()
+            .join(".scout-audit")
+            .join("telemetry")
+            .join("reports");
+        fs::create_dir_all(&reports_dir)?;
+
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+        let report_path = reports_dir.join(format!("report_{}.json", timestamp));
+        let json = serde_json::to_string_pretty(&self.report)?;
+        fs::write(&report_path, json)?;
 
         Ok(())
     }
