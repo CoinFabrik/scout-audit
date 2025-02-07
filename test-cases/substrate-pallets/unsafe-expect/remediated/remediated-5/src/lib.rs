@@ -45,10 +45,14 @@ pub mod pallet {
         pub fn unsafe_get_storage(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             let example_storage = ExampleStorage::<T>::get();
-            if example_storage.is_some() {
-                let value = example_storage.expect("This is safe");
-                Self::deposit_event(Event::UnsafeGetStorage { who, value });
+            if example_storage.is_none() {
+                return Err(Error::<T>::NotInitialized.into());
             }
+            let mut value = example_storage.expect("This is safe");
+            if value != 0 {
+                value = 10u32.checked_div(value).expect("This is safe");
+            }
+            Self::deposit_event(Event::UnsafeGetStorage { who, value });
             Ok(())
         }
 
