@@ -8,6 +8,8 @@ use std::{
 };
 use strum::EnumIter;
 
+use crate::cli::Scout;
+
 use super::blockchain::BlockChain;
 
 const SCOUT_TELEMETRY_URL: &str = "https://scout-api.coinfabrik.com";
@@ -139,11 +141,11 @@ impl TelemetryClient {
         Ok(new_user.user_id)
     }
 
-    pub fn detect_client_type(args: &[String]) -> ClientType {
-        if args.contains(&"--message-format=json".to_string()) {
-            ClientType::Vscode
-        } else if args.contains(&"--cicd".to_string()) {
+    pub fn detect_client_type(opts: &Scout) -> ClientType {
+        if opts.cicd.is_some() {
             ClientType::Cicd
+        } else if opts.args.contains(&"--message-format=json".to_string()) {
+            ClientType::Vscode
         } else {
             ClientType::Cli
         }

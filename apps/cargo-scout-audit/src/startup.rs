@@ -116,7 +116,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     }
 
     // Send telemetry data
-    let client_type = TelemetryClient::detect_client_type(&opts.args);
+    let client_type = TelemetryClient::detect_client_type(&opts);
     let telemetry_client = TelemetryClient::new(blockchain, client_type);
     let _ = telemetry_client.send_report();
 
