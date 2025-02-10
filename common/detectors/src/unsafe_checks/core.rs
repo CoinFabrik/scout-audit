@@ -19,7 +19,8 @@ pub struct UnsafeChecks<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     lint: &'static Lint,
     checks_symbol: Symbol,
-    arithmetic_checker: ArithmeticChecker<'a, 'tcx>,
+    arithmetic_checker: ArithmeticChecker,
+    constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
     option_result_checker: OptionResultChecker<'a, 'tcx>,
 }
 
@@ -34,7 +35,8 @@ impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
             cx,
             lint,
             checks_symbol,
-            arithmetic_checker: ArithmeticChecker::new(constant_analyzer),
+            constant_analyzer,
+            arithmetic_checker: ArithmeticChecker::new(),
             option_result_checker: OptionResultChecker::new(cx),
         }
     }
@@ -44,10 +46,9 @@ impl<'a, 'tcx> UnsafeChecks<'a, 'tcx> {
             if !is_from_proc_macro(self.cx, expr);
             if let ExprKind::MethodCall(path_segment, receiver, _, _) = &expr.kind;
             if path_segment.ident.name == self.checks_symbol;
-            if !self.arithmetic_checker.is_arithmetic_safe(receiver);
-            if self.option_result_checker.is_method_call_unsafe(receiver);
+            if !self.arithmetic_checker.is_arithmetic_safe(receiver, &self.constant_analyzer);
+            if self.option_result_checker.is_method_call_unsafe(receiver, &self.constant_analyzer);
             then {
-                // TODO: Implement this
                 let help_message = if self.checks_symbol == sym::expect {
                     "Please, use a custom error instead of `expect`"
                 } else {
@@ -92,8 +93,8 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeChecks<'a, 'tcx> {
             r#else: _,
         }) = IfOrIfLet::hir(expr)
         {
-            // Left TOOD: handle returns in arithmetic context.
-            self.arithmetic_checker.analyze_condition(cond);
+            self.arithmetic_checker
+                .analyze_condition(cond, &self.constant_analyzer);
 
             // If we are interested in the condition (if it is a CheckType) we traverse the body.
             let conditional_checker = ConditionalChecker::from_expression(cond);

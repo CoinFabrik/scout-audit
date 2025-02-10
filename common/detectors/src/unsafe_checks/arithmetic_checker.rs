@@ -6,8 +6,7 @@ use if_chain::if_chain;
 use rustc_hir::{BinOpKind, Expr, ExprKind, HirId};
 use std::collections::HashMap;
 
-pub struct ArithmeticChecker<'a, 'tcx> {
-    constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+pub struct ArithmeticChecker {
     arithmetic_context: HashMap<HirId, ArithmeticSafetyInfo>,
 }
 
@@ -18,20 +17,23 @@ pub struct ArithmeticSafetyInfo {
     non_zero: bool,
 }
 
-impl<'a, 'tcx> ArithmeticChecker<'a, 'tcx> {
-    pub fn new(constant_analyzer: ConstantAnalyzer<'a, 'tcx>) -> Self {
+impl ArithmeticChecker {
+    pub fn new() -> Self {
         Self {
-            constant_analyzer,
             arithmetic_context: HashMap::new(),
         }
     }
 
-    pub fn is_arithmetic_safe(&mut self, expr: &Expr<'tcx>) -> bool {
+    pub fn is_arithmetic_safe<'a, 'tcx>(
+        &mut self,
+        expr: &Expr<'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+    ) -> bool {
         if_chain! {
             if let ExprKind::MethodCall(path_segment, _, args, _) = &expr.kind;
             if path_segment.ident.name.as_str() == "checked_div";
             if let Some(arg_id) = get_expr_hir_id_opt(&args[0]);
-            let arg_constant = self.constant_analyzer.get_constant(&args[0]);
+            let arg_constant = constant_analyzer.get_constant(&args[0]);
             then {
                 if let Some(arg_constant) = arg_constant {
                     if let Constant::Int(arg_int) = arg_constant {
@@ -51,8 +53,8 @@ impl<'a, 'tcx> ArithmeticChecker<'a, 'tcx> {
             if path_segment.ident.name.as_str() == "checked_sub";
             if let Some(receiver_id) = get_expr_hir_id_opt(receiver);
             if let Some(arg_id) = get_expr_hir_id_opt(&args[0]);
-            let receiver_constant = self.constant_analyzer.get_constant(receiver);
-            let arg_constant = self.constant_analyzer.get_constant(&args[0]);
+            let receiver_constant = constant_analyzer.get_constant(receiver);
+            let arg_constant = constant_analyzer.get_constant(&args[0]);
             then {
                 match (receiver_constant, arg_constant) {
                     (Some(receiver_value), Some(arg_value)) => if_chain! {
@@ -117,10 +119,14 @@ impl<'a, 'tcx> ArithmeticChecker<'a, 'tcx> {
         self.arithmetic_context.clear();
     }
 
-    pub fn analyze_condition(&mut self, condition: &Expr<'tcx>) {
+    pub fn analyze_condition<'a, 'tcx>(
+        &mut self,
+        condition: &Expr<'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+    ) {
         if let ExprKind::Binary(op, left, right) = &condition.kind {
-            let left_constant = self.constant_analyzer.get_constant(left);
-            let right_constant = self.constant_analyzer.get_constant(right);
+            let left_constant = constant_analyzer.get_constant(left);
+            let right_constant = constant_analyzer.get_constant(right);
 
             let mut handle_constant_compare =
                 |constant: Constant, var_expr: &Expr, is_left_constant: bool| {

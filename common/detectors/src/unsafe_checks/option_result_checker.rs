@@ -2,7 +2,7 @@ extern crate rustc_hir;
 extern crate rustc_lint;
 extern crate rustc_span;
 
-use analysis::{get_node_type_opt, match_type_to_str};
+use analysis::{get_node_type_opt, match_type_to_str, ConstantAnalyzer};
 use if_chain::if_chain;
 use rustc_hir::{def::Res, BinOpKind, Expr, ExprKind, HirId, LangItem, MatchSource, QPath, UnOp};
 use rustc_lint::LateContext;
@@ -113,7 +113,15 @@ impl<'a, 'tcx> OptionResultChecker<'a, 'tcx> {
         }
     }
 
-    pub fn is_method_call_unsafe(&self, receiver: &Expr<'tcx>) -> bool {
+    pub fn is_method_call_unsafe(
+        &self,
+        receiver: &Expr<'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+    ) -> bool {
+        if constant_analyzer.get_constant(receiver).is_some() {
+            return false;
+        }
+
         self.get_check_info(receiver)
             .map_or(true, |id| !self.checked_exprs.contains(&id))
     }
