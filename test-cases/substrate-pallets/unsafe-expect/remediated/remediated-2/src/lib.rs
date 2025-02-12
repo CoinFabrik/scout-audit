@@ -48,7 +48,7 @@ pub mod pallet {
             if example_storage.is_none() {
                 return Err(Error::<T>::NotInitialized.into());
             }
-            let value = example_storage.expect("Storage is not initialized");
+            let value = example_storage.expect("This is safe");
             Self::deposit_event(Event::UnsafeGetStorage { who, value });
             Ok(())
         }

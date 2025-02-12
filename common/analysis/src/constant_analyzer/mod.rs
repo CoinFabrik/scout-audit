@@ -1,23 +1,36 @@
+extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_lint;
 
 use clippy_utils::consts::{constant, Constant};
 use if_chain::if_chain;
+use rustc_ast::LitKind;
 use rustc_hir::{
     def::{DefKind, Res},
     intravisit::{walk_local, Visitor},
     Expr, ExprKind, HirId, Node, QPath,
 };
 use rustc_lint::LateContext;
-use std::collections::HashSet;
+use std::collections::HashMap;
+
+use crate::get_expr_hir_id_opt;
 
 /// Analyzes expressions to determine if they are constants or known at compile-time.
 pub struct ConstantAnalyzer<'a, 'tcx> {
     pub cx: &'a LateContext<'tcx>,
-    pub constants: HashSet<HirId>,
+    pub current_constant: Option<Constant<'tcx>>,
+    pub constants: HashMap<HirId, Option<Constant<'tcx>>>,
 }
 
 impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
+    pub fn new(cx: &'a LateContext<'tcx>) -> Self {
+        Self {
+            cx,
+            current_constant: None,
+            constants: HashMap::new(),
+        }
+    }
+
     /// Checks if a QPath refers to a constant.
     fn is_qpath_constant(&self, path: &QPath) -> bool {
         if let QPath::Resolved(_, path) = path {
@@ -39,7 +52,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
                         }
                     }
                 }
-                Res::Local(hir_id) => self.constants.contains(&hir_id),
+                Res::Local(hir_id) => self.constants.contains_key(&hir_id),
                 _ => false,
             }
         } else {
@@ -48,8 +61,9 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
     }
 
     /// Determines if an expression is constant or known at compile-time.
-    fn is_expr_constant(&self, expr: &Expr<'tcx>) -> bool {
-        if constant(self.cx, self.cx.typeck_results(), expr).is_some() {
+    fn is_expr_constant(&mut self, expr: &Expr<'tcx>) -> bool {
+        if let Some(const_val) = constant(self.cx, self.cx.typeck_results(), expr) {
+            self.current_constant = Some(const_val);
             return true;
         }
 
@@ -65,7 +79,15 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
             ExprKind::Index(array_expr, index_expr, _) => {
                 self.is_array_index_constant(array_expr, index_expr)
             }
-            ExprKind::Lit(_) => true,
+            ExprKind::Lit(lit) => {
+                match lit.node {
+                    LitKind::Int(val, _) => {
+                        self.current_constant = Some(Constant::Int(val.get()));
+                    }
+                    _ => {}
+                };
+                true
+            }
             ExprKind::Path(qpath_expr) => self.is_qpath_constant(&qpath_expr),
             ExprKind::Repeat(repeat_expr, _) => self.is_expr_constant(repeat_expr),
             ExprKind::Struct(_, expr_fields, _) => expr_fields
@@ -79,7 +101,11 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
     }
 
     /// Checks if an array index operation results in a constant value.
-    fn is_array_index_constant(&self, array_expr: &Expr<'tcx>, index_expr: &Expr<'tcx>) -> bool {
+    fn is_array_index_constant(
+        &mut self,
+        array_expr: &Expr<'tcx>,
+        index_expr: &Expr<'tcx>,
+    ) -> bool {
         match (
             &array_expr.kind,
             constant(self.cx, self.cx.typeck_results(), index_expr),
@@ -104,15 +130,27 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
     }
 
     /// Checks if a specific array element is constant.
-    fn is_array_element_constant(&self, elements: &[Expr<'tcx>], index: u128) -> bool {
+    fn is_array_element_constant(&mut self, elements: &[Expr<'tcx>], index: u128) -> bool {
         elements
             .get(index as usize)
             .map_or(false, |element| self.is_expr_constant(element))
     }
 
     /// Public method to check if an expression is constant.
-    pub fn is_constant(&self, expr: &Expr<'tcx>) -> bool {
+    pub fn is_constant(&mut self, expr: &Expr<'tcx>) -> bool {
         self.is_expr_constant(expr)
+    }
+
+    pub fn get_constant(&self, expr: &Expr<'tcx>) -> Option<Constant<'tcx>> {
+        if let Some(constant) = constant(self.cx, self.cx.typeck_results(), expr) {
+            return Some(constant);
+        }
+
+        let hir_id = get_expr_hir_id_opt(expr)?;
+        if let Some(constant) = self.constants.get(&hir_id) {
+            return constant.clone();
+        }
+        None
     }
 }
 
@@ -120,7 +158,8 @@ impl<'a, 'tcx> Visitor<'tcx> for ConstantAnalyzer<'a, 'tcx> {
     fn visit_local(&mut self, l: &'tcx rustc_hir::LetStmt<'tcx>) -> Self::Result {
         if let Some(init) = l.init {
             if self.is_expr_constant(init) {
-                self.constants.insert(l.pat.hir_id);
+                self.constants
+                    .insert(l.pat.hir_id, self.current_constant.take());
             }
         }
         walk_local(self, l);

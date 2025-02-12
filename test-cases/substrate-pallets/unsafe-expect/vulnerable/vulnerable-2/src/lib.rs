@@ -44,11 +44,11 @@ pub mod pallet {
         #[pallet::call_index(0)]
         pub fn unsafe_get_storage(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            let example_storage = ExampleStorage::<T>::get();
-            if example_storage.is_some() {
-                let value = example_storage.expect("This is safe");
-                Self::deposit_event(Event::UnsafeGetStorage { who, value });
-            }
+            let value = ExampleStorage::<T>::get().expect("Storage is not initialized");
+            Self::deposit_event(Event::UnsafeGetStorage {
+                who,
+                value: value.checked_sub(10).expect("This is unsafe"),
+            });
             Ok(())
         }
 
