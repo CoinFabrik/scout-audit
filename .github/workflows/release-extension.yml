@@ -25,9 +25,9 @@ jobs:
           node-version: 20
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.15.4
           run_install: false
 
       - name: Get pnpm store directory
@@ -43,7 +43,7 @@ jobs:
 
       - name: Install dependencies and vsce
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install 
           pnpm install -g vsce
 
       - name: Build extension

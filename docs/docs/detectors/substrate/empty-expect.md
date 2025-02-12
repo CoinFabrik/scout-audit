@@ -4,8 +4,8 @@
 
 - Category: `Best Practices`
 - Severity: `Medium`
-- Detectors: [`empty-expect`](https://github.com/CoinFabrik/scout-audit/tree/develop/detectors/rust/empty-expect)
-- Test Cases: [`empty-expect-1`](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/empty-expect)
+- Detectors: [`empty-expect`](https://github.com/CoinFabrik/scout-audit/tree/main/detectors/rust/empty-expect)
+- Test Cases: [`empty-expect-1`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/empty-expect)
 
 An empty `.expect()` creates a panic without any explanatory message, leaving developers without information to diagnose the error or trace its origin. This lack of clarity can lead to longer resolution times, poor maintenance practices, and potentially even security issues if sensitive operations fail without explanation.
 
@@ -28,7 +28,7 @@ pub fn unsafe_get_storage(origin: OriginFor<T>) -> DispatchResult {
 
 In the the `unsafe_get_storage` function, the line `example_storage.expect("")` uses an empty string in the `.expect()` method. This is problematic because it provides no context for the panic that occurs if the `Option` is `None`. If a panic is triggered, debugging the issue becomes significantly harder, as there is no information to explain what went wrong or why the code expected a value in the storage.
 
-The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/empty-expect/vulnerable/vulnerable-1).
+The vulnerable code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/empty-expect/vulnerable/vulnerable-1).
 
 ## Remediation
 
@@ -47,4 +47,4 @@ pub fn unsafe_get_storage(origin: OriginFor<T>) -> DispatchResult {
 }
 ```
 
-The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/develop/test-cases/substrate-pallets/empty-expect/remediated/remediated-1).
+The remediated code example can be found [here](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/substrate-pallets/empty-expect/remediated/remediated-1).

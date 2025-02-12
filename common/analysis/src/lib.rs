@@ -21,5 +21,8 @@ pub use type_utils::*;
 mod token_interface_utils;
 pub use token_interface_utils::*;
 
+pub mod hir_utils;
+pub use hir_utils::*;
+
 pub mod decomposers;
 pub mod double_pass;

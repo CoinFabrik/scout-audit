@@ -1,15 +1,19 @@
 use super::{html, markdown, pdf, utils};
-use crate::cli::OutputFormat;
-use crate::finding::Finding as JsonFinding;
-use crate::output::raw_report::RawReport;
-use crate::output::table::Table;
-use crate::scout::project_info::Project;
-use crate::utils::detectors_info::{LintInfo, LintStore};
+use crate::{
+    cli::OutputFormat,
+    finding::Finding as JsonFinding,
+    output::{raw_report::RawReport, table::Table},
+    scout::project_info::Project,
+    utils::detectors_info::{LintInfo, LintStore},
+};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
 use terminal_color_builder::OutputFormatter;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -273,22 +277,26 @@ impl Report {
             }
             OutputFormat::Sarif => {
                 let sarif_path = output_path.unwrap_or_else(|| PathBuf::from("report.sarif"));
-
                 let mut sarif_file = File::create(&sarif_path)?;
 
-                let child = std::process::Command::new("clippy-sarif")
+                let mut child = std::process::Command::new("clippy-sarif")
                     .stdin(std::process::Stdio::piped())
                     .stdout(std::process::Stdio::piped())
                     .spawn()?;
 
-                for finding in findings {
-                    std::io::Write::write_all(
-                        &mut child.stdin.as_ref().unwrap(),
-                        finding.rendered().as_bytes(),
-                    )?;
+                {
+                    let stdin = child.stdin.as_mut().unwrap();
+                    for finding in findings {
+                        writeln!(stdin, "{}", finding.json())?;
+                    }
                 }
 
-                std::io::Write::write_all(&mut sarif_file, &child.wait_with_output()?.stdout)?;
+                let output = child.wait_with_output()?;
+                if !output.status.success() {
+                    return Err(anyhow::anyhow!("clippy-sarif failed to generate report"));
+                }
+
+                std::io::Write::write_all(&mut sarif_file, &output.stdout)?;
 
                 Ok(Some(sarif_path))
             }

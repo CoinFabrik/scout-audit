@@ -46,7 +46,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             let example_storage = ExampleStorage::<T>::get();
             if example_storage.is_some() {
-                let value = example_storage.expect("Storage is not initialized");
+                let value = example_storage.expect("This is safe");
                 Self::deposit_event(Event::UnsafeGetStorage { who, value });
             }
             Ok(())

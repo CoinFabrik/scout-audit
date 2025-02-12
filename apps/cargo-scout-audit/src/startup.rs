@@ -103,11 +103,6 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
     let toolchain = blockchain.get_toolchain();
 
-    // Send telemetry data
-    let client_type = TelemetryClient::detect_client_type(&opts.args);
-    let telemetry_client = TelemetryClient::new(blockchain, client_type);
-    let _ = telemetry_client.send_report();
-
     if opts.toolchain {
         println!("{}", toolchain);
         return Ok(ScoutResult::from_string(toolchain));
@@ -119,6 +114,11 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             .with_context(|| "Failed to wait for nightly child process")?;
         return Ok(ScoutResult::default());
     }
+
+    // Send telemetry data
+    let client_type = TelemetryClient::detect_client_type(&opts);
+    let telemetry_client = TelemetryClient::new(blockchain, client_type);
+    let _ = telemetry_client.send_report();
 
     if let Err(e) = VersionChecker::new().check_for_updates() {
         // This is not a critical error, so we don't need to bail and we don't need a ScoutError
