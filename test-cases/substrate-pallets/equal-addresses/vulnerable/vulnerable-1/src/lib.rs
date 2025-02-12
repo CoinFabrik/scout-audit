@@ -35,7 +35,7 @@ pub mod pallet {
             to: T::AccountId,
             amount: u32,
         ) -> DispatchResult {
-            let origin = ensure_signed(origin)?;
+            let _ = ensure_signed(origin)?;
             let sender_balance = Self::balance_of(&from);
 
             ensure!(sender_balance >= amount, "Insufficient balance");
