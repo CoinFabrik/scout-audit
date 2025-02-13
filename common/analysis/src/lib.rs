@@ -1,7 +1,7 @@
 #![feature(rustc_private)]
 
-pub use paste;
 pub use dylint_linting;
+pub use paste;
 
 mod function_call_visitor;
 pub use function_call_visitor::FunctionCallVisitor;
