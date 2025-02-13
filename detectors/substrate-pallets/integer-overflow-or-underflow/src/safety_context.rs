@@ -18,25 +18,25 @@ impl SafetyContext {
         }
     }
 
-    pub fn check_operation<'a, 'tcx>(&mut self, init: &Expr<'tcx>, pat_hir_id: HirId) {
+    pub fn check_operation(&mut self, init: &Expr<'_>, pat_hir_id: HirId) {
         self.subtraction_context.check_operation(init, pat_hir_id);
         // TODO: In the future we might want to have a 'global' context to track safe divisions
     }
 
-    pub fn is_subtraction_safe<'a, 'tcx>(
+    pub fn is_subtraction_safe<'tcx>(
         &self,
         minuend: &Expr<'tcx>,
         subtrahend: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) -> bool {
         self.subtraction_context
             .is_subtraction_safe(minuend, subtrahend, constant_analyzer)
     }
 
-    pub fn is_division_safe<'a, 'tcx>(
+    pub fn is_division_safe<'tcx>(
         &self,
         divisor: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) -> bool {
         self.division_context
             .is_division_safe(divisor, constant_analyzer)
@@ -52,11 +52,11 @@ impl SafetyContext {
         self.division_context.exit_scope();
     }
 
-    pub fn track_comparison<'a, 'tcx>(
+    pub fn track_comparison<'tcx>(
         &mut self,
         less_eq: &Expr<'tcx>,
         greater_eq: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) {
         self.subtraction_context
             .track_comparison(less_eq, greater_eq, constant_analyzer);
@@ -64,7 +64,7 @@ impl SafetyContext {
             .track_comparison(less_eq, greater_eq, constant_analyzer);
     }
 
-    pub fn track_zero_comparison<'a, 'tcx>(&mut self, expr: &Expr<'tcx>, is_not_equal: bool) {
+    pub fn track_zero_comparison(&mut self, expr: &Expr<'_>, is_not_equal: bool) {
         self.division_context
             .track_zero_comparison(expr, is_not_equal);
     }
@@ -97,11 +97,11 @@ impl SubtractionContext {
         self.current_scope = None;
     }
 
-    pub fn track_comparison<'a, 'tcx>(
+    pub fn track_comparison<'tcx>(
         &mut self,
         less_eq: &Expr<'tcx>,
         greater_eq: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) {
         // Analyze if less_eq is a constant
         if let Some(const_val) = constant_analyzer.get_constant(less_eq) {
@@ -189,11 +189,11 @@ impl SubtractionContext {
         }
     }
 
-    pub fn is_subtraction_safe<'a, 'tcx>(
+    pub fn is_subtraction_safe<'tcx>(
         &self,
         minuend: &Expr<'tcx>,
         subtrahend: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) -> bool {
         // 1. Both minuend and subtrahend are constants
         if_chain! {
@@ -309,16 +309,15 @@ impl DivisionContext {
         }
     }
 
-    pub fn track_comparison<'a, 'tcx>(
+    pub fn track_comparison<'tcx>(
         &mut self,
         less_eq: &Expr<'tcx>,
         greater_eq: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) {
-        if let Some(const_val) = constant_analyzer.get_constant(less_eq) {
+        if let Some(Constant::Int(val)) = constant_analyzer.get_constant(less_eq) {
             if_chain! {
                 if let Some(greater_hir_id) = get_expr_hir_id_opt(greater_eq);
-                if let Constant::Int(val) = const_val;
                 if val != 0;
                 then {
                     self.record_non_zero(greater_hir_id);
@@ -327,10 +326,9 @@ impl DivisionContext {
             return;
         }
 
-        if let Some(const_val) = constant_analyzer.get_constant(greater_eq) {
+        if let Some(Constant::Int(val)) = constant_analyzer.get_constant(greater_eq) {
             if_chain! {
                 if let Some(less_hir_id) = get_expr_hir_id_opt(less_eq);
-                if let Constant::Int(val) = const_val;
                 if val != 0;
                 then {
                     self.record_non_zero(less_hir_id);
@@ -340,7 +338,7 @@ impl DivisionContext {
     }
 
     // Track equality comparisons with zero
-    pub fn track_zero_comparison<'a, 'tcx>(&mut self, expr: &Expr<'tcx>, is_not_equal: bool) {
+    pub fn track_zero_comparison(&mut self, expr: &Expr<'_>, is_not_equal: bool) {
         if is_not_equal {
             if let Some(expr_hir_id) = get_expr_hir_id_opt(expr) {
                 self.record_non_zero(expr_hir_id);
@@ -348,16 +346,14 @@ impl DivisionContext {
         }
     }
 
-    pub fn is_division_safe<'a, 'tcx>(
+    pub fn is_division_safe<'tcx>(
         &self,
         divisor: &Expr<'tcx>,
-        constant_analyzer: &ConstantAnalyzer<'a, 'tcx>,
+        constant_analyzer: &ConstantAnalyzer<'_, 'tcx>,
     ) -> bool {
         // Check if it's a constant first
-        if let Some(const_val) = constant_analyzer.get_constant(divisor) {
-            if let Constant::Int(val) = const_val {
-                return val != 0;
-            }
+        if let Some(Constant::Int(val)) = constant_analyzer.get_constant(divisor) {
+            return val != 0;
         }
 
         // Then check if we know it's non-zero from comparisons

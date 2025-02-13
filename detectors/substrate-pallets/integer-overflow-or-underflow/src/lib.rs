@@ -162,7 +162,7 @@ impl<'a, 'tcx> IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
                 BinOpKind::Sub => {
                     if self
                         .safety_context
-                        .is_subtraction_safe(left, right, &self.constant_analyzer)
+                        .is_subtraction_safe(left, right, self.constant_analyzer)
                     {
                         return;
                     }
@@ -172,7 +172,7 @@ impl<'a, 'tcx> IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
                 BinOpKind::Div => {
                     if self
                         .safety_context
-                        .is_division_safe(right, &self.constant_analyzer)
+                        .is_division_safe(right, self.constant_analyzer)
                     {
                         return;
                     }
@@ -212,14 +212,14 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
                         if let Some(init) = let_expr.init {
                             self.visit_expr(init);
                             self.safety_context
-                                .check_operation(&init, let_expr.pat.hir_id);
+                                .check_operation(init, let_expr.pat.hir_id);
                         }
                     }
                 });
             }
             ExprKind::Let(let_expr) => {
                 self.safety_context
-                    .check_operation(&let_expr.init, let_expr.pat.hir_id);
+                    .check_operation(let_expr.init, let_expr.pat.hir_id);
             }
             ExprKind::If(cond, then_expr, _) => {
                 if let ExprKind::DropTemps(cond) = cond.kind {
@@ -255,7 +255,7 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
                             self.safety_context.track_comparison(
                                 left,
                                 right,
-                                &self.constant_analyzer,
+                                self.constant_analyzer,
                             );
                         }
                         self.visit_expr(then_expr);

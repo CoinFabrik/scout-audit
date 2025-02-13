@@ -67,7 +67,9 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
+    traits::{
+        Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension,
+    },
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
@@ -235,12 +237,22 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn multiply_dummy(origin: OriginFor<T>, factor: T::Balance) -> DispatchResult {
+        pub fn multiply_dummy(
+            origin: OriginFor<T>,
+            factor: T::Balance,
+            value: u32,
+        ) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
             <Dummy<T>>::mutate(|dummy| {
                 let new_dummy = dummy.map_or(T::Balance::default(), |d| d.saturating_mul(factor));
                 *dummy = Some(new_dummy);
             });
+
+            // This just intends to show that its safe to do this.
+            if value > 1000 {
+                let _dummy = 1000 - value;
+            }
+
             Self::deposit_event(Event::MultiplyDummy { balance: factor });
             Ok(())
         }

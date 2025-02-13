@@ -67,7 +67,7 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
+    traits::{Bounded, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
@@ -112,14 +112,8 @@ impl<T: pallet_balances::Config> WeighData<(&BalanceOf<T>,)> for WeightForSetDum
     fn weigh_data(&self, target: (&BalanceOf<T>,)) -> Weight {
         let multiplier = self.0;
         // *target.0 is the amount passed into the extrinsic
-        let target_balance = *target.0;
-        let cents = target_balance
-            .checked_div(&<BalanceOf<T>>::from(MILLICENTS))
-            .unwrap();
-        Weight::from_parts(
-            (cents.saturating_mul(multiplier)).saturated_into::<u64>(),
-            0,
-        )
+        let cents = *target.0 / <BalanceOf<T>>::from(MILLICENTS);
+        Weight::from_parts((cents * multiplier).saturated_into::<u64>(), 0)
     }
 }
 
@@ -235,12 +229,20 @@ pub mod pallet {
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        pub fn multiply_dummy(origin: OriginFor<T>, factor: T::Balance) -> DispatchResult {
+        pub fn multiply_dummy(
+            origin: OriginFor<T>,
+            factor: T::Balance,
+            value: u32,
+        ) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
             <Dummy<T>>::mutate(|dummy| {
-                let new_dummy = dummy.map_or(T::Balance::default(), |d| d.saturating_mul(factor));
+                let new_dummy = dummy.map_or(T::Balance::default(), |d| d * factor);
                 *dummy = Some(new_dummy);
             });
+
+            // This just intends to show that its not safe to do this.
+            let _dummy = 1000 - value;
+
             Self::deposit_event(Event::MultiplyDummy { balance: factor });
             Ok(())
         }
@@ -365,7 +367,7 @@ impl<T: Config> Pallet<T> {
             *x = x.saturating_add(increase_by);
             *x
         });
-        assert!(prev.saturating_add(increase_by) == result);
+        assert!(prev + increase_by == result);
 
         Ok(())
     }
