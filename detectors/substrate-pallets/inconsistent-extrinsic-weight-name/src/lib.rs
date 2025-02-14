@@ -6,49 +6,24 @@ extern crate rustc_span;
 
 use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
-    macros::expose_lint_info,
-    declarations::{
-        Severity,
-        VulnerabilityClass,
-    },
     analysis::decomposers::{
-        expr_to_block,
-        expr_to_match,
-        pattern_to_struct,
-        path_to_type_relative,
-        type_to_path,
-        path_to_resolved,
-        resolution_to_self_ty_alias,
-        expr_to_unary,
-        stmt_to_let,
-        expr_to_path,
-        pattern_to_binding,
+        expr_to_block, expr_to_match, expr_to_path, expr_to_unary, path_to_resolved,
+        path_to_type_relative, pattern_to_binding, pattern_to_struct, resolution_to_self_ty_alias,
+        stmt_to_let, type_to_path,
     },
+    declarations::{Severity, VulnerabilityClass},
+    macros::expose_lint_info,
 };
 use rustc_ast::{
     token::TokenKind, tokenstream::TokenTree, AssocItemKind, HasTokens, Item, ItemKind,
 };
-use rustc_hir::{
-    LetStmt,
-    Expr,
-    Stmt,
-    ExprKind,
-    Arm,
-};
-use rustc_lint::{
-    EarlyContext,
-    EarlyLintPass,
-    LateLintPass,
-    LateContext,
-};
+use rustc_hir::{Arm, Expr, ExprKind, LetStmt, Stmt};
+use rustc_lint::{EarlyContext, EarlyLintPass, LateContext, LateLintPass};
 use rustc_span::Span;
 use std::{
     collections::HashMap,
-    sync::{
-        Arc,
-        Mutex,
-    },
     ops::Deref,
+    sync::{Arc, Mutex},
 };
 
 const LINT_MESSAGE: &str =
@@ -79,7 +54,7 @@ struct GlobalState {
 impl GlobalState {
     pub fn new() -> Self {
         Self {
-            functions_to_reconsider: HashMap::new()
+            functions_to_reconsider: HashMap::new(),
         }
     }
     fn get_state() -> Arc<Mutex<GlobalState>> {
@@ -94,24 +69,25 @@ impl GlobalState {
             Some(p) => p.clone(),
         }
     }
-    pub fn add_function_to_be_reconsidered(function_name: String, span1: Span, span2: Span){
+    pub fn add_function_to_be_reconsidered(function_name: String, span1: Span, span2: Span) {
         let gs = Self::get_state();
         let mut lock = gs.lock().unwrap();
-        lock.functions_to_reconsider.insert(function_name, (span1, span2));
+        lock.functions_to_reconsider
+            .insert(function_name, (span1, span2));
     }
-    pub fn any_functions_to_reconsider() -> bool{
+    pub fn any_functions_to_reconsider() -> bool {
         let gs = Self::get_state();
         let lock = gs.lock().unwrap();
         !lock.functions_to_reconsider.is_empty()
     }
-    pub fn functions_needs_reconsideration(s: &str) -> Option<(Span, Span)>{
+    pub fn functions_needs_reconsideration(s: &str) -> Option<(Span, Span)> {
         let gs = Self::get_state();
         let lock = gs.lock().unwrap();
-        Some(lock.functions_to_reconsider.get(s)?.clone())
+        Some(*(lock.functions_to_reconsider.get(s)?))
     }
 }
 
-static GLOBAL_STATE: Mutex<Option<Arc<Mutex<GlobalState>>>> = Mutex::new(None);  
+static GLOBAL_STATE: Mutex<Option<Arc<Mutex<GlobalState>>>> = Mutex::new(None);
 struct WeightInfoValidator {
     pub function_name: String,
     pub collected_text: Vec<String>,
@@ -184,7 +160,11 @@ impl EarlyLintPass for InconsistentExtrinsicWeightName {
                             validator.process_token_trees(&attr_token_trees);
 
                             if !validator.is_valid_weight_info() {
-                                GlobalState::add_function_to_be_reconsidered(validator.function_name, impl_item.span, attr.span);
+                                GlobalState::add_function_to_be_reconsidered(
+                                    validator.function_name,
+                                    impl_item.span,
+                                    attr.span,
+                                );
                                 //eprintln!("Analyze further: {}", validator.function_name);
                                 /*span_lint_and_help(
                                     cx,
@@ -204,23 +184,23 @@ impl EarlyLintPass for InconsistentExtrinsicWeightName {
 }
 
 //Returns true if the expression has the form "*self"
-fn is_star_self(expr: &'_ rustc_hir::Expr<'_>) -> bool{
-    (|| -> Option<()>{
+fn is_star_self(expr: &'_ rustc_hir::Expr<'_>) -> bool {
+    (|| -> Option<()> {
         let (f, op) = expr_to_unary(&expr.kind)?;
-        if f != rustc_ast::UnOp::Deref{
+        if f != rustc_ast::UnOp::Deref {
             return None;
         }
 
         let path = expr_to_path(&op.kind)?;
         let (_, path) = path_to_resolved(&path)?;
-        if path.segments.len() != 1{
+        if path.segments.len() != 1 {
             return None;
         }
 
-        let segment = path.segments.get(0).unwrap();
-        if segment.ident.name.as_str() != "self"{
+        let segment = path.segments.first().unwrap();
+        if segment.ident.name.as_str() != "self" {
             None
-        }else{
+        } else {
             Some(())
         }
     })()
@@ -228,9 +208,9 @@ fn is_star_self(expr: &'_ rustc_hir::Expr<'_>) -> bool{
 }
 
 //Returns Some(identifier) if the pattern has the form "Self::" + identifier + "{}", otherwise returns None.
-fn get_self_member(pattern: &'_ rustc_hir::Pat<'_>) -> Option<String>{
+fn get_self_member(pattern: &'_ rustc_hir::Pat<'_>) -> Option<String> {
     let (path, fields, ellipsis) = pattern_to_struct(&pattern.kind)?;
-    if ellipsis || !fields.is_empty(){
+    if ellipsis || !fields.is_empty() {
         return None;
     }
 
@@ -243,50 +223,50 @@ fn get_self_member(pattern: &'_ rustc_hir::Pat<'_>) -> Option<String>{
 }
 
 //Returns Some(expr) iff the let statement has the form "let __pallet_base_weight = " expr.
-fn get_pallet_base_weight_init<'a>(let_stmt: &'a LetStmt<'a>) -> Option<&'a Expr<'a>>{
+fn get_pallet_base_weight_init<'a>(let_stmt: &'a LetStmt<'a>) -> Option<&'a Expr<'a>> {
     let (_, _, id, _) = pattern_to_binding(&let_stmt.pat.kind)?;
-    if id.name.as_str() != "__pallet_base_weight"{
+    if id.name.as_str() != "__pallet_base_weight" {
         return None;
     }
 
     let_stmt.init
 }
 
-fn process_init_call(function: &'_ Expr<'_>, function_being_analyzed: &str) -> Option<bool>{
+fn process_init_call(function: &'_ Expr<'_>, function_being_analyzed: &str) -> Option<bool> {
     let path = expr_to_path(&function.kind)?;
     let (_, segment) = path_to_type_relative(&path)?;
 
     Some(segment.ident.name.as_str() == function_being_analyzed)
 }
 
-fn process_init(init: &'_ Expr<'_>, function_being_analyzed: &str) -> Option<bool>{
-    match &init.kind{
+fn process_init(init: &'_ Expr<'_>, function_being_analyzed: &str) -> Option<bool> {
+    match &init.kind {
         ExprKind::Call(function, _) => process_init_call(function, function_being_analyzed),
         ExprKind::Block(block, _) => {
-            if !block.stmts.is_empty(){
+            if !block.stmts.is_empty() {
                 return None;
             }
-            if let Some(ret) = block.expr{
+            if let Some(ret) = block.expr {
                 process_init(ret, function_being_analyzed)
-            }else{
+            } else {
                 None
             }
-        },
-        _ => None
+        }
+        _ => None,
     }
 }
 
-fn process_statement<'a>(stmt: &'a Stmt<'a>) -> Option<&'a Expr<'a>>{
+fn process_statement<'a>(stmt: &'a Stmt<'a>) -> Option<&'a Expr<'a>> {
     let let_stmt = stmt_to_let(&stmt.kind)?;
     get_pallet_base_weight_init(let_stmt)
 }
 
-fn find_pallet_base_weight<'a>(expr: &'a rustc_hir::Expr<'a>) -> Option<&'a rustc_hir::Expr<'a>>{
+fn find_pallet_base_weight<'a>(expr: &'a rustc_hir::Expr<'a>) -> Option<&'a rustc_hir::Expr<'a>> {
     let (statements, _) = expr_to_block(&expr.kind)?;
-    
-    for stmt in statements.stmts.iter(){
-        let init = process_statement(&stmt);
-        if init.is_some(){
+
+    for stmt in statements.stmts.iter() {
+        let init = process_statement(stmt);
+        if init.is_some() {
             return init;
         }
     }
@@ -294,12 +274,12 @@ fn find_pallet_base_weight<'a>(expr: &'a rustc_hir::Expr<'a>) -> Option<&'a rust
     None
 }
 
-fn process_branch(branch: &'_ Arm<'_>, cx: &LateContext<'_>) -> Option<()>{
+fn process_branch(branch: &'_ Arm<'_>, cx: &LateContext<'_>) -> Option<()> {
     let function_name = get_self_member(branch.pat)?;
     let (span1, span2) = GlobalState::functions_needs_reconsideration(&function_name)?;
-    let pallet_base_weight_expr = find_pallet_base_weight(&branch.body)?;
+    let pallet_base_weight_expr = find_pallet_base_weight(branch.body)?;
     let valid_function = process_init(pallet_base_weight_expr, &function_name)?;
-    if valid_function{
+    if valid_function {
         return None;
     }
     span_lint_and_help(
@@ -313,7 +293,7 @@ fn process_branch(branch: &'_ Arm<'_>, cx: &LateContext<'_>) -> Option<()>{
     None
 }
 
-fn analyze_get_dispatch_info(body: &'_ rustc_hir::Body<'_>, cx: &LateContext<'_>) -> Option<()>{
+fn analyze_get_dispatch_info(body: &'_ rustc_hir::Body<'_>, cx: &LateContext<'_>) -> Option<()> {
     let (block, _) = expr_to_block(&body.value.kind)?;
     let expr = block.expr?;
     let (match_expr, match_branches, match_source) = expr_to_match(&expr.kind)?;
@@ -321,7 +301,7 @@ fn analyze_get_dispatch_info(body: &'_ rustc_hir::Body<'_>, cx: &LateContext<'_>
         return None;
     }
 
-    for branch in match_branches.iter(){
+    for branch in match_branches.iter() {
         let _ = process_branch(branch, cx);
     }
 
@@ -338,11 +318,13 @@ impl<'tcx> LateLintPass<'tcx> for InconsistentExtrinsicWeightName {
         _: Span,
         localdef: rustc_span::def_id::LocalDefId,
     ) {
-        if !GlobalState::any_functions_to_reconsider(){
+        if !GlobalState::any_functions_to_reconsider() {
             return;
         }
 
-        if cx.tcx.def_path_str(localdef) != "<pallet::Call<T> as frame_support::dispatch::GetDispatchInfo>::get_dispatch_info"{
+        if cx.tcx.def_path_str(localdef)
+            != "<pallet::Call<T> as frame_support::dispatch::GetDispatchInfo>::get_dispatch_info"
+        {
             return;
         }
 
