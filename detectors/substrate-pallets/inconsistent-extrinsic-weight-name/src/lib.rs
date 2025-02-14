@@ -27,7 +27,7 @@ use std::{
 };
 
 const LINT_MESSAGE: &str =
-    "Invalid weight attribute: Each extrinsic must use its own unique weight calculation function.";
+    "Inconsistent weight attribute name: Each extrinsic must use its own unique weight calculation function.";
 
 #[expose_lint_info]
 pub static INCONSISTENT_EXTRINSIC_WEIGHT_NAME_INFO: LintInfo = LintInfo {
