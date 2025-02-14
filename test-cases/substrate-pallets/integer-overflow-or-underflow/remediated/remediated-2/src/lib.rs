@@ -67,7 +67,9 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
+    traits::{
+        Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension,
+    },
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
