@@ -200,9 +200,13 @@ impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
         kind: FnKind<'tcx>,
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
-        _: Span,
+        span: Span,
         _: LocalDefId,
     ) {
+        if span.from_expansion() {
+            return;
+        }
+
         if GlobalState::function_is_ignored(&ident(&kind)) {
             return;
         }
