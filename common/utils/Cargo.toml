@@ -1,0 +1,12 @@
+[package]
+edition = "2021"
+name = "common-utils"
+version = "0.1.0"
+
+[dependencies]
+paste = "1.0"
+#dylint_internal = "=3.1.2"
+#dylint_linting = "=3.1.2"
+
+[package.metadata.rust-analyzer]
+rustc_private = true

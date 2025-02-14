@@ -11,6 +11,7 @@ clippy_utils = { workspace = true }
 common = { workspace = true }
 dylint_linting = { workspace = true }
 if_chain = { workspace = true }
+common_utils = { path = "../../../common/utils", package = "common-utils" }
 
 [package.metadata.rust-analyzer]
 rustc_private = true
