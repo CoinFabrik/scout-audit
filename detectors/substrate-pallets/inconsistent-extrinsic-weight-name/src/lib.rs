@@ -165,15 +165,6 @@ impl EarlyLintPass for InconsistentExtrinsicWeightName {
                                     impl_item.span,
                                     attr.span,
                                 );
-                                //eprintln!("Analyze further: {}", validator.function_name);
-                                /*span_lint_and_help(
-                                    cx,
-                                    INCONSISTENT_EXTRINSIC_WEIGHT_NAME,
-                                    impl_item.span,
-                                    LINT_MESSAGE,
-                                    Some(attr.span),
-                                    "used here",
-                                );*/
                             }
                         }
                     }
