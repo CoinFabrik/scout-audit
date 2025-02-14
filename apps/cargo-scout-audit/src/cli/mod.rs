@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::utils::print::print_info;
+use crate::{scout::blockchain::BlockChain, utils::print::print_info};
 
 #[derive(Debug, Parser)]
 #[clap(display_name = "cargo")]
@@ -143,8 +143,10 @@ pub struct Scout {
 }
 
 impl Scout {
-    pub fn prepare_args(&mut self) {
-        if !self.args.iter().any(|x| x.contains("--target=")) {
+    pub fn prepare_args(&mut self, blockchain: BlockChain) {
+        // Only add default target args if not a substrate-pallet project
+        let is_substrate_pallet = matches!(blockchain, BlockChain::SubstratePallets);
+        if !is_substrate_pallet && !self.args.iter().any(|x| x.contains("--target=")) {
             self.args.extend([
                 "--target=wasm32-unknown-unknown".to_string(),
                 "--no-default-features".to_string(),

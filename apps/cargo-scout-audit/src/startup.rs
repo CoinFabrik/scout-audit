@@ -86,7 +86,6 @@ impl ScoutResult {
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
-    opts.prepare_args();
 
     if let Some(path) = opts.get_fail_path() {
         let _ = std::fs::File::create(path);
@@ -101,6 +100,10 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         Project::get_metadata(&opts.manifest_path).map_err(ScoutError::MetadataFailed)?;
     let blockchain =
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
+
+    // Prepare the args after we know the Blockchain type
+    opts.prepare_args(blockchain);
+
     let toolchain = blockchain.get_toolchain();
 
     if opts.toolchain {
