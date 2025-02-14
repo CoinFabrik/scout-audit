@@ -15,7 +15,7 @@ type BalanceOf2<T> = <T as pallet_balances::Config>::Balance;
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{pallet_prelude::*, traits::BuildGenesisConfig};
+    use frame_support::{ pallet_prelude::*, traits::BuildGenesisConfig };
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
@@ -52,7 +52,7 @@ pub mod pallet {
             Ok(())
         }
         #[pallet::call_index(1)]
-        pub fn unsafe_check_balance(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
+        pub fn unsafe_check_balance(origin: OriginFor<T>, amount: BalanceOf2<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             let sender_balance = Self::balance_of(&who);
             let amount_u32: u32 = amount.try_into().unwrap_or(u32::MAX);
