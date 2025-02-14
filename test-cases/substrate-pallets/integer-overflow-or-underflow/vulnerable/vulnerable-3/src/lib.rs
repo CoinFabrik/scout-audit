@@ -67,9 +67,7 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{
-        Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension,
-    },
+    traits::{Bounded, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
@@ -114,14 +112,8 @@ impl<T: pallet_balances::Config> WeighData<(&BalanceOf<T>,)> for WeightForSetDum
     fn weigh_data(&self, target: (&BalanceOf<T>,)) -> Weight {
         let multiplier = self.0;
         // *target.0 is the amount passed into the extrinsic
-        let target_balance = *target.0;
-        let cents = target_balance
-            .checked_div(&<BalanceOf<T>>::from(MILLICENTS))
-            .unwrap();
-        Weight::from_parts(
-            (cents.saturating_mul(multiplier)).saturated_into::<u64>(),
-            0,
-        )
+        let cents = *target.0 / <BalanceOf<T>>::from(MILLICENTS);
+        Weight::from_parts((cents * multiplier).saturated_into::<u64>(), 0)
     }
 }
 
@@ -236,83 +228,22 @@ pub mod pallet {
     // `ensure_root` and `ensure_none`.
     #[pallet::call(weight(<T as Config>::WeightInfo))]
     impl<T: Config> Pallet<T> {
-        /// This is your public interface. Be extremely careful.
-        /// This is just a simple example of how to interact with the pallet from the external
-        /// world.
-        // This just increases the value of `Dummy` by `increase_by`.
-        //
-        // Since this is a dispatched function there are two extremely important things to
-        // remember:
-        //
-        // - MUST NOT PANIC: Under no circumstances (save, perhaps, storage getting into an
-        // irreparably damaged state) must this function panic.
-        // - NO SIDE-EFFECTS ON ERROR: This function must either complete totally (and return
-        // `Ok(())` or it must have no side-effects on storage and return `Err('Some reason')`.
-        //
-        // The first is relatively easy to audit for - just ensure all panickers are removed from
-        // logic that executes in production (which you do anyway, right?!). To ensure the second
-        // is followed, you should do all tests for validity at the top of your function. This
-        // is stuff like checking the sender (`origin`) or that state is such that the operation
-        // makes sense.
-        //
-        // Once you've determined that it's all good, then enact the operation and change storage.
-        // If you can't be certain that the operation will succeed without substantial computation
-        // then you have a classic blockchain attack scenario. The normal way of managing this is
-        // to attach a bond to the operation. As the first major alteration of storage, reserve
-        // some value from the sender's account (`Balances` Pallet has a `reserve` function for
-        // exactly this scenario). This amount should be enough to cover any costs of the
-        // substantial execution in case it turns out that you can't proceed with the operation.
-        //
-        // If it eventually transpires that the operation is fine and, therefore, that the
-        // expense of the checks should be borne by the network, then you can refund the reserved
-        // deposit. If, however, the operation turns out to be invalid and the computation is
-        // wasted, then you can burn it or repatriate elsewhere.
-        //
-        // Security bonds ensure that attackers can't game it by ensuring that anyone interacting
-        // with the system either progresses it or pays for the trouble of faffing around with
-        // no progress.
-        //
-        // If you don't respect these rules, it is likely that your chain will be attackable.
-        //
-        // Each transaction must define a `#[pallet::weight(..)]` attribute to convey a set of
-        // static information about its dispatch. FRAME System and FRAME Executive pallet then use
-        // this information to properly execute the transaction, whilst keeping the total load of
-        // the chain in a moderate rate.
-        //
-        // The parenthesized value of the `#[pallet::weight(..)]` attribute can be any type that
-        // implements a set of traits, namely [`WeighData`], [`ClassifyDispatch`], and
-        // [`PaysFee`]. The first conveys the weight (a numeric representation of pure
-        // execution time and difficulty) of the transaction and the second demonstrates the
-        // [`DispatchClass`] of the call, the third gives whereas extrinsic must pay fees or not.
-        // A higher weight means a larger transaction (less of which can be placed in a single
-        // block).
-        //
-        // The weight for this extrinsic we rely on the auto-generated `WeightInfo` from the
-        // benchmark toolchain.
         #[pallet::call_index(0)]
-        pub fn accumulate_dummy(origin: OriginFor<T>, increase_by: T::Balance) -> DispatchResult {
+        pub fn multiply_dummy(
+            origin: OriginFor<T>,
+            factor: T::Balance,
+            value: u32,
+        ) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
             <Dummy<T>>::mutate(|dummy| {
-                let new_dummy = dummy.map_or(increase_by, |d| d.saturating_add(increase_by));
+                let new_dummy = dummy.map_or(T::Balance::default(), |d| d * factor);
                 *dummy = Some(new_dummy);
             });
-            Self::deposit_event(Event::AccumulateDummy {
-                balance: increase_by,
-            });
-            Ok(())
-        }
 
-        #[pallet::call_index(1)]
-        pub fn reduce_dummy(origin: OriginFor<T>, decrease_by: T::Balance) -> DispatchResult {
-            let _sender = ensure_signed(origin)?;
-            <Dummy<T>>::mutate(|dummy| {
-                let new_dummy =
-                    dummy.map_or(T::Balance::default(), |d| d.saturating_sub(decrease_by));
-                *dummy = Some(new_dummy);
-            });
-            Self::deposit_event(Event::DecreaseDummy {
-                balance: decrease_by,
-            });
+            // This just intends to show that its not safe to do this.
+            let _dummy = 1000 - value;
+
+            Self::deposit_event(Event::MultiplyDummy { balance: factor });
             Ok(())
         }
 
@@ -326,7 +257,7 @@ pub mod pallet {
         //
         // The weight for this extrinsic we use our own weight object `WeightForSetDummy` to
         // determine its weight
-        #[pallet::call_index(4)]
+        #[pallet::call_index(2)]
         #[pallet::weight(WeightForSetDummy::<T>(<BalanceOf<T>>::from(100u32)))]
         pub fn set_dummy(
             origin: OriginFor<T>,
@@ -358,14 +289,6 @@ pub mod pallet {
     /// it is optional, it is also possible to provide a custom implementation.
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        // Just a normal `enum`, here's a dummy event to ensure it compiles.
-        /// Dummy event, just here so there's a generic type that's used.
-        AccumulateDummy {
-            balance: BalanceOf<T>,
-        },
-        DecreaseDummy {
-            balance: BalanceOf<T>,
-        },
         MultiplyDummy {
             balance: BalanceOf<T>,
         },
@@ -444,7 +367,7 @@ impl<T: Config> Pallet<T> {
             *x = x.saturating_add(increase_by);
             *x
         });
-        assert!(prev.saturating_add(increase_by) == result);
+        assert!(prev + increase_by == result);
 
         Ok(())
     }

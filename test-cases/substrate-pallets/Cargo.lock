@@ -1548,6 +1548,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "integer-overflow-or-underflow-remediated-3"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "integer-overflow-or-underflow-vulnerable-1"
 version = "0.1.0"
 dependencies = [
@@ -1564,6 +1579,21 @@ dependencies = [
 
 [[package]]
 name = "integer-overflow-or-underflow-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "integer-overflow-or-underflow-vulnerable-3"
 version = "0.1.0"
 dependencies = [
  "frame-support",
