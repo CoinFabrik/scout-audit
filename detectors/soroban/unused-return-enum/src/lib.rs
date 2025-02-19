@@ -61,6 +61,24 @@ impl<'tcx> Visitor<'tcx> for CounterVisitor {
                     }
                 }
             }
+            ExprKind::MethodCall(method, _, _, _) => {
+                let method_name = method.ident.name;
+                if matches!(method_name.as_str(), "ok_or" | "ok_or_else" | "ok_or_with") {
+                    self.count_ok += 1;
+                    self.count_err += 1;
+                    self.span.push(expr.span);
+                } else if matches!(
+                    method_name.as_str(),
+                    "map_err" | "or_else" | "unwrap_or" | "unwrap_or_else"
+                ) {
+                    if self.count_ok > 0 {
+                        self.count_err += 1;
+                    }
+                    if self.count_err > 0 {
+                        self.count_ok += 1;
+                    }
+                }
+            }
             ExprKind::Ret(Some(return_value)) => {
                 if_chain! {
                     if let ExprKind::Call(function, _) = &return_value.kind;
