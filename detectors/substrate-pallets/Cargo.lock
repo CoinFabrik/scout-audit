@@ -133,6 +133,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-utils"
+version = "0.1.0"
+dependencies = [
+ "paste",
+]
+
+[[package]]
 name = "declarations"
 version = "0.1.0"
 dependencies = [
@@ -204,6 +211,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
 
 [[package]]
+name = "inconsistent-extrinsic-weight-name"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "common-utils",
+ "dylint_linting",
+ "if_chain",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -220,16 +238,6 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal",
- "dylint_linting",
- "if_chain",
-]
-
-[[package]]
-name = "invalid-extrinsic-weight"
-version = "0.1.0"
-dependencies = [
- "clippy_utils",
- "common",
  "dylint_linting",
  "if_chain",
 ]

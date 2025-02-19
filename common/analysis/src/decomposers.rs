@@ -5,14 +5,14 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 extern crate rustc_lint;
 
-use rustc_ast::{BindingMode, Label, LitIntType, LitKind};
+use rustc_ast::{BindingMode, Label, LitIntType, LitKind, UnOp};
 use rustc_hir::{
     def::Res,
     Block, Expr, ExprField, ExprKind, HirId, LangItem, LoopSource, MatchSource, Pat, PatField,
-    PatKind, Path, QPath, StmtKind, Ty, PathSegment,
+    PatKind, Path, QPath, StmtKind, Ty, PathSegment, LetStmt,
 };
 use rustc_middle::ty::{TyCtxt, TyKind};
-use rustc_span::{symbol::Ident, Span};
+use rustc_span::{symbol::Ident, Span, def_id::DefId};
 use rustc_type_ir::Interner;
 
 pub fn type_to_adt<'hir>(
@@ -30,10 +30,28 @@ pub fn type_to_adt<'hir>(
     }
 }
 
+pub fn type_to_path<'hir>(
+    kind: &'hir rustc_hir::TyKind<'hir>,
+) -> Option<QPath<'hir>> {
+    if let rustc_hir::TyKind::Path(a) = kind {
+        Some(*a)
+    } else {
+        None
+    }
+}
+
 //---------------------------------------------------------------------
 
 pub fn stmt_to_expr<'hir>(kind: &'hir StmtKind<'hir>) -> Option<&'hir Expr<'hir>> {
     if let StmtKind::Expr(a) = kind {
+        Some(a)
+    } else {
+        None
+    }
+}
+
+pub fn stmt_to_let<'hir>(kind: &'hir StmtKind<'hir>) -> Option<&'hir LetStmt<'hir>> {
+    if let StmtKind::Let(a) = kind {
         Some(a)
     } else {
         None
@@ -122,6 +140,26 @@ pub fn expr_to_loop<'hir>(
     }
 }
 
+pub fn expr_to_block<'hir>(
+    kind: &'hir ExprKind<'hir>,
+) -> Option<(&'hir Block<'hir>, Option<Label>)> {
+    if let ExprKind::Block(a, b) = kind {
+        Some((a, *b))
+    } else {
+        None
+    }
+}
+
+pub fn expr_to_unary<'hir>(
+    kind: &'hir ExprKind<'hir>,
+) -> Option<(UnOp, &'hir Expr<'hir>)> {
+    if let ExprKind::Unary(a, b) = kind {
+        Some((*a, b))
+    } else {
+        None
+    }
+}
+
 //---------------------------------------------------------------------
 
 pub fn path_to_lang_item(path: &QPath) -> Option<(LangItem, Span)> {
@@ -142,11 +180,29 @@ pub fn path_to_resolved<'hir>(
     }
 }
 
+pub fn path_to_type_relative<'hir>(
+    path: &'hir QPath<'hir>,
+) -> Option<(&'hir Ty<'hir>, &'hir PathSegment<'hir>)> {
+    if let QPath::TypeRelative(a, b) = path {
+        Some((a, b))
+    } else {
+        None
+    }
+}
+
 //---------------------------------------------------------------------
 
 pub fn resolution_to_local(resolution: &Res) -> Option<&HirId> {
     if let Res::Local(a) = resolution {
         Some(a)
+    } else {
+        None
+    }
+}
+
+pub fn resolution_to_self_ty_alias(resolution: &Res) -> Option<(DefId, bool, bool)> {
+    if let Res::SelfTyAlias{alias_to, forbid_generic, is_trait_impl} = resolution {
+        Some((*alias_to, *forbid_generic, *is_trait_impl))
     } else {
         None
     }
