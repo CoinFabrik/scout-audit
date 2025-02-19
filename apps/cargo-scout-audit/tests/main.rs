@@ -1,14 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
-    use cargo_scout_audit::{
-        cli::{OutputFormat, Scout},
-        startup::run_scout,
-    };
+
+    use cargo_scout_audit::{cli::Scout, startup::run_scout};
     use lazy_static::lazy_static;
-    use std::{collections::HashMap, fs, path::PathBuf, process::Command};
+    use std::{fs, path::PathBuf};
     use tempfile::TempDir;
-    use uuid::Uuid;
 
     lazy_static! {
         static ref TEST_DIR: TempDir = TempDir::new().expect("Failed to create temp directory");
