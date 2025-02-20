@@ -55,10 +55,10 @@ jobs:
           fi
       - name: LS the detectors
         run: |
-          ls -la detectors/rust/target/release
-          ls -la detectors/substrate-pallets/target/release
-          ls -la detectors/soroban/target/release
-          ls -la detectors/ink/target/release
+          ls -la /home/runner/work/scout-audit/scout-audit/detectors/rust/target/release
+          ls -la /home/runner/work/scout-audit/scout-audit/detectors/substrate-pallets/target/release
+          ls -la /home/runner/work/scout-audit/scout-audit/detectors/soroban/target/release
+          ls -la /home/runner/work/scout-audit/scout-audit/detectors/ink/target/release
 
   comment-on-pr:
     name: Comment on PR about test status
