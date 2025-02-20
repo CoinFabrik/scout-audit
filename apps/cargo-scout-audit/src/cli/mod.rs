@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand, ValueEnum};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -35,7 +36,7 @@ pub enum CargoSubCommand {
     ScoutAudit(Scout),
 }
 
-#[derive(Debug, Default, Clone, ValueEnum, PartialEq)]
+#[derive(Debug, Default, Clone, ValueEnum, PartialEq, Serialize, Deserialize)]
 pub enum OutputFormat {
     #[default]
     Html,
@@ -73,20 +74,9 @@ pub struct Scout {
         long,
         value_name = "DETECTORS",
         help = "Only run specified detectors (comma-separated)",
-        conflicts_with = "exclude",
-        conflicts_with = "profile"
+        conflicts_with = "exclude"
     )]
     pub filter: Option<String>,
-
-    // Select profiles in configuration
-    #[clap(
-        short,
-        long,
-        value_name = "PROFILE",
-        help = "Use a predefined detector profile",
-        conflicts_with = "filter"
-    )]
-    pub profile: Option<String>,
 
     // List all the available detectors
     #[clap(short, long, help = "Display available detectors")]
