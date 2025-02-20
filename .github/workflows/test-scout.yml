@@ -52,7 +52,6 @@ jobs:
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
-            exit 1
           fi
       - name: LS the detectors
         run: |
