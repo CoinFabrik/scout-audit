@@ -48,10 +48,11 @@ jobs:
         working-directory: apps/cargo-scout-audit
         run: |
           rustup install nightly-2024-07-11
-          if cargo +nightly-2024-07-11 nextest run --all --all-features --no-default-features; then
+          if cargo +nightly-2024-07-11 nextest run --all; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
   comment-on-pr:

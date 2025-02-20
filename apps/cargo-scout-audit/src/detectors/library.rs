@@ -67,22 +67,13 @@ impl Library {
 
     #[cfg(not(feature = "docker_container"))]
     fn build_workspace(&self, bc: &BlockChain, verbose: bool) -> Result<()> {
-        println!("🔍 Debug: Building workspace at path: {:?}", self.root);
-        println!("🔍 Debug: Using blockchain: {:?}", bc);
-        println!("🔍 Debug: Target directory: {:?}", self.target_dir);
-
         cargo::build("detectors", bc, !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
             .current_dir(&self.root)
             .args(["--release"])
             .success()
-            .map_err(|e| {
-                println!("❌ Debug: Build failed with error: {:?}", e);
-                LibraryError::CargoBuildError(self.root.clone())
-            })?;
-
-        println!("✅ Debug: Workspace build completed successfully");
+            .map_err(LibraryError::CargoBuildError(self.root.clone()).traced())?;
         Ok(())
     }
 
@@ -108,38 +99,11 @@ impl Library {
 
     /// Builds the library and returns its path.
     pub fn build(&self, bc: &BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
-        println!("🔍 Debug: Starting library build process");
-
         // Build entire workspace
         self.build_workspace(bc, verbose)?;
 
         // Verify all libraries were built
         let compiled_library_paths = self.get_compiled_library_paths();
-        println!(
-            "🔍 Debug: Expected library paths: {:?}",
-            compiled_library_paths
-        );
-
-        // Print contents of release directory
-        let release_dir = self
-            .metadata
-            .target_directory
-            .clone()
-            .into_std_path_buf()
-            .join("release");
-        println!(
-            "🔍 Debug: Checking contents of release directory: {:?}",
-            release_dir
-        );
-        if let Ok(entries) = std::fs::read_dir(&release_dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    println!("📁 Found: {:?}", entry.path());
-                }
-            }
-        } else {
-            println!("⚠️  Could not read release directory");
-        }
 
         let unexistant_libraries = compiled_library_paths
             .clone()
@@ -148,13 +112,10 @@ impl Library {
             .collect_vec();
 
         if !unexistant_libraries.is_empty() {
-            println!("❌ Debug: Missing libraries: {:?}", unexistant_libraries);
             bail!(LibraryError::MissingLibraries(unexistant_libraries));
         }
 
-        println!("🔍 Debug: All libraries exist, creating target directory");
         self.create_target_directory()?;
-        println!("✅ Debug: Build process completed successfully");
 
         Ok(compiled_library_paths)
     }

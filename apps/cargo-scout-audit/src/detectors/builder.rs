@@ -84,35 +84,17 @@ impl<'a> DetectorBuilder<'a> {
 
     #[tracing::instrument(skip_all, level = "debug")]
     fn build_all_libraries(&self, bc: &BlockChain) -> Result<Vec<PathBuf>> {
-        println!("🔍 Debug: Starting to build all libraries");
         let mut all_library_paths = Vec::new();
 
         let libraries = self.get_all_libraries()?;
-        println!("🔍 Debug: Found {} libraries to build", libraries.len());
 
-        for (idx, library) in libraries.iter().enumerate() {
-            println!(
-                "🔍 Debug: Building library {}/{} at path: {:?}",
-                idx + 1,
-                libraries.len(),
-                library.root
-            );
-            let library_paths = match library.build(bc, self.verbose) {
-                Ok(paths) => {
-                    println!("✅ Debug: Successfully built library paths: {:?}", paths);
-                    paths
-                }
-                Err(e) => {
-                    println!("❌ Debug: Failed to build library: {:?}", e);
-                    return Err(anyhow::Error::from(BuilderError::BuildError(
-                        library.root.clone(),
-                    )));
-                }
-            };
+        for library in libraries {
+            let library_paths = library
+                .build(bc, self.verbose)
+                .map_err(BuilderError::BuildError(library.root).traced())?;
             all_library_paths.extend(library_paths);
         }
 
-        println!("✅ Debug: Completed building all libraries");
         Ok(all_library_paths)
     }
 
