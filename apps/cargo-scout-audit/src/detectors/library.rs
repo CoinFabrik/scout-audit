@@ -79,7 +79,7 @@ impl Library {
             .success()
             .map_err(|e| {
                 println!("❌ Debug: Build failed with error: {:?}", e);
-                LibraryError::CargoBuildError(self.root.clone()).traced()
+                LibraryError::CargoBuildError(self.root.clone())
             })?;
 
         println!("✅ Debug: Workspace build completed successfully");
