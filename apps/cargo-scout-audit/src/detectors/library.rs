@@ -120,6 +120,27 @@ impl Library {
             compiled_library_paths
         );
 
+        // Print contents of release directory
+        let release_dir = self
+            .metadata
+            .target_directory
+            .clone()
+            .into_std_path_buf()
+            .join("release");
+        println!(
+            "🔍 Debug: Checking contents of release directory: {:?}",
+            release_dir
+        );
+        if let Ok(entries) = std::fs::read_dir(&release_dir) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    println!("📁 Found: {:?}", entry.path());
+                }
+            }
+        } else {
+            println!("⚠️  Could not read release directory");
+        }
+
         let unexistant_libraries = compiled_library_paths
             .clone()
             .into_iter()

@@ -53,12 +53,6 @@ jobs:
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
           fi
-      - name: LS the detectors
-        run: |
-          ls -la /home/runner/work/scout-audit/scout-audit/detectors/rust/target/release
-          ls -la /home/runner/work/scout-audit/scout-audit/detectors/substrate-pallets/target/release
-          ls -la /home/runner/work/scout-audit/scout-audit/detectors/soroban/target/release
-          ls -la /home/runner/work/scout-audit/scout-audit/detectors/ink/target/release
 
   comment-on-pr:
     name: Comment on PR about test status
