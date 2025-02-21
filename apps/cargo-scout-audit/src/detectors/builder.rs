@@ -136,7 +136,6 @@ impl<'a> DetectorBuilder<'a> {
             (true, _) => download_git_repo(&config.dependency, self.cargo_config),
             (_, true) => source_id
                 .local_path()
-                .map(PathBuf::from)
                 .ok_or_else(|| BuilderError::InvalidPathSource(source_id).into()),
             _ => Err(BuilderError::UnsupportedSourceId(source_id).into()),
         }

@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+
     use anyhow::Result;
     use cargo_scout_audit::{
         cli::{OutputFormat, Scout},
@@ -49,6 +50,10 @@ mod tests {
             };
             let result = run_scout(scout_opts);
 
+            if let Err(e) = &result {
+                println!("Error: {}", e);
+            }
+
             // Then
             assert!(result.is_ok());
         }
@@ -92,11 +97,6 @@ mod tests {
             assert!(result.is_ok());
         }
     }
-
-    // #[test]
-    // fn test_scout_with_profile() {
-    //     // TODO
-    // }
 
     #[test]
     fn test_scout_list_detectors() {

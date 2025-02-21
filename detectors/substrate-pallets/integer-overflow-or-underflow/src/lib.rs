@@ -4,6 +4,9 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
+mod safety_context;
+
+use clippy_utils::consts::Constant;
 use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
     analysis::{match_type_to_str, ConstantAnalyzer},
@@ -12,12 +15,12 @@ use common::{
 };
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, StmtKind, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
-use std::collections::HashSet;
+use safety_context::SafetyContext;
 
 pub const LINT_MESSAGE: &str = "Potential for integer arithmetic overflow/underflow. Consider checked, wrapping or saturating arithmetic.";
 
@@ -57,6 +60,7 @@ enum Cause {
     Sub,
     Mul,
     Pow,
+    Div,
     Negate,
     Multiple,
 }
@@ -68,6 +72,7 @@ impl Cause {
             Cause::Sub => "subtraction operation",
             Cause::Mul => "multiplication operation",
             Cause::Pow => "exponentiation operation",
+            Cause::Div => "division operation",
             Cause::Negate => "negation operation",
             Cause::Multiple => "operation",
         }
@@ -97,10 +102,11 @@ pub struct IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     findings: Vec<Finding>,
     is_complex_operation: bool,
-    constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+    constant_analyzer: &'a mut ConstantAnalyzer<'a, 'tcx>,
+    safety_context: SafetyContext,
 }
 
-impl<'tcx> IntegerOverflowOrUnderflowVisitor<'_, 'tcx> {
+impl<'a, 'tcx> IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     pub fn check_pow(&mut self, expr: &Expr<'tcx>, base: &Expr<'tcx>, exponent: &Expr<'tcx>) {
         if self.constant_analyzer.is_constant(base) && self.constant_analyzer.is_constant(exponent)
         {
@@ -153,8 +159,25 @@ impl<'tcx> IntegerOverflowOrUnderflowVisitor<'_, 'tcx> {
         } else {
             match op {
                 BinOpKind::Add => (Type::Overflow, Cause::Add),
-                BinOpKind::Sub => (Type::Underflow, Cause::Sub),
+                BinOpKind::Sub => {
+                    if self
+                        .safety_context
+                        .is_subtraction_safe(left, right, self.constant_analyzer)
+                    {
+                        return;
+                    }
+                    (Type::Underflow, Cause::Sub)
+                }
                 BinOpKind::Mul => (Type::Overflow, Cause::Mul),
+                BinOpKind::Div => {
+                    if self
+                        .safety_context
+                        .is_division_safe(right, self.constant_analyzer)
+                    {
+                        return;
+                    }
+                    (Type::Overflow, Cause::Div)
+                }
                 _ => return,
             }
         };
@@ -182,6 +205,64 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
             }
             ExprKind::Unary(UnOp::Neg, arg) => {
                 self.check_negate(expr, arg);
+            }
+            ExprKind::Block(block, ..) => {
+                block.stmts.iter().for_each(|stmt| {
+                    if let StmtKind::Let(let_expr) = stmt.kind {
+                        if let Some(init) = let_expr.init {
+                            self.visit_expr(init);
+                            self.safety_context
+                                .check_operation(init, let_expr.pat.hir_id);
+                        }
+                    }
+                });
+            }
+            ExprKind::Let(let_expr) => {
+                self.safety_context
+                    .check_operation(let_expr.init, let_expr.pat.hir_id);
+            }
+            ExprKind::If(cond, then_expr, _) => {
+                if let ExprKind::DropTemps(cond) = cond.kind {
+                    if let ExprKind::Binary(op, lhs, rhs) = cond.kind {
+                        let (left, right, is_zero_comparison) = match op.node {
+                            BinOpKind::Gt | BinOpKind::Ge => (rhs, lhs, false),
+                            BinOpKind::Lt | BinOpKind::Le => (lhs, rhs, false),
+                            BinOpKind::Eq | BinOpKind::Ne => {
+                                if let Some(Constant::Int(0)) =
+                                    self.constant_analyzer.get_constant(lhs)
+                                {
+                                    (rhs, lhs, true)
+                                } else if let Some(Constant::Int(0)) =
+                                    self.constant_analyzer.get_constant(rhs)
+                                {
+                                    (lhs, rhs, true)
+                                } else {
+                                    self.visit_expr(then_expr);
+                                    return;
+                                }
+                            }
+                            _ => {
+                                self.visit_expr(then_expr);
+                                return;
+                            }
+                        };
+
+                        self.safety_context.enter_scope();
+                        if is_zero_comparison {
+                            self.safety_context
+                                .track_zero_comparison(left, matches!(op.node, BinOpKind::Ne));
+                        } else {
+                            self.safety_context.track_comparison(
+                                left,
+                                right,
+                                self.constant_analyzer,
+                            );
+                        }
+                        self.visit_expr(then_expr);
+                        self.safety_context.exit_scope();
+                        return;
+                    }
+                }
             }
             ExprKind::MethodCall(method_name, receiver, args, ..) => {
                 if method_name.ident.name == Symbol::intern("pow") {
@@ -211,10 +292,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
         }
 
         // Gather all compile-time variables in the function
-        let mut constant_analyzer = ConstantAnalyzer {
-            cx,
-            constants: HashSet::new(),
-        };
+        let mut constant_analyzer = ConstantAnalyzer::new(cx);
         constant_analyzer.visit_body(body);
 
         // Analyze the function for integer overflow/underflow
@@ -222,9 +300,10 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
             cx,
             findings: Vec::new(),
             is_complex_operation: false,
-            constant_analyzer,
+            constant_analyzer: &mut constant_analyzer,
+            safety_context: SafetyContext::new(),
         };
-        visitor.visit_body(body);
+        visitor.visit_expr(body.value);
 
         // Report any findings
         for finding in visitor.findings {

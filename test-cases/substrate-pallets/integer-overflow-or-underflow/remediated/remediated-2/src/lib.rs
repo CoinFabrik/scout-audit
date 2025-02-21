@@ -67,7 +67,9 @@ use frame_system::ensure_signed;
 use log::info;
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{Bounded, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
+    traits::{
+        Bounded, CheckedDiv, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension,
+    },
     transaction_validity::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
@@ -112,7 +114,10 @@ impl<T: pallet_balances::Config> WeighData<(&BalanceOf<T>,)> for WeightForSetDum
     fn weigh_data(&self, target: (&BalanceOf<T>,)) -> Weight {
         let multiplier = self.0;
         // *target.0 is the amount passed into the extrinsic
-        let cents = *target.0 / <BalanceOf<T>>::from(MILLICENTS);
+        let target_balance = *target.0;
+        let cents = target_balance
+            .checked_div(&<BalanceOf<T>>::from(MILLICENTS))
+            .unwrap();
         Weight::from_parts(
             (cents.saturating_mul(multiplier)).saturated_into::<u64>(),
             0,

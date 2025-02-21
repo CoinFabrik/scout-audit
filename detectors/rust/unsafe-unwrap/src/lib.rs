@@ -16,7 +16,6 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{sym, Span};
-use std::collections::HashSet;
 
 const LINT_MESSAGE: &str = "Unsafe usage of `unwrap`";
 
@@ -51,10 +50,7 @@ impl<'tcx> LateLintPass<'tcx> for UnsafeUnwrap {
             return;
         }
 
-        let mut constant_analyzer = ConstantAnalyzer {
-            cx,
-            constants: HashSet::new(),
-        };
+        let mut constant_analyzer = ConstantAnalyzer::new(cx);
         constant_analyzer.visit_body(body);
 
         let mut visitor = UnsafeChecks::new(cx, UNSAFE_UNWRAP, constant_analyzer, sym::unwrap);

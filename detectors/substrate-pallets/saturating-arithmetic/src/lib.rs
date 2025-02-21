@@ -159,7 +159,7 @@ fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) 
             LINT_MESSAGE,
             "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead",
             replacement,
-            Applicability::MaybeIncorrect,
+            Applicability::MaybeIncorrect
         );
     } else {
         span_lint_and_help(
@@ -168,7 +168,7 @@ fn detect_saturating_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) 
             method_name.ident.span,
             LINT_MESSAGE,
             None,
-            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead.",
+            "Saturating arithmetic clamps the result to the representation limit for the data type instead of overflowing. Consider checked arithmetic instead."
         );
     }
     None
@@ -200,13 +200,17 @@ impl<'tcx> LateLintPass<'tcx> for SaturatingArithmetic {
         kind: FnKind<'tcx>,
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
-        _: Span,
+        span: Span,
         _: LocalDefId,
     ) {
+        if span.from_expansion() {
+            return;
+        }
+
         if GlobalState::function_is_ignored(&ident(&kind)) {
             return;
         }
 
-        SaturatingFinder { cx }.visit_expr(body.value);
+        (SaturatingFinder { cx }).visit_expr(body.value);
     }
 }

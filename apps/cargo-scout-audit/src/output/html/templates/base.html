@@ -26,20 +26,22 @@
             </div>
 
             <div class="text-sm flex flex-wrap items-center">
-                <span class="mr-2 mt-2 sm:mt-0">Summary:</span>
+                <span class="mr-2 mt-2 sm:mt-0">Filter by:</span>
                 <span class="bg-gray-700 summary-tag">Total: {{
                     report.summary.total_vulnerabilities
                     }}</span>
-                <span class="severity-critical summary-tag">Critical: {{
+                <span class="severity-filter filter-btn severity-critical summary-tag"
+                    data-severity="critical">Critical: {{
                     report.summary.by_severity.critical
                     }}</span>
-                <span class="severity-medium summary-tag">Medium: {{
+                <span class="severity-filter filter-btn severity-medium summary-tag" data-severity="medium">Medium: {{
                     report.summary.by_severity.medium
                     }}</span>
-                <span class="severity-minor summary-tag">Minor: {{
+                <span class="severity-filter filter-btn severity-minor summary-tag" data-severity="minor">Minor: {{
                     report.summary.by_severity.minor
                     }}</span>
-                <span class="severity-enhancement summary-tag">Enhancements: {{
+                <span class="severity-filter filter-btn severity-enhancement summary-tag"
+                    data-severity="enhancement">Enhancements: {{
                     report.summary.by_severity.enhancement
                     }}</span>
                 <button class="analytics-btn border border-gray-200 rounded px-2 py-1 bg-gray-800 mt-2 sm:mt-0">
@@ -81,6 +83,7 @@
 <script> {% include "category-filter.js" %} </script>
 <script> {% include "vulnerability-expansion.js" %} </script>
 <script> {% include "vulnerability-details-display.js" %} </script>
+<script> {% include "severity-filter.js" %} </script>
 
 <style>
     {% include "styles.css" %}
@@ -117,6 +120,31 @@
 
     .severity-enhancement {
         background-color: #3490dc;
+    }
+
+    .filter-btn {
+        padding: 0.25rem 0.75rem;
+        margin-right: 0.5rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+    }
+
+    .filter-btn:hover {
+        opacity: 0.9;
+    }
+
+    .filter-btn.active {
+        opacity: 1;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+    }
+
+    @media (min-width: 640px) {
+        .filter-btn {
+            margin-top: 0;
+        }
     }
 </style>
 

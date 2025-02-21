@@ -11,6 +11,7 @@ const JS_MODAL_HANDLER: &str = include_str!("./build/modal-handler.js");
 const JS_CATEGORY_FILTER: &str = include_str!("./build/category-filter.js");
 const JS_VULNERABILITY_DETAILS: &str = include_str!("./build/vulnerability-details-display.js");
 const JS_VULNERABILITY_EXPANSION: &str = include_str!("./build/vulnerability-expansion.js");
+const JS_SEVERITY_FILTER: &str = include_str!("./build/severity-filter.js");
 const STYLES: &str = include_str!("./build/styles.css");
 
 pub struct HtmlEngine {
@@ -30,6 +31,7 @@ impl HtmlEngine {
             ("category-filter.js", JS_CATEGORY_FILTER),
             ("vulnerability-expansion.js", JS_VULNERABILITY_EXPANSION),
             ("vulnerability-details-display.js", JS_VULNERABILITY_DETAILS),
+            ("severity-filter.js", JS_SEVERITY_FILTER),
             ("styles.css", STYLES),
         ])?;
         Ok(HtmlEngine { tera })

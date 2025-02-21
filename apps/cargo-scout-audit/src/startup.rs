@@ -86,7 +86,6 @@ impl ScoutResult {
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
 pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
-    opts.prepare_args();
 
     if let Some(path) = opts.get_fail_path() {
         let _ = std::fs::File::create(path);
@@ -101,6 +100,10 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         Project::get_metadata(&opts.manifest_path).map_err(ScoutError::MetadataFailed)?;
     let blockchain =
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
+
+    // Prepare the args after we know the Blockchain type
+    opts.prepare_args(blockchain);
+
     let toolchain = blockchain.get_toolchain();
 
     if opts.toolchain {
@@ -151,8 +154,12 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         .get_detector_names()
         .map_err(ScoutError::GetDetectorNamesFailed)?;
 
-    let profile_detectors =
-        ProfileConfig::new(blockchain, detectors_names).get_profile_detectors(&opts.profile)?;
+    let profile_config =
+        ProfileConfig::new(blockchain, detectors_names, opts.output_format.clone())
+            .get_config(&metadata)?;
+
+    let profile_detectors = profile_config.detector_names;
+    let output_format = profile_config.output_format;
 
     if opts.list_detectors {
         list_detectors(&profile_detectors);
@@ -247,7 +254,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             project_info,
             &detectors_info,
             opts.output_path.clone(),
-            &opts.output_format,
+            &output_format,
         )?;
     }
 

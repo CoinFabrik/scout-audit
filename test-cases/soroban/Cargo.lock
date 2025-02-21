@@ -2004,6 +2004,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "unused-return-enum-remediated-3"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "unused-return-enum-vulnerable-1"
 version = "0.1.0"
 dependencies = [
