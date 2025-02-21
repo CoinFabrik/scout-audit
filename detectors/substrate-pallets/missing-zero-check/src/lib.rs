@@ -93,13 +93,12 @@ static MISSING_ZERO_CHECK_STATE: Mutex<Option<Arc<Mutex<MissingZeroCheckState>>>
     Mutex::new(None);
 
 struct ExtrinsicFunctionValidator {
-    pub function_name: String,
     pub collected_text: Vec<String>,
 }
+
 impl ExtrinsicFunctionValidator {
-    fn new(function_name: String) -> Self {
+    fn new() -> Self {
         Self {
-            function_name,
             collected_text: Vec::new(),
         }
     }
@@ -148,15 +147,13 @@ impl<'tcx> Visitor<'tcx> for MissingZeroCheckFinder<'tcx, '_> {
                 // If one of the values in the binary operation is a function parameter, verify if the other value is zero.
                 self.param_infos.iter_mut().for_each(|param| {
                     let actual_fn = self.cx.tcx.def_path_str(expr.hir_id.owner);
-                    if param.def_path == actual_fn {
-                        if param.param_name == lvalue_name.to_string()
-                            || param.param_name == rvalue_name.to_string()
-                        {
-                            if let Some(def_id) = expr_to_def_id(&lvalue.kind) {
-                                let name = self.cx.tcx.def_path_str(def_id);
-                                if name.to_string().contains("zero") {
-                                    param.is_checked = true;
-                                }
+                    if param.def_path == actual_fn && param.param_name == lvalue_name.to_string()
+                        || param.param_name == rvalue_name.to_string()
+                    {
+                        if let Some(def_id) = expr_to_def_id(&lvalue.kind) {
+                            let name = self.cx.tcx.def_path_str(def_id);
+                            if name.to_string().contains("zero") {
+                                param.is_checked = true;
                             }
                         }
                     }
@@ -180,7 +177,7 @@ impl EarlyLintPass for MissingZeroCheck {
                         }
 
                         if let Some(token_stream) = attr.tokens() {
-                            let mut validator = ExtrinsicFunctionValidator::new(fn_name.clone());
+                            let mut validator = ExtrinsicFunctionValidator::new();
 
                             let attr_token_stream = token_stream.to_attr_token_stream();
                             let attr_token_trees = attr_token_stream.to_token_trees();
