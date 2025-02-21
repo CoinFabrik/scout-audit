@@ -15,7 +15,7 @@ type BalanceOf2<T> = <T as pallet_balances::Config>::Balance;
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{ pallet_prelude::*, traits::BuildGenesisConfig };
+    use frame_support::{pallet_prelude::*, traits::BuildGenesisConfig};
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
