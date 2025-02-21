@@ -1,20 +1,19 @@
-extern crate rustc_driver;
 extern crate rustc_ast;
+extern crate rustc_driver;
 extern crate rustc_hir;
+extern crate rustc_lint;
 extern crate rustc_middle;
 extern crate rustc_span;
 extern crate rustc_type_ir;
-extern crate rustc_lint;
 
-use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
-use rustc_span::Symbol;
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
-    def::Res,
-    BindingMode, Block, ExprField, HirId, LangItem, LoopSource, MatchSource,
-    Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty, BorrowKind, Mutability,
+    def::Res, BindingMode, Block, BorrowKind, ExprField, HirId, LangItem, LoopSource, MatchSource,
+    Mutability, Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
 };
+use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
 use rustc_middle::ty::{Interner, TyCtxt, TyKind};
+use rustc_span::Symbol;
 use rustc_span::{symbol::Ident, Span};
 
 pub fn get_receiver_ident_name(receiver: &Expr) -> Symbol {
@@ -251,30 +250,33 @@ pub fn path_to_type_relative<'hir>(
 
 //---------------------------------------------------------------------
 
-pub fn get_node_type<'a>(cx: &rustc_lint::LateContext<'a>, hir_id: &HirId) -> rustc_middle::ty::Ty<'a> {
+pub fn get_node_type<'a>(
+    cx: &rustc_lint::LateContext<'a>,
+    hir_id: &HirId,
+) -> rustc_middle::ty::Ty<'a> {
     cx.typeck_results().node_type(*hir_id)
 }
 
-pub fn definition_to_string<'a>(cx: &rustc_lint::LateContext<'a>, did: rustc_hir::def_id::DefId) -> String{
-    cx
-        .get_def_path(did)
+pub fn definition_to_string<'a>(
+    cx: &rustc_lint::LateContext<'a>,
+    did: rustc_hir::def_id::DefId,
+) -> String {
+    cx.get_def_path(did)
         .iter()
         .map(|x| x.to_string())
         .collect::<Vec<_>>()
         .join("::")
 }
 
-pub fn get_type_string<'a, 'hir>(cx: &rustc_lint::LateContext<'a>, hir_id: &HirId) -> Result<String, ()>{
+pub fn get_type_string<'a, 'hir>(
+    cx: &rustc_lint::LateContext<'a>,
+    hir_id: &HirId,
+) -> Result<String, ()> {
     let (def, _generic_args) = type_to_adt(get_node_type(cx, hir_id).kind())?;
     Ok(definition_to_string(cx, def.did()))
 }
 
-pub fn stmt_to_local<'hir>(
-    kind: &'hir StmtKind<'hir>,
-) -> Result<
-    &'hir LetStmt<'hir>,
-    (),
-> {
+pub fn stmt_to_local<'hir>(kind: &'hir StmtKind<'hir>) -> Result<&'hir LetStmt<'hir>, ()> {
     if let StmtKind::Let(a) = kind {
         Ok(a)
     } else {
