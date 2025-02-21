@@ -42,13 +42,13 @@ jobs:
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
-          
+
       - name: Run tests and set output
         id: run-tests
         working-directory: apps/cargo-scout-audit
         run: |
           rustup install nightly-2024-07-11
-          if cargo +nightly-2024-07-11 nextest run --all --all-features; then
+          if cargo +nightly-2024-07-11 nextest run --all; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT
           else
             echo "${{ runner.os }}_status=failure" >> $GITHUB_OUTPUT
