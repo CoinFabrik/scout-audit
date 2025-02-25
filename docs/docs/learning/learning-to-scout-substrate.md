@@ -5,7 +5,7 @@ This video series explores some of the key issues detected by Scout in Substate 
 Discover how Scout identifies potential security vulnerabilities and learn how to address them, ensuring your Substrate code is secure and reliable.
 
 1. [Avoid `debug()` and `info()`](https://youtu.be/mxIPM9nGu5U)
-2. [Avoud `panic!` error](https://youtu.be/5Wo8DW6lUGY)
+2. [Avoid `panic!` error](https://youtu.be/5Wo8DW6lUGY)
 3. [Empty `expect()` method](https://youtu.be/My7BX9G_Urs)
 4. [Unsigned extrinsic](https://youtu.be/XPZ7KpXkDrI)
 5. [Invalid extrinsic weight](https://youtu.be/QCw9DRlcsSs)
