@@ -103,7 +103,7 @@ fn set_severity(
             }
         }
     }
-    output_to_json(&raw_findings_string)
+    output_to_json(raw_findings_string)
         .into_iter()
         .map(Finding::new)
         .collect::<Vec<_>>()
