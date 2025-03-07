@@ -194,13 +194,34 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let (_, stdout) = run_dylint(detectors_paths.clone(), &opts, inside_vscode)
         .map_err(ScoutError::RunDylintFailed)?;
 
-    let raw_findings_string = temp_file_to_string(stdout)?;
+    let mut raw_findings_string = temp_file_to_string(stdout)?;
+
     let raw_findings = output_to_json(&raw_findings_string)
         .into_iter()
         .map(Finding::new)
         .collect::<Vec<_>>();
     let crates = get_crates(&raw_findings, &project_info.packages, &metadata)?;
     let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
+
+    for finding in raw_findings.iter() {
+        if finding.is_scout_finding(&detector_names) {
+            if let Some(detector) = detectors_info.find_by_id(&finding.code()) {
+                let val = finding.message();
+                let severity_tag = format!("[{}]", detector.severity.to_uppercase());
+                if raw_findings_string.contains(&val)
+                    && !raw_findings_string.contains(&format!("{} {}", severity_tag, val))
+                {
+                    raw_findings_string =
+                        raw_findings_string.replace(&val, &format!("{} {}", severity_tag, val));
+                }
+            }
+        }
+    }
+    let raw_findings = output_to_json(&raw_findings_string)
+        .into_iter()
+        .map(Finding::new)
+        .collect::<Vec<_>>();
+
     let findings = raw_findings
         .iter()
         .filter(|&x| x.is_scout_finding(&detector_names))
