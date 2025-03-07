@@ -15,7 +15,7 @@ use crate::{
     utils::{
         config::ProfileConfig,
         detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-        detectors_info::get_detectors_info,
+        detectors_info::{get_detectors_info, LintStore},
         logger::TracedError,
         print::{print_error, print_info},
     },
@@ -81,6 +81,32 @@ impl ScoutResult {
     pub fn from_string<T: std::fmt::Display>(s: T) -> Self {
         Self::from_stdout(format!("{}\n", s))
     }
+}
+
+fn set_severity(
+    raw_findings_string: &mut String,
+    raw_findings: &[Finding],
+    detector_names: &HashSet<String>,
+    detectors_info: &LintStore,
+) -> Vec<Finding> {
+    for finding in raw_findings.iter() {
+        if finding.is_scout_finding(detector_names) {
+            if let Some(detector) = detectors_info.find_by_id(&finding.code()) {
+                let val = finding.message();
+                let severity_tag = format!("[{}]", detector.severity.to_uppercase());
+                if raw_findings_string.contains(&val)
+                    && !raw_findings_string.contains(&format!("{} {}", severity_tag, val))
+                {
+                    *raw_findings_string =
+                        raw_findings_string.replace(&val, &format!("{} {}", severity_tag, val));
+                }
+            }
+        }
+    }
+    output_to_json(&raw_findings_string)
+        .into_iter()
+        .map(Finding::new)
+        .collect::<Vec<_>>()
 }
 
 #[tracing::instrument(name = "RUN SCOUT", skip_all)]
@@ -203,24 +229,12 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let crates = get_crates(&raw_findings, &project_info.packages, &metadata)?;
     let detector_names = HashSet::from_iter(filtered_detectors.iter().cloned());
 
-    for finding in raw_findings.iter() {
-        if finding.is_scout_finding(&detector_names) {
-            if let Some(detector) = detectors_info.find_by_id(&finding.code()) {
-                let val = finding.message();
-                let severity_tag = format!("[{}]", detector.severity.to_uppercase());
-                if raw_findings_string.contains(&val)
-                    && !raw_findings_string.contains(&format!("{} {}", severity_tag, val))
-                {
-                    raw_findings_string =
-                        raw_findings_string.replace(&val, &format!("{} {}", severity_tag, val));
-                }
-            }
-        }
-    }
-    let raw_findings = output_to_json(&raw_findings_string)
-        .into_iter()
-        .map(Finding::new)
-        .collect::<Vec<_>>();
+    let raw_findings = set_severity(
+        &mut raw_findings_string,
+        &raw_findings,
+        &detector_names,
+        &detectors_info,
+    );
 
     let findings = raw_findings
         .iter()
