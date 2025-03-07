@@ -294,7 +294,7 @@ fn run_dylint(
 
     let mut args = opts.args.to_owned();
     if !inside_vscode {
-        args.push("--message-format=json".to_string());
+        args.push("--message-format=json-diagnostic-rendered-ansi".to_string());
     }
 
     let check_opts = Check {
