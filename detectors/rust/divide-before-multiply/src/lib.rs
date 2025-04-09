@@ -164,7 +164,7 @@ fn navigate_trough_basicblocks<'tcx>(
                     if BinOp::Div == *op {
                         tainted_places.push(assign.0);
                     } else if BinOp::Mul == *op
-                        || BinOp::MulWithOverflow == *op
+                        || BinOp::MulUnchecked == *op
                             && (check_operand(&operands.0, tainted_places, &assign.0)
                                 || check_operand(&operands.1, tainted_places, &assign.0))
                     {
@@ -196,9 +196,9 @@ fn navigate_trough_basicblocks<'tcx>(
                         tainted_places.push(*destination);
                     } else {
                         for arg in args {
-                            match arg.node {
+                            match arg {
                                 Operand::Copy(place) | Operand::Move(place) => {
-                                    if tainted_places.contains(&place) {
+                                    if tainted_places.contains(place) {
                                         tainted_places.push(*destination);
 
                                         if def_ids.checked_mul.is_some_and(|f| f == *id)
@@ -299,17 +299,22 @@ fn navigate_trough_basicblocks<'tcx>(
                     spans,
                 );
             }
-            TerminatorKind::InlineAsm { targets, .. } => {
-                targets.iter().for_each(|target| {
-                    navigate_trough_basicblocks(
-                        *target,
-                        bbs,
-                        def_ids,
-                        tainted_places,
-                        visited_bbs,
-                        spans,
-                    );
-                });
+            TerminatorKind::InlineAsm {
+                template: _,
+                operands: _,
+                options: _,
+                line_spans: _,
+                destination: Option::Some(dest),
+                unwind: _,
+            } => {
+                navigate_trough_basicblocks(
+                    *dest,
+                    bbs,
+                    def_ids,
+                    tainted_places,
+                    visited_bbs,
+                    spans,
+                );
             }
 
             _ => {}

@@ -14,9 +14,7 @@ use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
-use rustc_ast::{
-    token::TokenKind, tokenstream::TokenTree, AssocItemKind, HasTokens, Item, ItemKind,
-};
+use rustc_ast::{token::TokenKind, tokenstream::TokenTree, AssocItemKind, Item, ItemKind};
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     BinOpKind, Expr, ExprKind, PatKind,
@@ -176,22 +174,20 @@ impl EarlyLintPass for MissingZeroCheck {
                             continue;
                         }
 
-                        if let Some(token_stream) = attr.tokens() {
-                            let mut validator = ExtrinsicFunctionValidator::new();
+                        let token_stream = attr.tokens();
+                        let mut validator = ExtrinsicFunctionValidator::new();
 
-                            let attr_token_stream = token_stream.to_attr_token_stream();
-                            let attr_token_trees = attr_token_stream.to_token_trees();
-
-                            validator.process_token_trees(&attr_token_trees);
-                            if validator
+                        let trees: Vec<TokenTree> = token_stream.trees().cloned().collect();
+                        validator.process_token_trees(&trees);
+                        
+                        if validator
+                            .collected_text
+                            .starts_with(&["pallet".to_string(), "call_index".to_string()])
+                            || validator
                                 .collected_text
-                                .starts_with(&["pallet".to_string(), "call_index".to_string()])
-                                || validator
-                                    .collected_text
-                                    .starts_with(&["pallet".to_string(), "weight".to_string()])
-                            {
-                                MissingZeroCheckState::add_extrinsic_function(fn_name.clone());
-                            }
+                                .starts_with(&["pallet".to_string(), "weight".to_string()])
+                        {
+                            MissingZeroCheckState::add_extrinsic_function(fn_name.clone());
                         }
                     }
                 }

@@ -76,7 +76,6 @@ impl EarlyLintPass for OverflowCheck {
             Ok(dir) => dir,
             Err(err) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Failed to locate workspace directory: {}", err))
                     .emit();
                 return;
@@ -89,7 +88,6 @@ impl EarlyLintPass for OverflowCheck {
             Ok(content) => content,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!(
                         "Failed to read Cargo.toml from {:?}: {}",
                         cargo_toml_path, e
@@ -104,7 +102,6 @@ impl EarlyLintPass for OverflowCheck {
             Ok(parsed) => parsed,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Failed to parse Cargo.toml: {}", e))
                     .emit();
                 return;

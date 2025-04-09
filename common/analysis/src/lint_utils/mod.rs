@@ -8,10 +8,10 @@ extern crate rustc_type_ir;
 
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
-    def::Res, BindingMode, Block, BorrowKind, ExprField, HirId, LangItem, LoopSource, MatchSource,
-    Mutability, Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
+    def::Res, BindingAnnotation, Block, BorrowKind, ExprField, HirId, LangItem, LoopSource,
+    MatchSource, Mutability, Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
 };
-use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
+use rustc_hir::{Expr, ExprKind, Local, QPath};
 use rustc_middle::ty::{Interner, TyCtxt, TyKind};
 use rustc_span::Symbol;
 use rustc_span::{symbol::Ident, Span};
@@ -177,7 +177,7 @@ pub fn resolution_to_local(resolution: &Res) -> Result<&HirId, ()> {
 
 pub fn lit_to_int(kind: &LitKind) -> Result<(u128, LitIntType), ()> {
     if let LitKind::Int(a, b) = kind {
-        Ok((a.get(), *b))
+        Ok((*a, *b))
     } else {
         Err(())
     }
@@ -197,7 +197,7 @@ pub fn pattern_to_struct<'hir>(
 
 pub fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Result<(&BindingMode, &HirId, &Ident, &Option<&'hir Pat<'hir>>), ()> {
+) -> Result<(&BindingAnnotation, &HirId, &Ident, &Option<&'hir Pat<'hir>>), ()> {
     if let PatKind::Binding(a, b, c, d) = pat {
         Ok((a, b, c, d))
     } else {
@@ -276,8 +276,8 @@ pub fn get_type_string<'a, 'hir>(
     Ok(definition_to_string(cx, def.did()))
 }
 
-pub fn stmt_to_local<'hir>(kind: &'hir StmtKind<'hir>) -> Result<&'hir LetStmt<'hir>, ()> {
-    if let StmtKind::Let(a) = kind {
+pub fn stmt_to_local<'hir>(kind: &'hir StmtKind<'hir>) -> Result<&'hir Local<'hir>, ()> {
+    if let StmtKind::Local(a) = kind {
         Ok(a)
     } else {
         Err(())

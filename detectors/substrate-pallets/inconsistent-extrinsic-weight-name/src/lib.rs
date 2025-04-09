@@ -14,10 +14,8 @@ use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
-use rustc_ast::{
-    token::TokenKind, tokenstream::TokenTree, AssocItemKind, HasTokens, Item, ItemKind,
-};
-use rustc_hir::{Arm, Expr, ExprKind, LetStmt, Stmt};
+use rustc_ast::{token::TokenKind, tokenstream::TokenTree, AssocItemKind, Item, ItemKind};
+use rustc_hir::{Arm, Expr, ExprKind, Local, Stmt};
 use rustc_lint::{EarlyContext, EarlyLintPass, LateContext, LateLintPass};
 use rustc_span::Span;
 use std::{
@@ -151,21 +149,19 @@ impl EarlyLintPass for InconsistentExtrinsicWeightName {
                             continue;
                         }
 
-                        if let Some(token_stream) = attr.tokens() {
-                            let mut validator = WeightInfoValidator::new(fn_name.clone());
+                        let token_stream = attr.tokens();
+                        let mut validator = WeightInfoValidator::new(fn_name.clone());
 
-                            let attr_token_stream = token_stream.to_attr_token_stream();
-                            let attr_token_trees = attr_token_stream.to_token_trees();
+                        // Work directly with the TokenStream
+                        let trees: Vec<TokenTree> = token_stream.trees().cloned().collect();
+                        validator.process_token_trees(&trees);
 
-                            validator.process_token_trees(&attr_token_trees);
-
-                            if !validator.is_valid_weight_info() {
-                                GlobalState::add_function_to_be_reconsidered(
-                                    validator.function_name,
-                                    impl_item.span,
-                                    attr.span,
-                                );
-                            }
+                        if !validator.is_valid_weight_info() {
+                            GlobalState::add_function_to_be_reconsidered(
+                                validator.function_name,
+                                impl_item.span,
+                                attr.span,
+                            );
                         }
                     }
                 }
@@ -214,7 +210,7 @@ fn get_self_member(pattern: &'_ rustc_hir::Pat<'_>) -> Option<String> {
 }
 
 //Returns Some(expr) iff the let statement has the form "let __pallet_base_weight = " expr.
-fn get_pallet_base_weight_init<'a>(let_stmt: &'a LetStmt<'a>) -> Option<&'a Expr<'a>> {
+fn get_pallet_base_weight_init<'a>(let_stmt: &'a Local<'a>) -> Option<&'a Expr<'a>> {
     let (_, _, id, _) = pattern_to_binding(&let_stmt.pat.kind)?;
     if id.name.as_str() != "__pallet_base_weight" {
         return None;

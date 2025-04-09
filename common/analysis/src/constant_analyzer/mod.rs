@@ -82,7 +82,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
             ExprKind::Lit(lit) => {
                 match lit.node {
                     LitKind::Int(val, _) => {
-                        self.current_constant = Some(Constant::Int(val.get()));
+                        self.current_constant = Some(Constant::Int(val));
                     }
                     _ => {}
                 };
@@ -116,7 +116,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
             (ExprKind::Path(QPath::Resolved(_, path)), Some(Constant::Int(index))) => {
                 if_chain! {
                     if let Res::Local(hir_id) = path.res;
-                    if let Node::LetStmt(let_stmt) = self.cx.tcx.parent_hir_node(hir_id);
+                    if let Node::Local(let_stmt) = self.cx.tcx.hir_node(hir_id);
                     if let Some(ExprKind::Array(array_elements)) = let_stmt.init.map(|init| &init.kind);
                     then {
                         self.is_array_element_constant(array_elements, index)
@@ -155,7 +155,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for ConstantAnalyzer<'a, 'tcx> {
-    fn visit_local(&mut self, l: &'tcx rustc_hir::LetStmt<'tcx>) -> Self::Result {
+    fn visit_local(&mut self, l: &'tcx rustc_hir::Local<'tcx>) {
         if let Some(init) = l.init {
             if self.is_expr_constant(init) {
                 self.constants

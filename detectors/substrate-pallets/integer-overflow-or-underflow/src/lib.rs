@@ -208,7 +208,7 @@ impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
             }
             ExprKind::Block(block, ..) => {
                 block.stmts.iter().for_each(|stmt| {
-                    if let StmtKind::Let(let_expr) = stmt.kind {
+                    if let StmtKind::Local(let_expr) = stmt.kind {
                         if let Some(init) = let_expr.init {
                             self.visit_expr(init);
                             self.safety_context
@@ -311,7 +311,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
                 cx,
                 INTEGER_OVERFLOW_OR_UNDERFLOW,
                 finding.span,
-                finding.generate_message(),
+                &finding.generate_message(),
                 None,
                 "Consider using the checked version of this operation/s",
             )
