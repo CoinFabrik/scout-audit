@@ -126,14 +126,16 @@ impl DependencyGraph {
             Ok(ret)
         }
     }
+
     pub fn list_all_dependants(&self, package: &str) -> Result<Vec<String>> {
         self.list_dependants(package, Some(false))
     }
+
     pub fn list_dependants(&self, package: &str, direct: Option<bool>) -> Result<Vec<String>> {
-        let package = *self
-            .packages_numbers_by_package_id
-            .get(package)
-            .ok_or_else(|| anyhow!("Package {} is unknown", package))?;
+        let package = match self.packages_numbers_by_package_id.get(package) {
+            Some(num) => *num,
+            None => return Ok(Vec::new()),
+        };
 
         let n = self.packages_ids.len();
         let mut visited = Vec::<bool>::new();
