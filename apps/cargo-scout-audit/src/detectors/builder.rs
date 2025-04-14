@@ -10,10 +10,7 @@ use super::{
     library::Library,
     source::download_git_repo,
 };
-use crate::{
-    scout::blockchain::BlockChain,
-    utils::{logger::TracedError, print::print_info},
-};
+use crate::utils::{logger::TracedError, print::print_info};
 
 #[derive(Error, Debug)]
 pub enum BuilderError {
@@ -63,9 +60,9 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    pub fn build(&self, bc: &BlockChain, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
+    pub fn build(&self, used_detectors: &[String]) -> Result<Vec<PathBuf>> {
         print_info("Compiling detectors...");
-        let all_library_paths = self.build_all_libraries(bc)?;
+        let all_library_paths = self.build_all_libraries()?;
         self.filter_detectors(&all_library_paths, used_detectors)
     }
 
@@ -83,14 +80,14 @@ impl<'a> DetectorBuilder<'a> {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn build_all_libraries(&self, bc: &BlockChain) -> Result<Vec<PathBuf>> {
+    fn build_all_libraries(&self) -> Result<Vec<PathBuf>> {
         let mut all_library_paths = Vec::new();
 
         let libraries = self.get_all_libraries()?;
 
         for library in libraries {
             let library_paths = library
-                .build(bc, self.verbose)
+                .build(self.verbose)
                 .map_err(BuilderError::BuildError(library.root).traced())?;
             all_library_paths.extend(library_paths);
         }

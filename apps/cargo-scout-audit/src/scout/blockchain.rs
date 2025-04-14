@@ -1,8 +1,7 @@
-use crate::build_config::TOOLCHAIN;
 use anyhow::{bail, Result};
 use cargo_metadata::Metadata;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::{collections::HashSet, process::Command};
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use thiserror::Error;
 
@@ -19,6 +18,9 @@ pub enum BlockChain {
 pub enum BlockchainError {
     #[error("No supported dependency found in Cargo.toml.\n     → Supported dependencies:\n{0}")]
     UnsupportedDependency(String),
+
+    #[error("Failed to determine project toolchain: {0}")]
+    ToolchainError(String),
 }
 
 impl BlockChain {
@@ -28,18 +30,49 @@ impl BlockChain {
 
     pub fn get_detectors_path(&self) -> &str {
         match self {
-            BlockChain::Ink => "detectors/ink",
-            BlockChain::Soroban => "detectors/soroban",
-            BlockChain::SubstratePallets => "detectors/substrate-pallets",
+            BlockChain::Ink => "ink",
+            BlockChain::Soroban => "soroban",
+            BlockChain::SubstratePallets => "substrate-pallets",
         }
     }
 
-    pub fn get_toolchain(&self) -> &str {
-        match self {
-            BlockChain::Ink => TOOLCHAIN,
-            BlockChain::Soroban => TOOLCHAIN,
-            BlockChain::SubstratePallets => TOOLCHAIN,
+    fn get_project_toolchain(metadata: &Metadata) -> Result<Option<String>> {
+        let output = Command::new("rustup")
+            .current_dir(&metadata.workspace_root)
+            .args(["show", "active-toolchain"])
+            .output()
+            .map_err(|e| BlockchainError::ToolchainError(e.to_string()))?;
+
+        if !output.status.success() {
+            return Ok(None);
         }
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        // The output format is like "nightly-2024-07-11-aarch64-apple-darwin (default)"
+        // We only want the nightly-YYYY-MM-DD part
+        let toolchain = output_str
+            .split_whitespace()
+            .next()
+            .and_then(|s| s.split('-').take(4).collect::<Vec<_>>().join("-").into());
+
+        Ok(toolchain)
+    }
+
+    pub fn get_toolchain(&self, metadata: &Metadata) -> Result<String> {
+        // First try to get the project's active toolchain
+        if let Some(toolchain) = Self::get_project_toolchain(metadata)? {
+            if toolchain.starts_with("nightly-") {
+                return Ok(toolchain);
+            }
+        }
+
+        // If no nightly toolchain found, use defaults based on blockchain
+        let default_toolchain = match self {
+            BlockChain::SubstratePallets => "nightly-2023-12-16",
+            _ => "nightly-2024-07-11",
+        };
+
+        Ok(default_toolchain.to_string())
     }
 
     fn get_immediate_dependencies(metadata: &Metadata) -> HashSet<String> {
