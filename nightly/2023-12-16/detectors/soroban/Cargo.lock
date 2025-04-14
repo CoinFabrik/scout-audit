@@ -13,7 +13,7 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",
- "dylint_linting",
+ "dylint_linting 2.6.1",
  "if_chain",
  "paste",
 ]
@@ -37,7 +37,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -131,7 +131,7 @@ dependencies = [
  "analysis",
  "clippy_utils",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 2.6.1",
  "if_chain",
 ]
 
@@ -170,7 +170,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -181,7 +181,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -201,6 +201,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8a02a994b4802fc707e2e45099cb8e46266ad90018a8eddd96ba989d979642f"
 dependencies = [
  "anyhow",
+]
+
+[[package]]
+name = "dylint_linting"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43fc05c7103dfadd497486bbbf941899888f4e19271da70b58f66385247230c2"
+dependencies = [
+ "cargo_metadata",
+ "dylint_internal 2.6.1",
+ "paste",
+ "rustversion",
+ "serde",
+ "thiserror",
+ "toml 0.8.19",
 ]
 
 [[package]]
@@ -225,7 +240,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -273,7 +288,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -456,7 +471,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -467,7 +482,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -479,7 +494,7 @@ dependencies = [
  "common",
  "common-detectors",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
 ]
 
 [[package]]
@@ -705,7 +720,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -728,7 +743,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "semver",
  "serde_json",
  "ureq",
@@ -753,7 +768,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -833,7 +848,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -844,7 +859,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "edit-distance",
  "if_chain",
 ]
@@ -921,7 +936,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "edit-distance",
  "if_chain",
 ]
@@ -933,7 +948,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
  "serde",
  "serde_json",
@@ -946,7 +961,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -957,7 +972,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -968,7 +983,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -979,7 +994,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -996,7 +1011,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
 ]
 
@@ -1048,7 +1063,7 @@ dependencies = [
  "clippy_utils",
  "common",
  "dylint_internal 2.6.1",
- "dylint_linting",
+ "dylint_linting 3.0.1",
  "if_chain",
  "itertools 0.13.0",
 ]
