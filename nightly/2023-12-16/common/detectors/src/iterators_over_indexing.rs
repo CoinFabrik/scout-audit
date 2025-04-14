@@ -6,16 +6,15 @@ extern crate rustc_type_ir;
 
 use std::collections::HashSet;
 
+use analysis::decomposers::*;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
-    Expr, ExprKind, HirId, LangItem, LoopSource, MatchSource,
-    QPath
+    Expr, ExprKind, HirId, LangItem, LoopSource, MatchSource, QPath,
 };
 use rustc_lint::LateContext;
 use rustc_span::Span;
-use analysis::decomposers::*;
 
-pub struct IteratorsOverIndexingConfig{
+pub struct IteratorsOverIndexingConfig {
     pub check_get: bool,
     pub check_index: bool,
     pub relevant_object_types: HashSet<String>,
@@ -52,14 +51,14 @@ impl<'a, 'b, 'c> VectorAccessVisitor<'a, 'b, 'c> {
                 let name = function_name.ident.name.as_str();
                 if name == "get" || name == "get_unchecked" {
                     self.match_method_call_obj(&object.kind, arguments)
-                }else{
+                } else {
                     None
                 }
-            },
+            }
             ExprKind::Index(arr, index, _) => {
-                if !self.config.check_index{
+                if !self.config.check_index {
                     None
-                }else{
+                } else {
                     self.handle_index(&arr.hir_id, &arr.kind, &index.kind)
                 }
             }
@@ -117,11 +116,7 @@ impl<'a, 'b, 'c> VectorAccessVisitor<'a, 'b, 'c> {
         Some(*resolution_to_local(&index_path.res)?)
     }
 
-    fn handle_path(
-        &mut self,
-        object_path: &'a QPath<'a>,
-        index: &'a ExprKind<'a>,
-    ) -> Option<()> {
+    fn handle_path(&mut self, object_path: &'a QPath<'a>, index: &'a ExprKind<'a>) -> Option<()> {
         let type_name = self.get_path_type(object_path)?;
         self.final_check(&type_name, index)
     }
@@ -239,7 +234,11 @@ impl<'a, 'b, 'c> Visitor<'a> for ForLoopVisitor<'a, 'b, 'c> {
     }
 }
 
-pub fn check_expr<'a, 'b>(cx: &LateContext<'a>, expr: &'a Expr<'_>, config: &'b IteratorsOverIndexingConfig) -> HashSet<Span> {
+pub fn check_expr<'a, 'b>(
+    cx: &LateContext<'a>,
+    expr: &'a Expr<'_>,
+    config: &'b IteratorsOverIndexingConfig,
+) -> HashSet<Span> {
     let mut visitor = ForLoopVisitor {
         config,
         span_constant: HashSet::new(),

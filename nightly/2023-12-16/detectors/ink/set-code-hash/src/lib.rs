@@ -309,7 +309,7 @@ fn navigate_trough_basicblocks<'tcx>(
                 *dest,
                 caller_and_terminate,
                 after_comparison,
-                    tainted_places,
+                tainted_places,
             ));
         }
         _ => {}

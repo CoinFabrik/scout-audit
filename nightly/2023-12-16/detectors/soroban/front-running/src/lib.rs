@@ -15,7 +15,9 @@ use common::{
 use conditional_checker::{get_res_hir_id, is_panic_inducing_call, ConditionalChecker};
 use if_chain::if_chain;
 use rustc_hir::{
-    def::Res::{self}, intravisit::{walk_expr, FnKind, Visitor}, Body, Expr, ExprKind, FnDecl, HirId, Local, Path, QPath
+    def::Res::{self},
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, HirId, Local, Path, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{

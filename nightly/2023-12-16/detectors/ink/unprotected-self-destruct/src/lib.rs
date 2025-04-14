@@ -330,7 +330,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSelfDestruct {
                         *dest,
                         caller_and_terminate,
                         after_comparison,
-                            tainted_places,
+                        tainted_places,
                     ));
                 }
                 _ => {}

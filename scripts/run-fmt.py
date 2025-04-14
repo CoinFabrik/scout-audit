@@ -11,24 +11,6 @@ BASE_DIRS = [
     ("test-cases/substrate-pallets", "cargo fmt --check"),
 ]
 
-# Subdirectories to check in each nightly version
-NIGHTLY_SUBDIRS = ["ink", "soroban", "substrate-pallets"]
-
-
-def get_nightly_commands():
-    """Dynamically generate commands for all nightly directories."""
-    nightly_commands = []
-    # Find all nightly directories
-    nightly_dirs = glob.glob("nightly/20[0-9][0-9]-*-*")
-
-    for nightly_dir in nightly_dirs:
-        for subdir in NIGHTLY_SUBDIRS:
-            detector_path = f"{nightly_dir}/detectors/{subdir}"
-            if os.path.exists(detector_path):
-                nightly_commands.append((detector_path, "cargo fmt --check"))
-
-    return nightly_commands
-
 
 def create_digest():
     digest_path = "apps/cargo-scout-audit/src/digest.rs"
@@ -39,7 +21,7 @@ def create_digest():
 
 
 if __name__ == "__main__":
-    commands = BASE_DIRS + get_nightly_commands()
+    commands = BASE_DIRS + utils.get_nightly_commands("cargo fmt --all --check")
     create_digest()
     exit(
         utils.simple_runner(
