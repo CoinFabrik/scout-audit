@@ -15,9 +15,7 @@ use common::{
 use conditional_checker::{get_res_hir_id, is_panic_inducing_call, ConditionalChecker};
 use if_chain::if_chain;
 use rustc_hir::{
-    def::Res::{self},
-    intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, HirId, LetStmt, Path, QPath,
+    def::Res::{self}, intravisit::{walk_expr, FnKind, Visitor}, Body, Expr, ExprKind, FnDecl, HirId, Local, Path, QPath
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{
@@ -141,7 +139,7 @@ impl FrontRunningVisitor<'_, '_> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for FrontRunningVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
+    fn visit_local(&mut self, local: &'tcx Local<'tcx>) {
         if let Some(init) = &local.init {
             if self.local_uses_parameter(init) {
                 self.filtered_local_variables.insert(local.pat.hir_id);

@@ -18,7 +18,7 @@ use rustc_ast::ast::LitKind;
 use rustc_hir::{
     def::Res,
     intravisit::{walk_expr, walk_local, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, HirId, LetStmt, PatKind, QPath,
+    Body, Expr, ExprKind, FnDecl, HirId, Local, PatKind, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyKind;
@@ -149,7 +149,7 @@ impl<'a, 'tcx> ReentrancyVisitor<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for ReentrancyVisitor<'a, 'tcx> {
-    fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
+    fn visit_local(&mut self, local: &'tcx Local) {
         if let Some(init) = &local.init {
             if let PatKind::Binding(_, _, ident, _) = &local.pat.kind {
                 match &init.kind {

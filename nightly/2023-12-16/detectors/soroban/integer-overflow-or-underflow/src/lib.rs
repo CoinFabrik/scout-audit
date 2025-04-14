@@ -218,7 +218,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
                 cx,
                 INTEGER_OVERFLOW_OR_UNDERFLOW,
                 finding.span,
-                finding.generate_message(),
+                &finding.generate_message(),
                 None,
                 "Consider using the checked version of this operation/s",
             )

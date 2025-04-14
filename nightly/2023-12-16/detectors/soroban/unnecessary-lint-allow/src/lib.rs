@@ -82,7 +82,7 @@ impl UnnecessaryLintAllow {
                             span,
                             LINT_MESSAGE,
                             None,
-                            format!("The detector `{}` is no longer triggered. Consider removing the `#[scout_allow({})]` attribute if the lint is no longer triggered.", lint_name, lint_name)
+                            &format!("The detector `{}` is no longer triggered. Consider removing the `#[scout_allow({})]` attribute if the lint is no longer triggered.", lint_name, lint_name)
                         );
                     }
                 }

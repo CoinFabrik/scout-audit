@@ -142,7 +142,7 @@ impl ArithmeticContext {
                             expr.span,
                             LINT_MESSAGE,
                             None,
-                            format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                            &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
                         );
                         self.expr_id = Some(expr.hir_id);
                     }
@@ -154,7 +154,7 @@ impl ArithmeticContext {
                         expr.span,
                         LINT_MESSAGE,
                         None,
-                        format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                        &format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
                     );
                     self.expr_id = Some(expr.hir_id);
                 }

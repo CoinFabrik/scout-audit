@@ -179,7 +179,6 @@ impl EarlyLintPass for MissingZeroCheck {
 
                         let trees: Vec<TokenTree> = token_stream.trees().cloned().collect();
                         validator.process_token_trees(&trees);
-                        
                         if validator
                             .collected_text
                             .starts_with(&["pallet".to_string(), "call_index".to_string()])

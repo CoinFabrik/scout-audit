@@ -61,7 +61,7 @@ impl EarlyLintPass for InkVersion {
                 rustc_span::DUMMY_SP,
                 LINT_MESSAGE,
                 None,
-                format!("The latest ink! version is {latest_version}, and your version is {ink_version}")
+                &format!("The latest ink! version is {latest_version}, and your version is {ink_version}")
             );
         }
     }

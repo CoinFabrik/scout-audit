@@ -250,12 +250,12 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSelfDestruct {
                     ..
                 } => {
                     for arg in args {
-                        match arg.node {
+                        match arg {
                             Operand::Copy(origplace) | Operand::Move(origplace) => {
                                 if tainted_places
                                     .clone()
                                     .into_iter()
-                                    .any(|place| place == origplace)
+                                    .any(|place| place == *origplace)
                                 {
                                     tainted_places.push(*destination);
                                 }
@@ -321,16 +321,17 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedSelfDestruct {
                         tainted_places,
                     ));
                 }
-                TerminatorKind::InlineAsm { targets, .. } => {
-                    targets.iter().for_each(|target| {
-                        ret_vec.append(&mut navigate_trough_basicblocks(
-                            bbs,
-                            *target,
-                            caller_and_terminate,
-                            after_comparison,
+                TerminatorKind::InlineAsm {
+                    destination: Some(dest),
+                    ..
+                } => {
+                    ret_vec.append(&mut navigate_trough_basicblocks(
+                        bbs,
+                        *dest,
+                        caller_and_terminate,
+                        after_comparison,
                             tainted_places,
-                        ));
-                    });
+                    ));
                 }
                 _ => {}
             }

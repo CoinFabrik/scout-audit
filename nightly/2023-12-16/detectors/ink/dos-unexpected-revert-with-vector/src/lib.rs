@@ -226,12 +226,12 @@ impl DosUnexpectedRevertWithVector {
                 ..
             } => {
                 for arg in args {
-                    match arg.node {
+                    match arg {
                         Operand::Copy(origplace) | Operand::Move(origplace) => {
                             if tainted_places
                                 .clone()
                                 .into_iter()
-                                .any(|place| place == origplace)
+                                .any(|place| place == *origplace)
                             {
                                 tainted_places.push(*destination);
                             }
@@ -248,7 +248,7 @@ impl DosUnexpectedRevertWithVector {
                     if map_op.1 == bb
                         && !after_comparison
                         && args.get(1).map_or(true, |f| {
-                            f.node.place().is_some_and(|f| !tainted_places.contains(&f))
+                            f.place().is_some_and(|f| !tainted_places.contains(&f))
                         })
                     {
                         ret_vec.push((*destination, *fn_span))
@@ -306,19 +306,20 @@ impl DosUnexpectedRevertWithVector {
                     ),
                 );
             }
-            TerminatorKind::InlineAsm { targets, .. } => {
-                targets.iter().for_each(|target| {
-                    ret_vec.append(
-                        &mut DosUnexpectedRevertWithVector::navigate_trough_basicblocks(
-                            bbs,
-                            *target,
-                            caller_and_vec_ops,
-                            after_comparison,
-                            tainted_places,
-                            visited_bbs,
-                        ),
-                    );
-                });
+            TerminatorKind::InlineAsm {
+                destination: Some(dest),
+                ..
+            } => {
+                ret_vec.append(
+                    &mut DosUnexpectedRevertWithVector::navigate_trough_basicblocks(
+                        bbs,
+                        *dest,
+                        caller_and_vec_ops,
+                        after_comparison,
+                        tainted_places,
+                        visited_bbs,
+                    ),
+                );
             }
             _ => {}
         }

@@ -215,7 +215,7 @@ impl LazyValuesNotSet {
                                     let mut mapping_args: Vec<Local> = vec![];
                                     let mut lazy_args: Vec<Local> = vec![];
                                     for arg in args.iter().enumerate() {
-                                        match arg.1.node {
+                                        match arg.1 {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 if mapping_get_tainted_args.contains(&a.local) {
                                                     mapping_args.push(Local::from_usize(arg.0 + 1));
@@ -238,7 +238,7 @@ impl LazyValuesNotSet {
                                     for local in cleaned_taints.0 {
                                         let op_arg = args.get(local.as_usize() - 1);
                                         if let Some(arg) = op_arg {
-                                            match arg.node {
+                                            match arg {
                                                 Operand::Copy(a) | Operand::Move(a) => {
                                                     //clean the taints
                                                     mapping_get_tainted_args
@@ -255,7 +255,7 @@ impl LazyValuesNotSet {
                                 //if is an insert call clean the taints upwards
                                 else if self.lazy_set_defid.is_some_and(|did| did == *defid) {
                                     for arg in args {
-                                        match arg.node {
+                                        match arg {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 locals_to_clean.insert(a.local);
                                             }
@@ -265,7 +265,7 @@ impl LazyValuesNotSet {
                                 } else if self.mapping_insert_defid.is_some_and(|did| did == *defid)
                                 {
                                     for arg in args {
-                                        match arg.node {
+                                        match arg {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 locals_to_clean.insert(a.local);
                                             }
@@ -275,7 +275,7 @@ impl LazyValuesNotSet {
                                 } else {
                                     let mut args_locals = vec![];
                                     for arg in args {
-                                        match arg.node {
+                                        match arg {
                                             Operand::Copy(a) | Operand::Move(a) => {
                                                 args_locals.push(a.local);
                                             }

@@ -91,7 +91,7 @@ impl<'tcx> Visitor<'tcx> for ForLoopVisitor {
         // Constant detection
         if let ExprKind::Block(a, _) = expr.kind {
             a.stmts.iter().for_each(|func| {
-                if let StmtKind::Let(sd) = func.kind {
+                if let StmtKind::Local(sd) = func.kind {
                     if sd.init.is_some() && self.is_expr_constant(sd.init.as_ref().unwrap()) {
                         self.constants.push(sd.pat.hir_id);
                     }

@@ -46,7 +46,7 @@ impl<'tcx> LateLintPass<'tcx> for InsufficientlyRandomValues {
                     expr.span,
                     LINT_MESSAGE,
                     None,
-                    format!("This expression seems to use ledger().{}() as a pseudo random number",path.ident.as_str()),
+                    &format!("This expression seems to use ledger().{}() as a pseudo random number",path.ident.as_str()),
                 );
             }
         }

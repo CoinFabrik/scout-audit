@@ -273,7 +273,7 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                         {
                             if utf_storage.pusharg_def_id.is_some_and(|id| &id == def) {
                                 for arg in args {
-                                    if arg.node.place().map_or(false, |place| {
+                                    if arg.place().map_or(false, |place| {
                                         tainted_locals.iter().any(|l| l == &place.local)
                                     }) {
                                         clippy_utils::diagnostics::span_lint(

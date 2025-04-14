@@ -40,7 +40,6 @@ impl EarlyLintPass for SorobanVersion {
             Ok(version) => version,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Failed to get the latest Soroban version: {}", e))
                     .emit();
                 return;
@@ -51,7 +50,6 @@ impl EarlyLintPass for SorobanVersion {
             Ok(metadata) => metadata,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Failed to get cargo metadata: {}", e))
                     .emit();
                 return;
@@ -62,7 +60,6 @@ impl EarlyLintPass for SorobanVersion {
             Some(packages) => packages.first(),
             None => {
                 cx.sess()
-                    .dcx()
                     .struct_warn("Error parsing cargo metadata: packages not found")
                     .emit();
                 return;
@@ -73,7 +70,6 @@ impl EarlyLintPass for SorobanVersion {
             Some(package) => package,
             None => {
                 cx.sess()
-                    .dcx()
                     .struct_warn("Error parsing cargo metadata: first package not found")
                     .emit();
                 return;
@@ -84,7 +80,6 @@ impl EarlyLintPass for SorobanVersion {
             Some(dependencies) => dependencies,
             None => {
                 cx.sess()
-                    .dcx()
                     .struct_warn("Error parsing cargo metadata: dependencies not found")
                     .emit();
                 return;
@@ -98,7 +93,6 @@ impl EarlyLintPass for SorobanVersion {
             Some(current_dependency) => current_dependency,
             None => {
                 cx.sess()
-                    .dcx()
                     .struct_warn("Soroban dependency not found in dependencies")
                     .emit();
                 return;
@@ -109,7 +103,6 @@ impl EarlyLintPass for SorobanVersion {
             Some(version) => version,
             None => {
                 cx.sess()
-                    .dcx()
                     .struct_warn("Error parsing current Soroban version")
                     .emit();
                 return;
@@ -120,7 +113,6 @@ impl EarlyLintPass for SorobanVersion {
             Ok(version) => version,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Error parsing latest Soroban version: {}", e))
                     .emit();
                 return;
@@ -133,7 +125,6 @@ impl EarlyLintPass for SorobanVersion {
             Ok(version) => version,
             Err(e) => {
                 cx.sess()
-                    .dcx()
                     .struct_warn(format!("Error parsing project's Soroban version: {}", e))
                     .emit();
                 return;
@@ -147,7 +138,7 @@ impl EarlyLintPass for SorobanVersion {
                 DUMMY_SP,
                 LINT_MESSAGE,
                 None,
-                format!(
+                &format!(
                     r#"The latest Soroban version is {latest_soroban_version}, and your version is "{soroban_version}""#
                 ),
             );

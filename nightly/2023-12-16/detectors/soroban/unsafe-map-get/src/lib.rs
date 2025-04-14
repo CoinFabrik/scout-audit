@@ -66,7 +66,7 @@ impl<'a, 'tcx> Visitor<'tcx> for UnsafeMapGetVisitor<'a, 'tcx> {
                     UNSAFE_MAP_GET,
                     expr.span,
                     LINT_MESSAGE,
-                    format!("Using `{}` on a Map is unsafe as it could panic, please use", path_segment.ident),
+                    &format!("Using `{}` on a Map is unsafe as it could panic, please use", path_segment.ident),
                     format!("{}.try_get({}).unwrap_or_default()", receiver_ident_name, first_arg_str),
                     Applicability::MaybeIncorrect,
                 );

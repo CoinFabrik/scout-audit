@@ -97,7 +97,7 @@ fn is_dynamic_type(cx: &LateContext, ty: &Ty) -> bool {
             let type_name = cx.tcx.item_name(adt_def.did());
             matches!(type_name.as_str(), "Vec" | "String" | "Map" | "LinkedList")
         }
-        TyKind::RawPtr(ty, _) => is_dynamic_type(cx, ty),
+        TyKind::RawPtr(ty) => is_dynamic_type(cx, &ty.ty),
         TyKind::Ref(_, ty, _) => is_dynamic_type(cx, ty),
         TyKind::Tuple(substs) => substs.iter().any(|ty| is_dynamic_type(cx, &ty)),
         _ => false,

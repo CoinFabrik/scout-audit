@@ -142,12 +142,12 @@ impl<'tcx> Visitor<'tcx> for BufferingUnsizedTypesVisitor<'tcx, '_> {
                 self.cx,
                 BUFFERING_UNSIZED_TYPES,
                 expr.span,
-                format!(
+                &format!(
                     "Do not use `{}` with an unsized type. Use the `try_{}` method instead.",
                     met_name, met_name
                 ),
                 Some(*self.mapping_fields.get(&struct_field_name).unwrap()),
-                format!(
+                &format!(
                     "The variable `{}` is a storage type with a dinamically sized value.",
                     field_name
                 ),

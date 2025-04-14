@@ -139,7 +139,7 @@ fn verify_token_interface_function_similarity(fn_name: String) -> bool {
     let function_name = String::from(fn_name.split("::").last().unwrap());
     let formatted_name: String = function_name
         .to_lowercase()
-        .replace("_", "")
+        .replace('_', "")
         .split_whitespace()
         .collect();
 
