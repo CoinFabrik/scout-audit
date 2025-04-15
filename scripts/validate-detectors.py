@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import subprocess
@@ -209,7 +210,9 @@ def validate_detectors_and_test_cases(base_path: str) -> List[ValidationError]:
     all_errors: List[ValidationError] = []
 
     # Get all blockchain directories
-    blockchains = set(os.listdir(os.path.join(base_path, "detectors")))
+    for nightly in glob.glob("nightly/20[0-9][0-9]-*-*"):
+        blockchains = set(os.listdir(os.path.join(base_path, nightly, "detectors")))
+
     blockchains &= set(os.listdir(os.path.join(base_path, "test-cases")))
 
     for blockchain in blockchains:
