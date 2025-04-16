@@ -1,8 +1,7 @@
 import glob
 import os
 import re
-import subprocess
-from typing import List, Tuple
+from typing import List
 from dataclasses import dataclass
 
 from utils import BLUE, GREEN, RED, ENDC
@@ -10,7 +9,7 @@ from utils import BLUE, GREEN, RED, ENDC
 
 @dataclass
 class ValidationError:
-    blockchain: str
+    path: str
     detector: str
     message: str
 
@@ -105,102 +104,119 @@ def validate_test_case(test_case_path: str, detector_name: str) -> List[str]:
     return errors
 
 
-def validate_blockchain(blockchain: str, base_path: str) -> List[ValidationError]:
+def validate(nightly: str, base_path: str) -> List[ValidationError]:
     """Validate detectors and test cases for a specific blockchain."""
-    print(f"{BLUE}[*] Validating {blockchain}...{ENDC}")
+    print(f"{BLUE}[*] Validating everything for {nightly}...{ENDC}")
+
     errors: List[ValidationError] = []
 
-    detectors_path = os.path.join(base_path, "detectors", blockchain)
-    test_cases_path = os.path.join(base_path, "test-cases", blockchain)
-    rust_path = os.path.join(base_path, "detectors", "rust")
-
-    # Skip if either path doesn't exist
-    if not os.path.isdir(detectors_path) or not os.path.isdir(test_cases_path):
+    detectors_path = f"{base_path}/{nightly}/detectors"
+    if not os.path.isdir(detectors_path):
         errors.append(
             ValidationError(
-                blockchain=blockchain,
+                path=detectors_path,
                 detector="",
-                message=f"Missing detector or test-case directory for blockchain {blockchain}",
+                message=f"Missing detectors directory for {detectors_path}",
             )
         )
         return errors
 
-    # Get all detectors and test cases for this blockchain
-    detectors = set(os.listdir(detectors_path))
-    test_cases = set(os.listdir(test_cases_path))
+    test_cases_path = f"{base_path}/test-cases"
+    if not os.path.isdir(test_cases_path):
+        errors.append(
+            ValidationError(
+                path=test_cases_path,
+                detector="",
+                message=f"Missing test-cases directory for {test_cases_path}",
+            )
+        )
+        return errors
 
-    # Add rust detectors if the rust directory exists
-    if os.path.isdir(rust_path):
-        detectors.update(os.listdir(rust_path))
+    # Difference now is we validate each target directory
+    targets = [t for t in os.listdir(detectors_path) if t != "rust"]
+    for target in targets:
+        # We now validate each target directory against the test-cases
+        print(f"{BLUE}[*] Validating {target}...{ENDC}")
 
-    # Remove common ignored directories
-    ignore_dirs = {"target", ".cargo"}
-    detectors = {
-        d
-        for d in detectors
-        if d not in ignore_dirs and os.path.isdir(os.path.join(detectors_path, d))
-    }
-    test_cases = {
-        t
-        for t in test_cases
-        if t not in ignore_dirs and os.path.isdir(os.path.join(test_cases_path, t))
-    }
+        targets_path = os.path.join(detectors_path, target)
+        detectors = os.listdir(targets_path)
+        test_cases = os.listdir(os.path.join(test_cases_path, target))
 
-    # Check for mismatches between detectors and test cases
-    missing_test_cases = detectors - test_cases
-    extra_test_cases = test_cases - detectors
-    rust_path = os.path.join(base_path, "detectors", "rust")
+        # Remove common ignored directories
+        ignore_dirs = {"target", ".cargo"}
+        detectors = {
+            d
+            for d in detectors
+            if d not in ignore_dirs and os.path.isdir(os.path.join(targets_path, d))
+        }
 
-    # For test cases with no detector in blockchain folder, check rust folder
-    if os.path.isdir(rust_path):
+        test_cases = {
+            t
+            for t in test_cases
+            if t not in ignore_dirs
+            and os.path.isdir(os.path.join(test_cases_path, target, t))
+        }
+
+        # Check for mismatches between detectors and test cases
+        missing_test_cases = detectors - test_cases
+        for detector in missing_test_cases:
+            errors.append(
+                ValidationError(
+                    path=os.path.join(detectors_path, target, detector),
+                    detector=detector,
+                    message=f"Detector '{detector}' has no corresponding test case",
+                )
+            )
+
+        extra_test_cases = test_cases - detectors
         rust_detectors = set(
             d
-            for d in os.listdir(rust_path)
-            if d not in ignore_dirs and os.path.isdir(os.path.join(rust_path, d))
-        )
-        # Remove test cases that have a detector in the rust folder
-        extra_test_cases = extra_test_cases - rust_detectors
-
-    for detector in missing_test_cases:
-        errors.append(
-            ValidationError(
-                blockchain=blockchain,
-                detector=detector,
-                message=f"Detector '{detector}' has no corresponding test case",
-            )
+            for d in os.listdir(os.path.join(detectors_path, "rust"))
+            if d not in ignore_dirs
+            and os.path.isdir(os.path.join(detectors_path, "rust", d))
         )
 
-    for test_case in extra_test_cases:
-        errors.append(
-            ValidationError(
-                blockchain=blockchain,
-                detector=test_case,
-                message=f"Test case '{test_case}' has no corresponding detector",
-            )
-        )
+        for test_case in extra_test_cases:
+            if test_case not in rust_detectors:
+                errors.append(
+                    ValidationError(
+                        path=os.path.join(test_cases_path, target, test_case),
+                        detector=test_case,
+                        message=f"Test case '{test_case}' has no corresponding detector",
+                    )
+                )
 
-    # Validate matching pairs
-    for detector in detectors & test_cases:
-        detector_path = os.path.join(detectors_path, detector)
-        test_case_path = os.path.join(test_cases_path, detector)
+        # Validate matching pairs
 
-        # Validate detector
-        detector_errors = is_rust_project(detector_path)
-        for error in detector_errors:
-            errors.append(
-                ValidationError(blockchain=blockchain, detector=detector, message=error)
-            )
+        for detector in detectors & test_cases:
+            detector_path = os.path.join(detectors_path, target, detector)
+            test_case_path = os.path.join(test_cases_path, target, detector)
 
-        # Validate test case
-        test_case_errors = (
-            validate_test_case(test_case_path, detector)
-            if not should_skip_validation(test_case_path)
-            else []
-        )
-        for error in test_case_errors:
-            errors.append(
-                ValidationError(blockchain=blockchain, detector=detector, message=error)
+            # Validate detector
+            detector_errors = is_rust_project(detector_path)
+            for error in detector_errors:
+                errors.append(
+                    ValidationError(
+                        path=detector_path,
+                        detector=detector,
+                        message=error,
+                    )
+                )
+
+            # Validate test case
+            test_case_errors = (
+                validate_test_case(test_case_path, detector)
+                if not should_skip_validation(test_case_path)
+                else []
             )
+            for error in test_case_errors:
+                errors.append(
+                    ValidationError(
+                        path=test_case_path,
+                        detector=detector,
+                        message=error,
+                    )
+                )
 
     return errors
 
@@ -209,14 +225,12 @@ def validate_detectors_and_test_cases(base_path: str) -> List[ValidationError]:
     """Validate all blockchains, their detectors and test-cases."""
     all_errors: List[ValidationError] = []
 
-    # Get all blockchain directories
-    for nightly in glob.glob("nightly/20[0-9][0-9]-*-*"):
-        blockchains = set(os.listdir(os.path.join(base_path, nightly, "detectors")))
+    # Get all nightlies
+    nightly_dirs = glob.glob("nightly/20[0-9][0-9]-*-*")
 
-    blockchains &= set(os.listdir(os.path.join(base_path, "test-cases")))
-
-    for blockchain in blockchains:
-        all_errors.extend(validate_blockchain(blockchain, base_path))
+    # Validate all nightlies
+    for nightly in nightly_dirs:
+        all_errors.extend(validate(nightly, base_path))
 
     return all_errors
 
@@ -226,15 +240,8 @@ def main():
 
     if errors:
         print(f"{RED}Validation errors found:{ENDC}")
-        current_blockchain = None
         for error in errors:
-            if current_blockchain != error.blockchain:
-                current_blockchain = error.blockchain
-                print(f"\n{BLUE}Blockchain: {current_blockchain}{ENDC}")
-            if error.detector:
-                print(f"{RED}[{error.detector}] {error.message}{ENDC}")
-            else:
-                print(f"{RED}{error.message}{ENDC}")
+            print(f"{RED}[{error.path}] {error.detector} {error.message}{ENDC}")
         exit(1)
     else:
         print(f"{GREEN}All detectors and test cases are valid!{ENDC}")
