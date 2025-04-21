@@ -12,7 +12,7 @@ use thiserror::Error;
 
 // Constants
 const SCOUT_REPO_URL: &str = "https://github.com/CoinFabrik/scout-audit";
-const BASE_DETECTOR_PATH: &str = "detectors/rust";
+const DETECTORS_BASE_PATH: &str = "nightly";
 const LOCAL_BASE_DETECTOR_PATH: &str = "rust";
 const LIBRARY_NAME: &str = "library";
 
@@ -72,20 +72,30 @@ impl DetectorsConfiguration {
         std::iter::once(&self.base_config).chain(self.blockchain_config.as_ref())
     }
 
-    pub fn get(blockchain: BlockChain, local_path: &Option<PathBuf>) -> Result<Self> {
+    pub fn get(
+        blockchain: BlockChain,
+        toolchain: &str,
+        local_path: &Option<PathBuf>,
+    ) -> Result<Self> {
         let detectors_config = match &local_path {
             Some(path) => Self::get_local_detectors_configuration(path, blockchain)
                 .map_err(DetectorsConfigError::Local)?,
-            None => Self::get_remote_detectors_configuration(blockchain)
+            None => Self::get_remote_detectors_configuration(blockchain, toolchain)
                 .map_err(DetectorsConfigError::Remote)?,
         };
 
         Ok(detectors_config)
     }
 
+    fn get_detector_path(toolchain: &str, subpath: &str) -> String {
+        // Extract just the date part from the toolchain (e.g., "2024-07-11" from "nightly-2024-07-11")
+        let date = toolchain.strip_prefix("nightly-").unwrap_or(toolchain);
+        format!("{}/{}/detectors/{}", DETECTORS_BASE_PATH, date, subpath)
+    }
+
     /// Returns list of detectors from remote repository.
     #[tracing::instrument(name = "GET REMOTE DETECTORS CONFIGURATION", skip_all, level = "debug")]
-    fn get_remote_detectors_configuration(blockchain: BlockChain) -> Result<Self> {
+    fn get_remote_detectors_configuration(blockchain: BlockChain, toolchain: &str) -> Result<Self> {
         let scout_version = env!("CARGO_PKG_VERSION");
         let default_branch = format!("release/{scout_version}");
 
@@ -97,10 +107,15 @@ impl DetectorsConfiguration {
             create_git_dependency(&default_branch).map_err(DetectorsConfigError::GitDependency)?;
         let source_id = dependency.source_id();
 
-        let base_config = DetectorConfig::with_dependency_and_path(source_id, BASE_DETECTOR_PATH)?;
+        let base_config = DetectorConfig::with_dependency_and_path(
+            source_id,
+            Self::get_detector_path(toolchain, "rust"),
+        )?;
 
-        let blockchain_config =
-            DetectorConfig::with_dependency_and_path(source_id, blockchain.get_detectors_path())?;
+        let blockchain_config = DetectorConfig::with_dependency_and_path(
+            source_id,
+            Self::get_detector_path(toolchain, blockchain.get_detectors_path()),
+        )?;
 
         Ok(Self::new(base_config, Some(blockchain_config)))
     }

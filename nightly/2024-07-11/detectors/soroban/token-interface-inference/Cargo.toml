@@ -1,0 +1,18 @@
+[package]
+edition = "2021"
+name = "token-interface-inference"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+common = { workspace = true }
+dylint_internal = { workspace = true }
+dylint_linting = { workspace = true }
+edit-distance = "=2.1.2"
+if_chain = { workspace = true }
+clippy_utils = { workspace = true }
+
+[package.metadata.rust-analyzer]
+rustc_private = true
