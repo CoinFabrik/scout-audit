@@ -13,8 +13,11 @@ Scout is triggered upon every commit pushed to a pull request, automatically run
 To integrate Scout into your CI/CD pipeline, simply add the following `scout.yml` to the `.github/workflows` directory in your repo.
 
 ```yml
-name: scout-workflow
-on: [push]
+name: scout-audit
+on:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   scout-audit:
@@ -25,20 +28,19 @@ jobs:
       repository-projects: write
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: do scout
-        uses: coinfabrik/scout-actions@v2.4
+        uses: coinfabrik/scout-actions@v3
         with:
-          target: # Path to the root of your smart contract (e.g. contracts/token/)
-          markdown_output: "true"
+          target: '' # Path to the root of your smart contract (e.g. contracts/token/)
 
       - uses: mshick/add-pr-comment@v2.8.2
         with:
-          message-path: ${{ github.workspace }}/report.md
+          message-path:  ${{ github.workspace }}/report.md
 
       # Optional: Add the following step to block the merge of the commit if Scout finds any issues.
-
+      
       - name: Check for error
         run: |
           if [ -f "${{ github.workspace }}/FAIL" ]; then
