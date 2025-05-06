@@ -12,35 +12,37 @@ mod build_config;
 use build_config::TOOLCHAIN;
 
 fn main() {
-    match ensure_toolchain(TOOLCHAIN) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+    for toolchain in TOOLCHAIN {
+        match ensure_toolchain(toolchain) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
-    }
 
-    match ensure_components(TOOLCHAIN, &["rust-src", "llvm-tools", "rustc-dev"]) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+        match ensure_components(toolchain, &["rust-src", "llvm-tools", "rustc-dev"]) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
-    }
 
-    match ensure_dylint_link(TOOLCHAIN) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+        match ensure_dylint_link(toolchain) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
-    }
 
-    match write_digest_file() {
-        Ok(_) => {}
-        Err(e) => {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
+        match write_digest_file() {
+            Ok(_) => {}
+            Err(e) => {
+                println!("cargo:warning={}", e);
+                std::process::exit(1);
+            }
         }
     }
 }

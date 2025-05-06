@@ -130,7 +130,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     // Prepare the args after we know the Blockchain type
     opts.prepare_args(blockchain);
 
-    let toolchain = blockchain.get_toolchain();
+    let toolchain = &blockchain.get_toolchain(&metadata)?;
 
     if opts.toolchain {
         println!("{}", toolchain);
@@ -164,8 +164,9 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         Verbosity::Quiet
     });
 
-    let detectors_config = DetectorsConfiguration::get(blockchain, &opts.local_detectors)
-        .map_err(ScoutError::DetectorsConfigFailed)?;
+    let detectors_config =
+        DetectorsConfiguration::get(blockchain, toolchain, &opts.local_detectors)
+            .map_err(ScoutError::DetectorsConfigFailed)?;
 
     // Instantiate detectors
     let detector_builder = DetectorBuilder::new(
@@ -201,7 +202,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     };
 
     let detectors_paths = detector_builder
-        .build(&blockchain, &filtered_detectors)
+        .build(&filtered_detectors)
         .map_err(ScoutError::BuildDetectorsFailed)?;
 
     let detectors_info = get_detectors_info(&detectors_paths)?;

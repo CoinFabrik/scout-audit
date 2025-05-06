@@ -66,8 +66,8 @@ impl Library {
     }
 
     #[cfg(not(feature = "docker_container"))]
-    fn build_workspace(&self, bc: &BlockChain, verbose: bool) -> Result<()> {
-        cargo::build("detectors", bc, !verbose)
+    fn build_workspace(&self, verbose: bool) -> Result<()> {
+        cargo::build("detectors", &self.toolchain, !verbose)
             .sanitize_environment()
             .env_remove(env::RUSTFLAGS)
             .current_dir(&self.root)
@@ -78,7 +78,7 @@ impl Library {
     }
 
     #[cfg(feature = "docker_container")]
-    fn build_workspace(&self, _: &BlockChain, _: bool) -> Result<()> {
+    fn build_workspace(&self, _: bool) -> Result<()> {
         Ok(())
     }
 
@@ -98,9 +98,9 @@ impl Library {
     }
 
     /// Builds the library and returns its path.
-    pub fn build(&self, bc: &BlockChain, verbose: bool) -> Result<Vec<PathBuf>> {
+    pub fn build(&self, verbose: bool) -> Result<Vec<PathBuf>> {
         // Build entire workspace
-        self.build_workspace(bc, verbose)?;
+        self.build_workspace(verbose)?;
 
         // Verify all libraries were built
         let compiled_library_paths = self.get_compiled_library_paths();

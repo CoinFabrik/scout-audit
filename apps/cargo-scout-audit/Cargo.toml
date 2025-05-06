@@ -20,7 +20,7 @@ license = "MIT"
 name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.3.6"
+version = "0.3.7"
 
 [lib]
 path = "src/lib.rs"

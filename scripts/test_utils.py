@@ -1,3 +1,4 @@
+from glob import glob
 import os
 import argparse
 import time
@@ -56,7 +57,9 @@ def run_unit_tests(root, blockchain):
 def run_integration_tests(detector, root):
     start_time = time.time()
 
-    local_detectors = os.path.join(os.getcwd(), "detectors")
+    # Get latest nightly from the directory nightly/
+    latest_nightly = sorted(glob(os.path.join(os.getcwd(), "nightly", "*")))[-1]
+    local_detectors = os.path.join(latest_nightly, "detectors")
 
     returncode, stdout, _ = run_subprocess(
         [
@@ -82,9 +85,6 @@ def run_integration_tests(detector, root):
     if not isinstance(detector_metadata, dict):
         print("Failed to extract JSON:", detector_metadata)
         return True
-
-    detector_key = detector.replace("-", "_")
-    short_message = detector_metadata.get(detector_key, {}).get("short_message")
 
     _, tempPath = tempfile.mkstemp(None, f"scout_{os.getpid()}_")
 

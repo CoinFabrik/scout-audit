@@ -1,3 +1,4 @@
+import glob
 import subprocess
 import os
 import json
@@ -7,6 +8,21 @@ GREEN = "\033[92m"
 BLUE = "\033[94m"
 ENDC = "\033[0m"
 
+NIGHTLY_SUBDIRS = ["ink", "soroban", "substrate-pallets"]
+
+def get_nightly_commands(command: str):
+    """Dynamically generate commands for all nightly directories."""
+    nightly_commands = []
+    # Find all nightly directories
+    nightly_dirs = glob.glob("nightly/20[0-9][0-9]-*-*")
+
+    for nightly_dir in nightly_dirs:
+        for subdir in NIGHTLY_SUBDIRS:
+            detector_path = f"{nightly_dir}/detectors/{subdir}"
+            if os.path.exists(detector_path):
+                nightly_commands.append((detector_path, command))
+
+    return nightly_commands
 
 def run_subprocess(command: list, cwd: str):
     result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)

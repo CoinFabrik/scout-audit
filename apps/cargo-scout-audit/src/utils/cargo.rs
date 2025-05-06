@@ -1,5 +1,4 @@
 use super::command::Command;
-use crate::scout::blockchain::BlockChain;
 use ansi_term::Style;
 #[cfg(windows)]
 use std::path::Path;
@@ -9,12 +8,12 @@ use std::{
 };
 
 #[must_use]
-pub fn build(description: &str, bc: &BlockChain, quiet: bool) -> Command {
-    cargo("build", "Building", description, quiet, bc)
+pub fn build(description: &str, toolchain: &str, quiet: bool) -> Command {
+    cargo("build", "Building", description, quiet, toolchain)
 }
 
-fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, bc: &BlockChain) -> Command {
-    let toolchain = &format!("+{}", bc.get_toolchain());
+fn cargo(subcommand: &str, verb: &str, description: &str, quiet: bool, toolchain: &str) -> Command {
+    let toolchain = &format!("+{}", toolchain);
     if !quiet {
         // smoelius: Writing directly to `stderr` avoids capture by `libtest`.
         let message = format!("{verb} {description}");
