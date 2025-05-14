@@ -8,7 +8,7 @@ authors = [
     "Facundo Lerena <facundo.lerena@coinfabrik.com>",
     "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
     "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
 ]
 
 build = "build.rs"
