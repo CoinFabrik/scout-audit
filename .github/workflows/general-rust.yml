@@ -29,7 +29,8 @@ jobs:
         run: rustup update
 
       - name: Install rustfmt
-        run: rustup component add rustfmt
+        run: rustup component add rustfmt --toolchain nightly-2024-07-11
+        run: rustup component add rustfmt --toolchain nightly-2023-12-16
 
       - name: Check Format
         run: python3 scripts/run-fmt.py
