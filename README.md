@@ -1,6 +1,6 @@
 # Scout: Security Analysis Tool
 
-![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green) [![Test Detectors](https://github.com/CoinFabrik/scout-audit/actions/workflows/test-detectors-pr.yml/badge.svg)](https://github.com/CoinFabrik/scout-audit/actions/workflows/test-detectors-pr.yml)
+![https://img.shields.io/badge/license-MIT-green](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/CoinFabrik/scout/c1eb3073f85b051dc9ce2fa0ab1ebab4bde0914e/assets/scout.png" alt="Scout in a Dark Forest" width="300" center  />
@@ -29,6 +29,8 @@ cargo scout-audit
 :bulb: Scout supports [Cargo Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html). When run on a workspace, Scout will be executed on all packages specified as members of the workspace.
 
 :warning: Make sure that your smart contracts compile properly. Scout won't run if any compilation errors exist.
+
+:warning: We recommend installing Rust using the `curl` command provided on the official [Rust documentation](https://doc.rust-lang.org/cargo/getting-started/installation.html), as using a package manager like Homebrew may cause conflicts.
 
 For more information on Scout's installation and usage, please refer to [Scout's documentation](https://coinfabrik.github.io/scout-audit/docs/intro).
 
