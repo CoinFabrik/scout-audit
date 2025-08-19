@@ -1,6 +1,5 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
-#![feature(let_chains)]
 
 extern crate rustc_hir;
 extern crate rustc_middle;

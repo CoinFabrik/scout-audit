@@ -1,6 +1,5 @@
 #![feature(rustc_private)]
 #![recursion_limit = "256"]
-#![feature(let_chains)]
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;

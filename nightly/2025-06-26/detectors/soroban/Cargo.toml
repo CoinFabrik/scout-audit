@@ -4,7 +4,7 @@ members = ["*"]
 resolver = "2"
 
 [workspace.dependencies]
-clippy_utils = "=0.1.90"
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", commit = "feb18ca1ee3c195e9127d6acf20da99159fca581", package = "clippy_utils" }
 common = { path = "../../common" }
 common_detectors = { path = "../../common/detectors", package = "common-detectors" }
 dylint_internal = "=3.1.2"

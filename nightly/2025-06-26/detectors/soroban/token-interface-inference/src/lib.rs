@@ -115,7 +115,7 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
                             | ItemKind::Enum(ident, _, _)
                             | ItemKind::Struct(ident, _, _)
                             | ItemKind::Union(ident, _, _)
-                            | ItemKind::Trait(_, _, ident, _, _, _)
+                            | ItemKind::Trait(_, _, _, ident, _, _, _)
                             | ItemKind::TraitAlias(ident, _, _)
                             => Some(ident.span),
                         _ => None
