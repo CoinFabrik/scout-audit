@@ -146,7 +146,7 @@ fn navigate_trough_basicblocks<'tcx>(
         if let StatementKind::Assign(assign) = &statement.kind {
             match &assign.1 {
                 Rvalue::Ref(_, _, origplace)
-                | Rvalue::AddressOf(_, origplace)
+                | Rvalue::RawPtr(_, origplace)
                 | Rvalue::Len(origplace)
                 | Rvalue::CopyForDeref(origplace) => {
                     if tainted_places

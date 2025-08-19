@@ -7,6 +7,7 @@ resolver = "2"
 clippy_utils = "=0.1.90"
 common = { path = "../../common" }
 common_detectors = { path = "../../common/detectors", package = "common-detectors" }
+common_utils = { path = "../../common/utils", package = "common-utils" }
 dylint_internal = "=3.1.2"
 dylint_linting = "=3.1.2"
 if_chain = "=1.0.2"

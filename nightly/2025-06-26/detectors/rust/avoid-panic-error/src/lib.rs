@@ -71,7 +71,7 @@ impl EarlyLintPass for AvoidPanicError {
             ItemKind::Fn(fn_item) => {
                 self.check_function(cx, &fn_item.sig.decl.output, &fn_item.body);
             }
-            ItemKind::Mod(_, ModKind::Loaded(items, _, _)) => {
+            ItemKind::Mod(_, _, ModKind::Loaded(items, _, _, _)) => {
                 for item in items {
                     self.check_item(cx, item);
                 }
@@ -135,7 +135,7 @@ fn is_test_item(item: &Item) -> bool {
 
 fn is_test_token_present(args: &AttrArgs) -> bool {
     if let AttrArgs::Delimited(delim_args) = args {
-        delim_args.tokens.trees().any(
+        delim_args.tokens.iter().any(
             |tree| matches!(tree, TokenTree::Token(token, _) if token.is_ident_named(sym::test)),
         )
     } else {

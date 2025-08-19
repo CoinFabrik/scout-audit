@@ -3,11 +3,12 @@
 extern crate rustc_ast;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint, sym};
+use clippy_utils::{diagnostics::span_lint};
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
+use common_utils::clippy_sym;
 use rustc_ast::{tokenstream::TokenTree, AttrArgs, AttrKind, Item, MacCall};
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::{sym, Span};
@@ -47,7 +48,7 @@ impl AssertViolation {
     fn is_test_token_present(args: &AttrArgs) -> bool {
         matches!(args, AttrArgs::Delimited(delim_args) if delim_args
             .tokens
-            .trees()
+            .iter()
             .any(|tree| matches!(tree, TokenTree::Token(token, _) if token.is_ident_named(sym::test))))
     }
 
@@ -66,12 +67,12 @@ impl AssertViolation {
     }
 
     fn is_assert_macro(mac: &MacCall) -> bool {
-        mac.path == sym!(assert)
-            || mac.path == sym!(assert_eq)
-            || mac.path == sym!(assert_ne)
-            || mac.path == sym!(debug_assert)
-            || mac.path == sym!(debug_assert_eq)
-            || mac.path == sym!(debug_assert_ne)
+        mac.path == clippy_sym!(assert)
+            || mac.path == clippy_sym!(assert_eq)
+            || mac.path == clippy_sym!(assert_ne)
+            || mac.path == clippy_sym!(debug_assert)
+            || mac.path == clippy_sym!(debug_assert_eq)
+            || mac.path == clippy_sym!(debug_assert_ne)
     }
 }
 
