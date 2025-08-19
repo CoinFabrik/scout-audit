@@ -44,7 +44,7 @@ impl UnnecessaryLintAllow {
         let mut stack = VecDeque::from([tokens]);
 
         while let Some(current_stream) = stack.pop_front() {
-            for tree in current_stream.trees() {
+            for tree in current_stream.iter() {
                 match tree {
                     TokenTree::Token(
                         Token {

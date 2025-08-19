@@ -3,11 +3,11 @@
 extern crate rustc_ast;
 extern crate rustc_span;
 
-use clippy_utils::sym;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
+use common_utils::clippy_sym;
 use if_chain::if_chain;
 use rustc_ast::{
     tokenstream::{TokenStream, TokenTree},
@@ -68,7 +68,7 @@ impl EarlyLintPass for AvoidFormatString {
         if_chain! {
             if !self.in_test_item();
             if let ExprKind::MacCall(mac) = &expr.kind;
-            if mac.path == sym!(format);
+            if mac.path == clippy_sym!(format);
 
             then {
                 clippy_utils::diagnostics::span_lint_and_help(
@@ -117,7 +117,7 @@ fn is_test_item(item: &Item) -> bool {
 }
 
 fn is_test_token_present(token_stream: &TokenStream) -> bool {
-    token_stream.trees().any(|tree| match tree {
+    token_stream.iter().any(|tree| match tree {
         TokenTree::Token(token, _) => token.is_ident_named(sym::test),
         TokenTree::Delimited(_, _, _, token_stream) => is_test_token_present(token_stream),
     })

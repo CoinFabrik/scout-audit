@@ -3,7 +3,13 @@
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::{consts::constant_simple, is_integer_literal};
+use clippy_utils::{
+    consts::{
+        Constant,
+        ConstEvalCtxt,
+    },
+    is_integer_literal,
+};
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
@@ -52,7 +58,7 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
             }
             ExprKind::AssignOp(op, lhs, rhs) => {
                 self.arithmetic_context
-                    .check_binary(cx, e, op.node, lhs, rhs);
+                    .check_assignment(cx, e, op.node, lhs, rhs);
             }
             ExprKind::Unary(op, arg) => {
                 if op == UnOp::Neg {
@@ -74,6 +80,14 @@ impl<'tcx> LateLintPass<'tcx> for IntegerOverflowOrUnderflow {
     fn check_body_post(&mut self, cx: &LateContext<'tcx>, b: &rustc_hir::Body<'_>) {
         self.arithmetic_context.body_post(cx, b);
     }
+}
+
+/// Attempts to evaluate an expression only if its value is not dependent on other items.
+pub fn constant_simple<'tcx>(
+    lcx: &LateContext<'tcx>,
+    e: &Expr<'_>,
+) -> Option<Constant<'tcx>> {
+    ConstEvalCtxt::new(lcx).eval_simple(e)
 }
 
 #[derive(Default)]
@@ -162,6 +176,66 @@ impl ArithmeticContext {
         }
     }
 
+    pub fn check_assignment<'tcx>(
+        &mut self,
+        cx: &LateContext<'tcx>,
+        expr: &'tcx hir::Expr<'_>,
+        op: hir::AssignOpKind,
+        l: &'tcx hir::Expr<'_>,
+        r: &'tcx hir::Expr<'_>,
+    ) {
+        if self.skip_expr(expr) {
+            return;
+        }
+
+        let (l_ty, r_ty) = (
+            cx.typeck_results().expr_ty(l),
+            cx.typeck_results().expr_ty(r),
+        );
+        if l_ty.peel_refs().is_integral() && r_ty.peel_refs().is_integral() {
+            match op {
+                hir::AssignOpKind::DivAssign | hir::AssignOpKind::RemAssign => match &r.kind {
+                    hir::ExprKind::Lit(_lit) => (),
+                    hir::ExprKind::Unary(hir::UnOp::Neg, expr) => {
+                        if is_integer_literal(expr, 1) {
+                            clippy_utils::diagnostics::span_lint_and_help(
+                                cx,
+                                INTEGER_OVERFLOW_OR_UNDERFLOW,
+                                expr.span,
+                                LINT_MESSAGE,
+                                None,
+                                "Potential for integer arithmetic overflow/underflow in unary operation with negative expression. Consider checked, wrapping or saturating arithmetic."
+                            );
+                            self.expr_id = Some(expr.hir_id);
+                        }
+                    }
+                    _ => {
+                        clippy_utils::diagnostics::span_lint_and_help(
+                            cx,
+                            INTEGER_OVERFLOW_OR_UNDERFLOW,
+                            expr.span,
+                            LINT_MESSAGE,
+                            None,
+                            format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                        );
+                        self.expr_id = Some(expr.hir_id);
+                    }
+                },
+                _ => {
+                    clippy_utils::diagnostics::span_lint_and_help(
+                        cx,
+                        INTEGER_OVERFLOW_OR_UNDERFLOW,
+                        expr.span,
+                        LINT_MESSAGE,
+                        None,
+                        format!("Potential for integer arithmetic overflow/underflow in operation '{}'. Consider checked, wrapping or saturating arithmetic.", op.as_str()),
+                    );
+                    self.expr_id = Some(expr.hir_id);
+                }
+            }
+        }
+    }
+
     pub fn check_negate<'tcx>(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -172,7 +246,7 @@ impl ArithmeticContext {
             return;
         }
         let ty = cx.typeck_results().expr_ty(arg);
-        if constant_simple(cx, cx.typeck_results(), expr).is_none() && ty.is_integral() {
+        if constant_simple(cx, expr).is_none() && ty.is_integral() {
             clippy_utils::diagnostics::span_lint_and_help(
                 cx,
                 INTEGER_OVERFLOW_OR_UNDERFLOW,
@@ -192,12 +266,12 @@ impl ArithmeticContext {
     }
 
     pub fn enter_body(&mut self, cx: &LateContext<'_>, body: &hir::Body<'_>) {
-        let body_owner = cx.tcx.hir().body_owner(body.id());
-        let body_owner_def_id = cx.tcx.hir().body_owner_def_id(body.id());
+        let body_owner = cx.tcx.hir_body_owner(body.id());
+        let body_owner_def_id = cx.tcx.hir_body_owner_def_id(body.id());
 
-        match cx.tcx.hir().body_owner_kind(body_owner_def_id) {
+        match cx.tcx.hir_body_owner_kind(body_owner_def_id) {
             hir::BodyOwnerKind::Static(_) | hir::BodyOwnerKind::Const { .. } => {
-                let body_span = cx.tcx.hir().span_with_body(body_owner);
+                let body_span = cx.tcx.hir_span_with_body(body_owner);
 
                 if let Some(span) = self.const_span {
                     if span.contains(body_span) {
@@ -206,13 +280,13 @@ impl ArithmeticContext {
                 }
                 self.const_span = Some(body_span);
             }
-            hir::BodyOwnerKind::Fn | hir::BodyOwnerKind::Closure => (),
+            _ => (),
         }
     }
 
     pub fn body_post(&mut self, cx: &LateContext<'_>, body: &hir::Body<'_>) {
-        let body_owner = cx.tcx.hir().body_owner(body.id());
-        let body_span = cx.tcx.hir().span_with_body(body_owner);
+        let body_owner = cx.tcx.hir_body_owner(body.id());
+        let body_span = cx.tcx.hir_span_with_body(body_owner);
 
         if let Some(span) = self.const_span {
             if span.contains(body_span) {

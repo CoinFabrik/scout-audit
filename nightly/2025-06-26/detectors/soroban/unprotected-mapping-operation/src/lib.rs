@@ -19,7 +19,7 @@ use rustc_hir::{
     Body, Expr, ExprKind, FnDecl,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::{GenericArgKind, Ty, TyKind};
+use rustc_middle::ty::{Ty, TyKind};
 use rustc_span::{
     def_id::{DefId, LocalDefId},
     Span, Symbol,
@@ -153,7 +153,7 @@ impl<'tcx> UnprotectedMappingOperationVisitor<'_, 'tcx> {
             // Retrieve the first generic argument, ensure it exists and is of type Ty.
             if let TyKind::Adt(_, args) = receiver_type.kind();
             if let Some(first_arg) = args.first();
-            if let GenericArgKind::Type(first_type) = first_arg.unpack();
+            if let Some(first_type) = first_arg.as_type();
 
             // Verify that the type of the first argument is 'soroban_sdk::Address'.
             if is_soroban_address(self.cx, first_type);

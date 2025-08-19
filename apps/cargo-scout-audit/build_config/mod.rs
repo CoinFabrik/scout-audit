@@ -1,1 +1,5 @@
-pub const TOOLCHAIN: [&str; 2] = ["nightly-2023-12-16", "nightly-2024-07-11"];
+pub const TOOLCHAIN: [&str; 3] = [
+    "nightly-2023-12-16",
+    "nightly-2024-07-11",
+    "nightly-2025-07-03",
+];

@@ -122,7 +122,7 @@ impl<'tcx> LateLintPass<'tcx> for StorageChangeEvents {
                     span_lint_and_help(
                         cx,
                         STORAGE_CHANGE_EVENTS,
-                        cx.tcx.hir().span_if_local(*func).unwrap(),
+                        cx.tcx.hir_span_if_local(*func).unwrap(),
                         LINT_MESSAGE,
                         /* cx.tcx.hir().span_if_local(r) */ None,
                         "",

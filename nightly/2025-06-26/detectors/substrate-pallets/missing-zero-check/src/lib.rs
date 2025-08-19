@@ -107,7 +107,7 @@ impl ExtrinsicFunctionValidator {
         for tree in trees {
             match tree {
                 TokenTree::Delimited(.., token_stream) => {
-                    self.process_token_trees(&token_stream.trees().cloned().collect::<Vec<_>>());
+                    self.process_token_trees(&token_stream.iter().cloned().collect::<Vec<_>>());
                 }
                 TokenTree::Token(token, _) => {
                     if let TokenKind::Ident(symbol, _) = token.kind {
@@ -168,8 +168,8 @@ impl EarlyLintPass for MissingZeroCheck {
     fn check_item(&mut self, _: &EarlyContext<'_>, item: &Item) {
         if let ItemKind::Impl(impl_) = &item.kind {
             for impl_item in &impl_.items {
-                if let AssocItemKind::Fn(..) = &impl_item.kind {
-                    let fn_name = impl_item.ident.name.to_string();
+                if let AssocItemKind::Fn(f) = &impl_item.kind {
+                    let fn_name = f.ident.name.to_string();
 
                     for attr in &impl_item.attrs {
                         if attr.is_doc_comment() {

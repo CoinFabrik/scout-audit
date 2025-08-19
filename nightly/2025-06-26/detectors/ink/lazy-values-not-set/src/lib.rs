@@ -7,7 +7,6 @@ extern crate rustc_span;
 
 use std::collections::{HashMap, HashSet};
 
-use clippy_utils::match_def_path;
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
@@ -22,7 +21,7 @@ use rustc_middle::{
     mir::{traversal::preorder, Local, Operand, Rvalue, TerminatorKind},
     ty::TyKind,
 };
-use rustc_span::{def_id::LocalDefId, Span};
+use rustc_span::{def_id::LocalDefId, Span, Symbol};
 
 const LINT_MESSAGE: &str = "Lazy value was gotten here but never set afterwards";
 
@@ -57,6 +56,13 @@ struct FunFinderVisitor<'a, 'tcx: 'a> {
     lazy_get_defid: Option<DefId>,
     mapping_insert_defid: Option<DefId>,
     mapping_get_defid: Option<DefId>,
+}
+
+/// Checks if the given `DefId` matches the path.
+pub fn match_def_path(cx: &LateContext<'_>, did: DefId, syms: &[&str]) -> bool {
+    // We should probably move to Symbols in Clippy as well rather than interning every time.
+    let path = cx.get_def_path(did);
+    syms.iter().map(|x| Symbol::intern(x)).eq(path.iter().copied())
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for FunFinderVisitor<'a, 'tcx> {
@@ -326,7 +332,7 @@ fn get_locals_in_rvalue(rvalue: &Rvalue) -> Vec<Local> {
         | rustc_middle::mir::Rvalue::Cast(_, op, _)
         | rustc_middle::mir::Rvalue::UnaryOp(_, op) => op_local(op),
         rustc_middle::mir::Rvalue::Ref(_, _, p)
-        | rustc_middle::mir::Rvalue::AddressOf(_, p)
+        | rustc_middle::mir::Rvalue::RawPtr(_, p)
         | rustc_middle::mir::Rvalue::Len(p)
         | rustc_middle::mir::Rvalue::CopyForDeref(p) => {
             vec![p.local]

@@ -3,11 +3,15 @@
 extern crate rustc_ast;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint_and_help, sym};
+use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
-    declarations::{Severity, VulnerabilityClass},
+    declarations::{
+        Severity,
+        VulnerabilityClass,
+    },
     macros::expose_lint_info,
 };
+use common_utils::clippy_sym;
 use rustc_ast::{tokenstream::TokenTree, AttrArgs, AttrKind, Item, MacCall};
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::{sym, Span};
@@ -53,7 +57,7 @@ impl AvoidDebugInfo {
     fn is_test_token_present(args: &AttrArgs) -> bool {
         matches!(args, AttrArgs::Delimited(delim_args) if delim_args
             .tokens
-            .trees()
+            .iter()
             .any(|tree| matches!(tree, TokenTree::Token(token, _) if token.is_ident_named(sym::test))))
     }
 
@@ -79,7 +83,7 @@ impl EarlyLintPass for AvoidDebugInfo {
         }
     }
     fn check_mac(&mut self, cx: &EarlyContext<'_>, mac: &MacCall) {
-        if (mac.path != sym::debug) && (mac.path != sym!(info)) {
+        if (mac.path != sym::debug) && (mac.path != clippy_sym!(info)) {
             return;
         }
 

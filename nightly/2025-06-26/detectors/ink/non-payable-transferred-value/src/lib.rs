@@ -111,7 +111,7 @@ fn attr_is_present(attrs: &[Attribute], find: &str) -> bool {
 }
 
 fn is_token_present(token_stream: &TokenStream, find: &str) -> bool {
-    token_stream.trees().any(|tree| match tree {
+    token_stream.iter().any(|tree| match tree {
         TokenTree::Token(token, _) => token
             .ident()
             .map_or(false, |ident| ident.0.name.to_string() == find),

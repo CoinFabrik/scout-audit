@@ -124,7 +124,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
             bbs: &'tcx BasicBlocks<'tcx>,
             caller_def_id: Option<DefId>,
             map_ops: Vec<Option<DefId>>,
-        ) -> CallersAndMapOps {
+        ) -> CallersAndMapOps<'tcx> {
             let mut callers_vec = CallersAndMapOps {
                 callers: vec![],
                 map_ops: vec![],
@@ -208,7 +208,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                 if let StatementKind::Assign(assign) = &statement.kind {
                     match &assign.1 {
                         rustc_middle::mir::Rvalue::Ref(_, _, origplace)
-                        | rustc_middle::mir::Rvalue::AddressOf(_, origplace)
+                        | rustc_middle::mir::Rvalue::RawPtr(_, origplace)
                         | rustc_middle::mir::Rvalue::Len(origplace)
                         | rustc_middle::mir::Rvalue::CopyForDeref(origplace) => {
                             if tainted_places

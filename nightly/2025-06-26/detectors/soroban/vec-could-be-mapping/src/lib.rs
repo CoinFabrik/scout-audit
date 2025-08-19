@@ -21,7 +21,6 @@ use rustc_hir::{
     Body, Expr, FnDecl, GenericArg, HirId, QPath, Stmt, TyKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::GenericArgKind;
 use rustc_span::{def_id::LocalDefId, Span};
 
 const LINT_MESSAGE: &str =
@@ -138,16 +137,13 @@ impl<'a, 'b, 'c> FindIterations<'a, 'b, 'c> {
             return Ok(());
         }
 
-        let generic_arg = generic_args.first().unwrap().unpack();
+        let arg = generic_args.first().unwrap().as_type();
+        if arg.is_none(){
+            return Ok(());
+        }
+        let arg = arg.unwrap();
+        let type_string = arg.to_string();
 
-        let type_string = {
-            if let GenericArgKind::Type(x) = generic_arg {
-                Ok(x)
-            } else {
-                Err(())
-            }
-        }?
-        .to_string();
         let n = type_string.len();
         if !(n > 2
             && type_string.chars().nth(0).unwrap() == '('

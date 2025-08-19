@@ -17,7 +17,7 @@ use rustc_ast::LitKind;
 use rustc_hir::{
     def::Res,
     intravisit::{walk_expr, FnKind, Visitor},
-    ArrayLen, BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Param, PatKind, QPath, TyKind,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, HirId, Param, PatKind, QPath, TyKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyCtxt;
@@ -106,8 +106,8 @@ impl<'tcx> LateLintPass<'tcx> for ZeroOrTestAddress {
                 if let ExprKind::Lit(val_lit) = val_expr.kind;
                 if let LitKind::Int(val, _val_ty) = val_lit.node;
                 if val == 0;
-                if let ArrayLen::Body(body) = len;
-                if let ExprKind::Lit(repeat_lit) = tcx.hir().body(body.body).value.kind;
+                if let rustc_hir::ConstArgKind::Anon(anon) = len.kind;
+                if let ExprKind::Lit(repeat_lit) = tcx.hir_body(anon.body).value.kind;
                 if let LitKind::Int(repeat_val, _repeat_val_ty) = repeat_lit.node;
                 if repeat_val == 32;
                 then {

@@ -7,9 +7,28 @@ extern crate rustc_type_ir;
 
 use rustc_ast::{BindingMode, Label, LitIntType, LitKind, UnOp};
 use rustc_hir::{
-    def::{DefKind, Res},
-    Block, Expr, ExprField, ExprKind, HirId, LangItem, LetStmt, LoopSource, MatchSource, Pat,
-    PatField, PatKind, Path, PathSegment, QPath, StmtKind, Ty,
+    def::{
+        DefKind,
+        Res,
+    },
+    Block,
+    Expr,
+    ExprField,
+    ExprKind,
+    HirId,
+    LangItem,
+    LetStmt,
+    LoopSource,
+    MatchSource,
+    Pat,
+    PatField,
+    PatKind,
+    Path,
+    PathSegment,
+    QPath,
+    StmtKind,
+    Ty,
+    StructTailExpr,
 };
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_span::{def_id::DefId, symbol::Ident, Span};
@@ -112,10 +131,10 @@ pub fn expr_to_struct<'hir>(
 ) -> Option<(
     &'hir QPath<'hir>,
     &'hir [ExprField<'hir>],
-    Option<&'hir Expr<'hir>>,
+    &'hir StructTailExpr<'hir>,
 )> {
     if let ExprKind::Struct(a, b, c) = kind {
-        Some((a, b, *c))
+        Some((a, b, c))
     } else {
         None
     }
@@ -131,7 +150,7 @@ pub fn expr_to_lit<'hir>(kind: &'hir ExprKind<'hir>) -> Option<&'hir rustc_hir::
 
 pub fn expr_to_loop<'hir>(
     kind: &'hir ExprKind<'hir>,
-) -> Option<(&'hir Block<'hir>, &Option<Label>, LoopSource, &Span)> {
+) -> Option<(&'hir Block<'hir>, &'hir Option<Label>, LoopSource, &'hir Span)> {
     if let ExprKind::Loop(a, b, c, d) = kind {
         Some((a, b, *c, d))
     } else {
@@ -231,7 +250,7 @@ pub fn lit_to_int(kind: &LitKind) -> Option<(u128, LitIntType)> {
 
 pub fn pattern_to_struct<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Option<(&QPath<'hir>, &'hir [PatField<'hir>], bool)> {
+) -> Option<(&'hir QPath<'hir>, &'hir [PatField<'hir>], bool)> {
     if let PatKind::Struct(a, b, c) = pat {
         Some((a, b, *c))
     } else {
@@ -241,7 +260,7 @@ pub fn pattern_to_struct<'hir>(
 
 pub fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Option<(&BindingMode, &HirId, &Ident, &Option<&'hir Pat<'hir>>)> {
+) -> Option<(&'hir BindingMode, &'hir HirId, &'hir Ident, &'hir Option<&'hir Pat<'hir>>)> {
     if let PatKind::Binding(a, b, c, d) = pat {
         Some((a, b, c, d))
     } else {

@@ -140,7 +140,7 @@ fn find_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
     terminate_def_id: Option<DefId>,
     possible_terminate: Vec<Option<TerminateInfo>>,
-) -> Terminates {
+) -> Terminates<'tcx> {
     let mut terminates_vec = Terminates {
         terminates: vec![],
         terminates_info: vec![],

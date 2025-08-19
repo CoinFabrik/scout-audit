@@ -42,7 +42,7 @@ pub struct LazyDelegate {
 impl EarlyLintPass for LazyDelegate {
     fn check_item(&mut self, _: &EarlyContext<'_>, item: &Item) {
         if is_storage_item(item)
-            && let ItemKind::Struct(strt, _) = &item.kind
+            && let ItemKind::Struct(_, _, strt) = &item.kind
         {
             for field in strt.fields() {
                 if let Some(_) = field.ident
@@ -52,7 +52,7 @@ impl EarlyLintPass for LazyDelegate {
                         || path.segments[0].ident.name.to_string() == "Mapping")
                     && let Some(arg) = &path.segments[0].args
                     && let GenericArgs::AngleBracketed(AngleBracketedArgs { args, .. }) =
-                        arg.clone().into_inner()
+                        *arg.clone()
                     && args.len() > 1
                 {
                 } else if !self.non_lazy_manual_storage_spans.contains(&item.span) {
@@ -62,7 +62,7 @@ impl EarlyLintPass for LazyDelegate {
         }
     }
 
-    fn check_ident(&mut self, cx: &EarlyContext<'_>, id: rustc_span::symbol::Ident) {
+    fn check_ident(&mut self, cx: &EarlyContext<'_>, id: &rustc_span::Ident) {
         if id.name.to_string() == "delegate" {
             self.delegate_uses.push(id.span);
         }
@@ -108,7 +108,7 @@ fn is_storage_item(item: &Item) -> bool {
 }
 
 fn is_storage_present(token_stream: &TokenStream) -> bool {
-    token_stream.trees().any(|tree| match tree {
+    token_stream.iter().any(|tree| match tree {
         TokenTree::Token(token, _) => {
             if let Some(ident) = token.ident() {
                 ident.0.name.to_ident_string().contains("storage")

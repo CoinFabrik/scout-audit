@@ -1,11 +1,20 @@
-use crate::utils::print::{print_error, print_info};
-use anyhow::{Context, Result};
-use current_platform::CURRENT_PLATFORM;
+use crate::utils::print::print_info;
+use anyhow::Result;
 use lazy_static::lazy_static;
 use std::{
     env,
+    process::Child,
+};
+#[cfg(not(windows))]
+use crate::utils::print::print_error;
+#[cfg(not(windows))]
+use anyhow::Context;
+#[cfg(not(windows))]
+use current_platform::CURRENT_PLATFORM;
+#[cfg(not(windows))]
+use std::{
     path::Path,
-    process::{Child, Command},
+    process::Command,
 };
 
 lazy_static! {

@@ -2,7 +2,7 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_lint;
 
-use clippy_utils::consts::{constant, Constant};
+use clippy_utils::consts::{Constant, ConstEvalCtxt};
 use if_chain::if_chain;
 use rustc_ast::LitKind;
 use rustc_hir::{
@@ -62,7 +62,8 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
 
     /// Determines if an expression is constant or known at compile-time.
     fn is_expr_constant(&mut self, expr: &Expr<'tcx>) -> bool {
-        if let Some(const_val) = constant(self.cx, self.cx.typeck_results(), expr) {
+        let ctx = ConstEvalCtxt::new(self.cx);
+        if let Some(const_val) = ctx.eval(expr) {
             self.current_constant = Some(const_val);
             return true;
         }
@@ -106,9 +107,10 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
         array_expr: &Expr<'tcx>,
         index_expr: &Expr<'tcx>,
     ) -> bool {
+        let ctx = ConstEvalCtxt::new(self.cx);
         match (
             &array_expr.kind,
-            constant(self.cx, self.cx.typeck_results(), index_expr),
+            ctx.eval(index_expr),
         ) {
             (ExprKind::Array(array_elements), Some(Constant::Int(index))) => {
                 self.is_array_element_constant(array_elements, index)
@@ -142,7 +144,8 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
     }
 
     pub fn get_constant(&self, expr: &Expr<'tcx>) -> Option<Constant<'tcx>> {
-        if let Some(constant) = constant(self.cx, self.cx.typeck_results(), expr) {
+        let ctx = ConstEvalCtxt::new(self.cx);
+        if let Some(constant) = ctx.eval(expr) {
             return Some(constant);
         }
 

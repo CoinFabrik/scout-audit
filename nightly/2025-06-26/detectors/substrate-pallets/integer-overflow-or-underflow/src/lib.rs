@@ -14,8 +14,19 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, StmtKind, UnOp,
+    intravisit::{
+        walk_expr,
+        FnKind,
+        Visitor,
+    },
+    BinOpKind,
+    AssignOpKind,
+    Body,
+    Expr,
+    ExprKind,
+    FnDecl,
+    StmtKind,
+    UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
@@ -186,6 +197,60 @@ impl<'a, 'tcx> IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
             .push(Finding::new(expr.span, finding_type, cause));
     }
 
+    pub fn check_assignment(
+        &mut self,
+        expr: &Expr<'tcx>,
+        op: AssignOpKind,
+        left: &Expr<'tcx>,
+        right: &Expr<'tcx>,
+    ) {
+        if self.constant_analyzer.is_constant(left) && self.constant_analyzer.is_constant(right) {
+            return;
+        }
+
+        let (left_type, right_type) = (
+            self.cx.typeck_results().expr_ty(left),
+            self.cx.typeck_results().expr_ty(right),
+        );
+
+        if !self.is_overflow_susceptible_type(left_type)
+            || !self.is_overflow_susceptible_type(right_type)
+        {
+            return;
+        }
+
+        let (finding_type, cause) = if self.is_complex_operation {
+            (Type::OverflowUnderflow, Cause::Multiple)
+        } else {
+            match op {
+                AssignOpKind::AddAssign => (Type::Overflow, Cause::Add),
+                AssignOpKind::SubAssign => {
+                    if self
+                        .safety_context
+                        .is_subtraction_safe(left, right, self.constant_analyzer)
+                    {
+                        return;
+                    }
+                    (Type::Underflow, Cause::Sub)
+                }
+                AssignOpKind::MulAssign => (Type::Overflow, Cause::Mul),
+                AssignOpKind::DivAssign => {
+                    if self
+                        .safety_context
+                        .is_division_safe(right, self.constant_analyzer)
+                    {
+                        return;
+                    }
+                    (Type::Overflow, Cause::Div)
+                }
+                _ => return,
+            }
+        };
+
+        self.findings
+            .push(Finding::new(expr.span, finding_type, cause));
+    }
+
     fn is_overflow_susceptible_type(&self, ty: Ty<'_>) -> bool {
         let ty = ty.peel_refs();
         ty.is_integral() || match_type_to_str(self.cx, ty, "Balance")
@@ -195,10 +260,18 @@ impl<'a, 'tcx> IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
 impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         match expr.kind {
-            ExprKind::Binary(op, lhs, rhs) | ExprKind::AssignOp(op, lhs, rhs) => {
+            ExprKind::Binary(op, lhs, rhs) => {
                 self.is_complex_operation = matches!(lhs.kind, ExprKind::Binary(..))
                     || matches!(rhs.kind, ExprKind::Binary(..));
                 self.check_binary(expr, op.node, lhs, rhs);
+                if self.is_complex_operation {
+                    return;
+                }
+            }
+            ExprKind::AssignOp(op, lhs, rhs) => {
+                self.is_complex_operation = matches!(lhs.kind, ExprKind::Binary(..))
+                    || matches!(rhs.kind, ExprKind::Binary(..));
+                self.check_assignment(expr, op.node, lhs, rhs);
                 if self.is_complex_operation {
                     return;
                 }

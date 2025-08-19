@@ -10,8 +10,18 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
+    intravisit::{
+        walk_expr,
+        FnKind,
+        Visitor,
+    },
+    BinOpKind,
+    AssignOpKind,
+    Body,
+    Expr,
+    ExprKind,
+    FnDecl,
+    UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
@@ -156,15 +166,57 @@ impl<'tcx> IntegerOverflowOrUnderflowVisitor<'_, 'tcx> {
         self.findings
             .push(Finding::new(expr.span, finding_type, cause));
     }
+
+    pub fn check_assignment(
+        &mut self,
+        expr: &Expr<'tcx>,
+        op: AssignOpKind,
+        left: &Expr<'tcx>,
+        right: &Expr<'tcx>,
+    ) {
+        if self.constant_analyzer.is_constant(left) && self.constant_analyzer.is_constant(right) {
+            return;
+        }
+
+        let (left_type, right_type) = (
+            self.cx.typeck_results().expr_ty(left).peel_refs(),
+            self.cx.typeck_results().expr_ty(right).peel_refs(),
+        );
+        if !left_type.is_integral() || !right_type.is_integral() {
+            return;
+        }
+
+        let (finding_type, cause) = if self.is_complex_operation {
+            (Type::OverflowAndUnderflow, Cause::Multiple)
+        } else {
+            match op {
+                AssignOpKind::AddAssign => (Type::Overflow, Cause::Add),
+                AssignOpKind::SubAssign => (Type::Underflow, Cause::Sub),
+                AssignOpKind::MulAssign => (Type::Overflow, Cause::Mul),
+                _ => return,
+            }
+        };
+
+        self.findings
+            .push(Finding::new(expr.span, finding_type, cause));
+    }
 }
 
 impl<'a, 'tcx> Visitor<'tcx> for IntegerOverflowOrUnderflowVisitor<'a, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         match expr.kind {
-            ExprKind::Binary(op, lhs, rhs) | ExprKind::AssignOp(op, lhs, rhs) => {
+            ExprKind::Binary(op, lhs, rhs) => {
                 self.is_complex_operation = matches!(lhs.kind, ExprKind::Binary(..))
                     || matches!(rhs.kind, ExprKind::Binary(..));
                 self.check_binary(expr, op.node, lhs, rhs);
+                if self.is_complex_operation {
+                    return;
+                }
+            }
+            ExprKind::AssignOp(op, lhs, rhs) => {
+                self.is_complex_operation = matches!(lhs.kind, ExprKind::Binary(..))
+                    || matches!(rhs.kind, ExprKind::Binary(..));
+                self.check_assignment(expr, op.node, lhs, rhs);
                 if self.is_complex_operation {
                     return;
                 }

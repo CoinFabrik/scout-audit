@@ -8,11 +8,29 @@ extern crate rustc_type_ir;
 
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
-    def::Res, BindingMode, Block, BorrowKind, ExprField, HirId, LangItem, LoopSource, MatchSource,
-    Mutability, Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
+    def::Res,
+    BindingMode,
+    Block,
+    BorrowKind,
+    HirId,
+    LangItem,
+    LoopSource,
+    MatchSource,
+    Mutability,
+    Pat,
+    PatField,
+    PatKind,
+    Path,
+    PathSegment,
+    StmtKind,
+    Ty,
 };
 use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
-use rustc_middle::ty::{Interner, TyCtxt, TyKind};
+use rustc_type_ir::Interner;
+use rustc_middle::ty::{
+    TyCtxt,
+    TyKind,
+};
 use rustc_span::Symbol;
 use rustc_span::{symbol::Ident, Span};
 
@@ -90,23 +108,6 @@ pub fn expr_to_path<'hir>(kind: &'hir ExprKind<'hir>) -> Result<QPath<'hir>, ()>
     }
 }
 
-pub fn expr_to_struct<'hir>(
-    kind: &'hir ExprKind<'hir>,
-) -> Result<
-    (
-        &'hir QPath<'hir>,
-        &'hir [ExprField<'hir>],
-        Option<&'hir Expr<'hir>>,
-    ),
-    (),
-> {
-    if let ExprKind::Struct(a, b, c) = kind {
-        Ok((a, b, *c))
-    } else {
-        Err(())
-    }
-}
-
 pub fn expr_to_lit<'hir>(kind: &'hir ExprKind<'hir>) -> Result<&'hir rustc_hir::Lit, ()> {
     if let ExprKind::Lit(a) = kind {
         Ok(a)
@@ -117,7 +118,7 @@ pub fn expr_to_lit<'hir>(kind: &'hir ExprKind<'hir>) -> Result<&'hir rustc_hir::
 
 pub fn expr_to_loop<'hir>(
     kind: &'hir ExprKind<'hir>,
-) -> Result<(&'hir Block<'hir>, &Option<Label>, LoopSource, &Span), ()> {
+) -> Result<(&'hir Block<'hir>, &'hir Option<Label>, LoopSource, &'hir Span), ()> {
     if let ExprKind::Loop(a, b, c, d) = kind {
         Ok((a, b, *c, d))
     } else {
@@ -187,7 +188,7 @@ pub fn lit_to_int(kind: &LitKind) -> Result<(u128, LitIntType), ()> {
 
 pub fn pattern_to_struct<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Result<(&QPath<'hir>, &'hir [PatField<'hir>], bool), ()> {
+) -> Result<(&'hir QPath<'hir>, &'hir [PatField<'hir>], bool), ()> {
     if let PatKind::Struct(a, b, c) = pat {
         Ok((a, b, *c))
     } else {
@@ -197,7 +198,7 @@ pub fn pattern_to_struct<'hir>(
 
 pub fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Result<(&BindingMode, &HirId, &Ident, &Option<&'hir Pat<'hir>>), ()> {
+) -> Result<(&'hir BindingMode, &'hir HirId, &'hir Ident, &'hir Option<&'hir Pat<'hir>>), ()> {
     if let PatKind::Binding(a, b, c, d) = pat {
         Ok((a, b, c, d))
     } else {
@@ -228,7 +229,7 @@ pub fn type_to_path<'hir>(kind: &'hir rustc_hir::TyKind<'hir>) -> Result<&'hir Q
 
 pub fn expr_to_address_of<'hir>(
     kind: &'hir ExprKind<'hir>,
-) -> Result<(&BorrowKind, &Mutability, &'hir Expr<'hir>), ()> {
+) -> Result<(&'hir BorrowKind, &'hir Mutability, &'hir Expr<'hir>), ()> {
     if let ExprKind::AddrOf(a, b, c) = kind {
         Ok((a, b, c))
     } else {

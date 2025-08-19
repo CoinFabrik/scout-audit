@@ -51,7 +51,7 @@ impl AvoidPanicError {
     fn is_test_token_present(args: &AttrArgs) -> bool {
         matches!(args, AttrArgs::Delimited(delim_args) if delim_args
             .tokens
-            .trees()
+            .iter()
             .any(|tree| matches!(tree, TokenTree::Token(token, _) if token.is_ident_named(sym::test))))
     }
 

@@ -205,7 +205,7 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                 if let StatementKind::Assign(assign) = &statement.kind {
                     match &assign.1 {
                         rustc_middle::mir::Rvalue::Ref(_, _, origplace)
-                        | rustc_middle::mir::Rvalue::AddressOf(_, origplace)
+                        | rustc_middle::mir::Rvalue::RawPtr(_, origplace)
                         | rustc_middle::mir::Rvalue::Len(origplace)
                         | rustc_middle::mir::Rvalue::CopyForDeref(origplace) => {
                             if tainted_locals

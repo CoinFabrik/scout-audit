@@ -47,3 +47,11 @@ macro_rules! declare_pre_expansion_and_late_lint {
         }
     };
 }
+
+#[macro_export]
+/// Convenience wrapper around rustc's `Symbol::intern`
+macro_rules! clippy_sym {
+    ($tt:tt) => {
+        rustc_span::symbol::Symbol::intern(stringify!($tt))
+    };
+}

@@ -126,7 +126,7 @@ fn find_caller_and_terminate_in_mir<'tcx>(
     bbs: &'tcx BasicBlocks<'tcx>,
     caller_def_id: Option<DefId>,
     terminate_def_id: Option<DefId>,
-) -> CallersAndTerminates {
+) -> CallersAndTerminates<'tcx> {
     let mut callers_vec = CallersAndTerminates {
         callers: vec![],
         terminates: vec![],
@@ -172,7 +172,7 @@ fn navigate_trough_basicblocks<'tcx>(
         if let StatementKind::Assign(assign) = &statement.kind {
             match &assign.1 {
                 rustc_middle::mir::Rvalue::Ref(_, _, origplace)
-                | rustc_middle::mir::Rvalue::AddressOf(_, origplace)
+                | rustc_middle::mir::Rvalue::RawPtr(_, origplace)
                 | rustc_middle::mir::Rvalue::Len(origplace)
                 | rustc_middle::mir::Rvalue::CopyForDeref(origplace) => {
                     if tainted_places

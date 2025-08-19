@@ -126,7 +126,7 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceEvents {
                     span_lint_and_help(
                         cx,
                         TOKEN_INTERFACE_EVENTS,
-                        cx.tcx.hir().span_if_local(*func).unwrap(),
+                        cx.tcx.hir_span_if_local(*func).unwrap(),
                         LINT_MESSAGE,
                         /* cx.tcx.hir().span_if_local(r) */ None,
                         "",
