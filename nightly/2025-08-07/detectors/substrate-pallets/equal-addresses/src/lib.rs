@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(let_chains)]
 
 extern crate rustc_error_messages;
 extern crate rustc_hir;
@@ -158,7 +157,7 @@ fn find_terminate_in_mir<'tcx>(
             {
                 if !possible_terminate.is_empty() {
                     possible_terminate.iter().for_each(|terminate_info| {
-                        if let Some(ref info) = terminate_info {
+                        if let Some(info) = terminate_info {
                             terminates_vec.terminates_info.push(info.clone());
                         }
                     });

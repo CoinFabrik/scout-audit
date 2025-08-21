@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(let_chains)]
 
 extern crate rustc_error_messages;
 extern crate rustc_hir;

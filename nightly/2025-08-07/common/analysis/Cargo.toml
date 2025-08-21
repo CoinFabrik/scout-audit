@@ -5,7 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 if_chain = "=1.0.2"
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", commit = "feb18ca1ee3c195e9127d6acf20da99159fca581", package = "clippy_utils" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "feb18ca1ee3c195e9127d6acf20da99159fca581", package = "clippy_utils" }
 paste = "1.0"
 dylint_linting = "=3.1.2"
 

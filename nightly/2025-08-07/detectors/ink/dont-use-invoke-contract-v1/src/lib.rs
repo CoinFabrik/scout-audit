@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(let_chains)]
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
