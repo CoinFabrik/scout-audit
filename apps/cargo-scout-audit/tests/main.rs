@@ -20,18 +20,7 @@ mod tests {
             let mut ret = std::env::current_dir().expect("Failed to get current directory");
             ret.pop();
             ret.pop();
-
-            // Find latest nightly directory
-            let nightly_dir = ret.join("nightly");
-            let latest_nightly = std::fs::read_dir(&nightly_dir)
-                .expect("Failed to read nightly directory")
-                .filter_map(|entry| entry.ok())
-                .filter(|entry| entry.path().is_dir())
-                .max_by_key(|entry| entry.file_name())
-                .expect("No nightly directories found");
-
-            ret = latest_nightly.path();
-            ret.push("detectors");
+            ret.push("nightly");
             ret
         };
     }
