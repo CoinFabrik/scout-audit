@@ -68,9 +68,7 @@ impl BlockChain {
 
         // If no nightly toolchain found, use defaults based on blockchain
         let default_toolchain = match self {
-            BlockChain::SubstratePallets => "nightly-2023-12-16",
-            BlockChain::Soroban => "nightly-2025-08-07",
-            _ => "nightly-2024-07-11",
+            _ => "nightly-2025-08-07",
         };
 
         Ok(default_toolchain.to_string())
