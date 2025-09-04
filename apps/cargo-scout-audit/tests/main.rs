@@ -25,6 +25,29 @@ mod tests {
         };
     }
 
+    // Create a Command with LD_PRELOAD set for rustc_driver
+    fn create_cargo_scout_command() -> Command {
+        let mut command = Command::new("cargo");
+
+        // Get rustc_driver library path for LD_PRELOAD
+        #[cfg(target_os = "linux")]
+        {
+            let rustup_home = std::env::var("RUSTUP_HOME").unwrap_or_else(|_| {
+                format!(
+                    "{}/.rustup",
+                    std::env::var("HOME").unwrap_or_else(|_| "~".to_string())
+                )
+            });
+            let rustc_driver_path = format!(
+                "{}/toolchains/nightly-2025-08-07-x86_64-unknown-linux-gnu/lib/librustc_driver-12dbd1970610030b.so",
+                rustup_home
+            );
+            command.env("LD_PRELOAD", rustc_driver_path);
+        }
+
+        command
+    }
+
     fn get_test_cases() -> Vec<PathBuf> {
         let contracts_dir = PathBuf::from("tests").join("contracts");
         let contract_paths = fs::read_dir(&contracts_dir)
@@ -271,7 +294,7 @@ mod tests {
     fn test_message_format() {
         let path = "tests/contracts/substrate-pallets/";
 
-        let scout_output = Command::new("cargo")
+        let scout_output = create_cargo_scout_command()
             .args([
                 "scout-audit",
                 "--local-detectors",
@@ -298,7 +321,7 @@ mod tests {
     fn test_metadata() {
         let path = "tests/contracts/substrate-pallets/";
 
-        let scout_output = Command::new("cargo")
+        let scout_output = create_cargo_scout_command()
             .args([
                 "scout-audit",
                 "--metadata",

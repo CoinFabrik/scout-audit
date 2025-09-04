@@ -1,7 +1,8 @@
 use crate::scout::blockchain::BlockChain;
 use crate::utils::logger::TracedError;
-use anyhow::{bail, Context, Ok, Result, anyhow};
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::core::{Dependency, GitReference, SourceId};
+use cargo_metadata::Metadata;
 use git2::{RemoteCallbacks, Repository};
 use std::{
     env,
@@ -9,7 +10,6 @@ use std::{
 };
 use tempfile::TempDir;
 use thiserror::Error;
-use cargo_metadata::Metadata;
 
 // Constants
 const SCOUT_REPO_URL: &str = "https://github.com/CoinFabrik/scout-audit";
@@ -96,7 +96,10 @@ impl DetectorsConfiguration {
     }
 
     fn get_variable_detector_path(base: &str, toolchain: &str, subpath: &str) -> String {
-        format!("{}/{subpath}", Self::get_root_detector_path(base, toolchain))
+        format!(
+            "{}/{subpath}",
+            Self::get_root_detector_path(base, toolchain)
+        )
     }
 
     fn get_detector_path(toolchain: &str, subpath: &str) -> String {
@@ -132,9 +135,15 @@ impl DetectorsConfiguration {
 
     /// Returns local detectors configuration from custom path.
     //#[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
-    fn get_local_detectors_configuration(base_path: &Path, blockchain: BlockChain, metadata: &Metadata) -> Result<Self> {
+    fn get_local_detectors_configuration(
+        base_path: &Path,
+        blockchain: BlockChain,
+        metadata: &Metadata,
+    ) -> Result<Self> {
         let path = Self::get_root_detector_path(
-            base_path.to_str().ok_or_else(|| anyhow!("Could not get base detector path"))?,
+            base_path
+                .to_str()
+                .ok_or_else(|| anyhow!("Could not get base detector path"))?,
             blockchain.get_toolchain(metadata)?.as_str(),
         );
         let path = Path::new(&path);
