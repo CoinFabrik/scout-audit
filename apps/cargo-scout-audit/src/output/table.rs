@@ -690,7 +690,7 @@ pub(crate) fn construct_table(
     header.set_color(SemanticColor::Importance(Importance::Header));
     let mut ret = Table::new(header);
 
-    let crate_order: Vec<String> = crates.iter().map(|(x, _)| x.clone()).sorted().collect();
+    let crate_order: Vec<String> = crates.keys().cloned().sorted().collect();
     for krate in crate_order.iter() {
         let [crit, med, min, enhan] = count_findings(findings, krate, detectors_info);
         let success = *crates.get(krate).unwrap_or(&false);

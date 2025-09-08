@@ -67,9 +67,7 @@ impl BlockChain {
         }
 
         // If no nightly toolchain found, use defaults based on blockchain
-        let default_toolchain = match self {
-            _ => "nightly-2025-08-07",
-        };
+        let default_toolchain = "nightly-2025-08-07";
 
         Ok(default_toolchain.to_string())
     }
