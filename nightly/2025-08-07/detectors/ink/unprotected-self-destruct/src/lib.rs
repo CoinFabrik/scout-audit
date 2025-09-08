@@ -9,8 +9,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, Visitor},
     Expr, ExprKind, QPath,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
@@ -20,7 +20,7 @@ use rustc_middle::{
     },
     ty::TyKind,
 };
-use rustc_span::{def_id::DefId, Span};
+use rustc_span::{Span, def_id::DefId};
 
 const LINT_MESSAGE: &str = "This terminate_contract is called without access control";
 

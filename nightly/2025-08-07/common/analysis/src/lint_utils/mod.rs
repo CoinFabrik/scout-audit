@@ -7,31 +7,14 @@ extern crate rustc_type_ir;
 
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
-    def::Res,
-    BindingMode,
-    Block,
-    BorrowKind,
-    HirId,
-    LangItem,
-    LoopSource,
-    MatchSource,
-    Mutability,
-    Pat,
-    PatField,
-    PatKind,
-    Path,
-    PathSegment,
-    StmtKind,
-    Ty,
+    def::Res, BindingMode, Block, BorrowKind, HirId, LangItem, LoopSource, MatchSource, Mutability,
+    Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
 };
 use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
-use rustc_type_ir::Interner;
-use rustc_middle::ty::{
-    TyCtxt,
-    TyKind,
-};
+use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_span::Symbol;
 use rustc_span::{symbol::Ident, Span};
+use rustc_type_ir::Interner;
 
 pub fn get_receiver_ident_name(receiver: &Expr) -> Symbol {
     if let ExprKind::Path(QPath::Resolved(_, path)) = &receiver.kind {
@@ -117,7 +100,15 @@ pub fn expr_to_lit<'hir>(kind: &'hir ExprKind<'hir>) -> Result<&'hir rustc_hir::
 
 pub fn expr_to_loop<'hir>(
     kind: &'hir ExprKind<'hir>,
-) -> Result<(&'hir Block<'hir>, &'hir Option<Label>, LoopSource, &'hir Span), ()> {
+) -> Result<
+    (
+        &'hir Block<'hir>,
+        &'hir Option<Label>,
+        LoopSource,
+        &'hir Span,
+    ),
+    (),
+> {
     if let ExprKind::Loop(a, b, c, d) = kind {
         Ok((a, b, *c, d))
     } else {
@@ -197,7 +188,15 @@ pub fn pattern_to_struct<'hir>(
 
 pub fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Result<(&'hir BindingMode, &'hir HirId, &'hir Ident, &'hir Option<&'hir Pat<'hir>>), ()> {
+) -> Result<
+    (
+        &'hir BindingMode,
+        &'hir HirId,
+        &'hir Ident,
+        &'hir Option<&'hir Pat<'hir>>,
+    ),
+    (),
+> {
     if let PatKind::Binding(a, b, c, d) = pat {
         Ok((a, b, c, d))
     } else {

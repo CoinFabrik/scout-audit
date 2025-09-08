@@ -13,18 +13,17 @@ use common::{
 use if_chain::if_chain;
 use rustc_error_messages::MultiSpan;
 use rustc_hir::{
-    intravisit::{walk_expr, Visitor},
     BinOpKind, Expr, ExprKind, PatKind,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
     mir::{BasicBlock, BasicBlockData, BasicBlocks, Const, Operand, TerminatorKind},
     ty::TyKind,
 };
-use rustc_span::{def_id::DefId, Span};
+use rustc_span::{Span, def_id::DefId};
 
-const LINT_MESSAGE: &str =
-    "Not checking for a difference in the addresses could lead to unexpected behavior or security vulnerabilities";
+const LINT_MESSAGE: &str = "Not checking for a difference in the addresses could lead to unexpected behavior or security vulnerabilities";
 
 #[expose_lint_info]
 pub static EQUAL_ADDRESSES_INFO: LintInfo = LintInfo {

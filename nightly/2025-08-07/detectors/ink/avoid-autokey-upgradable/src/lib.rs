@@ -12,8 +12,8 @@ use common::{
 use itertools::Itertools;
 use rustc_error_messages::MultiSpan;
 use rustc_hir::{
-    intravisit::{walk_expr, Visitor},
     Expr, GenericArg, GenericArgs, QPath, TyKind,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
@@ -136,15 +136,14 @@ impl<'tcx> Visitor<'tcx> for AvoidAutokeyUpgradableVisitor<'tcx, '_> {
             spans.push_span_label(expr.span, "This makes the contract upgradable");
 
             span_lint_and_note(
-                        self.cx,
-                        AVOID_AUTOKEY_UPGRADABLE,
-                        spans,
-                        "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts",
-                        None,
-                        "For more information, see: \n[#171](https://github.com/CoinFabrik/scout/issues/171) \
-                            \n[Manual vs. Automatic Key Generation](https://use.ink/datastructures/storage-layout/#manual-vs-automatic-key-generation)"
-                        ,
-                    );
+                self.cx,
+                AVOID_AUTOKEY_UPGRADABLE,
+                spans,
+                "Avoid using `Lazy` fields without `ManualKey` in upgradable contracts",
+                None,
+                "For more information, see: \n[#171](https://github.com/CoinFabrik/scout/issues/171) \
+                            \n[Manual vs. Automatic Key Generation](https://use.ink/datastructures/storage-layout/#manual-vs-automatic-key-generation)",
+            );
         }
         walk_expr(self, expr)
     }

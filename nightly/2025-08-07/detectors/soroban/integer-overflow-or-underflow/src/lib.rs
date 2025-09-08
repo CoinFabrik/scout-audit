@@ -10,18 +10,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{
-        walk_expr,
-        FnKind,
-        Visitor,
-    },
-    BinOpKind,
-    AssignOpKind,
-    Body,
-    Expr,
-    ExprKind,
-    FnDecl,
-    UnOp,
+    intravisit::{walk_expr, FnKind, Visitor},
+    AssignOpKind, BinOpKind, Body, Expr, ExprKind, FnDecl, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span, Symbol};

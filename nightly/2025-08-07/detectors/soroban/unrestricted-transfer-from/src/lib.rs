@@ -11,8 +11,8 @@ use common::{
 };
 use rustc_hir::PatKind;
 use rustc_hir::{
-    intravisit::{walk_expr, Visitor},
     Body, Expr, ExprKind,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::mir::{BasicBlock, BasicBlocks, Local, Operand, StatementKind, TerminatorKind};

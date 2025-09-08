@@ -9,9 +9,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    def,
-    intravisit::{walk_expr, Visitor},
-    Expr, ExprKind, QPath,
+    Expr, ExprKind, QPath, def,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
@@ -21,7 +20,7 @@ use rustc_middle::{
     },
     ty::TyKind,
 };
-use rustc_span::{def_id::DefId, Span};
+use rustc_span::{Span, def_id::DefId};
 
 const LINT_MESSAGE: &str = "This set_code_hash is called without access control";
 

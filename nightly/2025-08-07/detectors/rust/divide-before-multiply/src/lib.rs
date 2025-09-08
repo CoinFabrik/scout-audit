@@ -13,8 +13,8 @@ use common::{
 };
 use if_chain::if_chain;
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
     BinOpKind, Body, Expr, ExprKind, FnDecl,
+    intravisit::{FnKind, Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
@@ -25,8 +25,8 @@ use rustc_middle::{
     ty::TyKind,
 };
 use rustc_span::{
-    def_id::{DefId, LocalDefId},
     Span,
+    def_id::{DefId, LocalDefId},
 };
 
 const LINT_MESSAGE: &str = "Division before multiplication might result in a loss of precision";

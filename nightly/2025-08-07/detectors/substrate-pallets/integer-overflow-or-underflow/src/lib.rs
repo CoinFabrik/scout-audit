@@ -14,19 +14,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{
-        walk_expr,
-        FnKind,
-        Visitor,
-    },
-    BinOpKind,
-    AssignOpKind,
-    Body,
-    Expr,
-    ExprKind,
-    FnDecl,
-    StmtKind,
-    UnOp,
+    intravisit::{walk_expr, FnKind, Visitor},
+    AssignOpKind, BinOpKind, Body, Expr, ExprKind, FnDecl, StmtKind, UnOp,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;

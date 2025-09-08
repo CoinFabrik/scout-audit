@@ -2,7 +2,7 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_lint;
 
-use clippy_utils::consts::{Constant, ConstEvalCtxt};
+use clippy_utils::consts::{ConstEvalCtxt, Constant};
 use if_chain::if_chain;
 use rustc_ast::LitKind;
 use rustc_hir::{
@@ -108,10 +108,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
         index_expr: &Expr<'tcx>,
     ) -> bool {
         let ctx = ConstEvalCtxt::new(self.cx);
-        match (
-            &array_expr.kind,
-            ctx.eval(index_expr),
-        ) {
+        match (&array_expr.kind, ctx.eval(index_expr)) {
             (ExprKind::Array(array_elements), Some(Constant::Int(index))) => {
                 self.is_array_element_constant(array_elements, index)
             }

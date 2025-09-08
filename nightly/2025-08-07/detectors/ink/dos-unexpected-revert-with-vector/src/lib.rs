@@ -13,8 +13,8 @@ use common::{
 };
 use if_chain::if_chain;
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, ExprKind, FnDecl, QPath,
+    intravisit::{FnKind, Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
@@ -24,7 +24,7 @@ use rustc_middle::{
     },
     ty::{Ty, TyKind},
 };
-use rustc_span::{def_id::DefId, def_id::LocalDefId, Span};
+use rustc_span::{Span, def_id::DefId, def_id::LocalDefId};
 
 const LINT_MESSAGE: &str = "This vector operation is called without access control";
 

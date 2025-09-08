@@ -9,8 +9,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_body, walk_expr, Visitor},
     Expr, ExprKind, QPath,
+    intravisit::{Visitor, walk_body, walk_expr},
 };
 use rustc_lint::LateLintPass;
 use rustc_span::Span;

@@ -1,10 +1,10 @@
 #![feature(rustc_private)]
 
+extern crate rustc_abi;
 extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
-extern crate rustc_abi;
 
 use std::collections::{HashMap, HashSet};
 
@@ -14,6 +14,7 @@ use common::{
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
+use rustc_abi::VariantIdx;
 use rustc_ast::ast::LitKind;
 use rustc_hir::{
     def::Res,
@@ -23,7 +24,6 @@ use rustc_hir::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyKind;
 use rustc_span::{def_id::LocalDefId, Span, Symbol};
-use rustc_abi::VariantIdx;
 
 const LINT_MESSAGE:&str = "External calls could open the opportunity for a malicious contract to execute any arbitrary code";
 

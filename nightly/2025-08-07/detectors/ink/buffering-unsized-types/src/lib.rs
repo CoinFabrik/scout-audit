@@ -11,11 +11,11 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, Visitor},
     Expr, ExprKind, GenericArg, QPath, Ty, TyKind,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{symbol::Ident, Span};
+use rustc_span::{Span, symbol::Ident};
 
 const LINT_MESSAGE: &str = "Do not use these method with an unsized (dynamically sized) type.";
 

@@ -8,8 +8,8 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
     Expr, ExprKind, QPath, TyKind,
+    intravisit::{FnKind, Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;

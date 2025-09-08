@@ -5,10 +5,7 @@ extern crate rustc_span;
 
 use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
-    declarations::{
-        Severity,
-        VulnerabilityClass,
-    },
+    declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use common_utils::clippy_sym;

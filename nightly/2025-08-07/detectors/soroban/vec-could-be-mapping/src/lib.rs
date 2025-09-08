@@ -16,11 +16,11 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, FnDecl, GenericArg, HirId, QPath, Stmt, TyKind,
+    intravisit::{FnKind, Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{def_id::LocalDefId, Span};
+use rustc_span::{Span, def_id::LocalDefId};
 
 const LINT_MESSAGE: &str =
     "You are iterating over a vector of tuples using `find`. Consider using a mapping instead.";
@@ -137,7 +137,7 @@ impl<'a, 'b, 'c> FindIterations<'a, 'b, 'c> {
         }
 
         let arg = generic_args.first().unwrap().as_type();
-        if arg.is_none(){
+        if arg.is_none() {
             return Ok(());
         }
         let arg = arg.unwrap();

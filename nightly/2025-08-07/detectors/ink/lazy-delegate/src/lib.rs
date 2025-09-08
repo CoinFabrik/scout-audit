@@ -7,8 +7,8 @@ use common::macros::expose_lint_info;
 use if_chain::if_chain;
 use rustc_ast::ast::GenericArgs;
 use rustc_ast::{
-    tokenstream::{TokenStream, TokenTree},
     AngleBracketedArgs, AttrArgs, AttrKind, Item, ItemKind, TyKind,
+    tokenstream::{TokenStream, TokenTree},
 };
 use rustc_lint::{EarlyContext, EarlyLintPass};
 use rustc_span::Span;

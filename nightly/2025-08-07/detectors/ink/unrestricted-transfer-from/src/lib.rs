@@ -10,11 +10,11 @@ use common::{
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
-use rustc_ast::{ast::UintTy, LitIntType, LitKind};
+use rustc_ast::{LitIntType, LitKind, ast::UintTy};
 use rustc_hir::{
-    def::Res,
-    intravisit::{walk_expr, Visitor},
     Body, Expr, ExprKind, FnRetTy, PatKind, QPath,
+    def::Res,
+    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::mir::{BasicBlock, BasicBlocks, Local, Operand, StatementKind, TerminatorKind};

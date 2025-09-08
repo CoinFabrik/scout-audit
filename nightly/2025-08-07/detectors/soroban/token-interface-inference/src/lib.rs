@@ -103,24 +103,21 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
         let fn_name = cx.tcx.def_path_str(def_id);
         let fn_name_span = if let Some(node) = cx.tcx.hir_get_if_local(def_id) {
             match node {
-                Node::Item(item) => {
-                    match item.kind{
-                        ItemKind::ExternCrate(_, ident)
-                            | ItemKind::Static(_, ident, _, _)
-                            | ItemKind::Const(ident, _, _, _)
-                            | ItemKind::Fn{ident, ..}
-                            | ItemKind::Macro(ident, _, _)
-                            | ItemKind::Mod(ident, _)
-                            | ItemKind::TyAlias(ident, _, _)
-                            | ItemKind::Enum(ident, _, _)
-                            | ItemKind::Struct(ident, _, _)
-                            | ItemKind::Union(ident, _, _)
-                            | ItemKind::Trait(_, _, _, ident, _, _, _)
-                            | ItemKind::TraitAlias(ident, _, _)
-                            => Some(ident.span),
-                        _ => None
-                    }
-                }
+                Node::Item(item) => match item.kind {
+                    ItemKind::ExternCrate(_, ident)
+                    | ItemKind::Static(_, ident, _, _)
+                    | ItemKind::Const(ident, _, _, _)
+                    | ItemKind::Fn { ident, .. }
+                    | ItemKind::Macro(ident, _, _)
+                    | ItemKind::Mod(ident, _)
+                    | ItemKind::TyAlias(ident, _, _)
+                    | ItemKind::Enum(ident, _, _)
+                    | ItemKind::Struct(ident, _, _)
+                    | ItemKind::Union(ident, _, _)
+                    | ItemKind::Trait(_, _, _, ident, _, _, _)
+                    | ItemKind::TraitAlias(ident, _, _) => Some(ident.span),
+                    _ => None,
+                },
                 Node::ImplItem(impl_item) => Some(impl_item.ident.span),
                 _ => None,
             }
