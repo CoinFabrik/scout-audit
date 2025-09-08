@@ -134,21 +134,20 @@ fn find_caller_and_terminate_in_mir<'tcx>(
             continue;
         }
         let terminator = bb_data.terminator.clone().unwrap();
-        if let TerminatorKind::Call { func, .. } = &terminator.kind {
-            if let Operand::Constant(fn_const) = func
-                && let Const::Val(_const_val, ty) = fn_const.const_
-                && let TyKind::FnDef(def, _subs) = ty.kind()
-            {
-                if caller_def_id.is_some_and(|d| &d == def) {
-                    callers_vec
-                        .callers
-                        .push((bb_data, BasicBlock::from_usize(bb)));
-                }
-                if terminate_def_id.is_some_and(|d| &d == def) {
-                    callers_vec
-                        .terminates
-                        .push((bb_data, BasicBlock::from_usize(bb)));
-                }
+        if let TerminatorKind::Call { func, .. } = &terminator.kind
+            && let Operand::Constant(fn_const) = func
+            && let Const::Val(_const_val, ty) = fn_const.const_
+            && let TyKind::FnDef(def, _subs) = ty.kind()
+        {
+            if caller_def_id.is_some_and(|d| &d == def) {
+                callers_vec
+                    .callers
+                    .push((bb_data, BasicBlock::from_usize(bb)));
+            }
+            if terminate_def_id.is_some_and(|d| &d == def) {
+                callers_vec
+                    .terminates
+                    .push((bb_data, BasicBlock::from_usize(bb)));
             }
         }
     }

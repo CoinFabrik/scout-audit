@@ -123,9 +123,9 @@ fn is_test_item(item: &Item) -> bool {
     item.attrs.iter().any(|attr| {
         attr.has_name(sym::test)
             || (attr.has_name(sym::cfg)
-                && attr.meta_item_list().map_or(false, |list| {
-                    list.iter().any(|item| item.has_name(sym::test))
-                }))
+                && attr
+                    .meta_item_list()
+                    .is_some_and(|list| list.iter().any(|item| item.has_name(sym::test))))
             || matches!(
                 &attr.kind,
                 AttrKind::Normal(normal) if is_test_token_present(&normal.item.args)
@@ -150,7 +150,7 @@ fn is_result_type(output: &FnRetTy) -> bool {
             if let TyKind::Path(None, path) = &ty.kind {
                 path.segments
                     .last()
-                    .map_or(false, |seg| seg.ident.name == sym::Result)
+                    .is_some_and(|seg| seg.ident.name == sym::Result)
             } else {
                 false
             }

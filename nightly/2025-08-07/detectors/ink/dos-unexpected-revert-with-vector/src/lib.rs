@@ -69,7 +69,7 @@ impl<'tcx> Visitor<'tcx> for UnprotectedVectorFinder<'tcx, '_> {
                 if let ExprKind::MethodCall(rec_path, receiver2, ..) = receiver.kind;
                 if rec_path.ident.name.to_string() == "env";
                 if let ExprKind::Path(QPath::Resolved(qualifier, rec2_path)) = &receiver2.kind;
-                if rec2_path.segments.first().map_or(false, |seg| {
+                if rec2_path.segments.first().is_some_and(|seg| {
                     seg.ident.to_string() == "self" && qualifier.is_none()
                 });
                 if path.ident.name.to_string() == "caller";
@@ -119,26 +119,25 @@ impl<'tcx> CallersAndVecOps<'tcx> {
                 continue;
             }
             let terminator = bb_data.terminator.clone().unwrap();
-            if let TerminatorKind::Call { func, .. } = terminator.kind {
-                if let Operand::Constant(fn_const) = func
-                    && let Const::Val(_const_val, ty) = fn_const.const_
-                    && let TyKind::FnDef(def, _subs) = ty.kind()
-                {
-                    if !callers_def_id.is_empty() {
-                        for caller in &callers_def_id {
-                            if caller == def {
-                                callers_vec
-                                    .callers
-                                    .push((bb_data, BasicBlock::from_usize(bb)));
-                            }
-                        }
-                    } else if let Some(op) = push_def_id {
-                        if op == *def {
+            if let TerminatorKind::Call { func, .. } = terminator.kind
+                && let Operand::Constant(fn_const) = func
+                && let Const::Val(_const_val, ty) = fn_const.const_
+                && let TyKind::FnDef(def, _subs) = ty.kind()
+            {
+                if !callers_def_id.is_empty() {
+                    for caller in &callers_def_id {
+                        if caller == def {
                             callers_vec
-                                .vec_ops
+                                .callers
                                 .push((bb_data, BasicBlock::from_usize(bb)));
                         }
                     }
+                } else if let Some(op) = push_def_id
+                    && op == *def
+                {
+                    callers_vec
+                        .vec_ops
+                        .push((bb_data, BasicBlock::from_usize(bb)));
                 }
             }
         }
@@ -246,7 +245,7 @@ impl DosUnexpectedRevertWithVector {
                 for map_op in &caller_and_vec_ops.vec_ops {
                     if map_op.1 == bb
                         && !after_comparison
-                        && args.get(1).map_or(true, |f| {
+                        && args.get(1).is_none_or(|f| {
                             f.node.place().is_some_and(|f| !tainted_places.contains(&f))
                         })
                     {

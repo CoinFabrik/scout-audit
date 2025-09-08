@@ -61,7 +61,7 @@ impl<'tcx> LateLintPass<'tcx> for ZeroOrTestAddress {
             .get_def_path(id.to_def_id())
             .iter()
             .nth_back(1)
-            .map_or(false, |s| s.as_str().ends_with("Ref"));
+            .is_some_and(|s| s.as_str().ends_with("Ref"));
 
         if is_ink_macro_generated || is_def_path_ending_with_ref {
             return;

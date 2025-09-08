@@ -90,7 +90,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                         && rec_path.ident.name.to_string() == "env"
                         && let ExprKind::Path(rec2_qpath) = &reciever2.kind
                         && let QPath::Resolved(qualifier, rec2_path) = rec2_qpath
-                        && rec2_path.segments.first().map_or(false, |seg| {
+                        && rec2_path.segments.first().is_some_and(|seg| {
                             seg.ident.to_string() == "self" && qualifier.is_none()
                         })
                         && path.ident.name.to_string() == "caller"
@@ -133,22 +133,21 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                     continue;
                 }
                 let terminator = bb_data.terminator.clone().unwrap();
-                if let TerminatorKind::Call { func, .. } = terminator.kind {
-                    if let Operand::Constant(fn_const) = func
-                        && let Const::Val(_const_val, ty) = fn_const.const_
-                        && let TyKind::FnDef(def, _subs) = ty.kind()
-                    {
-                        if caller_def_id.is_some_and(|d: DefId| &d == def) {
-                            callers_vec
-                                .callers
-                                .push((bb_data, BasicBlock::from_usize(bb)));
-                        } else {
-                            for op in &map_ops {
-                                if op.is_some_and(|d| &d == def) {
-                                    callers_vec
-                                        .map_ops
-                                        .push((bb_data, BasicBlock::from_usize(bb)));
-                                }
+                if let TerminatorKind::Call { func, .. } = terminator.kind
+                    && let Operand::Constant(fn_const) = func
+                    && let Const::Val(_const_val, ty) = fn_const.const_
+                    && let TyKind::FnDef(def, _subs) = ty.kind()
+                {
+                    if caller_def_id.is_some_and(|d: DefId| &d == def) {
+                        callers_vec
+                            .callers
+                            .push((bb_data, BasicBlock::from_usize(bb)));
+                    } else {
+                        for op in &map_ops {
+                            if op.is_some_and(|d| &d == def) {
+                                callers_vec
+                                    .map_ops
+                                    .push((bb_data, BasicBlock::from_usize(bb)));
                             }
                         }
                     }
@@ -285,7 +284,7 @@ impl<'tcx> LateLintPass<'tcx> for UnprotectedMappingOperation {
                     for map_op in &caller_and_map_ops.map_ops {
                         if map_op.1 == bb
                             && !after_comparison
-                            && args.get(1).map_or(true, |f| {
+                            && args.get(1).is_none_or(|f| {
                                 f.node.place().is_some_and(|f| !tainted_places.contains(&f))
                             })
                         {

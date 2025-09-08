@@ -172,7 +172,7 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
         if let FnRetTy::Return(ret_ty) = fn_decl.output
             && let rustc_hir::TyKind::Path(qpath) = &ret_ty.kind
             && let rustc_hir::QPath::Resolved(_, path) = qpath
-            && path.segments.last().map_or(false, |s| {
+            && path.segments.last().is_some_and(|s| {
                 s.ident.name.to_string() == "CallBuilder"
                     || s.ident.name.to_string() == "CreateBuilder"
             })
@@ -241,70 +241,68 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                 fn_span: _,
                 ..
             } = &bb.terminator().kind
+                && let Operand::Constant(cont) = func
+                && let rustc_middle::mir::Const::Val(_, val_type) = &cont.const_
+                && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
+                && utf_storage.def_id.is_some_and(|id| &id == def)
+                && target.is_some()
             {
-                if let Operand::Constant(cont) = func
-                    && let rustc_middle::mir::Const::Val(_, val_type) = &cont.const_
-                    && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
-                    && utf_storage.def_id.is_some_and(|id| &id == def)
-                    && target.is_some()
-                {
-                    //here the terminator is the call to new, the destination has the place with the selector
-                    //from here on, what I do is look for where the selector is used and where user given args are pushed to it
-                    let mut tainted_selector_places: Vec<Local> = vec![destination.local];
-                    fn navigate_trough_bbs(
-                        cx: &LateContext,
-                        bb: &BasicBlock,
-                        bbs: &BasicBlocks,
-                        tainted_locals: &Vec<Local>,
-                        _tainted_selector_places: &mut Vec<Local>,
-                        utf_storage: &UnrestrictedTransferFromFinder,
-                    ) {
-                        if let TerminatorKind::Call {
-                            func,
-                            args,
-                            fn_span,
-                            target,
-                            ..
-                        } = &bbs[*bb].terminator().kind
-                            && let Operand::Constant(cst) = func
-                            && let rustc_middle::mir::Const::Val(_, val_type) = &cst.const_
-                            && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
-                        {
-                            if utf_storage.pusharg_def_id.is_some_and(|id| &id == def) {
-                                for arg in args {
-                                    if arg.node.place().map_or(false, |place| {
-                                        tainted_locals.iter().any(|l| l == &place.local)
-                                    }) {
-                                        clippy_utils::diagnostics::span_lint(
-                                            cx,
-                                            UNRESTRICTED_TRANSFER_FROM,
-                                            *fn_span,
-                                            LINT_MESSAGE,
-                                        );
-                                    }
+                //here the terminator is the call to new, the destination has the place with the selector
+                //from here on, what I do is look for where the selector is used and where user given args are pushed to it
+                let mut tainted_selector_places: Vec<Local> = vec![destination.local];
+                fn navigate_trough_bbs(
+                    cx: &LateContext,
+                    bb: &BasicBlock,
+                    bbs: &BasicBlocks,
+                    tainted_locals: &Vec<Local>,
+                    _tainted_selector_places: &mut Vec<Local>,
+                    utf_storage: &UnrestrictedTransferFromFinder,
+                ) {
+                    if let TerminatorKind::Call {
+                        func,
+                        args,
+                        fn_span,
+                        target,
+                        ..
+                    } = &bbs[*bb].terminator().kind
+                        && let Operand::Constant(cst) = func
+                        && let rustc_middle::mir::Const::Val(_, val_type) = &cst.const_
+                        && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
+                    {
+                        if utf_storage.pusharg_def_id.is_some_and(|id| &id == def) {
+                            for arg in args {
+                                if arg.node.place().is_some_and(|place| {
+                                    tainted_locals.iter().any(|l| l == &place.local)
+                                }) {
+                                    clippy_utils::diagnostics::span_lint(
+                                        cx,
+                                        UNRESTRICTED_TRANSFER_FROM,
+                                        *fn_span,
+                                        LINT_MESSAGE,
+                                    );
                                 }
                             }
-                            if target.is_some() {
-                                navigate_trough_bbs(
-                                    cx,
-                                    &target.unwrap(),
-                                    bbs,
-                                    tainted_locals,
-                                    _tainted_selector_places,
-                                    utf_storage,
-                                );
-                            }
+                        }
+                        if target.is_some() {
+                            navigate_trough_bbs(
+                                cx,
+                                &target.unwrap(),
+                                bbs,
+                                tainted_locals,
+                                _tainted_selector_places,
+                                utf_storage,
+                            );
                         }
                     }
-                    navigate_trough_bbs(
-                        cx,
-                        &target.unwrap(),
-                        &mir_body.basic_blocks,
-                        &tainted_locals,
-                        &mut tainted_selector_places,
-                        &utf_storage,
-                    );
                 }
+                navigate_trough_bbs(
+                    cx,
+                    &target.unwrap(),
+                    &mir_body.basic_blocks,
+                    &tainted_locals,
+                    &mut tainted_selector_places,
+                    &utf_storage,
+                );
             }
         }
     }

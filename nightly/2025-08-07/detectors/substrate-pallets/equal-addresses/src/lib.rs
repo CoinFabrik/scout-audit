@@ -108,26 +108,26 @@ struct Terminates<'tcx> {
 
 impl<'tcx> Visitor<'tcx> for EqualAddressesFinder<'tcx, '_> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
-        if let ExprKind::Binary(op, rvalue, lvalue) = expr.kind {
-            if BinOpKind::Ne == op.node || BinOpKind::Eq == op.node {
-                let rtype = get_node_type_opt(self.cx, &rvalue.hir_id).unwrap();
-                let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
+        if let ExprKind::Binary(op, rvalue, lvalue) = expr.kind
+            && (BinOpKind::Ne == op.node || BinOpKind::Eq == op.node)
+        {
+            let rtype = get_node_type_opt(self.cx, &rvalue.hir_id).unwrap();
+            let ltype = get_node_type_opt(self.cx, &lvalue.hir_id).unwrap();
 
-                if_chain!(
-                    if rtype.to_string() == "<T as frame_system::Config>::AccountId";
-                    if ltype.to_string() == "<T as frame_system::Config>::AccountId";
-                    then {
-                        self.terminate_contract_span = Some(expr.span);
-                        self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
-                        let rvalue = get_receiver_ident_name(rvalue);
-                        let lvalue = get_receiver_ident_name(lvalue);
-                        self.possible_terminate.push(Some(TerminateInfo {
-                            param_names: [rvalue.to_string(),lvalue.to_string()],
-                            def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
-                        }));
-                    }
-                );
-            }
+            if_chain!(
+                if rtype.to_string() == "<T as frame_system::Config>::AccountId";
+                if ltype.to_string() == "<T as frame_system::Config>::AccountId";
+                then {
+                    self.terminate_contract_span = Some(expr.span);
+                    self.terminate_contract_def_id = self.cx.typeck_results().type_dependent_def_id(expr.hir_id);
+                    let rvalue = get_receiver_ident_name(rvalue);
+                    let lvalue = get_receiver_ident_name(lvalue);
+                    self.possible_terminate.push(Some(TerminateInfo {
+                        param_names: [rvalue.to_string(),lvalue.to_string()],
+                        def_path: self.cx.tcx.def_path_str(expr.hir_id.owner),
+                    }));
+                }
+            );
         }
 
         walk_expr(self, expr);
@@ -148,23 +148,22 @@ fn find_terminate_in_mir<'tcx>(
             continue;
         }
         let terminator = bb_data.terminator.clone().unwrap();
-        if let TerminatorKind::Call { func, .. } = &terminator.kind {
-            if let Operand::Constant(fn_const) = func
-                && let Const::Val(_const_val, ty) = fn_const.const_
-                && let TyKind::FnDef(def, _subs) = ty.kind()
-                && terminate_def_id.is_some_and(|d| &d == def)
-            {
-                if !possible_terminate.is_empty() {
-                    possible_terminate.iter().for_each(|terminate_info| {
-                        if let Some(info) = terminate_info {
-                            terminates_vec.terminates_info.push(info.clone());
-                        }
-                    });
-                }
-                terminates_vec
-                    .terminates
-                    .push((bb_data, BasicBlock::from_usize(bb)));
+        if let TerminatorKind::Call { func, .. } = &terminator.kind
+            && let Operand::Constant(fn_const) = func
+            && let Const::Val(_const_val, ty) = fn_const.const_
+            && let TyKind::FnDef(def, _subs) = ty.kind()
+            && terminate_def_id.is_some_and(|d| &d == def)
+        {
+            if !possible_terminate.is_empty() {
+                possible_terminate.iter().for_each(|terminate_info| {
+                    if let Some(info) = terminate_info {
+                        terminates_vec.terminates_info.push(info.clone());
+                    }
+                });
             }
+            terminates_vec
+                .terminates
+                .push((bb_data, BasicBlock::from_usize(bb)));
         }
     }
     terminates_vec

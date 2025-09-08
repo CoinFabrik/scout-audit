@@ -112,7 +112,7 @@ fn is_token_present(token_stream: &TokenStream, find: &str) -> bool {
     token_stream.iter().any(|tree| match tree {
         TokenTree::Token(token, _) => token
             .ident()
-            .map_or(false, |ident| ident.0.name.to_string() == find),
+            .is_some_and(|ident| ident.0.name.to_string() == find),
         TokenTree::Delimited(_, _, _, token_stream) => is_token_present(token_stream, find),
     })
 }

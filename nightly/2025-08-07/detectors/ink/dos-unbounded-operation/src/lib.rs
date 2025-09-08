@@ -46,7 +46,7 @@ impl<'tcx> Visitor<'tcx> for ForLoopVisitor {
             && let QPath::LangItem(item, _span) = qpath
             && item == &LangItem::IntoIterIntoIter
         {
-            if args.first().is_some()
+            if !args.is_empty()
                 && let ExprKind::Struct(qpath, fields, _) = args.first().unwrap().kind
                 && let QPath::LangItem(langitem, _span) = qpath
                 && (LangItem::Range == *langitem
