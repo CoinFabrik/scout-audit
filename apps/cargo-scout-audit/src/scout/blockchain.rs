@@ -48,7 +48,7 @@ impl BlockChain {
         }
 
         let output_str = String::from_utf8_lossy(&output.stdout);
-        // The output format is like "nightly-2024-07-11-aarch64-apple-darwin (default)"
+        // The output format is like "nightly-2025-08-07-aarch64-apple-darwin (default)"
         // We only want the nightly-YYYY-MM-DD part
         let toolchain = output_str
             .split_whitespace()
