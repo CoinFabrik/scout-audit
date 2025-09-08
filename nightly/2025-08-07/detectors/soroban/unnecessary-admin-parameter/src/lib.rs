@@ -127,7 +127,7 @@ fn find_admin_param<'tcx>(
         matches!(param.pat.kind, PatKind::Binding(_, _, ident, _)
             if is_similar_to(&ident.name.as_str().to_lowercase(), "admin"))
             && get_node_type_opt(cx, &param.hir_id)
-                .map_or(false, |type_| is_soroban_address(cx, type_))
+                .is_some_and(|type_| is_soroban_address(cx, type_))
     })
 }
 

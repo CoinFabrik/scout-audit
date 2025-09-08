@@ -63,8 +63,8 @@ fn check_events_children(
         return true;
     }
     let children = fcg.get(parent);
-    if children.is_some() {
-        for c in children.unwrap() {
+    if let Some(children) = children {
+        for c in children {
             if check_against.contains(c) || check_events_children(fcg, c, check_against) {
                 return true;
             }

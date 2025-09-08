@@ -128,8 +128,7 @@ impl FrontRunningVisitor<'_, '_> {
         match &expr.kind {
             ExprKind::MethodCall(_, _, args, _) | ExprKind::Call(_, args) => {
                 args.iter().any(|arg| {
-                    get_res_hir_id(arg)
-                        .map_or(false, |hir_id| self.function_params.contains(&hir_id))
+                    get_res_hir_id(arg).is_some_and(|hir_id| self.function_params.contains(&hir_id))
                 })
             }
             ExprKind::Binary(_, left_expr, right_expr) => {

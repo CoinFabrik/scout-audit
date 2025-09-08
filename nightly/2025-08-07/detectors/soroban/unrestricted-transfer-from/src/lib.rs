@@ -11,8 +11,8 @@ use common::{
 };
 use rustc_hir::PatKind;
 use rustc_hir::{
+    intravisit::{walk_expr, Visitor},
     Body, Expr, ExprKind,
-    intravisit::{Visitor, walk_expr},
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::mir::{BasicBlock, BasicBlocks, Local, Operand, StatementKind, TerminatorKind};
@@ -81,20 +81,19 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                             }
                         }
                         let from_param = methodargs[1];
-                        if let ExprKind::AddrOf(_, _, new_exp, ..) = from_param.kind {
-                            if let ExprKind::Path(
+                        if let ExprKind::AddrOf(_, _, new_exp, ..) = from_param.kind
+                            && let ExprKind::Path(
                                 rustc_hir::QPath::Resolved(_, rustc_hir::Path { segments, .. }),
                                 ..,
                             ) = new_exp.kind
-                            {
-                                let from_ref_param = segments.first();
-                                let from_addr;
-                                if from_ref_param.is_some() {
-                                    from_addr = from_ref_param.unwrap();
-                                    if possible_params.contains(&from_addr.ident.name.to_string()) {
-                                        self.span = Some(from_addr.ident.span);
-                                        self.from_ref = true;
-                                    }
+                        {
+                            let from_ref_param = segments.first();
+                            let from_addr;
+                            if let Some(from_ref_param) = from_ref_param {
+                                from_addr = from_ref_param;
+                                if possible_params.contains(&from_addr.ident.name.to_string()) {
+                                    self.span = Some(from_addr.ident.span);
+                                    self.from_ref = true;
                                 }
                             }
                         }
@@ -178,55 +177,53 @@ impl<'tcx> LateLintPass<'tcx> for UnrestrictedTransferFrom {
                 fn_span: _,
                 ..
             } = &bb.terminator().kind
+                && let Operand::Constant(cont) = func
+                && let rustc_middle::mir::Const::Val(_, val_type) = &cont.const_
+                && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
+                && utf_storage.def_id.is_some_and(|id| &id == def)
+                && target.is_some()
             {
-                if let Operand::Constant(cont) = func
-                    && let rustc_middle::mir::Const::Val(_, val_type) = &cont.const_
-                    && let rustc_middle::ty::TyKind::FnDef(def, _) = val_type.kind()
-                    && utf_storage.def_id.is_some_and(|id| &id == def)
-                    && target.is_some()
-                {
-                    //here the terminator is the call to new, the destination has the place with the selector
-                    //from here on, what I do is look for where the selector is used and where user given args are pushed to it
-                    let mut tainted_selector_places: Vec<Local> = vec![destination.local];
-                    fn navigate_trough_bbs(
-                        _cx: &LateContext,
-                        bb: &BasicBlock,
-                        bbs: &BasicBlocks,
-                        _tainted_locals: &Vec<Local>,
-                        _tainted_selector_places: &mut Vec<Local>,
-                        _utf_storage: &UnrestrictedTransferFromFinder,
-                    ) {
-                        if let TerminatorKind::Call {
-                            func,
-                            args: _,
-                            fn_span: _,
-                            target,
-                            ..
-                        } = &bbs[*bb].terminator().kind
-                            && let Operand::Constant(cst) = func
-                            && let rustc_middle::mir::Const::Val(_, val_type) = &cst.const_
-                            && let rustc_middle::ty::TyKind::FnDef(_def, _) = val_type.kind()
-                            && target.is_some()
-                        {
-                            navigate_trough_bbs(
-                                _cx,
-                                &target.unwrap(),
-                                bbs,
-                                _tainted_locals,
-                                _tainted_selector_places,
-                                _utf_storage,
-                            );
-                        }
+                //here the terminator is the call to new, the destination has the place with the selector
+                //from here on, what I do is look for where the selector is used and where user given args are pushed to it
+                let mut tainted_selector_places: Vec<Local> = vec![destination.local];
+                fn navigate_trough_bbs(
+                    _cx: &LateContext,
+                    bb: &BasicBlock,
+                    bbs: &BasicBlocks,
+                    _tainted_locals: &Vec<Local>,
+                    _tainted_selector_places: &mut Vec<Local>,
+                    _utf_storage: &UnrestrictedTransferFromFinder,
+                ) {
+                    if let TerminatorKind::Call {
+                        func,
+                        args: _,
+                        fn_span: _,
+                        target,
+                        ..
+                    } = &bbs[*bb].terminator().kind
+                        && let Operand::Constant(cst) = func
+                        && let rustc_middle::mir::Const::Val(_, val_type) = &cst.const_
+                        && let rustc_middle::ty::TyKind::FnDef(_def, _) = val_type.kind()
+                        && target.is_some()
+                    {
+                        navigate_trough_bbs(
+                            _cx,
+                            &target.unwrap(),
+                            bbs,
+                            _tainted_locals,
+                            _tainted_selector_places,
+                            _utf_storage,
+                        );
                     }
-                    navigate_trough_bbs(
-                        cx,
-                        &target.unwrap(),
-                        &mir_body.basic_blocks,
-                        &tainted_locals,
-                        &mut tainted_selector_places,
-                        &utf_storage,
-                    );
                 }
+                navigate_trough_bbs(
+                    cx,
+                    &target.unwrap(),
+                    &mir_body.basic_blocks,
+                    &tainted_locals,
+                    &mut tainted_selector_places,
+                    &utf_storage,
+                );
             }
         }
     }
