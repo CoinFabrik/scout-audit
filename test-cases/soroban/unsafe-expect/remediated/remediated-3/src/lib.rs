@@ -1,4 +1,6 @@
 #![no_std]
+#![allow(clippy::unnecessary_unwrap)]
+
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, Map, Symbol};
 
 #[contract]

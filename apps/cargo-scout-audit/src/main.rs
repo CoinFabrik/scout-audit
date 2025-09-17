@@ -1,3 +1,6 @@
+#![feature(rustc_private)]
+extern crate rustc_driver;
+
 use cargo_scout_audit::{
     cli::{CargoSubCommand, Cli},
     startup::run_scout,

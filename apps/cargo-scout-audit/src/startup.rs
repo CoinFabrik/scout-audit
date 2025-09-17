@@ -165,7 +165,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     });
 
     let detectors_config =
-        DetectorsConfiguration::get(blockchain, toolchain, &opts.local_detectors)
+        DetectorsConfiguration::get(blockchain, toolchain, &opts.local_detectors, &metadata)
             .map_err(ScoutError::DetectorsConfigFailed)?;
 
     // Instantiate detectors

@@ -22,7 +22,7 @@ fn generate_temp_html(report: &Report) -> Result<NamedTempFile> {
     let mut file = Builder::new()
         .suffix(".html")
         .tempfile()
-        .with_context(|| ("Failed to create temporary HTML file"))?;
+        .with_context(|| "Failed to create temporary HTML file")?;
     file.write(report_html.as_bytes())
         .with_context(|| "Failed to write temporary HTML file")?;
     Ok(file)
