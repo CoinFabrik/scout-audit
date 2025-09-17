@@ -1,7 +1,8 @@
 use crate::scout::blockchain::BlockChain;
 use crate::utils::logger::TracedError;
-use anyhow::{bail, Context, Ok, Result};
+use anyhow::{anyhow, bail, Context, Ok, Result};
 use cargo::core::{Dependency, GitReference, SourceId};
+use cargo_metadata::Metadata;
 use git2::{RemoteCallbacks, Repository};
 use std::{
     env,
@@ -76,9 +77,10 @@ impl DetectorsConfiguration {
         blockchain: BlockChain,
         toolchain: &str,
         local_path: &Option<PathBuf>,
+        metadata: &Metadata,
     ) -> Result<Self> {
         let detectors_config = match &local_path {
-            Some(path) => Self::get_local_detectors_configuration(path, blockchain)
+            Some(path) => Self::get_local_detectors_configuration(path, blockchain, metadata)
                 .map_err(DetectorsConfigError::Local)?,
             None => Self::get_remote_detectors_configuration(blockchain, toolchain)
                 .map_err(DetectorsConfigError::Remote)?,
@@ -87,10 +89,21 @@ impl DetectorsConfiguration {
         Ok(detectors_config)
     }
 
-    fn get_detector_path(toolchain: &str, subpath: &str) -> String {
-        // Extract just the date part from the toolchain (e.g., "2024-07-11" from "nightly-2024-07-11")
+    fn get_root_detector_path(base: &str, toolchain: &str) -> String {
+        // Extract just the date part from the toolchain (e.g., "2025-08-07" from "nightly-2025-08-07")
         let date = toolchain.strip_prefix("nightly-").unwrap_or(toolchain);
-        format!("{}/{}/detectors/{}", DETECTORS_BASE_PATH, date, subpath)
+        format!("{base}/{date}/detectors")
+    }
+
+    fn get_variable_detector_path(base: &str, toolchain: &str, subpath: &str) -> String {
+        format!(
+            "{}/{subpath}",
+            Self::get_root_detector_path(base, toolchain)
+        )
+    }
+
+    fn get_detector_path(toolchain: &str, subpath: &str) -> String {
+        Self::get_variable_detector_path(DETECTORS_BASE_PATH, toolchain, subpath)
     }
 
     /// Returns list of detectors from remote repository.
@@ -121,8 +134,20 @@ impl DetectorsConfiguration {
     }
 
     /// Returns local detectors configuration from custom path.
-    #[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
-    fn get_local_detectors_configuration(path: &Path, blockchain: BlockChain) -> Result<Self> {
+    //#[tracing::instrument(name = "GET LOCAL DETECTORS CONFIGURATION", skip_all, level = "debug")]
+    fn get_local_detectors_configuration(
+        base_path: &Path,
+        blockchain: BlockChain,
+        metadata: &Metadata,
+    ) -> Result<Self> {
+        let path = Self::get_root_detector_path(
+            base_path
+                .to_str()
+                .ok_or_else(|| anyhow!("Could not get base detector path"))?,
+            blockchain.get_toolchain(metadata)?.as_str(),
+        );
+        let path = Path::new(&path);
+
         let source_id = SourceId::for_path(path)
             .map_err(DetectorsConfigError::SourceId(path.to_path_buf()).traced())?;
 

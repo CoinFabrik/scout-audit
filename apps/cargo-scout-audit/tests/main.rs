@@ -1,3 +1,6 @@
+#![feature(rustc_private)]
+extern crate rustc_driver;
+
 #[cfg(test)]
 mod tests {
 
@@ -20,20 +23,13 @@ mod tests {
             let mut ret = std::env::current_dir().expect("Failed to get current directory");
             ret.pop();
             ret.pop();
-
-            // Find latest nightly directory
-            let nightly_dir = ret.join("nightly");
-            let latest_nightly = std::fs::read_dir(&nightly_dir)
-                .expect("Failed to read nightly directory")
-                .filter_map(|entry| entry.ok())
-                .filter(|entry| entry.path().is_dir())
-                .max_by_key(|entry| entry.file_name())
-                .expect("No nightly directories found");
-
-            ret = latest_nightly.path();
-            ret.push("detectors");
+            ret.push("nightly");
             ret
         };
+    }
+
+    fn create_cargo_command() -> Command {
+        Command::new("cargo")
     }
 
     fn get_test_cases() -> Vec<PathBuf> {
@@ -282,7 +278,7 @@ mod tests {
     fn test_message_format() {
         let path = "tests/contracts/substrate-pallets/";
 
-        let scout_output = Command::new("cargo")
+        let scout_output = create_cargo_command()
             .args([
                 "scout-audit",
                 "--local-detectors",
@@ -309,7 +305,7 @@ mod tests {
     fn test_metadata() {
         let path = "tests/contracts/substrate-pallets/";
 
-        let scout_output = Command::new("cargo")
+        let scout_output = create_cargo_command()
             .args([
                 "scout-audit",
                 "--metadata",

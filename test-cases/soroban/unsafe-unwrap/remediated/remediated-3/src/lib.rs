@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::unnecessary_unwrap)]
 use soroban_sdk::{contract, contracterror, contractimpl};
 
 #[contract]

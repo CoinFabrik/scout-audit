@@ -1,12 +1,15 @@
-use crate::utils::print::{print_error, print_info};
-use anyhow::{Context, Result};
+#[cfg(not(windows))]
+use crate::utils::print::print_error;
+use crate::utils::print::print_info;
+#[cfg(not(windows))]
+use anyhow::Context;
+use anyhow::Result;
+#[cfg(not(windows))]
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
-use std::{
-    env,
-    path::Path,
-    process::{Child, Command},
-};
+use std::{env, process::Child};
+#[cfg(not(windows))]
+use std::{path::Path, process::Command};
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
