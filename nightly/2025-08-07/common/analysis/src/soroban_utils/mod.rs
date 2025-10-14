@@ -15,6 +15,7 @@ const SOROBAN_MAP: &str = "soroban_sdk::Map";
 const SOROBAN_INSTANCE_STORAGE: &str = "soroban_sdk::storage::Instance";
 const SOROBAN_TEMPORARY_STORAGE: &str = "soroban_sdk::storage::Temporary";
 const SOROBAN_PERSISTENT_STORAGE: &str = "soroban_sdk::storage::Persistent";
+const SOROBAN_VEC: &str = "soroban_sdk::Vec";
 
 /// Determines whether a function defined by its `DefId` is part of a Soroban contract implementation.
 ///
@@ -71,6 +72,11 @@ pub fn is_soroban_address(cx: &LateContext<'_>, expr_type: Ty<'_>) -> bool {
 /// Checks if the provided type is a Soroban Map (`soroban_sdk::Map`).
 pub fn is_soroban_map(cx: &LateContext<'_>, expr_type: Ty<'_>) -> bool {
     match_type_to_str(cx, expr_type, SOROBAN_MAP)
+}
+
+/// Checks if the provided type is a Soroban Vec (`soroban_sdk::Vec`).
+pub fn is_soroban_vec(cx: &LateContext<'_>, expr_type: Ty<'_>) -> bool {
+    match_type_to_str(cx, expr_type, SOROBAN_VEC)
 }
 
 pub enum SorobanStorageType {

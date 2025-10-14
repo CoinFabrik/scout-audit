@@ -58,8 +58,7 @@ def run_integration_tests(detector, root):
     start_time = time.time()
 
     # Get latest nightly from the directory nightly/
-    latest_nightly = sorted(glob(os.path.join(os.getcwd(), "nightly", "*")))[-1]
-    local_detectors = os.path.join(latest_nightly, "detectors")
+    latest_nightly = os.path.join(os.getcwd(), "nightly")
 
     returncode, stdout, _ = run_subprocess(
         [
@@ -69,7 +68,7 @@ def run_integration_tests(detector, root):
             detector,
             "--metadata",
             "--local-detectors",
-            local_detectors,
+            latest_nightly,
         ],
         root,
     )
@@ -96,7 +95,7 @@ def run_integration_tests(detector, root):
             "cargo",
             "scout-audit",
             "--local-detectors",
-            local_detectors,
+            latest_nightly,
             "--output-format",
             "raw-json",
             "--output-path",
