@@ -53,17 +53,15 @@ jobs:
           key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
           restore-keys: ${{ runner.os }}-tests-
 
-      - name: Install Rust stable
-        run: rustup install stable --profile minimal
-
-      - name: Update Rust Toolchain
-        run: rustup update
-
-      - name: Install Rust nightly
-        run: rustup install nightly --profile minimal
+      - name: Ensure required toolchains
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup toolchain install nightly-2025-08-07 --profile minimal
+          rustup component add rustc-dev --toolchain nightly-2025-08-07
+          rustup component add llvm-tools-preview --toolchain nightly-2025-08-07
 
       - name: Install dylint, dylint-link
-        run: cargo +nightly install cargo-dylint dylint-link
+        run: cargo +nightly-2025-08-07 install cargo-dylint dylint-link
 
       - name: Install cargo-scout-audit
         working-directory: apps/cargo-scout-audit
@@ -125,6 +123,11 @@ jobs:
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
+      - name: Ensure nightly toolchain
+        run: |
+          rustup toolchain install nightly-2025-08-07 --profile minimal
+          rustup component add rustc-dev --toolchain nightly-2025-08-07
+          rustup component add llvm-tools-preview --toolchain nightly-2025-08-07
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
