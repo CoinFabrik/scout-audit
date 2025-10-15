@@ -63,6 +63,7 @@ def run_integration_tests(detector, root):
     returncode, stdout, stderr = run_subprocess(
         [
             "cargo",
+            "+nightly-2025-08-07",
             "scout-audit",
             "--filter",
             detector,
@@ -95,6 +96,7 @@ def run_integration_tests(detector, root):
     returncode, _, stderr = run_subprocess(
         [
             "cargo",
+            "+nightly-2025-08-07",
             "scout-audit",
             "--local-detectors",
             latest_nightly,
