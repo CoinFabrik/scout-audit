@@ -60,7 +60,7 @@ def run_integration_tests(detector, root):
     # Get latest nightly from the directory nightly/
     latest_nightly = os.path.join(os.getcwd(), "nightly")
 
-    returncode, stdout, _ = run_subprocess(
+    returncode, stdout, stderr = run_subprocess(
         [
             "cargo",
             "scout-audit",
@@ -74,6 +74,8 @@ def run_integration_tests(detector, root):
     )
 
     if stdout is None:
+        print(f"{utils.RED}STDOUT: {stdout}\n\n{utils.ENDC}")
+        print(f"{utils.RED}STDERR: {stderr}\n\n{utils.ENDC}")
         print(
             f"{utils.RED}Failed to run integration tests in {root} - Metadata returned empty.{utils.ENDC}"
         )
