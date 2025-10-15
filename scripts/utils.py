@@ -10,6 +10,7 @@ ENDC = "\033[0m"
 
 NIGHTLY_SUBDIRS = ["ink", "soroban", "substrate-pallets"]
 
+
 def get_nightly_commands(command: str):
     """Dynamically generate commands for all nightly directories."""
     nightly_commands = []
@@ -23,6 +24,7 @@ def get_nightly_commands(command: str):
                 nightly_commands.append((detector_path, command))
 
     return nightly_commands
+
 
 def run_subprocess(command: list, cwd: str):
     result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)

@@ -77,13 +77,13 @@ def run_integration_tests(detector, root):
         print(
             f"{utils.RED}Failed to run integration tests in {root} - Metadata returned empty.{utils.ENDC}"
         )
-        return True
+        return False
 
     detector_metadata = parse_json_from_string(stdout)
 
     if not isinstance(detector_metadata, dict):
         print("Failed to extract JSON:", detector_metadata)
-        return True
+        return False
 
     _, tempPath = tempfile.mkstemp(None, f"scout_{os.getpid()}_")
 
