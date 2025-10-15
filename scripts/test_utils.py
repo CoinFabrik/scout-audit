@@ -28,7 +28,7 @@ def run_tests(detector):
         if is_rust_project(root):
             if run_unit_tests(root, blockchain):
                 errors.append(root)
-            if not run_integration_tests(detector, root):
+            if run_integration_tests(detector, root):
                 errors.append(root)
     return errors
 
@@ -77,13 +77,13 @@ def run_integration_tests(detector, root):
         print(
             f"{utils.RED}Failed to run integration tests in {root} - Metadata returned empty.{utils.ENDC}"
         )
-        return False
+        return True
 
     detector_metadata = parse_json_from_string(stdout)
 
     if not isinstance(detector_metadata, dict):
         print("Failed to extract JSON:", detector_metadata)
-        return False
+        return True
 
     _, tempPath = tempfile.mkstemp(None, f"scout_{os.getpid()}_")
 
@@ -106,7 +106,7 @@ def run_integration_tests(detector, root):
 
     if returncode != 0:
         print(f"{utils.RED}Scout failed to run.\n{stderr}{utils.ENDC}")
-        return False
+        return True
 
     should_fail = "vulnerable" in root
     did_fail = False
@@ -126,7 +126,7 @@ def run_integration_tests(detector, root):
             print(
                 f"{utils.RED}Test case {root} didn't pass because {explanation}.\n{stderr}{utils.ENDC}"
             )
-            return False
+            return True
 
     print_results(
         returncode,
@@ -135,7 +135,7 @@ def run_integration_tests(detector, root):
         root,
         time.time() - start_time,
     )
-    return True
+    return False
 
 
 if __name__ == "__main__":
