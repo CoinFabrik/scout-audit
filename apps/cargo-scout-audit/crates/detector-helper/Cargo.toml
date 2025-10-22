@@ -1,0 +1,14 @@
+[package]
+name = "detector-helper"
+edition = "2024"
+repository.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+interop.path = "../interop"
+util.path = "../util"
+serde_json.workspace = true
+anyhow.workspace = true

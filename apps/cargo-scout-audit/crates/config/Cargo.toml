@@ -1,0 +1,16 @@
+[package]
+name = "config"
+edition = "2024"
+repository.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cargo_metadata.workspace = true
+cli_args = { path = "../cli-args", package = "cli-args" }
+serde = { workspace = true, features = ["derive"] }
+serde_yaml.workspace = true
+util.path = "../util"

@@ -1,27 +1,44 @@
 #![feature(rustc_private)]
 extern crate rustc_driver;
 
-use cargo_scout_audit::{
-    cli::{CargoSubCommand, Cli},
-    startup::run_scout,
-    utils::{logger, print::print_error},
+use scout_driver::{
+    startup::run_dylint,
 };
-use clap::Parser;
 use tracing::level_filters::LevelFilter;
+use interop::{
+    scout::{
+        ScoutInput,
+        ScoutOutput,
+        DylintOutput,
+    },
+    subprocess::subprocess_wrapper,
+};
+use std::path::PathBuf;
 
 fn main() {
-    let subscriber = logger::get_subscriber("scout".into(), LevelFilter::OFF, std::io::stdout);
-    logger::init_subscriber(subscriber);
+    subprocess_wrapper::<ScoutInput, ScoutOutput, _>(|i|{
+        let detectors_paths = i.detectors_paths
+            .iter()
+            .map(|x| PathBuf::from(x))
+            .collect::<Vec<_>>();
+        let result = run_dylint(detectors_paths, &i.opts, i.inside_vscode);
 
-    let cli = Cli::parse();
-
-    match cli.subcmd {
-        CargoSubCommand::ScoutAudit(opts) => match run_scout(opts) {
-            Ok(_) => std::process::exit(0),
+        match result{
+            Ok((success, mut temp)) => {
+                temp.disable_cleanup(true);
+                let output_file_path = util::path_to_string(temp.path());
+                ScoutOutput{
+                    result: Ok(DylintOutput{
+                        success,
+                        output_file_path,
+                    })
+                }
+            },
             Err(e) => {
-                print_error(e.to_string().trim());
-                std::process::exit(1);
+                ScoutOutput{
+                    result: Err(e.to_string()),
+                }
             }
-        },
-    }
+        }
+    });
 }

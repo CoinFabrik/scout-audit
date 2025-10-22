@@ -15,66 +15,70 @@ build = "build.rs"
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 edition = "2021"
-keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
-license = "MIT"
-name = "cargo-scout-audit"
-readme = "../../README.md"
-repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.3.9"
+keywords.workspace = true
+license.workspace = true
+name = "scout-driver"
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
 
 [lib]
 path = "src/lib.rs"
 
 [[bin]]
-name = "cargo-scout-audit"
+name = "scout-driver"
 path = "src/main.rs"
 
+[features]
+docker_container = []
+
 [dependencies]
-ansi_term = { workspace = true }
-anyhow = { workspace = true }
-cargo = { workspace = true }
-cargo_metadata = { workspace = true }
+ansi_term.workspace = true
+anyhow.workspace = true
+cargo.workspace = true
+cargo_metadata.workspace = true
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
-colored = { workspace = true }
-current_platform = { workspace = true }
-dunce = { workspace = true }
-dylint = { workspace = true }
-git2 = { workspace = true }
-home = { workspace = true }
-itertools = { workspace = true }
-lazy_static = { workspace = true }
-libloading = { workspace = true }
-once_cell = { workspace = true }
-orion = { workspace = true }
+cli_args = { path = "../cli-args", package = "cli-args" }
+colored.workspace = true
+current_platform.workspace = true
+dunce.workspace = true
+dylint.workspace = true
+git2.workspace = true
+home.workspace = true
+itertools.workspace = true
+lazy_static.workspace = true
+libloading.workspace = true
+once_cell.workspace = true
+orion.workspace = true
 regex = { workspace = true, features = ["unicode"] }
 reqwest = { workspace = true, features = ["blocking", "json"] }
-semver = { workspace = true }
+scout.path = "../scout"
+util.path = "../util"
+interop.path = "../interop"
+semver.workspace = true
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-serde_yaml = { workspace = true }
+serde_json.workspace = true
+serde_yaml.workspace = true
 strum = { workspace = true, features = ["derive"] }
-tempfile = { workspace = true }
+tempfile.workspace = true
 tera = { workspace = true, features = ["builtins"] }
-terminal_color_builder = { workspace = true }
-thiserror = { workspace = true }
-toml = { workspace = true }
-tracing = { workspace = true }
-tracing-bunyan-formatter = { workspace = true }
-tracing-log = { workspace = true }
+terminal_color_builder.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-bunyan-formatter.workspace = true
+tracing-log.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter", "registry"] }
-webbrowser = { workspace = true }
+webbrowser.workspace = true
 
-[dev-dependencies]
-uuid = { workspace = true, features = ["v4"] }
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
 
 [build-dependencies]
 regex = "1.10.5"
 sha2 = "0.10.8"
 walkdir = "2.5.0"
 
-[target.'cfg(windows)'.dependencies]
-windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
-
-[features]
-docker_container = []
+[dev-dependencies]
+uuid = { workspace = true, features = ["v4"] }

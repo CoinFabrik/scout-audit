@@ -1,0 +1,18 @@
+[package]
+name = "cli-args"
+edition = "2024"
+repository.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+cargo_metadata = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+strum = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+util = { path = "../util" }
