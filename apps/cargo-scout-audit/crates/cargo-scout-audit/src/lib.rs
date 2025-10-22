@@ -1,9 +1,9 @@
-pub mod result;
-pub mod digest;
-pub mod run;
-pub mod project_info;
-#[path = "scout-driver.rs"]
-pub mod scout_driver;
+pub mod consts;
 #[path = "detector-helper.rs"]
 pub mod detector_helper;
-pub mod consts;
+pub mod digest;
+pub mod project_info;
+pub mod result;
+pub mod run;
+#[path = "scout-driver.rs"]
+pub mod scout_driver;

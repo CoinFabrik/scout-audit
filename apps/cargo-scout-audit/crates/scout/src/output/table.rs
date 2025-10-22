@@ -1,5 +1,4 @@
 use crate::finding::Finding;
-use util::detectors_info::LintStore;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -13,6 +12,7 @@ use std::{
 };
 use tera::{Context, Tera};
 use terminal_color_builder::OutputFormatter;
+use util::detectors_info::LintStore;
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum Color {
@@ -395,12 +395,10 @@ fn process_object_console(o: &serde_json::Map<String, Value>, pad: bool) -> Stri
         Color::Magenta => formatter.fg().magenta(),
     };
     let mut padded = json_to_string(content);
-    if pad {
-        if let Some(w) = o.get("w") {
-            let w: usize = usize::try_from(json_to_int(w)).ok().unwrap_or(0);
-            while padded.len() < w {
-                padded.push(' ');
-            }
+    if pad && let Some(w) = o.get("w") {
+        let w: usize = usize::try_from(json_to_int(w)).ok().unwrap_or(0);
+        while padded.len() < w {
+            padded.push(' ');
         }
     }
     formatter.text_str(&padded).print()
@@ -412,12 +410,10 @@ fn process_object_md(o: &serde_json::Map<String, Value>, pad: bool) -> String {
         return "".into();
     }
     let mut padded = json_to_string(content.unwrap());
-    if pad {
-        if let Some(w) = o.get("w") {
-            let w: usize = usize::try_from(json_to_int(w)).ok().unwrap_or(0);
-            while padded.len() < w {
-                padded.push(' ');
-            }
+    if pad && let Some(w) = o.get("w") {
+        let w: usize = usize::try_from(json_to_int(w)).ok().unwrap_or(0);
+        while padded.len() < w {
+            padded.push(' ');
         }
     }
     let color = get_color(o);

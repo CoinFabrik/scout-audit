@@ -1,5 +1,5 @@
-use colored::Colorize;
 use anyhow::Error;
+use colored::Colorize;
 
 pub fn print_warning(message: &str) {
     println!("{}", pretty_warning(message));
@@ -10,7 +10,7 @@ pub fn print_error(message: &str) {
 }
 
 pub fn print_full_error(e: &Error) {
-    for i in e.chain(){
+    for i in e.chain() {
         print_error(&i.to_string());
     }
 }

@@ -1,21 +1,14 @@
-#[cfg(not(feature = "docker_container"))]
-use util::{
-    cargo,
-    env,
-    logger::TracedError,
-};
 use crate::scout::blockchain::BlockChain;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use cargo_metadata::{Metadata, Package};
 use itertools::Itertools;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use util::library::{
-    Library,
-    LibraryError,
-};
+use util::library::{Library, LibraryError};
+#[cfg(not(feature = "docker_container"))]
+use util::{cargo, env, logger::TracedError};
 
 /// Represents a Rust library.
 #[derive(Debug, Clone)]
@@ -27,14 +20,14 @@ impl DetectorLibrary {
     /// Creates a new instance of `Library`.
     pub fn new(root: PathBuf, toolchain: String, target_dir: PathBuf, metadata: Metadata) -> Self {
         Self {
-            lib: Library::new(root, toolchain, target_dir, metadata)
+            lib: Library::new(root, toolchain, target_dir, metadata),
         }
     }
 
     /// Creates a library from a workspace path
     pub fn create(workspace_path: PathBuf, toolchain: String, target_dir: PathBuf) -> Result<Self> {
-        Ok(Self{
-            lib: Library::create(workspace_path, toolchain, target_dir)?
+        Ok(Self {
+            lib: Library::create(workspace_path, toolchain, target_dir)?,
         })
     }
 
@@ -111,7 +104,8 @@ impl DetectorLibrary {
 
         for library in libraries {
             // Determine the detector type for this library (rust or blockchain)
-            let detector_type = match library.lib
+            let detector_type = match library
+                .lib
                 .root
                 .ancestors()
                 .find(|p| {

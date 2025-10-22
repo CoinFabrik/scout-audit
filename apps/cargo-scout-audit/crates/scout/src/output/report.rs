@@ -4,9 +4,8 @@ use crate::{
     output::{raw_report::RawReport, table::Table},
     scout::project_info::Project,
 };
-use cli_args::OutputFormat;
-use util::detectors_info::{LintInfo, LintStore};
 use anyhow::{Context, Result};
+use cli_args::OutputFormat;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -15,6 +14,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use terminal_color_builder::OutputFormatter;
+use util::detectors_info::{LintInfo, LintStore};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Report {

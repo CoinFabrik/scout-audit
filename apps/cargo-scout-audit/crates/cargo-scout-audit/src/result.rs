@@ -1,5 +1,5 @@
-use thiserror::Error;
 use scout::finding::Finding;
+use thiserror::Error;
 
 #[derive(Default)]
 pub struct ScoutResult {

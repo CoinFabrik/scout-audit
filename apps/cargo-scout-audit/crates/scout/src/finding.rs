@@ -1,10 +1,7 @@
-use util::json::{
-    json_to_string_exact,
-    json_to_string_opt,
-};
 use serde_json::Value;
 use std::collections::HashSet;
 use std::result::Result;
+use util::json::{json_to_string_exact, json_to_string_opt};
 
 #[derive(Clone, Debug)]
 pub struct Finding {

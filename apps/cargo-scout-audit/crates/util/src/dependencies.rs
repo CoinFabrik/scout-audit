@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use cargo_metadata::Metadata;
 use std::collections::{HashMap, HashSet};
 

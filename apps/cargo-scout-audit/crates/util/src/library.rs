@@ -1,15 +1,8 @@
-use anyhow::{bail, Result};
-use cargo_metadata::{
-    Metadata,
-    MetadataCommand,
-    Package,
-};
-use std::{
-    env::consts,
-    path::{Path, PathBuf},
-};
-use thiserror::Error;
 use crate::logger::TracedError;
+use anyhow::{Result, bail};
+use cargo_metadata::{Metadata, MetadataCommand, Package};
+use std::{env::consts, path::PathBuf};
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum LibraryError {
@@ -75,61 +68,59 @@ impl Library {
         ))
     }
 
-    pub fn get_compiled_paths(&self, package_name: Option<&str>, kind: Option<&str>) -> Vec<PathBuf> {
-        let mut mapped = self.metadata
+    pub fn get_compiled_paths(
+        &self,
+        package_name: Option<&str>,
+        kind: Option<&str>,
+    ) -> Vec<PathBuf> {
+        let mut mapped = self
+            .metadata
             .packages
             .clone()
             .into_iter()
             .collect::<Vec<_>>();
-        if let Some(package_name) = package_name{
+        if let Some(package_name) = package_name {
             mapped = mapped
                 .into_iter()
                 .filter(|x| x.name == package_name)
                 .collect::<Vec<_>>()
         };
-        if let Some(kind) = kind{
-            mapped
-                .iter()
-                .map(|p| self.paths(&p, kind))
-                .flatten()
-                .collect()
-        }else{
-            mapped
-                .iter()
-                .filter_map(|p| self.path(&p))
-                .collect()
+        if let Some(kind) = kind {
+            mapped.iter().flat_map(|p| self.paths(p, kind)).collect()
+        } else {
+            mapped.iter().filter_map(|p| self.path(p)).collect()
         }
     }
 
-    fn path(&self, pkg: &Package) -> Option<PathBuf>{
+    fn path(&self, pkg: &Package) -> Option<PathBuf> {
         let target = pkg.targets.first()?;
-        if target.kind.len() != 1{
+        if target.kind.len() != 1 {
             return None;
         }
         self.path_with_kind(pkg, target.kind.first()?)
     }
 
-    fn path_with_kind(&self, pkg: &Package, kind: &str) -> Option<PathBuf>{
-        Some(if kind == "lib" || kind == "cdylib"{
+    fn path_with_kind(&self, pkg: &Package, kind: &str) -> Option<PathBuf> {
+        Some(if kind == "lib" || kind == "cdylib" {
             self.library_path(pkg.name.clone())
-        }else{
+        } else {
             self.binary_path(pkg.name.clone())
         })
     }
 
-    fn paths(&self, pkg: &Package, expected_kind: &str) -> Vec<PathBuf>{
+    fn paths(&self, pkg: &Package, expected_kind: &str) -> Vec<PathBuf> {
         let mut ret = Vec::new();
-        
-        for target in pkg.targets.iter(){
-            if !target.kind.iter().any(|k| k == expected_kind){
+
+        for target in pkg.targets.iter() {
+            if !target.kind.iter().any(|k| k == expected_kind) {
                 continue;
             }
-            let Some(path) = self.path_with_kind(pkg, expected_kind) else{
+            let Some(path) = self.path_with_kind(pkg, expected_kind) else {
                 continue;
             };
             ret.push(path);
         }
-        
+
         ret
     }
 
@@ -161,11 +152,7 @@ impl Library {
 
     fn binary_path(&self, binary_name: String) -> PathBuf {
         let filename = if self.toolchain.is_empty() {
-            format!(
-                "{}{}",
-                binary_name.replace('_', "-"),
-                consts::EXE_SUFFIX
-            )
+            format!("{}{}", binary_name.replace('_', "-"), consts::EXE_SUFFIX)
         } else {
             format!(
                 "{}@{}{}",
@@ -190,5 +177,4 @@ impl Library {
             .exec()
             .map_err(LibraryError::MetadataError(workspace_path.clone()).traced())
     }
-
 }

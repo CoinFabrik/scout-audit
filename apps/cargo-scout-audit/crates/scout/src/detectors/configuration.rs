@@ -1,6 +1,5 @@
 use crate::scout::blockchain::BlockChain;
-use util::logger::TracedError;
-use anyhow::{anyhow, bail, Context, Ok, Result};
+use anyhow::{Context, Ok, Result, anyhow, bail};
 use cargo::core::{Dependency, GitReference, SourceId};
 use cargo_metadata::Metadata;
 use git2::{RemoteCallbacks, Repository};
@@ -10,6 +9,7 @@ use std::{
 };
 use tempfile::TempDir;
 use thiserror::Error;
+use util::logger::TracedError;
 
 // Constants
 const SCOUT_REPO_URL: &str = "https://github.com/CoinFabrik/scout-audit";

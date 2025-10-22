@@ -1,73 +1,42 @@
 use crate::{
-    result::{
-        ScoutError,
-        ScoutResult,
-    },
-    digest,
-    scout_driver::run_dylint,
     detector_helper::get_detectors_info as get_detectors_info_helped,
+    digest,
+    result::{ScoutError, ScoutResult},
+    scout_driver::run_dylint,
 };
-use cli_args::{
-    Scout,
-    BlockChain,
-    OutputFormat,
-};
+use anyhow::{Context, Ok, Result, anyhow};
+use cargo::{GlobalContext, core::Verbosity};
+use cargo_metadata::Metadata;
+use cli_args::{BlockChain, OutputFormat, Scout};
+use config::ProfileConfig;
 use scout::{
-    finding::{
-        Finding,
-    },
+    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
+    finding::Finding,
+    output::report::Report,
     scout::{
-        findings::{
-            temp_file_to_string,
-            output_to_json,
-            get_crates,
-            split_findings,
-        },
+        findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
         project_info::Project,
         telemetry::TelemetryClient,
-        nightly_runner::run_scout_in_nightly,
         version_checker::VersionChecker,
     },
-    detectors::{
-        builder::DetectorBuilder,
-        configuration::DetectorsConfiguration,
-    },
-    output::report::Report,
 };
-use util::{
-    print::print_error,
-    detectors_info::{
-        LintStore,
-        get_detectors_info,
-    },
-    detectors::{
-        list_detectors,
-        get_filtered_detectors,
-        get_excluded_detectors,
-    },
-    logger::TracedError,
-};
-use config::ProfileConfig;
-use anyhow::{anyhow, Context, Ok, Result};
 use serde_json::to_string_pretty;
-use std::{
-    collections::HashSet,
-    io::Write, path::PathBuf,
-};
-use cargo::{core::Verbosity, GlobalContext};
+use std::{collections::HashSet, io::Write, path::PathBuf};
 use terminal_color_builder::OutputFormatter;
-use interop::scout::{
-    ScoutInput,
-    ScoutOutput,
+use util::{
+    detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
+    detectors_info::LintStore,
+    logger::TracedError,
+    print::print_error,
 };
-use cargo_metadata::Metadata;
 
-enum EitherInfoOrScoutResult{
+#[allow(clippy::large_enum_variant)]
+enum EitherInfoOrScoutResult {
     Info(RunInfo),
     ScoutResult(ScoutResult),
 }
 
-fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
+fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult> {
     opts.validate().map_err(ScoutError::ValidateFailed)?;
 
     if let Some(path) = opts.get_fail_path() {
@@ -76,7 +45,9 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
 
     if opts.src_hash {
         println!("{}", digest::SOURCE_DIGEST);
-        return Ok(EitherInfoOrScoutResult::ScoutResult(ScoutResult::from_string(digest::SOURCE_DIGEST)));
+        return Ok(EitherInfoOrScoutResult::ScoutResult(
+            ScoutResult::from_string(digest::SOURCE_DIGEST),
+        ));
     }
 
     let metadata =
@@ -91,7 +62,9 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
 
     if opts.toolchain {
         println!("{}", toolchain);
-        return Ok(EitherInfoOrScoutResult::ScoutResult(ScoutResult::from_string(toolchain)));
+        return Ok(EitherInfoOrScoutResult::ScoutResult(
+            ScoutResult::from_string(toolchain),
+        ));
     }
 
     /*
@@ -104,7 +77,7 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
     */
 
     // Send telemetry data
-    let client_type = TelemetryClient::detect_client_type(&opts);
+    let client_type = TelemetryClient::detect_client_type(opts);
     let telemetry_client = TelemetryClient::new(blockchain, client_type);
     let _ = telemetry_client.send_report();
 
@@ -169,14 +142,16 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
     if opts.detectors_metadata {
         let metadata = to_string_pretty(&detectors_info).unwrap();
         println!("{}", metadata);
-        return Ok(EitherInfoOrScoutResult::ScoutResult(ScoutResult::from_string(metadata)));
+        return Ok(EitherInfoOrScoutResult::ScoutResult(
+            ScoutResult::from_string(metadata),
+        ));
     }
 
     let project_info = Project::get_info(&metadata).map_err(ScoutError::GetProjectInfoFailed)?;
 
     let inside_vscode = opts.args.contains(&"--message-format=json".to_string());
 
-    Ok(EitherInfoOrScoutResult::Info(RunInfo{
+    Ok(EitherInfoOrScoutResult::Info(RunInfo {
         inside_vscode,
         project_info,
         metadata,
@@ -188,7 +163,7 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult>{
     }))
 }
 
-struct RunInfo{
+struct RunInfo {
     pub inside_vscode: bool,
     pub project_info: Project,
     pub metadata: Metadata,
@@ -202,14 +177,14 @@ struct RunInfo{
 pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
     let either = prepare_scout_input(&mut opts)?;
 
-    let info = match either{
+    let info = match either {
         EitherInfoOrScoutResult::Info(run_info) => run_info,
         EitherInfoOrScoutResult::ScoutResult(scout_result) => {
             return Ok(scout_result);
-        },
+        }
     };
 
-    let RunInfo{
+    let RunInfo {
         inside_vscode,
         project_info,
         metadata,
@@ -297,10 +272,10 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
         )?;
     }
 
-    if let Some(path) = opts.get_fail_path() {
-        if console_findings.is_empty() {
-            let _ = std::fs::remove_file(path);
-        }
+    if let Some(path) = opts.get_fail_path()
+        && console_findings.is_empty()
+    {
+        let _ = std::fs::remove_file(path);
     }
 
     Ok(ScoutResult::new(console_findings, output_string_vscode))
@@ -313,16 +288,16 @@ fn set_severity(
     detectors_info: &LintStore,
 ) -> Vec<Finding> {
     for finding in raw_findings.iter() {
-        if finding.is_scout_finding(detector_names) {
-            if let Some(detector) = detectors_info.find_by_id(&finding.code()) {
-                let val = finding.message();
-                let severity_tag = format!("[{}]", detector.severity.to_uppercase());
-                if raw_findings_string.contains(&val)
-                    && !raw_findings_string.contains(&format!("{} {}", severity_tag, val))
-                {
-                    *raw_findings_string =
-                        raw_findings_string.replace(&val, &format!("{} {}", severity_tag, val));
-                }
+        if finding.is_scout_finding(detector_names)
+            && let Some(detector) = detectors_info.find_by_id(&finding.code())
+        {
+            let val = finding.message();
+            let severity_tag = format!("[{}]", detector.severity.to_uppercase());
+            if raw_findings_string.contains(&val)
+                && !raw_findings_string.contains(&format!("{} {}", severity_tag, val))
+            {
+                *raw_findings_string =
+                    raw_findings_string.replace(&val, &format!("{} {}", severity_tag, val));
             }
         }
     }

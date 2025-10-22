@@ -1,36 +1,11 @@
-use crate::{
-    digest,
-};
-use cli_args::{
-    Scout,
-    BlockChain,
-};
-use scout::{
-    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
-    output::report::Report,
-    finding::Finding,
-    scout::{
-        findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
-        nightly_runner::run_scout_in_nightly,
-        project_info::Project,
-        telemetry::TelemetryClient,
-        version_checker::VersionChecker,
-    },
-};
-use util::{
-    detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-    detectors_info::{get_detectors_info, LintStore},
-    logger::TracedError,
-    print::{print_error, print_info},
-};
-    
-use anyhow::{anyhow, Context, Ok, Result};
-use cargo::{core::Verbosity, GlobalContext};
+use cli_args::Scout;
+use scout::finding::Finding;
+use util::print::print_info;
+
+use anyhow::{Context, Ok, Result};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
-use serde_json::to_string_pretty;
-use std::{collections::HashSet, io::Write, path::PathBuf};
+use std::path::PathBuf;
 use tempfile::NamedTempFile;
-use terminal_color_builder::OutputFormatter;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -87,7 +62,6 @@ impl ScoutResult {
     }
 }
 
-#[tracing::instrument(name = "RUN DYLINT", skip_all)]
 pub fn run_dylint(
     detectors_paths: Vec<PathBuf>,
     opts: &Scout,

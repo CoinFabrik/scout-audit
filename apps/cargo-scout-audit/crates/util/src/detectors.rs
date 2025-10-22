@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use anyhow::bail;
 use anyhow::Result;
+use anyhow::bail;
 
 fn parse_detectors(detectors: &str) -> Vec<String> {
     detectors

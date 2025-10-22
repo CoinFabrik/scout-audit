@@ -1,12 +1,9 @@
-use anyhow::{anyhow, Context, Result};
-use cargo_metadata::{camino::Utf8PathBuf, Metadata};
+use anyhow::{Context, Result, anyhow};
+use cargo_metadata::{Metadata, camino::Utf8PathBuf};
+use cli_args::{BlockChain, OutputFormat};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use util::print::print_info;
-use cli_args::{
-    OutputFormat,
-    BlockChain,
-};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct ScoutConfig {

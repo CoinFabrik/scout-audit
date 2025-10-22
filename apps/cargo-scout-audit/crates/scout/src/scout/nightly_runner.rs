@@ -1,22 +1,15 @@
 #[cfg(not(windows))]
-use util::print::{
-    print_warning,
-    print_info,
-};
-#[cfg(not(windows))]
 use anyhow::Context;
 use anyhow::Result;
 #[cfg(not(windows))]
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
-use std::{
-    env,
-    process::Child,
-    path::PathBuf,
-};
+use std::{env, path::PathBuf, process::Child};
 #[cfg(not(windows))]
 use std::{path::Path, process::Command};
+#[cfg(not(windows))]
+use util::print::{print_info, print_warning};
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
@@ -28,9 +21,9 @@ lazy_static! {
 
 #[cfg(windows)]
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>>{
+pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
     use std::os::windows::ffi::OsStrExt;
-    use windows::{core::PCWSTR, Win32::System::LibraryLoader::SetDllDirectoryW};
+    use windows::{Win32::System::LibraryLoader::SetDllDirectoryW, core::PCWSTR};
 
     let user_profile = env::var("USERPROFILE")
         .map_err(|e| anyhow::anyhow!("Unable to get user profile directory: {e}"))?;
@@ -55,21 +48,25 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>>{
 
 #[cfg(not(windows))]
 #[tracing::instrument(name = "RUN SCOUT IN NIGHTLY", skip_all)]
-pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>>{
+pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
     let mut ret = HashMap::new();
 
     let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
     if !current_lib_path.contains(toolchain) {
         let rustup_home = env::var("RUSTUP_HOME");
 
-        let rustup_home = match rustup_home{
+        let rustup_home = match rustup_home {
             Ok(x) => PathBuf::from(x),
             Err(_) => {
-                let mut home = PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "~".to_string()));
+                let mut home =
+                    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "~".to_string()));
                 home.push(".rustup");
-                print_warning(&format!("Failed to get RUSTUP_HOME, defaulting to {:?}", &home));
+                print_warning(&format!(
+                    "Failed to get RUSTUP_HOME, defaulting to {:?}",
+                    &home
+                ));
                 home
-            },
+            }
         };
 
         let nightly_lib_path = Path::new(&rustup_home)
@@ -77,9 +74,10 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>>{
             .join(format!("{}-{}", toolchain, CURRENT_PLATFORM))
             .join("lib");
 
-        let nightly_lib_path = nightly_lib_path.to_str()
-            .and_then(|x| Some(x.to_owned()))
-            .unwrap_or_else(|| String::new());
+        let nightly_lib_path = nightly_lib_path
+            .to_str()
+            .map(|x| x.to_owned())
+            .unwrap_or_default();
 
         ret.insert(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
     }
@@ -99,7 +97,7 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
 pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     let environment = set_up_environment(toolchain)?;
 
-    if environment.is_empty(){
+    if environment.is_empty() {
         return Ok(None);
     }
 

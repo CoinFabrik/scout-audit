@@ -4,7 +4,7 @@ use std::{
     process::{Command as StdCommand, Stdio},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 
 use super::env;
 
@@ -72,8 +72,11 @@ impl Command {
     }
 }
 
-pub fn set_env(cmd: &mut std::process::Command, environment: &std::collections::HashMap<String, String>){
-    for (k, v) in environment.iter(){
+pub fn set_env(
+    cmd: &mut std::process::Command,
+    environment: &std::collections::HashMap<String, String>,
+) {
+    for (k, v) in environment.iter() {
         cmd.env(k, v);
     }
 }

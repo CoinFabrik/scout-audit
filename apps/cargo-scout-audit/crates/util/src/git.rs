@@ -1,11 +1,11 @@
-use std::path::PathBuf;
-use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{Result, anyhow, bail, ensure};
 use cargo::{
+    GlobalContext,
     core::{Dependency, Package, PackageId},
     sources::source::{MaybePackage, QueryKind, Source},
     util::cache_lock::CacheLockMode,
-    GlobalContext,
 };
+use std::path::PathBuf;
 
 /// Downloads git repo using cargo native cache and returns its path.
 pub fn download_git_repo(dependency: &Dependency, config: &GlobalContext) -> Result<PathBuf> {

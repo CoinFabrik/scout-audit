@@ -1,5 +1,5 @@
-use clap::Parser;
 use cargo_scout_audit::run::run_scout;
+use clap::Parser;
 use util::print::print_full_error;
 
 fn main() {

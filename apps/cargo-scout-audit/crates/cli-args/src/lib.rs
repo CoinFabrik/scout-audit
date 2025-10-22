@@ -1,30 +1,11 @@
-use anyhow::{
-    bail,
-    Result,
-};
-use clap::{
-    Parser,
-    Subcommand,
-    ValueEnum,
-};
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use std::{
-    path::PathBuf,
-    collections::HashSet,
-    process::Command,
-};
+use anyhow::{Result, bail};
+use cargo_metadata::Metadata;
+use clap::{Parser, Subcommand, ValueEnum};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, path::PathBuf, process::Command};
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use thiserror::Error;
 use util::print::print_info;
-use strum::{
-    Display,
-    EnumIter,
-    EnumString,
-    IntoEnumIterator,
-};
-use cargo_metadata::Metadata;
 
 #[derive(Error, Debug)]
 pub enum BlockchainError {
@@ -81,10 +62,10 @@ impl BlockChain {
 
     pub fn get_toolchain(&self, metadata: &Metadata) -> Result<String> {
         // First try to get the project's active toolchain
-        if let Some(toolchain) = Self::get_project_toolchain(metadata)? {
-            if toolchain.starts_with("nightly-") {
-                return Ok(toolchain);
-            }
+        if let Some(toolchain) = Self::get_project_toolchain(metadata)?
+            && toolchain.starts_with("nightly-")
+        {
+            return Ok(toolchain);
         }
 
         // If no nightly toolchain found, use defaults based on blockchain
@@ -274,10 +255,10 @@ impl Scout {
 
     pub fn validate(&self) -> Result<()> {
         print_info("Validating CLI arguments...");
-        if let Some(path) = &self.output_path {
-            if path.is_dir() {
-                bail!(CliError::OutputPathIsDirectory(path.clone()));
-            }
+        if let Some(path) = &self.output_path
+            && path.is_dir()
+        {
+            bail!(CliError::OutputPathIsDirectory(path.clone()));
         }
 
         if let Some(path) = &self.local_detectors {

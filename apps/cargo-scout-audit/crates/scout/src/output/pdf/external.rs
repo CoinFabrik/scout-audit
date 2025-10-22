@@ -1,7 +1,4 @@
-use anyhow::{
-    Context,
-    Result,
-};
+use anyhow::{Context, Result};
 use libloading::Symbol;
 use std::os::raw::c_uchar;
 use std::path::PathBuf;
@@ -11,7 +8,7 @@ use util::build_and_run::PackageToBuild;
 const URL: &str = "https://github.com/CoinFabrik/html-to-pdf";
 const BRANCH: &str = "master";
 
-pub fn build_library() -> Result<PathBuf>{
+pub fn build_library() -> Result<PathBuf> {
     let mut pkg = PackageToBuild::new(URL, BRANCH, "library");
     pkg.build_message = "Building PDF generator. Please wait.".to_string();
     pkg.build_error_message = "Failed to build PDF generator".to_string();

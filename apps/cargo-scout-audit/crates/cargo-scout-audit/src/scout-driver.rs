@@ -1,19 +1,18 @@
+use crate::consts::{SCOUT_BRANCH, SCOUT_REPO};
+use anyhow::{Result, anyhow};
 use cli_args::Scout;
-use anyhow::{anyhow, Result};
+use interop::scout::{ScoutInput, ScoutOutput};
 use std::path::PathBuf;
-use interop::scout::{
-    ScoutInput,
-    ScoutOutput,
-};
-use crate::consts::{
-    SCOUT_REPO,
-    SCOUT_BRANCH,
-};
 use util::build_and_run::PackageToBuild;
 
 //#[tracing::instrument(name = "RUN DYLINT", skip_all)]
-pub fn run_dylint(toolchain: &String, detectors_paths: &Vec<PathBuf>, opts: &Scout, inside_vscode: bool) -> Result<(bool, PathBuf)> {
-    let input = ScoutInput{
+pub fn run_dylint(
+    toolchain: &str,
+    detectors_paths: &[PathBuf],
+    opts: &Scout,
+    inside_vscode: bool,
+) -> Result<(bool, PathBuf)> {
+    let input = ScoutInput {
         detectors_paths: util::paths_to_strings(detectors_paths),
         opts: opts.clone(),
         inside_vscode,
@@ -27,8 +26,8 @@ pub fn run_dylint(toolchain: &String, detectors_paths: &Vec<PathBuf>, opts: &Sco
 
     let output = interop::subprocess::run_subprocess::<_, ScoutOutput>(toolchain, &path, &input)?;
 
-    match output.result{
+    match output.result {
         Ok(x) => Ok((x.success, x.output_file_path.into())),
-        Err(e) => Err(anyhow!(e))
+        Err(e) => Err(anyhow!(e)),
     }
 }

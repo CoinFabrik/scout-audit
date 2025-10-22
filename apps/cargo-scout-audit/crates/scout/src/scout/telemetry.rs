@@ -1,4 +1,6 @@
+use super::blockchain::BlockChain;
 use anyhow::{Context, Result};
+use cli_args::Scout;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -7,8 +9,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use strum::EnumIter;
-use cli_args::Scout;
-use super::blockchain::BlockChain;
 
 const SCOUT_TELEMETRY_URL: &str = "https://scout-api.coinfabrik.com";
 
@@ -83,20 +83,19 @@ impl TelemetryClient {
             .join("user_id.txt");
 
         // Read user ID from file
-        if let Ok(content) = fs::read_to_string(&user_id_path) {
-            if let Some(last_line) = content.lines().last() {
-                if !last_line.trim().is_empty() {
-                    return last_line.to_string();
-                }
-            }
+        if let Ok(content) = fs::read_to_string(&user_id_path)
+            && let Some(last_line) = content.lines().last()
+            && !last_line.trim().is_empty()
+        {
+            return last_line.to_string();
         }
 
         // Create parent directory if it doesn't exist
-        if let Some(parent) = user_id_path.parent() {
-            if let Err(e) = fs::create_dir_all(parent) {
-                tracing::error!("Failed to create telemetry directory: {}", e);
-                return "DONOTTRACK".to_string();
-            }
+        if let Some(parent) = user_id_path.parent()
+            && let Err(e) = fs::create_dir_all(parent)
+        {
+            tracing::error!("Failed to create telemetry directory: {}", e);
+            return "DONOTTRACK".to_string();
         }
 
         // Request new user ID from server

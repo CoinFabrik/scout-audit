@@ -1,21 +1,15 @@
-use anyhow::{ensure, Result};
-use cargo::{core::SourceId, GlobalContext};
+use super::{
+    configuration::{DetectorConfig, DetectorsConfiguration},
+    library::DetectorLibrary,
+};
+use anyhow::{Result, ensure};
+use cargo::{GlobalContext, core::SourceId};
 use cargo_metadata::Metadata;
 use current_platform::CURRENT_PLATFORM;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use super::{
-    configuration::{
-        DetectorConfig,
-        DetectorsConfiguration,
-    },
-    library::DetectorLibrary,
-};
-use util::{
-    logger::TracedError,
-    print::print_info,
-};
 use util::git::download_git_repo;
+use util::{logger::TracedError, print::print_info};
 
 #[derive(Error, Debug)]
 pub enum BuilderError {

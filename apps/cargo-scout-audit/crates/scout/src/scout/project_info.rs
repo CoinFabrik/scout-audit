@@ -1,10 +1,10 @@
-use anyhow::{anyhow, bail, Context, Result};
-use cargo_metadata::{camino::Utf8PathBuf, Metadata, MetadataCommand};
+use crate::output::report::Package;
+use anyhow::{Context, Result, anyhow, bail};
+use cargo_metadata::{Metadata, MetadataCommand, camino::Utf8PathBuf};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::{fs, path::PathBuf};
 use thiserror::Error;
-use crate::output::report::Package;
 use util::logger::TracedError;
 
 #[derive(Debug)]
@@ -27,7 +27,9 @@ pub enum MetadataError {
     #[error("Failed to access Cargo.toml file. (Path: {0})")]
     CargoTomlAccessError(PathBuf),
 
-    #[error("Failed to execute metadata command, ensure this is a valid rust project or workspace directory.")]
+    #[error(
+        "Failed to execute metadata command, ensure this is a valid rust project or workspace directory."
+    )]
     MetadataCommandFailed,
 }
 
@@ -78,7 +80,9 @@ impl Project {
             // Multi-package case
             metadata.workspace_default_members.iter().collect()
         } else {
-            bail!("No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package.");
+            bail!(
+                "No packages found in the workspace. Ensure that workspace is configured properly and contains at least one package."
+            );
         };
 
         let is_single_package = metadata.root_package().is_some();

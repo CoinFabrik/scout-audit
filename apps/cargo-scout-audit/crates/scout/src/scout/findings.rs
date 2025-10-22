@@ -1,13 +1,9 @@
 use crate::finding::Finding;
-use util::dependencies::DependencyGraph;
 use anyhow::Result;
 use cargo_metadata::Metadata;
-use serde_json::{from_str, Value};
-use std::{
-    collections::HashMap,
-    io::Read,
-    path::PathBuf,
-};
+use serde_json::{Value, from_str};
+use std::{collections::HashMap, io::Read, path::PathBuf};
+use util::dependencies::DependencyGraph;
 
 pub fn get_crates(
     findings: &Vec<Finding>,
@@ -104,10 +100,10 @@ fn get_crates_from_output(
         };
 
         for name in affected {
-            if let Some(previous) = ret.get(&name) {
-                if !previous {
-                    continue;
-                }
+            if let Some(previous) = ret.get(&name)
+                && !previous
+            {
+                continue;
             }
             ret.insert(name, !finding.is_compiler_error());
         }
@@ -123,7 +119,7 @@ pub fn temp_file_to_string(path: &PathBuf) -> Result<String> {
         file.read_to_string(&mut ret)?;
         ret
     };
-    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_file(path);
     Ok(ret)
 }
 

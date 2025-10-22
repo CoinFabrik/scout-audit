@@ -1,12 +1,9 @@
-use crate::output::table::{
-    construct_table,
-    prepare_tera_for_table_render_console,
-};
+use crate::finding::Finding;
+use crate::output::table::{construct_table, prepare_tera_for_table_render_console};
 use std::collections::HashMap;
 use tera::{Context, Tera};
-use util::detectors_info::LintStore;
-use crate::finding::Finding;
 use terminal_color_builder::OutputFormatter;
+use util::detectors_info::LintStore;
 
 const CONSOLE_TEMPLATE: &str = include_str!("./template.txt");
 
