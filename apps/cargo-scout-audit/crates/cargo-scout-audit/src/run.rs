@@ -67,15 +67,6 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult> {
         ));
     }
 
-    /*
-    if let Some(mut child) = run_scout_in_nightly(toolchain)? {
-        child
-            .wait()
-            .with_context(|| "Failed to wait for nightly child process")?;
-        return Ok(ScoutResult::default());
-    }
-    */
-
     // Send telemetry data
     let client_type = TelemetryClient::detect_client_type(opts);
     let telemetry_client = TelemetryClient::new(blockchain, client_type);
