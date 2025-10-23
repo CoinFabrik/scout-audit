@@ -4,11 +4,15 @@ use cli_args::Scout;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{
-    env, fs,
-    path::PathBuf,
-    time::{SystemTime, UNIX_EPOCH},
+    env,
+    fs,
+    time::{
+        SystemTime,
+        UNIX_EPOCH,
+    },
 };
 use strum::EnumIter;
+use util::home::get_config_directory;
 
 const SCOUT_TELEMETRY_URL: &str = "https://scout-api.coinfabrik.com";
 
@@ -76,9 +80,7 @@ impl TelemetryClient {
     }
 
     fn get_user_id() -> String {
-        let home_dir = get_home_directory();
-        let user_id_path = home_dir
-            .join(".scout-audit")
+        let user_id_path = get_config_directory()
             .join("telemetry")
             .join("user_id.txt");
 
@@ -161,8 +163,7 @@ impl TelemetryClient {
             .send()
             .context("Failed to send telemetry report")?;
 
-        let reports_dir = get_home_directory()
-            .join(".scout-audit")
+        let reports_dir = get_config_directory()
             .join("telemetry")
             .join("reports");
         fs::create_dir_all(&reports_dir)?;
@@ -174,26 +175,4 @@ impl TelemetryClient {
 
         Ok(())
     }
-}
-
-#[cfg(windows)]
-fn get_home_directory() -> PathBuf {
-    PathBuf::from(env::var("USERPROFILE").unwrap_or_else(|e| {
-        tracing::error!("Failed to get USERPROFILE: {}", e);
-        ".".to_string()
-    }))
-}
-
-#[cfg(unix)]
-fn get_home_directory() -> PathBuf {
-    PathBuf::from(env::var("HOME").unwrap_or_else(|e| {
-        tracing::error!("Failed to get HOME: {}", e);
-        ".".to_string()
-    }))
-}
-
-#[cfg(not(any(windows, unix)))]
-fn get_home_directory() -> PathBuf {
-    tracing::warn!("Unsupported OS for home directory detection");
-    PathBuf::from(".")
 }

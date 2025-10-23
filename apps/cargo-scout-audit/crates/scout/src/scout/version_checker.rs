@@ -3,11 +3,18 @@ use colored::Colorize;
 use reqwest::blocking::Client;
 use semver::Version;
 use serde_json::Value;
-use std::env;
+use std::{env, path::PathBuf};
 use thiserror::Error;
 use util::logger::TracedError;
+use serde::{Serialize, Deserialize};
+use util::home::get_config_directory;
+use std::fs::read_to_string;
+use chrono::{
+    DateTime,
+    Utc,
+};
 
-const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+const CRATES_IO_URL: &str = "https://crates.io/api/v1/crates/cargo-scout-audit";
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Default)]
@@ -30,6 +37,42 @@ pub enum VersionCheckerError {
     VersionParseFailed,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct CachedVersionCheck{
+    last_check: Option<i64>,
+    pub latest_version: Option<Version>,
+}
+
+impl CachedVersionCheck{
+    pub fn load() -> Option<CachedVersionCheck>{
+        let path = Self::get_path();
+        if !std::fs::exists(&path).ok()?{
+            None
+        }else{
+            serde_json::from_str::<CachedVersionCheck>(&read_to_string(path).ok()?).ok()
+        }
+    }
+    pub fn save(ver: Version) -> Result<()>{
+        let mut vci = Self{
+            last_check: None,
+            latest_version: Some(ver),
+        };
+        vci.set_last_check();
+
+        std::fs::write(Self::get_path(), serde_json::to_string(&vci)?)?;
+        Ok(())
+    }
+    fn get_path() -> PathBuf{
+        get_config_directory().join("version.json")
+    }
+    pub fn get_last_check(&self) -> Option<DateTime<Utc>>{
+        DateTime::from_timestamp(self.last_check?, 0)
+    }
+    pub fn set_last_check(&mut self){
+        self.last_check = Some(Utc::now().timestamp());
+    }
+}
+
 impl VersionChecker {
     pub fn new() -> Self {
         VersionChecker {
@@ -38,9 +81,28 @@ impl VersionChecker {
     }
 
     pub fn check_for_updates(&self) -> Result<()> {
+        let cached = CachedVersionCheck::load();
+        
+        let mut latest_version = None;
+        if let Some(last_check) = cached{
+            if let Some(t) = last_check.get_last_check(){
+                if (Utc::now() - t).num_hours() < 24{
+                    if let Some(lv) = last_check.latest_version{
+                        latest_version = Some(lv)
+                    }
+                }
+            }
+        };
+        let latest_version = if let Some(latest_version) = latest_version{
+            latest_version
+        }else{
+            let latest_version = self.get_latest_version()?;
+            let _ = CachedVersionCheck::save(latest_version.clone());
+            latest_version
+        };
+
         let current_version = Version::parse(CURRENT_VERSION)
             .map_err(VersionCheckerError::VersionParseFailed.traced())?;
-        let latest_version = self.get_latest_version()?;
 
         if latest_version > current_version {
             self.print_update_warning(&current_version, &latest_version);
@@ -50,10 +112,9 @@ impl VersionChecker {
     }
 
     fn get_latest_version(&self) -> Result<Version> {
-        let url = format!("https://crates.io/api/v1/crates/{}", CRATE_NAME);
         let response = self
             .client
-            .get(&url)
+            .get(CRATES_IO_URL)
             .header("User-Agent", "scout-version-checker/1.0")
             .send()
             .map_err(VersionCheckerError::RequestFailed.traced())?
