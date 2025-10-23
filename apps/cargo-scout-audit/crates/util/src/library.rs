@@ -1,5 +1,5 @@
 use crate::logger::TracedError;
-use anyhow::{Result, bail};
+use anyhow::{anyhow, bail, Context, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use std::{env::consts, path::PathBuf};
 use thiserror::Error;
@@ -175,6 +175,6 @@ impl Library {
             .current_dir(workspace_path)
             .no_deps()
             .exec()
-            .map_err(LibraryError::MetadataError(workspace_path.clone()).traced())
+            .with_context(|| anyhow!("Failed to get cargo metadata for workspace at {:?}.", workspace_path.clone()))
     }
 }
