@@ -133,10 +133,8 @@ impl<'a, 'tcx> IneffectiveExtendTtlVisitor<'a, 'tcx> {
     }
 
     fn resolve_constant_u128(&self, expr: &Expr<'tcx>) -> Option<u128> {
-        if let Some(constant) = self.constant_analyzer.get_constant(expr) {
-            if let Constant::Int(value) = constant {
-                return Some(value);
-            }
+        if let Some(Constant::Int(value)) = self.constant_analyzer.get_constant(expr) {
+            return Some(value);
         }
 
         None
