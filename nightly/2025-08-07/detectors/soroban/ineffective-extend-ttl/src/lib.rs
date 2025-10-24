@@ -4,14 +4,13 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+use clippy_utils::{consts::Constant, diagnostics::span_lint_and_help};
 use common::{
-    analysis::{get_expr_hir_id_opt, is_soroban_storage, SorobanStorageType},
+    analysis::{get_expr_hir_id_opt, is_soroban_storage, ConstantAnalyzer, SorobanStorageType},
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use if_chain::if_chain;
-use rustc_ast::LitKind;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, ExprKind, FnDecl,
@@ -52,13 +51,20 @@ impl<'tcx> LateLintPass<'tcx> for IneffectiveExtendTtl {
             return;
         }
 
-        let mut visitor = IneffectiveExtendTtlVisitor { cx };
+        let mut constant_analyzer = ConstantAnalyzer::new(cx);
+        constant_analyzer.visit_body(body);
+
+        let mut visitor = IneffectiveExtendTtlVisitor {
+            cx,
+            constant_analyzer,
+        };
         walk_expr(&mut visitor, body.value);
     }
 }
 
 struct IneffectiveExtendTtlVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
+    constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
 }
 
 impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
@@ -79,21 +85,31 @@ impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
                     (1, 2)
                 };
 
-                if let Some(threshold) = get_expr_hir_id_opt(&args[threshold_idx]) {
-                    if let Some(extend_to) = get_expr_hir_id_opt(&args[extend_to_idx]) {
-                        let same_binding = threshold == extend_to;
+                let threshold_expr = &args[threshold_idx];
+                let extend_to_expr = &args[extend_to_idx];
 
-                        if same_binding || is_extend_to_smaller_than_threshold(&args[threshold_idx], &args[extend_to_idx]) {
-                            span_lint_and_help(
-                                self.cx,
-                                INEFFECTIVE_EXTEND_TTL,
-                                *call_span,
-                                LINT_MESSAGE,
-                                None,
-                                "ensure `extend_to` is strictly higher than `threshold`, or enforce the expiration through contract logic instead of extend_ttl",
-                            );
-                        }
-                    }
+                let same_binding = match (
+                    get_expr_hir_id_opt(threshold_expr),
+                    get_expr_hir_id_opt(extend_to_expr),
+                ) {
+                    (Some(threshold), Some(extend_to)) => threshold == extend_to,
+                    _ => false,
+                };
+
+                let shrink_extend = self.is_extend_to_smaller_than_threshold(
+                    threshold_expr,
+                    extend_to_expr,
+                );
+
+                if same_binding || shrink_extend {
+                    span_lint_and_help(
+                        self.cx,
+                        INEFFECTIVE_EXTEND_TTL,
+                        *call_span,
+                        LINT_MESSAGE,
+                        None,
+                        "ensure `extend_to` is strictly higher than `threshold`, or enforce the expiration through contract logic instead of extend_ttl",
+                    );
                 }
             }
         }
@@ -101,25 +117,28 @@ impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
     }
 }
 
-fn is_extend_to_smaller_than_threshold(
-    threshold_expr: &Expr<'_>,
-    extend_to_expr: &Expr<'_>,
-) -> bool {
-    let threshold_val = extract_literal_int(threshold_expr);
-    let extend_to_val = extract_literal_int(extend_to_expr);
+impl<'a, 'tcx> IneffectiveExtendTtlVisitor<'a, 'tcx> {
+    fn is_extend_to_smaller_than_threshold(
+        &self,
+        threshold_expr: &Expr<'tcx>,
+        extend_to_expr: &Expr<'tcx>,
+    ) -> bool {
+        let threshold_val = self.resolve_constant_u128(threshold_expr);
+        let extend_to_val = self.resolve_constant_u128(extend_to_expr);
 
-    if let (Some(threshold), Some(extend_to)) = (threshold_val, extend_to_val) {
-        return extend_to <= threshold;
-    }
-
-    false
-}
-
-fn extract_literal_int(expr: &Expr<'_>) -> Option<u128> {
-    if let ExprKind::Lit(lit) = &expr.kind {
-        if let LitKind::Int(val, _) = lit.node {
-            return Some(val.get());
+        match (threshold_val, extend_to_val) {
+            (Some(threshold), Some(extend_to)) => extend_to <= threshold,
+            _ => false,
         }
     }
-    None
+
+    fn resolve_constant_u128(&self, expr: &Expr<'tcx>) -> Option<u128> {
+        if let Some(constant) = self.constant_analyzer.get_constant(expr) {
+            if let Constant::Int(value) = constant {
+                return Some(value);
+            }
+        }
+
+        None
+    }
 }
