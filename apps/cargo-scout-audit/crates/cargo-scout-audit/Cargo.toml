@@ -23,3 +23,4 @@ terminal_color_builder.workspace = true
 thiserror = { workspace = true }
 tracing = { workspace = true }
 util.path = "../util"
+uuid = { workspace = true, features = ["v4"] }

@@ -5,12 +5,15 @@ extern crate rustc_driver;
 mod tests {
 
     use anyhow::Result;
-    use cargo_scout_audit::{
-        cli::{OutputFormat, Scout},
-        startup::run_scout,
-    };
+    use cargo_scout_audit::run::run_scout;
+    use cli_args::{OutputFormat, Scout};
     use lazy_static::lazy_static;
-    use std::{collections::HashMap, fs, path::PathBuf, process::Command};
+    use std::{
+        collections::HashMap,
+        fs,
+        path::{Path, PathBuf},
+        process::Command,
+    };
     use tempfile::TempDir;
     use uuid::Uuid;
 
@@ -19,13 +22,11 @@ mod tests {
     }
 
     lazy_static! {
-        static ref DETECTORS_DIR: PathBuf = {
-            let mut ret = std::env::current_dir().expect("Failed to get current directory");
-            ret.pop();
-            ret.pop();
-            ret.push("nightly");
-            ret
-        };
+        static ref DETECTORS_DIR: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .map(|ancestor| ancestor.join("nightly"))
+            .find(|candidate| candidate.is_dir())
+            .expect("Failed to locate the 'nightly' detectors directory");
     }
 
     fn create_cargo_command() -> Command {
@@ -34,14 +35,22 @@ mod tests {
 
     fn get_test_cases() -> Vec<PathBuf> {
         let contracts_dir = PathBuf::from("tests").join("contracts");
-        let contract_paths = fs::read_dir(&contracts_dir)
+        let mut contract_paths = fs::read_dir(&contracts_dir)
             .unwrap_or_else(|_| panic!("Failed to read directory: {}", contracts_dir.display()))
-            .filter_map(|entry| entry.ok().map(|e| e.path().join("Cargo.toml")))
+            .filter_map(|entry| {
+                entry.ok().and_then(|e| {
+                    let manifest = e.path().join("Cargo.toml");
+                    if manifest.is_file() {
+                        Some(manifest)
+                    } else {
+                        None
+                    }
+                })
+            })
             .collect::<Vec<_>>();
 
-        let mut sorted_paths = contract_paths;
-        sorted_paths.sort();
-        sorted_paths
+        contract_paths.sort();
+        contract_paths
     }
 
     #[test]
@@ -166,7 +175,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
@@ -341,11 +349,17 @@ mod tests {
         {
             let expected = expected.len();
             let actual = counts.len();
-            assert!(actual == expected, "Scout should return exactly {expected} findings for the test contract, but it returned {actual}");
+            assert!(
+                actual == expected,
+                "Scout should return exactly {expected} findings for the test contract, but it returned {actual}"
+            );
         }
         for &(name, count) in expected.iter() {
             let actual = *counts.get(name).unwrap_or(&0);
-            assert!(actual == count, "Scout should return exactly {count} {name} for the test contract, but it returned {actual}");
+            assert!(
+                actual == count,
+                "Scout should return exactly {count} {name} for the test contract, but it returned {actual}"
+            );
         }
     }
 }
