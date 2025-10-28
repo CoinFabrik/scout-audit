@@ -394,6 +394,7 @@ dependencies = [
  "thiserror 2.0.3",
  "tracing",
  "util",
+ "uuid",
 ]
 
 [[package]]

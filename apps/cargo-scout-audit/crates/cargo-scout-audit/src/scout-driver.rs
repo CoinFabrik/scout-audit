@@ -18,7 +18,11 @@ pub fn run_dylint(
         inside_vscode,
     };
 
-    let mut pkg = PackageToBuild::new(SCOUT_REPO, SCOUT_BRANCH, "scout-driver");
+    let mut pkg = if let Some(root) = &opts.scout_source {
+        PackageToBuild::new_local(root.clone())
+    } else {
+        PackageToBuild::new_remote(SCOUT_REPO, SCOUT_BRANCH, "scout-driver")
+    };
     pkg.build_message = "Building scout-driver".to_string();
     pkg.build_error_message = "Failed to build scout-driver".to_string();
     pkg.internal_path = Some("apps/cargo-scout-audit/crates/scout-driver".into());

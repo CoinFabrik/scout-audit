@@ -1,4 +1,3 @@
-use crate::logger::TracedError;
 use anyhow::{anyhow, bail, Context, Result};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use std::{env::consts, path::PathBuf};

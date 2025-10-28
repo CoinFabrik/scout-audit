@@ -28,7 +28,7 @@ def run_tests(detector):
         if is_rust_project(root):
             if run_unit_tests(root, blockchain):
                 errors.append(root)
-            if not run_integration_tests(detector, root):
+            if run_integration_tests(detector, root):
                 errors.append(root)
     return errors
 
@@ -58,23 +58,25 @@ def run_integration_tests(detector, root):
     start_time = time.time()
 
     # Get latest nightly from the directory nightly/
-    latest_nightly = sorted(glob(os.path.join(os.getcwd(), "nightly", "*")))[-1]
-    local_detectors = os.path.join(latest_nightly, "detectors")
+    latest_nightly = os.path.join(os.getcwd(), "nightly")
 
-    returncode, stdout, _ = run_subprocess(
+    returncode, stdout, stderr = run_subprocess(
         [
             "cargo",
+            "+nightly-2025-08-07",
             "scout-audit",
             "--filter",
             detector,
             "--metadata",
             "--local-detectors",
-            local_detectors,
+            latest_nightly,
         ],
         root,
     )
 
     if stdout is None:
+        print(f"{utils.RED}STDOUT: {stdout}\n\n{utils.ENDC}")
+        print(f"{utils.RED}STDERR: {stderr}\n\n{utils.ENDC}")
         print(
             f"{utils.RED}Failed to run integration tests in {root} - Metadata returned empty.{utils.ENDC}"
         )
@@ -94,9 +96,10 @@ def run_integration_tests(detector, root):
     returncode, _, stderr = run_subprocess(
         [
             "cargo",
+            "+nightly-2025-08-07",
             "scout-audit",
             "--local-detectors",
-            local_detectors,
+            latest_nightly,
             "--output-format",
             "raw-json",
             "--output-path",
@@ -107,7 +110,7 @@ def run_integration_tests(detector, root):
 
     if returncode != 0:
         print(f"{utils.RED}Scout failed to run.\n{stderr}{utils.ENDC}")
-        return False
+        return True
 
     should_fail = "vulnerable" in root
     did_fail = False
@@ -127,7 +130,7 @@ def run_integration_tests(detector, root):
             print(
                 f"{utils.RED}Test case {root} didn't pass because {explanation}.\n{stderr}{utils.ENDC}"
             )
-            return False
+            return True
 
     print_results(
         returncode,
@@ -136,7 +139,7 @@ def run_integration_tests(detector, root):
         root,
         time.time() - start_time,
     )
-    return True
+    return False
 
 
 if __name__ == "__main__":

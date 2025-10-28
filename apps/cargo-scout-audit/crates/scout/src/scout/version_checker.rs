@@ -1,18 +1,13 @@
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use colored::Colorize;
 use reqwest::blocking::Client;
 use semver::Version;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{env, path::PathBuf};
+use std::{env, fs::read_to_string, path::PathBuf};
 use thiserror::Error;
-use util::logger::TracedError;
-use serde::{Serialize, Deserialize};
-use util::home::get_config_directory;
-use std::fs::read_to_string;
-use chrono::{
-    DateTime,
-    Utc,
-};
+use util::{home::get_config_directory, logger::TracedError};
 
 const CRATES_IO_URL: &str = "https://crates.io/api/v1/crates/cargo-scout-audit";
 const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -38,22 +33,23 @@ pub enum VersionCheckerError {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct CachedVersionCheck{
+struct CachedVersionCheck {
     last_check: Option<i64>,
     pub latest_version: Option<Version>,
 }
 
-impl CachedVersionCheck{
-    pub fn load() -> Option<CachedVersionCheck>{
+impl CachedVersionCheck {
+    pub fn load() -> Option<CachedVersionCheck> {
         let path = Self::get_path();
-        if !std::fs::exists(&path).ok()?{
+        if !std::fs::exists(&path).ok()? {
             None
-        }else{
+        } else {
             serde_json::from_str::<CachedVersionCheck>(&read_to_string(path).ok()?).ok()
         }
     }
-    pub fn save(ver: Version) -> Result<()>{
-        let mut vci = Self{
+
+    pub fn save(ver: Version) -> Result<()> {
+        let mut vci = Self {
             last_check: None,
             latest_version: Some(ver),
         };
@@ -62,13 +58,16 @@ impl CachedVersionCheck{
         std::fs::write(Self::get_path(), serde_json::to_string(&vci)?)?;
         Ok(())
     }
-    fn get_path() -> PathBuf{
+
+    fn get_path() -> PathBuf {
         get_config_directory().join("version.json")
     }
-    pub fn get_last_check(&self) -> Option<DateTime<Utc>>{
+
+    pub fn get_last_check(&self) -> Option<DateTime<Utc>> {
         DateTime::from_timestamp(self.last_check?, 0)
     }
-    pub fn set_last_check(&mut self){
+
+    pub fn set_last_check(&mut self) {
         self.last_check = Some(Utc::now().timestamp());
     }
 }
@@ -82,20 +81,18 @@ impl VersionChecker {
 
     pub fn check_for_updates(&self) -> Result<()> {
         let cached = CachedVersionCheck::load();
-        
+
         let mut latest_version = None;
-        if let Some(last_check) = cached{
-            if let Some(t) = last_check.get_last_check(){
-                if (Utc::now() - t).num_hours() < 24{
-                    if let Some(lv) = last_check.latest_version{
-                        latest_version = Some(lv)
-                    }
-                }
-            }
+        if let Some(last_check) = cached
+            && let Some(t) = last_check.get_last_check()
+            && (Utc::now() - t).num_hours() < 24
+            && let Some(lv) = last_check.latest_version
+        {
+            latest_version = Some(lv)
         };
-        let latest_version = if let Some(latest_version) = latest_version{
+        let latest_version = if let Some(latest_version) = latest_version {
             latest_version
-        }else{
+        } else {
             let latest_version = self.get_latest_version()?;
             let _ = CachedVersionCheck::save(latest_version.clone());
             latest_version

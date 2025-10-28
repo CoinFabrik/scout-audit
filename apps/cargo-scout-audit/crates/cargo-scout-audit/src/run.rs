@@ -50,8 +50,7 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult> {
         ));
     }
 
-    let metadata =
-        Project::get_metadata(&opts.manifest_path)
+    let metadata = Project::get_metadata(&opts.manifest_path)
         .with_context(|| "Failed to get project metadata")?;
     let blockchain =
         BlockChain::get_blockchain_dependency(&metadata).map_err(ScoutError::BlockchainFailed)?;
@@ -129,7 +128,8 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult> {
         .build(&filtered_detectors)
         .map_err(ScoutError::BuildDetectorsFailed)?;
 
-    let detectors_info = get_detectors_info_helped(&toolchain, &detectors_paths)?;
+    let detectors_info =
+        get_detectors_info_helped(&toolchain, &detectors_paths, opts.scout_source.as_ref())?;
 
     if opts.detectors_metadata {
         let metadata = to_string_pretty(&detectors_info).unwrap();

@@ -122,6 +122,12 @@ pub enum CliError {
     #[error("The output path cannot be a directory (Path: '{0}')")]
     OutputPathIsDirectory(PathBuf),
 
+    #[error("The scout sources path does not exist (Path: '{0}')")]
+    ScoutSourcesPathDoesNotExist(PathBuf),
+
+    #[error("The scout sources path must be a directory (Path: '{0}')")]
+    ScoutSourcesPathIsNotDirectory(PathBuf),
+
     #[error("Local detectors path does not exist (Path: '{0}')")]
     LocalDetectorsPathDoesNotExist(PathBuf),
 
@@ -234,6 +240,14 @@ pub struct Scout {
         value_hint = clap::ValueHint::FilePath,
     )]
     pub cicd: Option<PathBuf>,
+
+    #[clap(
+        long,
+        value_name = "PATH",
+        help = "Reuse an existing clone of the scout repository",
+        value_hint = clap::ValueHint::DirPath
+    )]
+    pub scout_source: Option<PathBuf>,
 }
 
 impl Scout {
@@ -259,6 +273,15 @@ impl Scout {
             && path.is_dir()
         {
             bail!(CliError::OutputPathIsDirectory(path.clone()));
+        }
+
+        if let Some(path) = &self.scout_source {
+            if !path.exists() {
+                bail!(CliError::ScoutSourcesPathDoesNotExist(path.clone()));
+            }
+            if !path.is_dir() {
+                bail!(CliError::ScoutSourcesPathIsNotDirectory(path.clone()));
+            }
         }
 
         if let Some(path) = &self.local_detectors {

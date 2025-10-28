@@ -5,65 +5,113 @@ use cargo::{
     core::{Dependency, GitReference, SourceId, Verbosity},
 };
 use cargo_metadata::{Metadata, MetadataCommand};
-use std::path::PathBuf;
+use std::{fs::canonicalize, path::PathBuf};
+
+enum PackageSource {
+    Remote {
+        url: String,
+        branch: String,
+        name: String,
+    },
+    Local {
+        root: PathBuf,
+    },
+}
 
 pub struct PackageToBuild {
-    pub url: String,
-    pub branch: String,
-    pub name: String,
+    source: PackageSource,
     pub internal_path: Option<PathBuf>,
     pub build_message: String,
     pub build_error_message: String,
 }
 
 impl PackageToBuild {
-    pub fn new(url: &str, branch: &str, name: &str) -> Self {
-        let url = url.to_string();
-        let branch = branch.to_string();
-        let name = name.to_string();
+    pub fn new_remote(url: &str, branch: &str, name: &str) -> Self {
         Self {
-            url,
-            branch,
-            name,
+            source: PackageSource::Remote {
+                url: url.to_string(),
+                branch: branch.to_string(),
+                name: name.to_string(),
+            },
             internal_path: None,
             build_message: String::new(),
             build_error_message: String::new(),
         }
     }
-    fn first_phase(&self) -> Result<(PathBuf, Metadata)> {
-        let dependency = Dependency::parse(
-            self.name.clone(),
-            None,
-            SourceId::for_git(
-                &reqwest::Url::parse(&self.url)?,
-                GitReference::Branch(self.branch.clone()),
-            )?,
-        )
-        .with_context(|| "Failed to create git dependency")?;
 
-        let cargo_config = GlobalContext::default()
-            .with_context(|| "Failed to create default cargo configuration")?;
-        cargo_config.shell().set_verbosity(Verbosity::Quiet);
-
-        let mut repo_path = download_git_repo(&dependency, &cargo_config)
-            .with_context(|| "Failed to download git repository")?;
-
-        if let Some(internal_path) = &self.internal_path {
-            repo_path.push(internal_path);
+    pub fn new_local(root: impl Into<PathBuf>) -> Self {
+        Self {
+            source: PackageSource::Local { root: root.into() },
+            internal_path: None,
+            build_message: String::new(),
+            build_error_message: String::new(),
         }
+    }
 
-        let metadata = MetadataCommand::new()
-            .current_dir(&repo_path)
-            .no_deps()
-            .exec()
-            .with_context(|| {
-                format!(
-                    "Could not get metadata for the workspace at {}",
-                    repo_path.to_string_lossy()
+    fn first_phase(&self) -> Result<(PathBuf, Metadata)> {
+        match &self.source {
+            PackageSource::Local { root } => {
+                let mut repo_path = canonicalize(root).with_context(|| {
+                    format!(
+                        "Failed to canonicalize local scout sources at '{}'",
+                        root.display()
+                    )
+                })?;
+
+                if let Some(internal_path) = &self.internal_path {
+                    repo_path.push(internal_path);
+                }
+
+                let metadata = MetadataCommand::new()
+                    .current_dir(&repo_path)
+                    .no_deps()
+                    .exec()
+                    .with_context(|| {
+                        format!(
+                            "Could not get metadata for the workspace at {}",
+                            repo_path.to_string_lossy()
+                        )
+                    })?;
+
+                Ok((repo_path, metadata))
+            }
+
+            PackageSource::Remote { url, branch, name } => {
+                let dependency = Dependency::parse(
+                    name.clone(),
+                    None,
+                    SourceId::for_git(
+                        &reqwest::Url::parse(url)?,
+                        GitReference::Branch(branch.clone()),
+                    )?,
                 )
-            })?;
+                .with_context(|| "Failed to create git dependency")?;
 
-        Ok((repo_path, metadata))
+                let cargo_config = GlobalContext::default()
+                    .with_context(|| "Failed to create default cargo configuration")?;
+                cargo_config.shell().set_verbosity(Verbosity::Quiet);
+
+                let mut repo_path = download_git_repo(&dependency, &cargo_config)
+                    .with_context(|| "Failed to download git repository")?;
+
+                if let Some(internal_path) = &self.internal_path {
+                    repo_path.push(internal_path);
+                }
+
+                let metadata = MetadataCommand::new()
+                    .current_dir(&repo_path)
+                    .no_deps()
+                    .exec()
+                    .with_context(|| {
+                        format!(
+                            "Could not get metadata for the workspace at {}",
+                            repo_path.to_string_lossy()
+                        )
+                    })?;
+
+                Ok((repo_path, metadata))
+            }
+        }
     }
     fn second_phase(&self, repo_path: PathBuf, ret: PathBuf) -> Result<PathBuf> {
         if !std::fs::exists(&ret)? {
