@@ -10,6 +10,7 @@ pub mod detectors;
 pub mod detectors_info;
 pub mod env;
 pub mod git;
+pub mod home;
 pub mod json;
 pub mod library;
 pub mod logger;
