@@ -14,7 +14,6 @@ pub mod json;
 pub mod library;
 pub mod logger;
 pub mod print;
-pub mod home;
 
 pub fn paths_to_strings(paths: &[PathBuf]) -> Vec<String> {
     paths

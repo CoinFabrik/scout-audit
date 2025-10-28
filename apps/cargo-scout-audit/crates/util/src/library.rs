@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use std::{env::consts, path::PathBuf};
 use thiserror::Error;
@@ -174,6 +174,11 @@ impl Library {
             .current_dir(workspace_path)
             .no_deps()
             .exec()
-            .with_context(|| anyhow!("Failed to get cargo metadata for workspace at {:?}.", workspace_path.clone()))
+            .with_context(|| {
+                anyhow!(
+                    "Failed to get cargo metadata for workspace at {:?}.",
+                    workspace_path.clone()
+                )
+            })
     }
 }

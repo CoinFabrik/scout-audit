@@ -1,5 +1,4 @@
-use std::path::PathBuf;
-use std::env;
+use std::{env, path::PathBuf};
 
 #[cfg(windows)]
 pub fn get_home_directory() -> PathBuf {
@@ -23,7 +22,6 @@ pub fn get_home_directory() -> PathBuf {
     PathBuf::from(".")
 }
 
-pub fn get_config_directory() -> PathBuf{
-    get_home_directory()
-        .join(".scout-audit")
+pub fn get_config_directory() -> PathBuf {
+    get_home_directory().join(".scout-audit")
 }

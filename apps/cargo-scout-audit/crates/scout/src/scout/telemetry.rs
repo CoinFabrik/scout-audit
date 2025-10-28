@@ -4,12 +4,8 @@ use cli_args::Scout;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{
-    env,
-    fs,
-    time::{
-        SystemTime,
-        UNIX_EPOCH,
-    },
+    env, fs,
+    time::{SystemTime, UNIX_EPOCH},
 };
 use strum::EnumIter;
 use util::home::get_config_directory;
@@ -80,9 +76,7 @@ impl TelemetryClient {
     }
 
     fn get_user_id() -> String {
-        let user_id_path = get_config_directory()
-            .join("telemetry")
-            .join("user_id.txt");
+        let user_id_path = get_config_directory().join("telemetry").join("user_id.txt");
 
         // Read user ID from file
         if let Ok(content) = fs::read_to_string(&user_id_path)
@@ -163,9 +157,7 @@ impl TelemetryClient {
             .send()
             .context("Failed to send telemetry report")?;
 
-        let reports_dir = get_config_directory()
-            .join("telemetry")
-            .join("reports");
+        let reports_dir = get_config_directory().join("telemetry").join("reports");
         fs::create_dir_all(&reports_dir)?;
 
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
