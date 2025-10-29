@@ -125,6 +125,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "avoid-vec-map-input-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"

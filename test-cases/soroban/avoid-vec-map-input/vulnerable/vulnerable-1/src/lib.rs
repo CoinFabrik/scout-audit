@@ -40,9 +40,15 @@ mod tests {
         let contract_id = env.register_contract(None, AvoidVecMapInputVulnerable);
         let client = AvoidVecMapInputVulnerableClient::new(&env, &contract_id);
 
-        let addresses = vec![&env, Address::generate(&env), Address::generate(&env)];
+        let first = Address::generate(&env);
+        let second = Address::generate(&env);
+
+        let addresses = vec![&env, first.clone(), second.clone()];
         client.store_addresses(&addresses);
+
         let stored = client.get_addresses().expect("addresses stored");
         assert_eq!(stored.len(), 2);
+        assert_eq!(stored.get(0).unwrap(), first);
+        assert_eq!(stored.get(1).unwrap(), second);
     }
 }

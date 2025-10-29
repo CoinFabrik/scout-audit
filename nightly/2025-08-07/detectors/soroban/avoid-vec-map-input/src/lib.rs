@@ -24,13 +24,8 @@ const LINT_MESSAGE: &str =
 pub static AVOID_VEC_MAP_INPUT_INFO: LintInfo = LintInfo {
     name: env!("CARGO_PKG_NAME"),
     short_message: LINT_MESSAGE,
-    long_message: "Be careful of accepting Vec and Map<K, V> data types as functions’ inputs! \
-        The Val is a raw value of the Soroban smart contract platform that types can be converted to and \
-        from for storing, or passing between contracts. When the elements of a Vec or Map<K, V> are \
-        transmitted to the Host environment, they are converted to Vals. However, there is no guarantee \
-        that these values can be properly converted back to their expected types (T for vectors or K, V \
-        for maps). Without proper validation, storing them in the contract can be dangerous, as attempting \
-        to retrieve and use them later could halt contract execution.",
+    long_message: "Soroban Vec and Map<K, V> parameters arrive as raw Val values. \
+        Validate or normalize every element before storing or reusing them so a bad conversion does not halt contract execution.",
     severity: Severity::Medium,
     help: "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/avoid-vec-map-input",
     vulnerability_class: VulnerabilityClass::BestPractices,
