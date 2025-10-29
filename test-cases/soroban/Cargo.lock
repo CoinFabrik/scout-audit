@@ -819,6 +819,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ineffective-extend-ttl-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "insufficiently-random-values-remediated-1"
 version = "0.1.0"
 dependencies = [

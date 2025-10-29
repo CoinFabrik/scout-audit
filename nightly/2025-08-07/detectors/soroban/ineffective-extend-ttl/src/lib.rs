@@ -1,12 +1,13 @@
 #![feature(rustc_private)]
 
-extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
 use clippy_utils::{consts::Constant, diagnostics::span_lint_and_help};
 use common::{
-    analysis::{get_expr_hir_id_opt, is_soroban_storage, ConstantAnalyzer, SorobanStorageType},
+    analysis::{
+        collect_locals, is_soroban_storage, ConstantAnalyzer, ExprAnalyzer, SorobanStorageType,
+    },
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
@@ -17,6 +18,7 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{def_id::LocalDefId, Span};
+use std::collections::HashMap;
 
 const LINT_MESSAGE: &str =
     "extend_ttl called with identical or smaller TTL arguments keeps refreshing the entry without enforcing expiration";
@@ -54,9 +56,15 @@ impl<'tcx> LateLintPass<'tcx> for IneffectiveExtendTtl {
         let mut constant_analyzer = ConstantAnalyzer::new(cx);
         constant_analyzer.visit_body(body);
 
+        let mut locals = HashMap::new();
+        collect_locals(body, &mut locals);
+
+        let expr_analyzer = ExprAnalyzer::new(&locals);
+
         let mut visitor = IneffectiveExtendTtlVisitor {
             cx,
             constant_analyzer,
+            expr_analyzer,
         };
         walk_expr(&mut visitor, body.value);
     }
@@ -65,6 +73,7 @@ impl<'tcx> LateLintPass<'tcx> for IneffectiveExtendTtl {
 struct IneffectiveExtendTtlVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     constant_analyzer: ConstantAnalyzer<'a, 'tcx>,
+    expr_analyzer: ExprAnalyzer<'a, 'tcx>,
 }
 
 impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
@@ -88,24 +97,14 @@ impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
                 let threshold_expr = &args[threshold_idx];
                 let extend_to_expr = &args[extend_to_idx];
 
-                let same_binding = match (
-                    get_expr_hir_id_opt(threshold_expr),
-                    get_expr_hir_id_opt(extend_to_expr),
-                ) {
-                    (Some(threshold), Some(extend_to)) => threshold == extend_to,
-                    _ => false,
-                };
-
-                if same_binding
-                    || self.is_extend_to_smaller_than_threshold(threshold_expr, extend_to_expr)
-                {
+                if self.is_ineffective(threshold_expr, extend_to_expr) {
                     span_lint_and_help(
                         self.cx,
                         INEFFECTIVE_EXTEND_TTL,
                         *call_span,
                         LINT_MESSAGE,
                         None,
-                        "ensure `extend_to` is strictly higher than `threshold`, or enforce the expiration through contract logic instead of extend_ttl",
+                        "ensure `extend_to` is strictly greater than `threshold`, or enforce expiration through contract logic instead of extend_ttl",
                     );
                 }
             }
@@ -115,6 +114,13 @@ impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
 }
 
 impl<'a, 'tcx> IneffectiveExtendTtlVisitor<'a, 'tcx> {
+    fn is_ineffective(&self, threshold: &'tcx Expr<'tcx>, extend_to: &'tcx Expr<'tcx>) -> bool {
+        // Check if expressions are structurally equivalent
+        self.expr_analyzer.are_equivalent(threshold, extend_to)
+        // Check if extend_to <= threshold in linear form
+        || self.is_extend_to_smaller_than_threshold(threshold, extend_to)
+    }
+
     fn is_extend_to_smaller_than_threshold(
         &self,
         threshold_expr: &Expr<'tcx>,

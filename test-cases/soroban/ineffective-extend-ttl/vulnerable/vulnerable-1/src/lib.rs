@@ -16,23 +16,6 @@ pub struct IneffectiveExtendTtl;
 
 #[contractimpl]
 impl IneffectiveExtendTtl {
-    pub fn store_cache_with_expression(env: Env, data: u64) {
-        let now = env.ledger().timestamp();
-        let entry = CacheEntry {
-            data,
-            timestamp: now,
-        };
-
-        env.storage().temporary().set(&CACHE_KEY, &entry);
-
-        let base_ttl = ((now as u32) % 10_000) + 1;
-        let bump = ((data as u32) % 1_000) + 1;
-
-        env.storage()
-            .temporary()
-            .extend_ttl(&CACHE_KEY, base_ttl + bump, base_ttl + bump * 2);
-    }
-
     pub fn store_cache(env: Env, data: u64) {
         let entry = CacheEntry {
             data,
@@ -84,7 +67,6 @@ mod tests {
             &env.register_contract(None, IneffectiveExtendTtl {}),
         );
 
-        contract.store_cache_with_expression(&4242);
         contract.store_cache(&42);
         contract.store_persistent(&symbol_short!("KEY1"), &100);
         contract.init_instance(&999);

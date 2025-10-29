@@ -15,6 +15,9 @@ pub use lint_utils::*;
 mod constant_analyzer;
 pub use constant_analyzer::*;
 
+mod expr_analyzer;
+pub use expr_analyzer::*;
+
 mod type_utils;
 pub use type_utils::*;
 
