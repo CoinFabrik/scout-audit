@@ -39,7 +39,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-    #          - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -100,8 +99,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        #          - macos-latest
-        #          - windows-latest
         detector: ${{fromJson(needs.prepare-detector-matrix.outputs.matrix)}}
     runs-on: ${{ matrix.os }}
     outputs:
@@ -146,16 +143,6 @@ jobs:
         working-directory: build-status-ubuntu-latest
         run: echo "status=$(cat status-ubuntu-latest.txt)" >> $GITHUB_OUTPUT
 
-      #      - name: Read macOS build status
-      #        id: macos_status
-      #        working-directory: build-status-macos-latest
-      #        run: echo "status=$(cat status-macos-latest.txt)" >> $GITHUB_OUTPUT
-
-      #      - name: Read Windows build status
-      #        id: windows_status
-      #        working-directory: build-status-windows-latest
-      #        run: echo "status=$(cat status-windows-latest.txt)" >> $GITHUB_OUTPUT
-
       - name: Find comment
         id: find_comment
         uses: peter-evans/find-comment@v3
@@ -177,8 +164,5 @@ jobs:
             | Detector Validation     | ${{ (needs.validate-detectors.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Build on Ubuntu         | ${{ (steps.ubuntu_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Tests Execution         | ${{ (needs.test.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
-            
-            The workflow has completed. Great job! 🚀
 
-#            | Build on macOS          | ${{ (steps.macos_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
-#            | Build on Windows        | ${{ (steps.windows_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            The workflow has completed. Great job! 🚀
