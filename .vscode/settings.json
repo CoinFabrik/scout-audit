@@ -2,7 +2,9 @@
   "rust-analyzer.rustfmt.extraArgs": ["+nightly"],
   "rust-analyzer.showUnlinkedFileNotification": false,
   "rust-analyzer.linkedProjects": [
-    "apps/cargo-scout-audit/Cargo.toml",
+    "apps/cargo-scout-audit/crates/scout-driver/Cargo.toml",
+    "apps/cargo-scout-audit/crates/cargo-scout-audit/Cargo.toml",
+    "apps/cargo-scout-audit/crates/cli-args/Cargo.toml",
     "detectors/ink/Cargo.toml",
     "detectors/soroban/Cargo.toml",
     "detectors/substrate-pallets/Cargo.toml",

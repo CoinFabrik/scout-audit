@@ -4,7 +4,8 @@ on:
   pull_request:
     paths:
       - "apps/cargo-scout-audit/**"
-      - "detectors/**"
+      - "nightly/**"
+      - "scout-utils/**"
       - "test-cases/**"
       - "scripts/**"
   workflow_dispatch:
@@ -50,7 +51,7 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Install Rust stable
@@ -66,7 +67,7 @@ jobs:
         run: cargo +nightly install cargo-dylint dylint-link
 
       - name: Install cargo-scout-audit
-        working-directory: apps/cargo-scout-audit
+        working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: cargo install --path .
 
       - name: Determine build status and write to file
@@ -118,14 +119,14 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Disable telemetry
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
-          
+
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 

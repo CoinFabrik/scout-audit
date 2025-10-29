@@ -1,0 +1,42 @@
+[package]
+name = "scout"
+edition = "2024"
+repository.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[features]
+docker_container = []
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
+
+[dependencies]
+anyhow.workspace = true
+cargo.workspace = true
+cargo_metadata.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+cli-args.path = "../cli-args"
+colored.workspace = true
+current_platform.workspace = true
+dunce.workspace = true
+git2.workspace = true
+itertools.workspace = true
+lazy_static.workspace = true
+libloading.workspace = true
+once_cell.workspace = true
+regex.workspace = true
+reqwest = { workspace = true, features = ["blocking", "json"] }
+semver.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+strum = { workspace = true, features = ["derive"] }
+tempfile.workspace = true
+tera = { workspace = true, features = ["builtins"] }
+terminal_color_builder.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+util.path = "../util"
+webbrowser.workspace = true

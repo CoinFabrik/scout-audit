@@ -13,7 +13,7 @@ BASE_DIRS = [
 
 
 def create_digest():
-    digest_path = "apps/cargo-scout-audit/src/digest.rs"
+    digest_path = "apps/cargo-scout-audit/crates/cargo-scout-audit/src/digest.rs"
     if not os.path.exists(digest_path):
         with open(digest_path, "w") as file:
             file.write("\n")

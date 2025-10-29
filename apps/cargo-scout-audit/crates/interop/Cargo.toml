@@ -1,0 +1,16 @@
+[package]
+name = "interop"
+edition = "2024"
+repository.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cli-args.path = "../cli-args"
+scout.path = "../scout"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+util.path = "../util"
