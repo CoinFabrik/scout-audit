@@ -54,4 +54,3 @@ mod tests {
         assert!(!stored.get(second).unwrap());
     }
 }
- 
