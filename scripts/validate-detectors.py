@@ -143,7 +143,7 @@ def validate(nightly: str, base_path: str) -> List[ValidationError]:
         test_cases = os.listdir(os.path.join(test_cases_path, target))
 
         # Remove common ignored directories
-        ignore_dirs = {"target", ".cargo"}
+        ignore_dirs = {"target", ".cargo", "contract-import-dependency"}
         detectors = {
             d
             for d in detectors
