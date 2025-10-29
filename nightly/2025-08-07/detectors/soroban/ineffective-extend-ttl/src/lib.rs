@@ -96,12 +96,9 @@ impl<'tcx> Visitor<'tcx> for IneffectiveExtendTtlVisitor<'_, 'tcx> {
                     _ => false,
                 };
 
-                let shrink_extend = self.is_extend_to_smaller_than_threshold(
-                    threshold_expr,
-                    extend_to_expr,
-                );
-
-                if same_binding || shrink_extend {
+                if same_binding
+                    || self.is_extend_to_smaller_than_threshold(threshold_expr, extend_to_expr)
+                {
                     span_lint_and_help(
                         self.cx,
                         INEFFECTIVE_EXTEND_TTL,
