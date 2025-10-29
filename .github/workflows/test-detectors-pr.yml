@@ -125,11 +125,7 @@ jobs:
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
-      - name: Ensure nightly toolchain
-        run: |
-          rustup toolchain install nightly-2025-08-07 --profile minimal
-          rustup component add rustc-dev --toolchain nightly-2025-08-07
-          rustup component add llvm-tools-preview --toolchain nightly-2025-08-07
+          
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
