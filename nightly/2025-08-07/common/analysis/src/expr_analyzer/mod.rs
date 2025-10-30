@@ -5,7 +5,7 @@ use rustc_data_structures::fx::FxHashSet;
 use rustc_hir::{Expr, ExprKind, HirId, QPath};
 use std::collections::HashMap;
 
-/// Analyzes expressions for linear forms and structural equivalence
+/// Analyzes expressions structural equivalence
 pub struct ExprAnalyzer<'a, 'tcx> {
     locals: &'a HashMap<HirId, &'tcx Expr<'tcx>>,
 }
