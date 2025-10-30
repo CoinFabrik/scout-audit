@@ -16,72 +16,23 @@ pub struct EffectiveExtendTtl;
 
 #[contractimpl]
 impl EffectiveExtendTtl {
-    pub fn store_cache(env: Env, data: u64) {
+    pub fn store_cache(env: Env, data: u64, var1: u32, var2: u32) {
         let entry = CacheEntry {
             data,
             timestamp: env.ledger().timestamp(),
         };
 
-        env.storage().temporary().set(&CACHE_KEY, &entry);
-        env.storage()
-            .temporary()
-            .extend_ttl(&CACHE_KEY, 50_000, 100_000);
-    }
+        let storage = env.storage().temporary();
+        storage.set(&CACHE_KEY, &entry);
 
-    pub fn store_persistent(env: Env, key: Symbol, value: u64) {
-        env.storage().persistent().set(&key, &value);
-        env.storage().persistent().extend_ttl(&key, 10_000, 100_000);
-    }
+        storage.extend_ttl(&CACHE_KEY, 1, 2);
+        storage.extend_ttl(&CACHE_KEY, var1, var2);
+        const OFFSET: u32 = 3;
+        storage.extend_ttl(&CACHE_KEY, var1, var1 + OFFSET);
+        storage.extend_ttl(&CACHE_KEY, var1 + OFFSET, var2 + OFFSET);
 
-    pub fn init_instance(env: Env, config: u64) {
-        env.storage().instance().set(&CACHE_KEY, &config);
-        env.storage().instance().extend_ttl(50_000, 200_000);
-    }
-
-    pub fn update_cache(env: Env, data: u64) {
-        let mut entry = env
-            .storage()
-            .temporary()
-            .get::<_, CacheEntry>(&CACHE_KEY)
-            .unwrap_or(CacheEntry {
-                data: 0,
-                timestamp: 0,
-            });
-
-        entry.data = data;
-        entry.timestamp = env.ledger().timestamp();
-        env.storage().temporary().set(&CACHE_KEY, &entry);
-        env.storage().temporary().extend_ttl(&CACHE_KEY, 1000, 5000);
-    }
-
-    pub fn store_expiring_cache(env: Env, data: u64, expires_at: u64) {
-        let entry = CacheEntry {
-            data,
-            timestamp: expires_at,
-        };
-
-        env.storage().temporary().set(&CACHE_KEY, &entry);
-
-        env.storage()
-            .temporary()
-            .extend_ttl(&CACHE_KEY, 10_000, 50_000);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_effective_extend() {
-        let env = Env::default();
-        let contract = EffectiveExtendTtlClient::new(
-            &env,
-            &env.register_contract(None, EffectiveExtendTtl {}),
-        );
-
-        contract.store_cache(&42);
-        contract.store_persistent(&symbol_short!("KEY1"), &100);
-        contract.init_instance(&999);
+        const CONST_LEFT: u32 = 5;
+        const CONST_RIGHT: u32 = 9;
+        storage.extend_ttl(&CACHE_KEY, CONST_LEFT, CONST_RIGHT);
     }
 }

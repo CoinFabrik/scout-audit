@@ -16,30 +16,24 @@ pub struct IneffectiveExtendTtl;
 
 #[contractimpl]
 impl IneffectiveExtendTtl {
-    pub fn store_cache(env: Env, data: u64) {
+    pub fn store_cache(env: Env, data: u64, var1: u32) {
         let entry = CacheEntry {
             data,
             timestamp: env.ledger().timestamp(),
         };
 
-        env.storage().temporary().set(&CACHE_KEY, &entry);
-        let ttl = 100_000;
-        env.storage().temporary().extend_ttl(&CACHE_KEY, ttl, ttl);
-    }
-}
+        let storage = env.storage().temporary();
+        storage.set(&CACHE_KEY, &entry);
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+        storage.extend_ttl(&CACHE_KEY, 1, 1);
+        storage.extend_ttl(&CACHE_KEY, var1, var1);
+        storage.extend_ttl(&CACHE_KEY, 2, 1);
 
-    #[test]
-    fn test_ineffective_extend() {
-        let env = Env::default();
-        let contract = IneffectiveExtendTtlClient::new(
-            &env,
-            &env.register_contract(None, IneffectiveExtendTtl {}),
-        );
+        const CONST_1: u32 = 5;
+        const CONST_2: u32 = 5;
+        const CONST_3: u32 = 10;
 
-        contract.store_cache(&42);
+        storage.extend_ttl(&CACHE_KEY, CONST_1, CONST_2);
+        storage.extend_ttl(&CACHE_KEY, CONST_3, CONST_2);
     }
 }

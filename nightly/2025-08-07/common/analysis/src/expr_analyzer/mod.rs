@@ -47,11 +47,6 @@ impl<'a, 'tcx> ExprAnalyzer<'a, 'tcx> {
             (ExprKind::DropTemps(i1), ExprKind::DropTemps(i2)) => {
                 self.are_equivalent_impl(i1, i2, visited)
             }
-            (ExprKind::Block(b1, _), ExprKind::Block(b2, _)) => match (b1.expr, b2.expr) {
-                (Some(e1), Some(e2)) => self.are_equivalent_impl(e1, e2, visited),
-                (None, None) => true,
-                _ => false,
-            },
             (ExprKind::DropTemps(inner), _) => self.are_equivalent_impl(inner, expr2, visited),
             (_, ExprKind::DropTemps(inner)) => self.are_equivalent_impl(expr1, inner, visited),
             (ExprKind::Block(b, _), _) if b.expr.is_some() => {
