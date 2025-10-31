@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "cargo",
@@ -568,7 +568,7 @@ checksum = "a1d728cc89cf3aee9ff92b05e62b19ee65a02b5702cff7d5a377e32c6ae29d8d"
 
 [[package]]
 name = "cli-args"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "cargo_metadata 0.18.1",
@@ -635,7 +635,7 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "cargo_metadata 0.18.1",
@@ -842,7 +842,7 @@ dependencies = [
 
 [[package]]
 name = "detector-helper"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "interop",
@@ -2461,7 +2461,7 @@ dependencies = [
 
 [[package]]
 name = "interop"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "cli-args",
@@ -3667,7 +3667,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scout"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "cargo",
@@ -3700,7 +3700,7 @@ dependencies = [
 
 [[package]]
 name = "scout-driver"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -4655,7 +4655,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "util"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "ansi_term",
  "anyhow",
