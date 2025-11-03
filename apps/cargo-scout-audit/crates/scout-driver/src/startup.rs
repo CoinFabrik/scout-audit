@@ -1,6 +1,6 @@
-use cli_args::Scout;
-use scout::finding::Finding;
-use util::print::print_info;
+use cargo_scout_audit::cli_args::Scout;
+use cargo_scout_audit::scout::finding::Finding;
+use cargo_scout_audit::util::print::print_info;
 
 use anyhow::{Context, Ok, Result};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};

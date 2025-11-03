@@ -1,9 +1,9 @@
+use crate::cli_args::Scout;
 use crate::consts::{SCOUT_BRANCH, SCOUT_REPO};
+use crate::interop::scout::{ScoutInput, ScoutOutput};
+use crate::util::build_and_run::PackageToBuild;
 use anyhow::{Result, anyhow};
-use cli_args::Scout;
-use interop::scout::{ScoutInput, ScoutOutput};
 use std::path::PathBuf;
-use util::build_and_run::PackageToBuild;
 
 //#[tracing::instrument(name = "RUN DYLINT", skip_all)]
 pub fn run_dylint(
@@ -13,7 +13,7 @@ pub fn run_dylint(
     inside_vscode: bool,
 ) -> Result<(bool, PathBuf)> {
     let input = ScoutInput {
-        detectors_paths: util::paths_to_strings(detectors_paths),
+        detectors_paths: crate::util::paths_to_strings(detectors_paths),
         opts: opts.clone(),
         inside_vscode,
     };
@@ -28,7 +28,8 @@ pub fn run_dylint(
     pkg.internal_path = Some("apps/cargo-scout-audit/crates/scout-driver".into());
     let path = pkg.build_executable(Some("scout-driver"))?;
 
-    let output = interop::subprocess::run_subprocess::<_, ScoutOutput>(toolchain, &path, &input)?;
+    let output =
+        crate::interop::subprocess::run_subprocess::<_, ScoutOutput>(toolchain, &path, &input)?;
 
     match output.result {
         Ok(x) => Ok((x.success, x.output_file_path.into())),

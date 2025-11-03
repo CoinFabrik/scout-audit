@@ -1,6 +1,5 @@
-use cargo_scout_audit::run::run_scout;
+use cargo_scout_audit::{cli_args, run::run_scout, util::print::print_full_error};
 use clap::Parser;
-use util::print::print_full_error;
 
 fn main() {
     let cli = cli_args::Cli::parse();

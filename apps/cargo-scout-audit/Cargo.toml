@@ -1,23 +1,14 @@
 [workspace]
-members = [
-    "crates/cargo-scout-audit",
-    "crates/cli-args",
-    "crates/config",
-    "crates/detector-helper",
-    "crates/interop",
-    "crates/scout",
-    "crates/scout-driver",
-    "crates/util",
-]
 exclude = ["tests"]
+members = ["crates/cargo-scout-audit", "crates/scout-driver"]
 resolver = "2"
 
 [workspace.package]
+keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
+license = "MIT"
+readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
 version = "0.3.10"
-readme = "../../README.md"
-license = "MIT"
-keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
 
 [workspace.dependencies]
 ansi_term = "0.12.1"

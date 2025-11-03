@@ -1,4 +1,4 @@
-use scout::finding::Finding;
+use crate::scout::finding::Finding;
 use thiserror::Error;
 
 #[derive(Default)]

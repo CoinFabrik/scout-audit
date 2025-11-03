@@ -1,7 +1,7 @@
 #![feature(rustc_private)]
 extern crate rustc_driver;
 
-use interop::{
+use cargo_scout_audit::interop::{
     scout::{DylintOutput, ScoutInput, ScoutOutput},
     subprocess::subprocess_wrapper,
 };
@@ -20,7 +20,7 @@ fn main() {
         match result {
             Ok((success, mut temp)) => {
                 temp.disable_cleanup(true);
-                let output_file_path = util::path_to_string(temp.path());
+                let output_file_path = cargo_scout_audit::util::path_to_string(temp.path());
                 ScoutOutput {
                     result: Ok(DylintOutput {
                         success,

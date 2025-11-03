@@ -1,3 +1,22 @@
+use crate::scout::scout::findings::split_findings;
+use crate::cli_args::{BlockChain, OutputFormat, Scout};
+use crate::config::ProfileConfig;
+use crate::scout::scout::project_info::Project;
+use crate::scout::scout::telemetry::TelemetryClient;
+use crate::scout::scout::findings::output_to_json;
+use crate::scout::scout::findings::{get_crates, temp_file_to_string};
+use crate::scout::scout::version_checker::VersionChecker;
+use crate::scout::{
+    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
+    finding::Finding,
+    output::report::Report,
+};
+use crate::util::{
+    detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
+    detectors_info::LintStore,
+    logger::TracedError,
+    print::print_error,
+};
 use crate::{
     detector_helper::get_detectors_info as get_detectors_info_helped,
     digest,
@@ -7,28 +26,9 @@ use crate::{
 use anyhow::{Context, Ok, Result, anyhow};
 use cargo::{GlobalContext, core::Verbosity};
 use cargo_metadata::Metadata;
-use cli_args::{BlockChain, OutputFormat, Scout};
-use config::ProfileConfig;
-use scout::{
-    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
-    finding::Finding,
-    output::report::Report,
-    scout::{
-        findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
-        project_info::Project,
-        telemetry::TelemetryClient,
-        version_checker::VersionChecker,
-    },
-};
 use serde_json::to_string_pretty;
 use std::{collections::HashSet, io::Write, path::PathBuf};
 use terminal_color_builder::OutputFormatter;
-use util::{
-    detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-    detectors_info::LintStore,
-    logger::TracedError,
-    print::print_error,
-};
 
 #[allow(clippy::large_enum_variant)]
 enum EitherInfoOrScoutResult {
@@ -236,7 +236,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
 
     // Create and run post processor if the path is found, otherwise use default values
     let (console_findings, output_string_vscode) = if unnecessary_lint_allow_path.is_some() {
-        scout::scout::post_processing::process(
+        crate::scout::scout::post_processing::process(
             successful_findings.clone(),
             raw_findings.clone(),
             inside_vscode,
@@ -252,7 +252,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
             .write_all(output_string_vscode.as_bytes())
             .with_context(|| "Failed to write stdout content")?;
     } else {
-        scout::output::console::render_report(&console_findings, &crates, &detectors_info)?;
+        crate::scout::output::console::render_report(&console_findings, &crates, &detectors_info)?;
         Report::generate(
             &console_findings,
             raw_findings,

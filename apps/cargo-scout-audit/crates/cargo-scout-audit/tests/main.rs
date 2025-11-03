@@ -5,8 +5,10 @@ extern crate rustc_driver;
 mod tests {
 
     use anyhow::Result;
-    use cargo_scout_audit::run::run_scout;
-    use cli_args::{OutputFormat, Scout};
+    use cargo_scout_audit::{
+        cli_args::{OutputFormat, Scout},
+        run::run_scout,
+    };
     use lazy_static::lazy_static;
     use std::{
         collections::HashMap,
