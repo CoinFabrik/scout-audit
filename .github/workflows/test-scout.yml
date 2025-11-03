@@ -45,6 +45,8 @@ jobs:
 
       - name: Run tests and set output
         id: run-tests
+        env:
+          RUST_BACKTRACE: full
         working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: |
           if cargo nextest run --all; then
