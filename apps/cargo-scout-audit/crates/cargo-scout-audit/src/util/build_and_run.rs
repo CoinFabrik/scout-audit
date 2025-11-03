@@ -141,14 +141,34 @@ impl PackageToBuild {
 
         self.second_phase(repo_path, ret)
     }
-    pub fn build_executable(&self, package_name: Option<&str>) -> Result<PathBuf> {
+    pub fn build_executable(
+        &self,
+        package_name: Option<&str>,
+        binary_name: &str,
+    ) -> Result<PathBuf> {
         let (repo_path, metadata) = self.first_phase()?;
 
-        let ret = Library::new_from_metadata(metadata)
-            .get_compiled_paths(package_name, Some("bin"))
-            .first()
-            .cloned()
-            .with_context(|| "Failed to determine the binary's expected location")?;
+        let library = Library::new_from_metadata(metadata);
+
+        let binary_exists = library
+            .metadata
+            .packages
+            .iter()
+            .filter(|pkg| package_name.map(|name| pkg.name == name).unwrap_or(true))
+            .any(|pkg| {
+                pkg.targets.iter().any(|target| {
+                    target.kind.iter().any(|k| k == "bin") && target.name == binary_name
+                })
+            });
+
+        if !binary_exists {
+            return Err(anyhow::anyhow!(
+                "Binary target '{}' not found in package metadata",
+                binary_name
+            ));
+        }
+
+        let ret = library.binary_path(binary_name.to_string());
 
         self.second_phase(repo_path, ret)
     }

@@ -149,7 +149,7 @@ impl Library {
             .join(filename)
     }
 
-    fn binary_path(&self, binary_name: String) -> PathBuf {
+    pub fn binary_path(&self, binary_name: String) -> PathBuf {
         let filename = if self.toolchain.is_empty() {
             format!("{}{}", binary_name.replace('_', "-"), consts::EXE_SUFFIX)
         } else {

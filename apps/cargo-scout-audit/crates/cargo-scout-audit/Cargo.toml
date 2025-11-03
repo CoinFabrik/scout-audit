@@ -6,6 +6,10 @@ version.workspace = true
 [lib]
 path = "src/lib.rs"
 
+[[bin]]
+name = "detector-helper"
+path = "src/bin/detector-helper.rs"
+
 [dependencies]
 ansi_term = { workspace = true }
 anyhow = { workspace = true }

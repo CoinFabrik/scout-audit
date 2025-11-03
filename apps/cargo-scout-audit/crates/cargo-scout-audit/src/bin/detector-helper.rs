@@ -1,12 +1,12 @@
 #![feature(rustc_private)]
 extern crate rustc_driver;
 
-use crate::interop::{
+use cargo_scout_audit::interop::{
     helper::{HelperInput, HelperOutput},
     subprocess::subprocess_wrapper,
 };
+use cargo_scout_audit::util::detectors_info::get_detectors_info;
 use std::path::PathBuf;
-use crate::util::detectors_info::get_detectors_info;
 
 fn main() {
     subprocess_wrapper::<HelperInput, HelperOutput, _>(|i| {

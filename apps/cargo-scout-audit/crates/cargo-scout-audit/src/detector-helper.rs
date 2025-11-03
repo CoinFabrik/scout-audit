@@ -16,12 +16,12 @@ pub fn get_detectors_info(
 
     let mut pkg = match scout_sources {
         Some(root) => PackageToBuild::new_local(root.clone()),
-        None => PackageToBuild::new_remote(SCOUT_REPO, SCOUT_BRANCH, "detector-helper"),
+        None => PackageToBuild::new_remote(SCOUT_REPO, SCOUT_BRANCH, "cargo-scout-audit"),
     };
     pkg.build_message = "Building detector-helper".to_string();
     pkg.build_error_message = "Failed to build detector-helper".to_string();
-    pkg.internal_path = Some("apps/cargo-scout-audit/crates/detector-helper".into());
-    let path = pkg.build_executable(Some("detector-helper"))?;
+    pkg.internal_path = Some("apps/cargo-scout-audit/crates/cargo-scout-audit".into());
+    let path = pkg.build_executable(Some("cargo-scout-audit"), "detector-helper")?;
 
     let output =
         crate::interop::subprocess::run_subprocess::<_, HelperOutput>(toolchain, &path, &input)?;
