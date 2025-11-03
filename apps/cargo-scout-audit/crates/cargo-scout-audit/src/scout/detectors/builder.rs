@@ -2,14 +2,13 @@ use super::{
     configuration::{DetectorConfig, DetectorsConfiguration},
     library::DetectorLibrary,
 };
+use crate::util::{git::download_git_repo, logger::TracedError, print::print_info};
 use anyhow::{Result, ensure};
 use cargo::{GlobalContext, core::SourceId};
 use cargo_metadata::Metadata;
 use current_platform::CURRENT_PLATFORM;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use crate::util::git::download_git_repo;
-use crate::util::{logger::TracedError, print::print_info};
 
 #[derive(Error, Debug)]
 pub enum BuilderError {

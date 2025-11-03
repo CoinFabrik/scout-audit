@@ -1,5 +1,7 @@
-use crate::cli_args::{BlockChain, OutputFormat};
-use crate::util::print::print_info;
+use crate::{
+    cli_args::{BlockChain, OutputFormat},
+    util::print::print_info,
+};
 use anyhow::{Context, Result, anyhow};
 use cargo_metadata::{Metadata, camino::Utf8PathBuf};
 use serde::{Deserialize, Serialize};

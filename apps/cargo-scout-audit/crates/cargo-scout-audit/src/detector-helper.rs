@@ -1,6 +1,8 @@
-use crate::consts::{SCOUT_BRANCH, SCOUT_REPO};
-use crate::interop::helper::{HelperInput, HelperOutput};
-use crate::util::{build_and_run::PackageToBuild, detectors_info::LintStore};
+use crate::{
+    consts::{SCOUT_BRANCH, SCOUT_REPO},
+    interop::helper::{HelperInput, HelperOutput},
+    util::{build_and_run::PackageToBuild, detectors_info::LintStore},
+};
 use anyhow::{Result, anyhow};
 use std::path::PathBuf;
 

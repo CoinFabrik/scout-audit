@@ -1,7 +1,9 @@
-use crate::cli_args::Scout;
-use crate::consts::{SCOUT_BRANCH, SCOUT_REPO};
-use crate::interop::scout::{ScoutInput, ScoutOutput};
-use crate::util::build_and_run::PackageToBuild;
+use crate::{
+    cli_args::Scout,
+    consts::{SCOUT_BRANCH, SCOUT_REPO},
+    interop::scout::{ScoutInput, ScoutOutput},
+    util::build_and_run::PackageToBuild,
+};
 use anyhow::{Result, anyhow};
 use std::path::PathBuf;
 

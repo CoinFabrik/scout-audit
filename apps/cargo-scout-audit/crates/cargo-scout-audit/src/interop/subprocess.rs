@@ -1,5 +1,4 @@
-use crate::scout::scout::nightly_runner::set_up_environment;
-use crate::util::print::print_full_error;
+use crate::{scout::core::nightly_runner::set_up_environment, util::print::print_full_error};
 use anyhow::{Context, Result, anyhow};
 use serde::{Serialize, de::DeserializeOwned};
 #[cfg(not(windows))]

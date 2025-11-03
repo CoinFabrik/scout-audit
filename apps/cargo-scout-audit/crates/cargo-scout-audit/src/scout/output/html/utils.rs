@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::scout::output::report;
+use std::collections::HashMap;
 
 pub fn get_analytics(report: &report::Report) -> HashMap<String, u32> {
     let mut analytics = HashMap::new();

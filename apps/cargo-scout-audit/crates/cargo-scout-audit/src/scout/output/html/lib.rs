@@ -1,6 +1,5 @@
-use crate::scout::output::report::Report;
-
 use super::{tera::HtmlEngine, utils};
+use crate::scout::output::report::Report;
 use anyhow::Result;
 use std::{error::Error, fmt::Write, vec};
 

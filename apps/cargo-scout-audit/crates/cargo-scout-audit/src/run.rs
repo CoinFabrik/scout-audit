@@ -1,27 +1,27 @@
-use crate::scout::scout::findings::split_findings;
-use crate::cli_args::{BlockChain, OutputFormat, Scout};
-use crate::config::ProfileConfig;
-use crate::scout::scout::project_info::Project;
-use crate::scout::scout::telemetry::TelemetryClient;
-use crate::scout::scout::findings::output_to_json;
-use crate::scout::scout::findings::{get_crates, temp_file_to_string};
-use crate::scout::scout::version_checker::VersionChecker;
-use crate::scout::{
-    detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
-    finding::Finding,
-    output::report::Report,
-};
-use crate::util::{
-    detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
-    detectors_info::LintStore,
-    logger::TracedError,
-    print::print_error,
-};
 use crate::{
+    cli_args::{BlockChain, OutputFormat, Scout},
+    config::ProfileConfig,
     detector_helper::get_detectors_info as get_detectors_info_helped,
     digest,
     result::{ScoutError, ScoutResult},
+    scout::{
+        core::{
+            findings::{get_crates, output_to_json, split_findings, temp_file_to_string},
+            project_info::Project,
+            telemetry::TelemetryClient,
+            version_checker::VersionChecker,
+        },
+        detectors::{builder::DetectorBuilder, configuration::DetectorsConfiguration},
+        finding::Finding,
+        output::report::Report,
+    },
     scout_driver::run_dylint,
+    util::{
+        detectors::{get_excluded_detectors, get_filtered_detectors, list_detectors},
+        detectors_info::LintStore,
+        logger::TracedError,
+        print::print_error,
+    },
 };
 use anyhow::{Context, Ok, Result, anyhow};
 use cargo::{GlobalContext, core::Verbosity};
@@ -236,7 +236,7 @@ pub fn run_scout(mut opts: Scout) -> Result<ScoutResult> {
 
     // Create and run post processor if the path is found, otherwise use default values
     let (console_findings, output_string_vscode) = if unnecessary_lint_allow_path.is_some() {
-        crate::scout::scout::post_processing::process(
+        crate::scout::core::post_processing::process(
             successful_findings.clone(),
             raw_findings.clone(),
             inside_vscode,

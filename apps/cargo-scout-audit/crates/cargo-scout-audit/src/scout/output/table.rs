@@ -1,4 +1,4 @@
-use crate::scout::finding::Finding;
+use crate::{scout::finding::Finding, util::detectors_info::LintStore};
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,6 @@ use std::{
 };
 use tera::{Context, Tera};
 use terminal_color_builder::OutputFormatter;
-use crate::util::detectors_info::LintStore;
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum Color {

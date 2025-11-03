@@ -1,11 +1,10 @@
-use crate::scout::output::report::Package;
+use crate::{scout::output::report::Package, util::logger::TracedError};
 use anyhow::{Context, Result, anyhow, bail};
 use cargo_metadata::{Metadata, MetadataCommand, camino::Utf8PathBuf};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::{fs, path::PathBuf};
 use thiserror::Error;
-use crate::util::logger::TracedError;
 
 #[derive(Debug)]
 pub struct Project {

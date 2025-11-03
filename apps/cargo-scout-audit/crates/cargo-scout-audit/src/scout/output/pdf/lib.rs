@@ -1,6 +1,8 @@
 use super::generator::{generate_body, generate_header, generate_summary};
-use crate::scout::output::pdf::external::{build_library, call};
-use crate::scout::output::report::Report;
+use crate::scout::output::{
+    pdf::external::{build_library, call},
+    report::Report,
+};
 use anyhow::{Context, Result};
 use std::io::Write;
 use std::path::Path;

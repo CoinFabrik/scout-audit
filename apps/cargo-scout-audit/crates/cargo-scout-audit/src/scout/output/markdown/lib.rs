@@ -1,6 +1,5 @@
 use super::{generator::generate_summary_context, tera::MdEngine};
-use crate::scout::output::report::Report;
-use crate::scout::output::table::register_functions_for_tera_md;
+use crate::scout::output::{report::Report, table::register_functions_for_tera_md};
 use anyhow::{Context, Result};
 
 // Generates an Markdown report from a given `Report` object.

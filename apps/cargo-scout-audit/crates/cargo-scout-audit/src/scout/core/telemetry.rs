@@ -1,6 +1,6 @@
 use super::blockchain::BlockChain;
+use crate::{cli_args::Scout, util::home::get_config_directory};
 use anyhow::{Context, Result};
-use crate::cli_args::Scout;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -8,7 +8,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use strum::EnumIter;
-use crate::util::home::get_config_directory;
 
 const SCOUT_TELEMETRY_URL: &str = "https://scout-api.coinfabrik.com";
 

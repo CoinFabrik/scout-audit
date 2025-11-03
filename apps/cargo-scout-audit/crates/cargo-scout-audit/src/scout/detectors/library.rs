@@ -1,7 +1,9 @@
-use crate::cli_args::BlockChain;
-use crate::util::library::{Library, LibraryError};
 #[cfg(not(feature = "docker_container"))]
 use crate::util::{cargo, env, logger::TracedError};
+use crate::{
+    cli_args::BlockChain,
+    util::library::{Library, LibraryError},
+};
 use anyhow::{Result, bail};
 use cargo_metadata::{Metadata, Package};
 use itertools::Itertools;

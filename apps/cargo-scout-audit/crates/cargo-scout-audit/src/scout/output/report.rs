@@ -1,11 +1,13 @@
 use super::{html, markdown, pdf, utils};
-use crate::cli_args::OutputFormat;
-use crate::scout::scout::project_info::Project;
-use crate::scout::{
-    finding::Finding as JsonFinding,
-    output::{raw_report::RawReport, table::Table},
+use crate::{
+    cli_args::OutputFormat,
+    scout::{
+        core::project_info::Project,
+        finding::Finding as JsonFinding,
+        output::{raw_report::RawReport, table::Table},
+    },
+    util::detectors_info::{LintInfo, LintStore},
 };
-use crate::util::detectors_info::{LintInfo, LintStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{

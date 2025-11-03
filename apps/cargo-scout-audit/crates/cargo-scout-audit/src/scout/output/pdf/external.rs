@@ -1,7 +1,7 @@
+use crate::util::build_and_run::PackageToBuild;
 use anyhow::{Context, Result};
 use libloading::Symbol;
 use std::{os::raw::c_uchar, path::PathBuf, sync::Arc};
-use crate::util::build_and_run::PackageToBuild;
 
 const URL: &str = "https://github.com/CoinFabrik/html-to-pdf";
 const BRANCH: &str = "master";

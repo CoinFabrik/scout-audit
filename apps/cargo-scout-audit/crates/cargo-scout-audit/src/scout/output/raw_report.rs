@@ -1,6 +1,8 @@
 use super::report::{Category, Finding, Report, Severity, Summary, Vulnerability};
-use crate::scout::finding::Finding as JsonFinding;
-use crate::scout::scout::project_info::Project;
+use crate::{
+    scout::{core::project_info::Project, finding::Finding as JsonFinding},
+    util::{detectors_info::LintStore, json::json_to_string},
+};
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::{
@@ -8,7 +10,6 @@ use std::{
     io::{BufReader, Read, Seek, SeekFrom},
     path::{Path, PathBuf},
 };
-use crate::util::{detectors_info::LintStore, json::json_to_string};
 
 pub struct RawReport;
 
