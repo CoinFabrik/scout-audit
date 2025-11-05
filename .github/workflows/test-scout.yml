@@ -46,6 +46,7 @@ jobs:
       - name: Run tests and set output
         id: run-tests
         env:
+          RUST_LOG: "none,cargo_scout_audit=debug"
           RUST_BACKTRACE: full
         working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: |
