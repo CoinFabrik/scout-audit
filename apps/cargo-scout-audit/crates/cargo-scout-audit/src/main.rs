@@ -13,7 +13,7 @@ fn main() {
     let subscriber = get_subscriber(
         "cargo-scout-audit".to_string(),
         LevelFilter::INFO,
-        || std::io::stdout(),
+        std::io::stdout,
     );
     init_subscriber(subscriber);
 

@@ -199,6 +199,10 @@ mod tests {
         // When
         let result = run_scout(scout_opts);
 
+        if let Err(e) = &result {
+            println!("Error: {:?}", e);
+        }
+
         // Then
         assert!(result.is_ok(), "[{:?}] Scout should run", output_format);
 
