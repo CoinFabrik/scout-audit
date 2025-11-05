@@ -12,7 +12,7 @@ use tracing::level_filters::LevelFilter;
 fn main() {
     let subscriber = get_subscriber(
         "cargo-scout-audit".to_string(),
-        LevelFilter::INFO,
+        LevelFilter::OFF,
         std::io::stdout,
     );
     init_subscriber(subscriber);
