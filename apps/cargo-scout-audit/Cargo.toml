@@ -1,80 +1,49 @@
+[workspace]
+exclude = ["tests"]
+members = ["crates/cargo-scout-audit", "crates/scout-driver"]
+resolver = "2"
 
-[package]
-authors = [
-    "Agustin Aon <agustin.aon@coinfabrik.com>",
-    "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
-    "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
-    "Víctor M. González <victor.gonzalez@coinfabrik.com>",
-    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
-    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
-    "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
-]
-
-build = "build.rs"
-categories = ["command-line-utilities", "development-tools"]
-description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
-edition = "2021"
+[workspace.package]
 keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
 license = "MIT"
-name = "cargo-scout-audit"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.3.9"
+version = "0.3.10"
 
-[lib]
-path = "src/lib.rs"
-
-[[bin]]
-name = "cargo-scout-audit"
-path = "src/main.rs"
-
-[dependencies]
-ansi_term = "=0.12.1"
-anyhow = "=1.0.86"
-cargo = "=0.80.0"
-cargo_metadata = "=0.18.1"
-chrono = { version = "=0.4.38", features = ["serde"] }
-clap = { version = "=4.5.9", features = ["derive"] }
-colored = "=2.1.0"
-current_platform = "=0.2.0"
-dunce = "=1.0.4"
-dylint = "=4.1.0"
-git2 = "=0.18.3"
-home = "=0.5.9"
-itertools = "=0.13.0"
-lazy_static = "=1.5.0"
-libloading = "=0.8.4"
-once_cell = "=1.21.3"
-orion = "=0.17.6"
-regex = { version = "=1.11.1", features = ["unicode"] }
-reqwest = { version = "=0.12.5", features = ["blocking", "json"] }
-semver = "=1.0.23"
-serde = { version = "=1.0.204", features = ["derive"] }
-serde_json = "=1.0.120"
+[workspace.dependencies]
+ansi_term = "0.12.1"
+anyhow = "1.0.86"
+cargo = "0.80.0"
+cargo_metadata = "0.18.1"
+chrono = "0.4.38"
+clap = "4.5.9"
+colored = "2.1.0"
+current_platform = "0.2.0"
+dunce = "1.0.4"
+dylint = "4.1.0"
+git2 = "0.18.3"
+home = "0.5.9"
+itertools = "0.13.0"
+lazy_static = "1.5.0"
+libloading = "0.8.4"
+once_cell = "1.21.3"
+orion = "0.17.6"
+regex = "1.11.1"
+reqwest = "0.12.5"
+semver = "1.0.23"
+serde = "1.0.204"
+serde_json = "1.0.120"
 serde_yaml = "0.9.33"
-strum = { version = "=0.26.3", features = ["derive"] }
-tempfile = "=3.21.0"
-tera = { version = "=1.20.0", features = ["builtins"] }
-terminal_color_builder = "=0.1.1"
-thiserror = "=2.0.3"
-toml = "=0.8.23"
-tracing = "=0.1.40"
-tracing-bunyan-formatter = "=0.3.9"
-tracing-log = "=0.2.0"
-tracing-subscriber = { version = "=0.3.18", features = ["env-filter", "registry"] }
-webbrowser = "=1.0.1"
-
-[dev-dependencies]
-uuid = { version = "1.3.1", features = ["v4"] }
-
-[build-dependencies]
-regex = "1.10.5"
-sha2 = "0.10.8"
-walkdir = "2.5.0"
-
-[target.'cfg(windows)'.dependencies]
-windows = { version = "=0.58.0", features = ["Win32_System_LibraryLoader"] }
-
-[features]
-docker_container = []
+strum = "0.26.3"
+tempfile = "3.21.0"
+tera = "1.20.0"
+terminal_color_builder = "0.1.1"
+thiserror = "2.0.3"
+toml = "0.8.23"
+tracing = "0.1.40"
+tracing-bunyan-formatter = "0.3.9"
+tracing-log = "0.2.0"
+tracing-subscriber = "0.3.18"
+uuid = "1.3.1"
+webbrowser = "1.0.1"
+windows = "0.58.0"

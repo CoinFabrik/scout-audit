@@ -1,0 +1,77 @@
+
+[package]
+authors = [
+    "Agustin Aon <agustin.aon@coinfabrik.com>",
+    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
+    "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
+    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
+    "Federico Pinho <federico.pinho@coinfabrik.com>",
+    "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
+    "Víctor M. González <victor.gonzalez@coinfabrik.com>",
+]
+
+build = "build.rs"
+categories = ["command-line-utilities", "development-tools"]
+description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
+edition = "2021"
+keywords.workspace = true
+license.workspace = true
+name = "scout-driver"
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "scout-driver"
+path = "src/main.rs"
+
+[features]
+docker_container = []
+
+[dependencies]
+ansi_term.workspace = true
+anyhow.workspace = true
+cargo.workspace = true
+cargo-scout-audit.path = "../cargo-scout-audit"
+cargo_metadata.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+clap = { workspace = true, features = ["derive"] }
+colored.workspace = true
+current_platform.workspace = true
+dunce.workspace = true
+dylint.workspace = true
+git2.workspace = true
+home.workspace = true
+itertools.workspace = true
+lazy_static.workspace = true
+libloading.workspace = true
+once_cell.workspace = true
+orion.workspace = true
+regex = { workspace = true, features = ["unicode"] }
+reqwest = { workspace = true, features = ["blocking", "json"] }
+semver.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+strum = { workspace = true, features = ["derive"] }
+tempfile.workspace = true
+tera = { workspace = true, features = ["builtins"] }
+terminal_color_builder.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-bunyan-formatter.workspace = true
+tracing-log.workspace = true
+tracing-subscriber = { workspace = true, features = ["env-filter", "registry"] }
+webbrowser.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
+
+[build-dependencies]
+regex = "1.10.5"
+sha2 = "0.10.8"
+walkdir = "2.5.0"

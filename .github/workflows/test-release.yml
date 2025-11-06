@@ -36,7 +36,7 @@ jobs:
       - name: Test Scout Audit
         id: scout-audit
         run: |
-          python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit --dry-run
+          python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit/crates/cargo-scout-audit --dry-run
           echo "result=success" >> $GITHUB_OUTPUT
 
   test-docker-release:

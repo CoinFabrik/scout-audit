@@ -32,7 +32,7 @@ jobs:
           restore-keys: ${{ runner.os }}-test-scout-
 
       - name: Install local scout
-        working-directory: apps/cargo-scout-audit
+        working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: cargo install --path .
 
       - name: Install clippy-sarif and cargo-nextest
@@ -45,7 +45,9 @@ jobs:
 
       - name: Run tests and set output
         id: run-tests
-        working-directory: apps/cargo-scout-audit
+        env:
+          RUST_BACKTRACE: full
+        working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: |
           if cargo nextest run --all; then
             echo "${{ runner.os }}_status=success" >> $GITHUB_OUTPUT

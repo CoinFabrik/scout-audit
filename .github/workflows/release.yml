@@ -58,7 +58,7 @@ jobs:
 
       - name: Publish Scout Audit
         if: ${{ needs.filter-paths.outputs.scout-audit == 'true' }}
-        run: python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit
+        run: python scripts/publish-to-crates-io.py --crate-path apps/cargo-scout-audit/crates/cargo-scout-audit
 
   docker-release:
     name: Release to Docker Hub

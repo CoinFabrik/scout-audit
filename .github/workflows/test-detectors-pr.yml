@@ -4,7 +4,8 @@ on:
   pull_request:
     paths:
       - "apps/cargo-scout-audit/**"
-      - "detectors/**"
+      - "nightly/**"
+      - "scout-utils/**"
       - "test-cases/**"
       - "scripts/**"
   workflow_dispatch:
@@ -39,7 +40,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-    #          - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -51,7 +51,7 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Install Rust stable
@@ -67,7 +67,7 @@ jobs:
         run: cargo +nightly install cargo-dylint dylint-link
 
       - name: Install cargo-scout-audit
-        working-directory: apps/cargo-scout-audit
+        working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
         run: cargo install --path .
 
       - name: Determine build status and write to file
@@ -100,8 +100,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        #          - macos-latest
-        #          - windows-latest
         detector: ${{fromJson(needs.prepare-detector-matrix.outputs.matrix)}}
     runs-on: ${{ matrix.os }}
     outputs:
@@ -121,14 +119,14 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs') }}
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-tests-
 
       - name: Disable telemetry
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
-          
+
       - name: Run unit and integration tests
         run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
@@ -145,16 +143,6 @@ jobs:
         id: ubuntu_status
         working-directory: build-status-ubuntu-latest
         run: echo "status=$(cat status-ubuntu-latest.txt)" >> $GITHUB_OUTPUT
-
-      #      - name: Read macOS build status
-      #        id: macos_status
-      #        working-directory: build-status-macos-latest
-      #        run: echo "status=$(cat status-macos-latest.txt)" >> $GITHUB_OUTPUT
-
-      #      - name: Read Windows build status
-      #        id: windows_status
-      #        working-directory: build-status-windows-latest
-      #        run: echo "status=$(cat status-windows-latest.txt)" >> $GITHUB_OUTPUT
 
       - name: Find comment
         id: find_comment
@@ -177,8 +165,5 @@ jobs:
             | Detector Validation     | ${{ (needs.validate-detectors.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Build on Ubuntu         | ${{ (steps.ubuntu_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
             | Tests Execution         | ${{ (needs.test.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
-            
-            The workflow has completed. Great job! 🚀
 
-#            | Build on macOS          | ${{ (steps.macos_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
-#            | Build on Windows        | ${{ (steps.windows_status.outputs.status == 'success' && '✅ Successful') || '❌ Failed' }} |
+            The workflow has completed. Great job! 🚀

@@ -1,0 +1,10 @@
+[package]
+edition = "2021"
+name = "dependency-contract"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }

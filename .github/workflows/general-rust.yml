@@ -5,7 +5,8 @@ on:
     paths:
       - ".github/workflows/**"
       - "apps/cargo-scout-audit/**"
-      - "detectors/**"
+      - "nightly/**"
+      - "scout-utils/**"
       - "test-cases/**"
       - "scripts/**"
   workflow_dispatch:
@@ -50,7 +51,7 @@ jobs:
           path: |
             ~/.cargo
             ./apps/cargo-scout-audit/target
-          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
 
       - name: Update Rust Toolchain
         run: rustup update
@@ -83,7 +84,7 @@ jobs:
           path: |
             ~/.cargo
             ./apps/cargo-scout-audit/target
-          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('apps/cargo-scout-audit/Cargo.lock', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
 
       - name: Update Rust Toolchain and default to nightly
         run: |

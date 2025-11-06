@@ -7,20 +7,21 @@ SHELL ["/bin/bash", "-c"]
 COPY entrypoint.sh /usr/src/scout/entrypoint.sh
 
 # Copy local cargo-scout-audit project files
-COPY / /usr/src/scout-audit
+COPY . /usr/src/scout-audit
 
-# Install cargo-scout-audit from the local path
+# Install cargo-scout-audit from the local crate path inside the workspace
 WORKDIR /usr/src/scout-audit/apps/cargo-scout-audit
-RUN cargo install --features docker_container --path . --locked
+RUN cargo install --path crates/cargo-scout-audit --locked
+RUN cargo install dylint-link --locked
 
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/ink
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/rust
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/soroban
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/substrate-pallets
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 
 # Stage 2: Final
 # Base image with Rust slim version for the runtime environment
