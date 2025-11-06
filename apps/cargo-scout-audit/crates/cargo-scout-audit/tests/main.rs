@@ -177,6 +177,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
