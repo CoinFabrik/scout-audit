@@ -1,8 +1,10 @@
-use crate::consts::{SCOUT_BRANCH, SCOUT_REPO};
+use crate::{
+    consts::{SCOUT_BRANCH, SCOUT_REPO},
+    interop::helper::{HelperInput, HelperOutput},
+    util::{build_and_run::PackageToBuild, detectors_info::LintStore},
+};
 use anyhow::{Result, anyhow};
-use interop::helper::{HelperInput, HelperOutput};
 use std::path::PathBuf;
-use util::{build_and_run::PackageToBuild, detectors_info::LintStore};
 
 #[cfg(not(windows))]
 pub fn get_detectors_info(
@@ -11,19 +13,20 @@ pub fn get_detectors_info(
     scout_sources: Option<&PathBuf>,
 ) -> Result<LintStore> {
     let input = HelperInput {
-        detectors_paths: util::paths_to_strings(detectors_paths),
+        detectors_paths: crate::util::paths_to_strings(detectors_paths),
     };
 
     let mut pkg = match scout_sources {
         Some(root) => PackageToBuild::new_local(root.clone()),
-        None => PackageToBuild::new_remote(SCOUT_REPO, SCOUT_BRANCH, "detector-helper"),
+        None => PackageToBuild::new_remote(SCOUT_REPO, SCOUT_BRANCH, "cargo-scout-audit"),
     };
     pkg.build_message = "Building detector-helper".to_string();
     pkg.build_error_message = "Failed to build detector-helper".to_string();
-    pkg.internal_path = Some("apps/cargo-scout-audit/crates/detector-helper".into());
-    let path = pkg.build_executable(Some("detector-helper"))?;
+    pkg.internal_path = Some("apps/cargo-scout-audit/crates/cargo-scout-audit".into());
+    let path = pkg.build_executable(Some("cargo-scout-audit"), "detector-helper")?;
 
-    let output = interop::subprocess::run_subprocess::<_, HelperOutput>(toolchain, &path, &input)?;
+    let output =
+        crate::interop::subprocess::run_subprocess::<_, HelperOutput>(toolchain, &path, &input)?;
 
     match output.result {
         Ok(x) => Ok(x),

@@ -2,13 +2,13 @@
 [package]
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
+    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
     "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
+    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
+    "Federico Pinho <federico.pinho@coinfabrik.com>",
     "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
     "Víctor M. González <victor.gonzalez@coinfabrik.com>",
-    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
-    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
-    "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
 ]
 
 build = "build.rs"
@@ -36,10 +36,10 @@ docker_container = []
 ansi_term.workspace = true
 anyhow.workspace = true
 cargo.workspace = true
+cargo-scout-audit.path = "../cargo-scout-audit"
 cargo_metadata.workspace = true
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
-cli_args = { path = "../cli-args", package = "cli-args" }
 colored.workspace = true
 current_platform.workspace = true
 dunce.workspace = true
@@ -53,9 +53,6 @@ once_cell.workspace = true
 orion.workspace = true
 regex = { workspace = true, features = ["unicode"] }
 reqwest = { workspace = true, features = ["blocking", "json"] }
-scout.path = "../scout"
-util.path = "../util"
-interop.path = "../interop"
 semver.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

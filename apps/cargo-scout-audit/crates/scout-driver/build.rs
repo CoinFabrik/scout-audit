@@ -1,10 +1,10 @@
 use regex::Regex;
 use sha2::{Digest, Sha256};
-use std::process::Command;
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::Path,
+    process::Command,
 };
 use walkdir::WalkDir;
 

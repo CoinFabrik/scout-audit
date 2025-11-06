@@ -1,7 +1,7 @@
-use scout::finding::Finding;
+use crate::scout::finding::Finding;
 use thiserror::Error;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ScoutResult {
     pub findings: Vec<Finding>,
     pub stdout_helper: String,

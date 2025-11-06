@@ -1,26 +1,47 @@
 [package]
+edition = "2024"
 name = "cargo-scout-audit"
 version.workspace = true
-edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "detector-helper"
+path = "src/bin/detector-helper.rs"
 
 [dependencies]
+ansi_term = { workspace = true }
 anyhow = { workspace = true }
 cargo.workspace = true
 cargo_metadata = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
-cli-args.path = "../cli-args"
-config.path = "../config"
-interop.path = "../interop"
+colored = { workspace = true }
+current_platform = { workspace = true }
+dunce = { workspace = true }
+git2 = { workspace = true }
+itertools = { workspace = true }
 lazy_static = { workspace = true }
+libloading = { workspace = true }
+once_cell = { workspace = true }
 regex = { workspace = true, features = ["unicode"] }
-scout.path = "../scout"
+reqwest = { workspace = true, features = ["blocking", "json"] }
+semver = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 strum = { workspace = true, features = ["derive"] }
 tempfile.workspace = true
+tera = { workspace = true }
 terminal_color_builder.workspace = true
 thiserror = { workspace = true }
 tracing = { workspace = true }
-util.path = "../util"
+tracing-bunyan-formatter = { workspace = true }
+tracing-log = { workspace = true }
+tracing-subscriber = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
+webbrowser = { workspace = true }
+
+[features]
+docker_container = []

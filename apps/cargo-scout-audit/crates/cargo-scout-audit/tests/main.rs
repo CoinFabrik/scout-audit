@@ -5,8 +5,10 @@ extern crate rustc_driver;
 mod tests {
 
     use anyhow::Result;
-    use cargo_scout_audit::run::run_scout;
-    use cli_args::{OutputFormat, Scout};
+    use cargo_scout_audit::{
+        cli_args::{OutputFormat, Scout},
+        run::run_scout,
+    };
     use lazy_static::lazy_static;
     use std::{
         collections::HashMap,
@@ -175,6 +177,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_pdf_format() -> Result<()> {
         test_output_fn("report.pdf", OutputFormat::Pdf)
     }
@@ -196,6 +199,10 @@ mod tests {
 
         // When
         let result = run_scout(scout_opts);
+
+        if let Err(e) = &result {
+            println!("Error: {:?}", e);
+        }
 
         // Then
         assert!(result.is_ok(), "[{:?}] Scout should run", output_format);

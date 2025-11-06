@@ -1,8 +1,5 @@
-use cli_args::Scout;
-use scout::finding::Finding;
-use util::print::print_info;
-
 use anyhow::{Context, Ok, Result};
+use cargo_scout_audit::{cli_args::Scout, scout::finding::Finding, util::print::print_info};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
