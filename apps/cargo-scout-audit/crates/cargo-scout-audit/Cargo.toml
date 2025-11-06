@@ -2,6 +2,12 @@
 edition = "2024"
 name = "cargo-scout-audit"
 version.workspace = true
+license = "MIT"
+repository.workspace = true
+keywords.workspace = true
+authors.workspace = true
+categories = ["command-line-utilities", "development-tools"]
+description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 
 [lib]
 path = "src/lib.rs"
