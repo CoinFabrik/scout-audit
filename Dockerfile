@@ -14,13 +14,13 @@ WORKDIR /usr/src/scout-audit/apps/cargo-scout-audit
 RUN cargo install --path crates/cargo-scout-audit --locked
 
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/ink
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/rust
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/soroban
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/substrate-pallets
-RUN cargo +nightly-2025-08-07 build --release
+RUN cargo build --release
 
 # Stage 2: Final
 # Base image with Rust slim version for the runtime environment

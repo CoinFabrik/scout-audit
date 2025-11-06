@@ -1,0 +1,39 @@
+# Rust
+target/
+**/target/
+Cargo.lock.orig
+.cargo/registry/
+.cargo/git/
+
+# VCS
+.git/
+.gitmodules
+.gitignore
+
+# Node / frontend
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+dist/
+build/
+
+# Python / misc
+.venv/
+__pycache__/
+
+# OS/editor cruft
+.DS_Store
+*.swp
+*.log
+.cache/
+.idea/
+.vscode/
+
+# Large assets you don’t need to build the image
+data/
+datasets/
+artifacts/
+*.wasm
+*.zip
+*.tar
+*.tar.gz
