@@ -8,7 +8,7 @@ keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
 license = "MIT"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
-version = "0.3.10"
+version = "0.3.11"
 authors = [
     "Agustin Aon <agustin.aon@coinfabrik.com>",
     "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
