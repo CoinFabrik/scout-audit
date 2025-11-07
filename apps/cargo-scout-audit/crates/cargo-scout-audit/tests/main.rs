@@ -29,6 +29,14 @@ mod tests {
             .map(|ancestor| ancestor.join("nightly"))
             .find(|candidate| candidate.is_dir())
             .expect("Failed to locate the 'nightly' detectors directory");
+        static ref SCOUT_SOURCE: PathBuf = (||{
+            let mut ret = std::env::current_dir().unwrap();
+            ret.pop();
+            ret.pop();
+            ret.pop();
+            ret.pop();
+            ret
+        })();
     }
 
     fn create_cargo_command() -> Command {
@@ -64,6 +72,7 @@ mod tests {
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -87,6 +96,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 exclude: Some("unsafe-unwrap".to_string()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -107,6 +117,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 filter: Some("unsafe-unwrap".to_string()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -127,6 +138,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 list_detectors: true,
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -194,6 +206,7 @@ mod tests {
             output_format: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
             local_detectors: Some(DETECTORS_DIR.clone()),
+            scout_source: Some(SCOUT_SOURCE.clone()),
             ..Scout::default()
         };
 
@@ -263,6 +276,7 @@ mod tests {
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
             local_detectors: Some(DETECTORS_DIR.clone()),
+            scout_source: Some(SCOUT_SOURCE.clone()),
             ..Scout::default()
         };
         let result = run_scout(scout_opts);
