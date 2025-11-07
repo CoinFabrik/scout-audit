@@ -394,6 +394,7 @@ dependencies = [
  "current_platform",
  "dunce",
  "git2",
+ "home",
  "itertools 0.13.0",
  "lazy_static",
  "libloading",
@@ -415,6 +416,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "webbrowser",
+ "windows",
 ]
 
 [[package]]

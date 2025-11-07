@@ -1,14 +1,21 @@
 #[cfg(not(windows))]
-use crate::util::print::{print_info, print_warning};
+use crate::util::print::print_warning;
+use crate::util::print::print_info;
 #[cfg(not(windows))]
 use anyhow::Context;
 use anyhow::Result;
 #[cfg(not(windows))]
 use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
-use std::{collections::HashMap, env, path::PathBuf, process::Child};
+use std::{collections::HashMap, env, process::Child};
 #[cfg(not(windows))]
-use std::{path::Path, process::Command};
+use std::{
+    path::{
+        Path,
+        PathBuf,
+    },
+    process::Command,
+};
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {

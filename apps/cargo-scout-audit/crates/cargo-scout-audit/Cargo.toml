@@ -50,5 +50,9 @@ tracing-subscriber = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 webbrowser = { workspace = true }
 
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
+home.workspace = true
+
 [features]
 docker_container = []

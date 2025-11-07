@@ -1,7 +1,6 @@
 use crate::{scout::core::nightly_runner::set_up_environment, util::print::print_full_error};
 use anyhow::{Context, Result, anyhow};
 use serde::{Serialize, de::DeserializeOwned};
-#[cfg(not(windows))]
 use std::process::Command;
 use std::{
     collections::HashMap,
@@ -55,7 +54,6 @@ fn get_paths<I: Serialize>(input: &I) -> Result<(String, String)> {
     Ok((input_path, output_path))
 }
 
-#[cfg(not(windows))]
 fn do_it(
     exec: &PathBuf,
     environment: HashMap<String, String>,
