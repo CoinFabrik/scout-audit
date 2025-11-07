@@ -1,6 +1,6 @@
+use crate::util::print::print_info;
 #[cfg(not(windows))]
 use crate::util::print::print_warning;
-use crate::util::print::print_info;
 #[cfg(not(windows))]
 use anyhow::Context;
 use anyhow::Result;
@@ -10,10 +10,7 @@ use lazy_static::lazy_static;
 use std::{collections::HashMap, env, process::Child};
 #[cfg(not(windows))]
 use std::{
-    path::{
-        Path,
-        PathBuf,
-    },
+    path::{Path, PathBuf},
     process::Command,
 };
 
@@ -95,7 +92,7 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
 pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
     let _ = set_up_environment(toolchain)?;
     print_info("Re-running scout with nightly toolchain...");
-    return Ok(None);
+    Ok(None)
 }
 
 #[cfg(not(windows))]

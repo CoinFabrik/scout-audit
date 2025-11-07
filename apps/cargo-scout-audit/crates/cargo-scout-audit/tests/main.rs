@@ -10,6 +10,7 @@ mod tests {
         run::run_scout,
     };
     use lazy_static::lazy_static;
+    use once_cell::sync::Lazy;
     use std::{
         collections::HashMap,
         fs,
@@ -21,23 +22,21 @@ mod tests {
 
     lazy_static! {
         static ref TEST_DIR: TempDir = TempDir::new().expect("Failed to create temp directory");
-    }
-
-    lazy_static! {
         static ref DETECTORS_DIR: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
             .ancestors()
             .map(|ancestor| ancestor.join("nightly"))
             .find(|candidate| candidate.is_dir())
             .expect("Failed to locate the 'nightly' detectors directory");
-        static ref SCOUT_SOURCE: PathBuf = (||{
-            let mut ret = std::env::current_dir().unwrap();
-            ret.pop();
-            ret.pop();
-            ret.pop();
-            ret.pop();
-            ret
-        })();
     }
+
+    static SCOUT_SOURCE: Lazy<PathBuf> = Lazy::new(|| {
+        let mut ret = std::env::current_dir().unwrap();
+        ret.pop();
+        ret.pop();
+        ret.pop();
+        ret.pop();
+        ret
+    });
 
     fn create_cargo_command() -> Command {
         Command::new("cargo")
