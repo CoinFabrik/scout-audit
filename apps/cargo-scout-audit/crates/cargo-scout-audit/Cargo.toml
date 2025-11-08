@@ -8,6 +8,7 @@ keywords.workspace = true
 authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
+readme = "../../../../README.md"
 
 [lib]
 path = "src/lib.rs"
@@ -48,6 +49,10 @@ tracing-log = { workspace = true }
 tracing-subscriber = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 webbrowser = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_LibraryLoader"] }
+home.workspace = true
 
 [features]
 docker_container = []

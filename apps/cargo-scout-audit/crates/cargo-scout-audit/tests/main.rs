@@ -10,6 +10,7 @@ mod tests {
         run::run_scout,
     };
     use lazy_static::lazy_static;
+    use once_cell::sync::Lazy;
     use std::{
         collections::HashMap,
         fs,
@@ -21,15 +22,21 @@ mod tests {
 
     lazy_static! {
         static ref TEST_DIR: TempDir = TempDir::new().expect("Failed to create temp directory");
-    }
-
-    lazy_static! {
         static ref DETECTORS_DIR: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
             .ancestors()
             .map(|ancestor| ancestor.join("nightly"))
             .find(|candidate| candidate.is_dir())
             .expect("Failed to locate the 'nightly' detectors directory");
     }
+
+    static SCOUT_SOURCE: Lazy<PathBuf> = Lazy::new(|| {
+        let mut ret = std::env::current_dir().unwrap();
+        ret.pop();
+        ret.pop();
+        ret.pop();
+        ret.pop();
+        ret
+    });
 
     fn create_cargo_command() -> Command {
         Command::new("cargo")
@@ -64,6 +71,7 @@ mod tests {
             let scout_opts = Scout {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -87,6 +95,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 exclude: Some("unsafe-unwrap".to_string()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -107,6 +116,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 filter: Some("unsafe-unwrap".to_string()),
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -127,6 +137,7 @@ mod tests {
                 manifest_path: Some(contract_path),
                 local_detectors: Some(DETECTORS_DIR.clone()),
                 list_detectors: true,
+                scout_source: Some(SCOUT_SOURCE.clone()),
                 ..Scout::default()
             };
             let result = run_scout(scout_opts);
@@ -194,6 +205,7 @@ mod tests {
             output_format: vec![format.clone()],
             output_path: Some(PathBuf::from(output_file)),
             local_detectors: Some(DETECTORS_DIR.clone()),
+            scout_source: Some(SCOUT_SOURCE.clone()),
             ..Scout::default()
         };
 
@@ -263,6 +275,7 @@ mod tests {
         let scout_opts = Scout {
             manifest_path: Some(contract_path.to_path_buf()),
             local_detectors: Some(DETECTORS_DIR.clone()),
+            scout_source: Some(SCOUT_SOURCE.clone()),
             ..Scout::default()
         };
         let result = run_scout(scout_opts);

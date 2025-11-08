@@ -382,7 +382,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-scout-audit"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -394,6 +394,7 @@ dependencies = [
  "current_platform",
  "dunce",
  "git2",
+ "home",
  "itertools 0.13.0",
  "lazy_static",
  "libloading",
@@ -415,6 +416,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "webbrowser",
+ "windows",
 ]
 
 [[package]]
@@ -3621,7 +3623,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scout-driver"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "ansi_term",
  "anyhow",

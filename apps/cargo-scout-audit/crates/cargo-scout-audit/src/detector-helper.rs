@@ -6,7 +6,6 @@ use crate::{
 use anyhow::{Result, anyhow};
 use std::path::PathBuf;
 
-#[cfg(not(windows))]
 pub fn get_detectors_info(
     toolchain: &str,
     detectors_paths: &[PathBuf],
