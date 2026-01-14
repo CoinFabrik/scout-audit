@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "dos-unexpected-revert-with-vector"
+name = "dos-unexpected-revert-with-storage"
 version = "0.1.0"
 
 [lib]
