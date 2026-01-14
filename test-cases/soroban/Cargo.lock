@@ -513,21 +513,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "dos-unexpected-revert-with-vector-remediated-1"
+name = "dos-unexpected-revert-with-storage-remediated-1"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
 ]
 
 [[package]]
-name = "dos-unexpected-revert-with-vector-remediated-2"
+name = "dos-unexpected-revert-with-storage-remediated-2"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
 ]
 
 [[package]]
-name = "dos-unexpected-revert-with-vector-vulnerable-1"
+name = "dos-unexpected-revert-with-storage-remediated-3"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "dos-unexpected-revert-with-storage-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "dos-unexpected-revert-with-storage-vulnerable-2"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
