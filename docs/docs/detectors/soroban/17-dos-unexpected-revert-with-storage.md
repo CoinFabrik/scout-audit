@@ -7,15 +7,15 @@
 - Detector:
   [`dos-unexpected-revert-with-storage`](https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dos-unexpected-revert-with-storage)
 - Test Cases:
-  [`dos-unexpected-revert-with-storage-1`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-vector/vulnerable/vulnerable-1)
-  [`dos-unexpected-revert-with-storage-2`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-vector/vulnerable/vulnerable-2)
+  [`dos-unexpected-revert-with-storage-1`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-1)
+  [`dos-unexpected-revert-with-storage-2`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-2)
 
 This issue of DoS through unexpected revert arises when a smart contract does
 not handle storage size errors correctly, and a user can add an excessive number
 of entries, leading to an unexpected revert of transactions by other users and a
 Denial of Service.
 
-## Why it is bad?
+## Why is this bad?
 
 In Soroban smart contracts, a Denial of Service (DoS) issue through unexpected
 reverts can occur if the contract does not properly manage storage limits or
@@ -205,7 +205,7 @@ cause a revert if the storage limit is reached or the data structure becomes too
 large.
 
 The code example can be found
-[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/vulnerable/vulnerable-1).
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-1).
 
 ## Remediated example
 
@@ -261,7 +261,7 @@ and using it to handle new candidates would prevent the issue.
 ```
 
 This remediated code example can be found
-[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/remediated/remediated-2).
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-storage/remediated/remediated-2).
 
 ## How is it detected?
 
