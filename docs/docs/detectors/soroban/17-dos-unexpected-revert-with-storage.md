@@ -190,3 +190,87 @@ impl UnexpectedRevert {
     }
 }
 ```
+
+The smart contract has several functions that allow adding a candidate, getting
+votes for a specific candidate, getting the account ID of the most voted
+candidate, getting the total votes, getting the total number of candidates,
+getting a candidate by index, checking if an account has voted, and voting for a
+candidate.
+
+In this case, we see that a `Vec` is being used to store the array of
+candidates, and a `Map` is used to store votes. Notice how the `candidates`
+array `push` operation and the `votes` map `set` operation have no access
+control or proper storage management in the function `add_candidate()`. This can
+cause a revert if the storage limit is reached or the data structure becomes too
+large.
+
+The code example can be found
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/vulnerable/vulnerable-1).
+
+## Remediated example
+
+This issue can be addressed in different ways.
+
+On the one hand, if the amount of candidates is going to be limited, and only
+authorized users are going to add new candidates, then enforcing this
+authorization would be a sufficient fix to prevent attackers from filling the
+storage and producing a denial of service attack.
+
+```rust
+pub fn add_candidate(env: Env, candidate: Address, caller: Address) -> Result<(), URError> {
+    let mut state = Self::get_state(env.clone());
+     // Require authorization from an admin set at contract initialization.
+    state.admin.require_auth(); 
+    if Self::vote_ended(env.clone()) {
+        return Err(URError::VoteEnded);
+    }
+    if state.already_voted.contains_key(caller.clone()) {
+        return Err(URError::AccountAlreadyVoted); 
+    } else {
+        state.candidates.push_back(candidate.clone());
+        state.votes.set(candidate, 0);
+        Ok(())
+    }
+}
+```
+
+Alternatively, if any user should be authorized to add new candidates, a
+different data structure should be used, one without the limitations of a
+vector. For example, a dictionary can be implemented in Soroban by defining a
+struct for the `Candidate`, accessible through a `DataKey` enum like the one we
+have here. This data structure does not have the storage limitations of vectors,
+and using it to handle new candidates would prevent the issue.
+
+```rust
+ pub fn add_candidate(env: Env, candidate: Address, caller: Address) -> Result<(), URError> {
+      caller.require_auth();
+      let mut state = Self::get_state(env.clone());
+      if Self::vote_ended(env.clone()) {
+          return Err(URError::VoteEnded);
+      }
+      if Self::account_has_voted(env.clone(), caller.clone()) {
+          return Err(URError::AccountAlreadyVoted); 
+      } else {
+          // Replace the vector with a mapping like structure made with a DataKey enum.
+          env.storage().instance().set(&DataKey::Candidate(candidate.clone()), &Candidate{votes: 0});
+          state.total_candidates += 1; 
+          env.storage().instance().set(&DataKey::State, &state);
+          Ok(())
+      }
+}
+```
+
+This remediated code example can be found
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/remediated/remediated-2).
+
+## How is it detected?
+
+Checks if the contract uses **Vector** (`push_back`, `push_front`) or **Map**
+(`set`) operations to increase storage size without calling `require_auth`
+previously.
+
+## References
+
+- [SWC-113](https://swcregistry.io/docs/SWC-113)
+- https://consensys.github.io/smart-contract-best-practices/attacks/denial-of-service/#dos-with-unexpected-revert
+- [Ethernaut: King](https://github.com/OpenZeppelin/ethernaut/blob/master/contracts/src/levels/King.sol)
