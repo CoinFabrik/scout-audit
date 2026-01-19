@@ -20,6 +20,8 @@ impl MissingNewAdminAuthAlias {
         let admin: Address = e.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
         let candidate_admin = new_admin.clone();
-        e.storage().instance().set(&DataKey::Admin, &candidate_admin);
+        e.storage()
+            .instance()
+            .set(&DataKey::Admin, &candidate_admin);
     }
 }
