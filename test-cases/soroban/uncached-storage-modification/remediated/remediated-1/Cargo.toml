@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+name = "uncached-storage-modification-remediated-1"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = "21.7.6"
+
+[dev-dependencies]
+soroban-sdk = { version = "21.7.6", features = ["testutils"] }
