@@ -165,8 +165,6 @@ impl<'a, 'tcx> Visitor<'tcx> for StateVisitor<'a, 'tcx> {
 
     fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
         if let Some(init) = local.init {
-            // Check if initialization is a storage get
-            // recursively peel call chain (unwrap, unwrap_or, expect)
             if let Some(args) = Self::find_storage_get_args(init) {
                 if let Some(key_expr) = args.first() {
                     if let Some(key_id) = self.get_local_var_id(key_expr) {
