@@ -18,7 +18,8 @@ use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ty;
 use rustc_span::{def_id::DefId, Span};
 
-const LINT_MESSAGE: &str = "This storage (vector or map) operation is called without access control";
+const LINT_MESSAGE: &str =
+    "This storage (vector or map) operation is called without access control";
 
 #[expose_lint_info]
 pub static DOS_UNEXPECTED_REVERT_WITH_STORAGE_INFO: LintInfo = LintInfo {
