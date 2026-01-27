@@ -1,6 +1,6 @@
 # Stage 1: Builder
 # Using the latest Rust image to set up the build environment
-FROM rust:1.84 AS builder
+FROM rust:1.92 AS builder
 SHELL ["/bin/bash", "-c"]
 
 # Copy and set permissions for the entrypoint script
@@ -14,6 +14,9 @@ WORKDIR /usr/src/scout-audit/apps/cargo-scout-audit
 RUN cargo install --path crates/cargo-scout-audit --locked
 RUN cargo install dylint-link --locked
 
+# Build scout-driver
+RUN cargo build --release -p scout-driver
+
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/ink
 RUN cargo build --release
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/rust
@@ -25,7 +28,7 @@ RUN cargo build --release
 
 # Stage 2: Final
 # Base image with Rust slim version for the runtime environment
-FROM rust:1.84 AS final
+FROM rust:1.92 AS final
 
 # Install only necessary runtime dependencies
 RUN apt-get update && apt-get install -y libcurl4 libssl-dev pkg-config && \
