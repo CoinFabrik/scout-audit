@@ -1,8 +1,8 @@
 use crate::util::{git::download_git_repo, library::Library};
 use anyhow::{Context, Result};
 use cargo::{
-    GlobalContext,
     core::{Dependency, GitReference, SourceId, Verbosity},
+    GlobalContext,
 };
 use cargo_metadata::{Metadata, MetadataCommand};
 use std::{fs::canonicalize, path::PathBuf};
@@ -23,6 +23,7 @@ pub struct PackageToBuild {
     pub internal_path: Option<PathBuf>,
     pub build_message: String,
     pub build_error_message: String,
+    pub toolchain: Option<String>,
 }
 
 impl PackageToBuild {
@@ -36,6 +37,7 @@ impl PackageToBuild {
             internal_path: None,
             build_message: String::new(),
             build_error_message: String::new(),
+            toolchain: None,
         }
     }
 
@@ -45,6 +47,7 @@ impl PackageToBuild {
             internal_path: None,
             build_message: String::new(),
             build_error_message: String::new(),
+            toolchain: None,
         }
     }
 
@@ -118,9 +121,13 @@ impl PackageToBuild {
             if !self.build_message.is_empty() {
                 crate::util::print::print_info(&self.build_message);
             }
-            let result = crate::util::cargo::call_cargo(&["build", "--release"], true, None)
-                .current_dir(&repo_path)
-                .success();
+            let result = crate::util::cargo::call_cargo(
+                &["build", "--release"],
+                true,
+                self.toolchain.as_deref(),
+            )
+            .current_dir(&repo_path)
+            .success();
             if !self.build_error_message.is_empty() {
                 result.with_context(|| self.build_error_message.clone())
             } else {

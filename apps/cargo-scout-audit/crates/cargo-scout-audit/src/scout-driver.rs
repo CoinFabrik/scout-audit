@@ -4,7 +4,7 @@ use crate::{
     interop::scout::{ScoutInput, ScoutOutput},
     util::build_and_run::PackageToBuild,
 };
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::path::PathBuf;
 
 //#[tracing::instrument(name = "RUN DYLINT", skip_all)]
@@ -27,6 +27,7 @@ pub fn run_dylint(
     };
     pkg.build_message = "Building scout-driver".to_string();
     pkg.build_error_message = "Failed to build scout-driver".to_string();
+    pkg.toolchain = Some(format!("+{}", toolchain.trim_start_matches('+')));
     pkg.internal_path = Some("apps/cargo-scout-audit/crates/scout-driver".into());
     let path = pkg.build_executable(Some("scout-driver"), "scout-driver")?;
 
