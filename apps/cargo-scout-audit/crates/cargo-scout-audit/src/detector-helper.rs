@@ -3,7 +3,7 @@ use crate::{
     interop::helper::{HelperInput, HelperOutput},
     util::{build_and_run::PackageToBuild, detectors_info::LintStore},
 };
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::path::PathBuf;
 
 pub fn get_detectors_info(

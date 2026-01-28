@@ -4,7 +4,7 @@ use crate::{
     interop::scout::{ScoutInput, ScoutOutput},
     util::build_and_run::PackageToBuild,
 };
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::path::PathBuf;
 
 //#[tracing::instrument(name = "RUN DYLINT", skip_all)]

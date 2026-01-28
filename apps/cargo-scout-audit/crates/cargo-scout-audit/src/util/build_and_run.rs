@@ -1,8 +1,8 @@
 use crate::util::{git::download_git_repo, library::Library};
 use anyhow::{Context, Result};
 use cargo::{
-    core::{Dependency, GitReference, SourceId, Verbosity},
     GlobalContext,
+    core::{Dependency, GitReference, SourceId, Verbosity},
 };
 use cargo_metadata::{Metadata, MetadataCommand};
 use std::{fs::canonicalize, path::PathBuf};
