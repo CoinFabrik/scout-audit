@@ -16,7 +16,7 @@ impl MissingNewAdminAuth {
         e.storage().instance().set(&DataKey::Admin, &admin);
     }
 
-    fn foo(x: &Address){
+    fn foo(x: &Address) {
         x.require_auth();
     }
 

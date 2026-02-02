@@ -16,14 +16,14 @@ impl MissingNewAdminAuth {
         e.storage().instance().set(&DataKey::Admin, &admin);
     }
 
-    fn foo(x: &Address){
+    fn foo(x: &Address) {
         x.require_auth();
     }
 
     pub fn set_admin(e: Env, new_admin: Address, b: bool) {
         let admin: Address = e.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
-        if true{
+        if true {
             new_admin.require_auth();
         }
         e.storage().instance().set(&DataKey::Admin, &new_admin);

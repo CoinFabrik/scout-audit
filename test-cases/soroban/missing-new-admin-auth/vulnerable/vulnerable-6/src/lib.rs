@@ -19,7 +19,7 @@ impl MissingNewAdminAuth {
     pub fn set_admin(e: Env, new_admin: Address, b: bool) {
         let admin: Address = e.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
-        if b{
+        if b {
             new_admin.require_auth();
         }
         e.storage().instance().set(&DataKey::Admin, &new_admin);

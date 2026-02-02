@@ -1,20 +1,28 @@
 #![feature(rustc_private)]
 
 extern crate rustc_hir;
+extern crate rustc_index;
+extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+mod mir_auth_flow;
+mod types;
+mod utils;
+
+use clippy_utils::sym;
 use common::{
-    analysis::{self, get_node_type_opt, is_soroban_address, is_soroban_function},
+    analysis::{
+        self, get_expr_hir_id_opt, get_node_type_opt, is_soroban_address, is_soroban_function,
+        FunctionCallVisitor,
+    },
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
-use edit_distance::edit_distance;
 use if_chain::if_chain;
 use rustc_hir::{
     def::Res,
     intravisit::{walk_expr, walk_local, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, HirId, LetStmt, Param, PatKind, QPath,
+    Body, Expr, ExprKind, FnDecl, HirId, LetStmt, PatKind, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{
@@ -22,6 +30,15 @@ use rustc_span::{
     Span, Symbol,
 };
 use std::collections::{HashMap, HashSet};
+
+use crate::{
+    mir_auth_flow::{compute_summary_for_fn, lint_sinks_for_fn, FnSummary},
+    types::{AuthEvent, CallSite, ParamInfo, Sink},
+    utils::{
+        get_vec_slice, is_get_method, is_initialize_fn, is_privileged_name, is_unwrap_method,
+        strip_identity,
+    },
+};
 
 const LINT_MESSAGE: &str = "New admin/owner address must sign before being stored";
 
@@ -42,116 +59,103 @@ dylint_linting::impl_late_lint! {
     MissingNewAdminAuth::default()
 }
 
-#[derive(Clone, Debug)]
-struct ParamInfo {
-    is_address: bool,
-    is_privileged_name: bool,
-}
-
-#[derive(Clone, Debug)]
-struct SinkRecord {
-    span: Span,
-    param_index: Option<usize>,
-}
-
-#[derive(Clone, Debug)]
-struct CallInfo {
-    callee: DefId,
-    arg_param_map: Vec<Option<usize>>,
-}
-
 #[derive(Default)]
 struct MissingNewAdminAuth {
-    checked_functions: HashSet<String>,
-    local_auth: HashMap<DefId, HashSet<usize>>,
-    has_any_auth: HashMap<DefId, bool>,
-    param_infos: HashMap<DefId, Vec<ParamInfo>>,
-    sinks: HashMap<DefId, Vec<SinkRecord>>,
-    call_mappings: HashMap<DefId, Vec<CallInfo>>,
+    checked_functions: HashMap<String, DefId>,
+    // Map functions -> parameters
+    params: HashMap<DefId, Vec<ParamInfo>>,
+    sinks: HashMap<DefId, Vec<Sink>>,
+    auth_events: HashMap<DefId, Vec<AuthEvent>>,
+    function_call_graph: HashMap<DefId, HashSet<DefId>>,
+    call_sites: HashMap<DefId, Vec<CallSite>>,
 }
 
 impl<'tcx> LateLintPass<'tcx> for MissingNewAdminAuth {
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
-        // Only analyze call paths reachable from Soroban contract entrypoints.
-        let entrypoints: HashSet<DefId> = self
-            .param_infos
-            .keys()
-            .copied()
-            .filter(|def_id| is_soroban_function(cx, &self.checked_functions, def_id))
-            .collect();
+        let checked_names: HashSet<String> = self.checked_functions.keys().cloned().collect();
+        self.checked_functions.iter().for_each(|(_, def_id)| {
+            if !is_soroban_function(cx, &checked_names, def_id) {
+                return;
+            }
 
-        let reachable = collect_reachable(&self.call_mappings, &entrypoints);
-        let mut effective_auth = self.local_auth.clone();
-        let mut effective_has_auth = self.has_any_auth.clone();
-        let mut changed = true;
-
-        while changed {
-            changed = false;
-            for (caller, calls) in &self.call_mappings {
-                let caller_auth = effective_auth.get(caller).cloned().unwrap_or_default();
-                let caller_has_auth = effective_has_auth.get(caller).copied().unwrap_or(false);
-                for call in calls {
-                    // Propagate param-level auth
-                    let callee_auth = effective_auth.entry(call.callee).or_default();
-                    for (arg_index, caller_param) in call.arg_param_map.iter().enumerate() {
-                        if let Some(caller_param) = caller_param {
-                            if caller_auth.contains(caller_param) && callee_auth.insert(arg_index) {
-                                changed = true;
-                            }
-                        }
-                    }
-                    // Propagate "has any auth" context: if caller has auth, callee is in update context
-                    if caller_has_auth {
-                        let callee_has_auth =
-                            effective_has_auth.entry(call.callee).or_insert(false);
-                        if !*callee_has_auth {
-                            *callee_has_auth = true;
-                            changed = true;
+            // Collect reachable functions
+            // Build reachable set for this entrypoint (DFS/BFS)
+            let mut reachable: HashSet<DefId> = HashSet::new();
+            let mut stack: Vec<DefId> = vec![*def_id];
+            while let Some(current) = stack.pop() {
+                if !reachable.insert(current) {
+                    continue;
+                }
+                if let Some(callees) = self.function_call_graph.get(&current) {
+                    for callee in callees {
+                        if !reachable.contains(callee) {
+                            stack.push(*callee);
                         }
                     }
                 }
             }
-        }
 
-        for (def_id, sinks) in &self.sinks {
-            if !reachable.contains(def_id) {
-                continue;
+            // On reachable, we have the functions that SHOULD be analyzed.
+            // We can get sinks and authevents on each function, and we know its relationships
+            // through the function_call_graph.
+
+            // Now, we need to understand the safety of those sinks, composing everything we have.
+            // Using the MIR with DataAnalysis
+
+            let mut summaries: HashMap<DefId, FnSummary> = HashMap::new();
+            for def_id in &reachable {
+                if let Some(params) = self.params.get(def_id) {
+                    summaries.insert(*def_id, FnSummary::empty(params.len()));
+                }
             }
-            // Skip if not in update context (no auth required anywhere in the call chain)
-            let is_update_context = effective_has_auth.get(def_id).copied().unwrap_or(false);
-            if !is_update_context {
-                continue;
+
+            // Fixpoint over summaries
+            loop {
+                let mut changed = false;
+
+                for def_id in &reachable {
+                    let Some(params) = self.params.get(def_id) else {
+                        continue;
+                    };
+                    let Some(local_def_id) = def_id.as_local() else {
+                        continue;
+                    };
+
+                    let body = cx.tcx.optimized_mir(local_def_id);
+                    let events = get_vec_slice(&self.auth_events, def_id);
+                    let callsites = get_vec_slice(&self.call_sites, def_id);
+
+                    let new_summary =
+                        compute_summary_for_fn(cx, body, params, events, callsites, &summaries);
+
+                    if summaries.get(def_id) != Some(&new_summary) {
+                        summaries.insert(*def_id, new_summary);
+                        changed = true;
+                    }
+                }
+
+                if !changed {
+                    break;
+                }
             }
-            let authed_params = effective_auth.get(def_id);
-            let param_infos = self.param_infos.get(def_id);
-            for sink in sinks {
-                let Some(param_index) = sink.param_index else {
-                    // No direct trace - skip
+
+            // Final lint pass
+            for def_id in &reachable {
+                let Some(params) = self.params.get(def_id) else {
                     continue;
                 };
-                // Check param is Address AND has privileged name
-                let param_valid = param_infos
-                    .and_then(|infos| infos.get(param_index))
-                    .map(|info| info.is_address && info.is_privileged_name)
-                    .unwrap_or(false);
-                if !param_valid {
+                let Some(local_def_id) = def_id.as_local() else {
                     continue;
-                }
-                let is_authed = authed_params
-                    .map(|set| set.contains(&param_index))
-                    .unwrap_or(false);
-                if !is_authed {
-                    span_lint_and_help(
-                        cx,
-                        MISSING_NEW_ADMIN_AUTH,
-                        sink.span,
-                        LINT_MESSAGE,
-                        None,
-                        "Require the incoming admin/owner address to sign before storing it",
-                    );
-                }
+                };
+
+                let body = cx.tcx.optimized_mir(local_def_id);
+                let events = get_vec_slice(&self.auth_events, def_id);
+                let sinks = get_vec_slice(&self.sinks, def_id);
+                let callsites = get_vec_slice(&self.call_sites, def_id);
+
+                lint_sinks_for_fn(cx, body, params, events, sinks, callsites, &summaries);
             }
-        }
+        });
     }
 
     fn check_fn(
@@ -164,167 +168,259 @@ impl<'tcx> LateLintPass<'tcx> for MissingNewAdminAuth {
         local_def_id: LocalDefId,
     ) {
         let def_id = local_def_id.to_def_id();
-        self.checked_functions.insert(cx.tcx.def_path_str(def_id));
+
+        if is_initialize_fn(cx, def_id) {
+            return;
+        }
+        self.checked_functions
+            .insert(cx.tcx.def_path_str(def_id), def_id);
 
         if span.from_expansion() {
             return;
         }
 
-        let (param_infos, param_hir_ids) = collect_param_infos(cx, body.params);
+        let mut function_call_visitor =
+            FunctionCallVisitor::new(cx, def_id, &mut self.function_call_graph);
+        function_call_visitor.visit_body(body);
 
-        let mut visitor = MissingNewAdminAuthVisitor::new(cx, param_hir_ids);
+        // Store params for the current function
+        let params_info = collect_param_info(cx, body);
+        let mut visitor = MissingNewAdminAuthVisitor::new(cx, params_info.clone());
         visitor.visit_body(body);
 
-        self.local_auth.insert(def_id, visitor.local_auth);
-        self.has_any_auth.insert(def_id, visitor.has_any_auth);
-        self.param_infos.insert(def_id, param_infos);
+        self.call_sites.insert(def_id, visitor.call_sites);
+
+        self.params.insert(def_id, params_info);
         self.sinks.insert(def_id, visitor.sinks);
-        self.call_mappings.insert(def_id, visitor.call_mappings);
+        self.auth_events.insert(def_id, visitor.auth_events.clone());
     }
+}
+
+fn collect_param_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> Vec<ParamInfo> {
+    body.params
+        .iter()
+        .map(|param| {
+            let name = match param.pat.kind {
+                PatKind::Binding(_, _, ident, _) => ident.name,
+                _ => Symbol::intern(""),
+            };
+
+            let is_address = get_node_type_opt(cx, &param.hir_id)
+                .map(|ty| is_soroban_address(cx, ty))
+                .unwrap_or(false);
+
+            ParamInfo {
+                hir_id: param.pat.hir_id,
+                is_address,
+                is_privileged_name: is_privileged_name(name.as_str()),
+            }
+        })
+        .collect()
 }
 
 struct MissingNewAdminAuthVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
-    param_hir_ids: HashMap<HirId, usize>,
-    // Track simple `let x = param` aliases to keep param tracing stable.
-    local_aliases: HashMap<HirId, usize>,
-    local_auth: HashSet<usize>,
-    has_any_auth: bool,
-    sinks: Vec<SinkRecord>,
-    // Map callee args back to caller params for interprocedural propagation.
-    call_mappings: Vec<CallInfo>,
+    // Params within the current function
+    params: Vec<ParamInfo>,
+    // Map hir_id -> param index (for quick lookup)
+    param_by_hir: HashMap<HirId, usize>,
+    // Sinks: when a new admin/owner is set
+    sinks: Vec<Sink>,
+    // Auth events: when a param is required to be authenticated
+    auth_events: Vec<AuthEvent>,
+    // Aliases: when a param is assigned to another param
+    aliases: HashMap<HirId, HirId>,
+    // Current admin locals: params that hold the current admin (from storage.get)
+    current_admin_locals: HashSet<HirId>,
+    call_sites: Vec<CallSite>,
 }
 
 impl<'a, 'tcx> MissingNewAdminAuthVisitor<'a, 'tcx> {
-    fn new(cx: &'a LateContext<'tcx>, param_hir_ids: HashMap<HirId, usize>) -> Self {
+    fn new(cx: &'a LateContext<'tcx>, params: Vec<ParamInfo>) -> Self {
+        let param_by_hir = params
+            .iter()
+            .enumerate()
+            .map(|(i, param)| (param.hir_id, i))
+            .collect();
         Self {
             cx,
-            param_hir_ids,
-            local_aliases: HashMap::new(),
-            local_auth: HashSet::new(),
-            has_any_auth: false,
-            sinks: Vec::new(),
-            call_mappings: Vec::new(),
+            params,
+            param_by_hir,
+            sinks: vec![],
+            auth_events: vec![],
+            aliases: HashMap::new(),
+            current_admin_locals: HashSet::new(),
+            call_sites: vec![],
         }
-    }
-
-    // Resolve an expression back to a parameter index when possible.
-    fn resolve_param_index(&self, expr: &Expr<'_>) -> Option<usize> {
-        match expr.kind {
-            ExprKind::AddrOf(_, _, inner) => self.resolve_param_index(inner),
-            ExprKind::Path(QPath::Resolved(_, path)) => match path.res {
-                Res::Local(hir_id) => self
-                    .param_hir_ids
-                    .get(&hir_id)
-                    .copied()
-                    .or_else(|| self.local_aliases.get(&hir_id).copied()),
-                _ => None,
-            },
-            ExprKind::MethodCall(path_segment, receiver, args, _) => {
-                if path_segment.ident.name == Symbol::intern("clone") && args.is_empty() {
-                    self.resolve_param_index(receiver)
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        }
-    }
-
-    fn record_call(&mut self, callee: DefId, args: impl Iterator<Item = &'tcx Expr<'tcx>>) {
-        if !callee.is_local() {
-            return;
-        }
-        let arg_param_map = args.map(|arg| self.resolve_param_index(arg)).collect();
-        self.call_mappings.push(CallInfo {
-            callee,
-            arg_param_map,
-        });
     }
 }
 
-impl<'tcx> Visitor<'tcx> for MissingNewAdminAuthVisitor<'_, 'tcx> {
+// Resolve an expr to a param HirId (after aliasing + filtering).
+fn resolve_expr_to_param<'tcx>(
+    expr: &'tcx Expr<'tcx>,
+    aliases: &HashMap<HirId, HirId>,
+    param_by_hir: &HashMap<HirId, usize>,
+) -> Option<HirId> {
+    let local_id = get_expr_hir_id_stripped(expr)?;
+    let resolved = resolve_alias(local_id, aliases);
+    param_by_hir.contains_key(&resolved).then_some(resolved)
+}
+
+fn get_expr_hir_id_stripped<'tcx>(expr: &'tcx Expr<'tcx>) -> Option<HirId> {
+    get_expr_hir_id_opt(strip_identity(expr))
+}
+
+fn resolve_alias(hir_id: HirId, aliases: &HashMap<HirId, HirId>) -> HirId {
+    let mut current = hir_id;
+    while let Some(next) = aliases.get(&current).copied() {
+        if next == current {
+            break;
+        }
+        current = next;
+    }
+    current
+}
+
+// Detect `storage.get(...).unwrap()` (or `get` alone) with privileged key
+fn is_privileged_storage_get<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &'tcx Expr<'tcx>,
+) -> Option<(&'tcx Expr<'tcx>, &'tcx Expr<'tcx>)> {
+    let mut expr = strip_identity(expr);
+
+    loop {
+        match &expr.kind {
+            ExprKind::MethodCall(seg, receiver, args, _) => {
+                let name = seg.ident.name;
+
+                if is_unwrap_method(name) || matches!(name, sym::clone | sym::to_owned | sym::into)
+                {
+                    expr = receiver;
+                    continue;
+                }
+
+                if is_get_method(name) {
+                    let key_expr = args.first()?;
+                    let is_storage = get_node_type_opt(cx, &receiver.hir_id).is_some_and(|ty| {
+                        analysis::is_soroban_storage(cx, ty, analysis::SorobanStorageType::Any)
+                    });
+
+                    return (is_storage && is_privileged_key(key_expr))
+                        .then_some((receiver, key_expr));
+                }
+
+                return None;
+            }
+            _ => return None,
+        }
+    }
+}
+
+impl<'a, 'tcx> Visitor<'tcx> for MissingNewAdminAuthVisitor<'a, 'tcx> {
     fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
         if let PatKind::Binding(_, _, _ident, _) = local.pat.kind {
             if let Some(init) = &local.init {
-                if let Some(param_index) = self.resolve_param_index(init) {
-                    self.local_aliases.insert(local.pat.hir_id, param_index);
+                // Save current admin locals, if the init is a storage.get with privileged key
+                if is_privileged_storage_get(self.cx, init).is_some() {
+                    self.current_admin_locals.insert(local.pat.hir_id);
+                }
+
+                // If the init is a local, add it to aliases
+                if let Some(local_id) = get_expr_hir_id_stripped(init) {
+                    let resolved = resolve_alias(local_id, &self.aliases);
+                    if self.param_by_hir.contains_key(&resolved)
+                        || self.current_admin_locals.contains(&resolved)
+                    {
+                        self.aliases.insert(local.pat.hir_id, resolved);
+                    }
                 }
             }
         }
         walk_local(self, local);
     }
 
-    fn visit_expr(&mut self, expr: &'tcx Expr<'_>) {
-        if let ExprKind::MethodCall(path_segment, receiver, args, _) = &expr.kind {
-            let name = path_segment.ident.name;
-            if name == Symbol::intern("require_auth")
-                || name == Symbol::intern("require_auth_for_args")
-            {
-                self.has_any_auth = true;
-                if let Some(param_index) = self.resolve_param_index(receiver) {
-                    self.local_auth.insert(param_index);
-                }
+    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+        if let ExprKind::Call(callee, args) = expr.kind {
+            if let ExprKind::Closure(closure) = callee.kind {
+                let body = self.cx.tcx.hir_body(closure.body);
+                self.visit_body(body);
             }
 
-            let receiver_type = get_node_type_opt(self.cx, &receiver.hir_id);
-            if name == Symbol::intern("set")
-                && receiver_type.is_some_and(|ty| {
+            if let ExprKind::Path(ref qpath) = callee.kind {
+                if let Some(callee_def_id) = self.cx.qpath_res(qpath, callee.hir_id).opt_def_id() {
+                    let arg_to_param = args
+                        .iter()
+                        .map(|arg| {
+                            resolve_expr_to_param(arg, &self.aliases, &self.param_by_hir)
+                                .and_then(|hir_id| self.param_by_hir.get(&hir_id).copied())
+                        })
+                        .collect();
+
+                    self.call_sites.push(CallSite {
+                        callee_def_id,
+                        arg_to_param,
+                        span: expr.span,
+                    });
+                }
+            }
+        }
+
+        if let ExprKind::MethodCall(path_segment, receiver, call_args, _) = expr.kind {
+            let method_name = path_segment.ident.name;
+            let receiver_ty = get_node_type_opt(self.cx, &receiver.hir_id);
+
+            // Find all Sinks (when a new admin/owner is set)
+            // We care about storage.set operations, where the key is privileged.
+            // We should only record Sinks that come from a PARAMETER.
+            if method_name == Symbol::intern("set")
+                && receiver_ty.is_some_and(|ty| {
                     analysis::is_soroban_storage(self.cx, ty, analysis::SorobanStorageType::Any)
                 })
-                && args.len() >= 2
-                && is_privileged_key(&args[0])
+                && call_args.len() >= 2
+                && is_privileged_key(&call_args[0])
             {
-                let param_index = self.resolve_param_index(&args[1]);
-                self.sinks.push(SinkRecord {
-                    span: expr.span,
-                    param_index,
-                });
+                if let Some(param_hir_id) =
+                    resolve_expr_to_param(&call_args[1], &self.aliases, &self.param_by_hir)
+                {
+                    if let Some(param_index) = self.param_by_hir.get(&param_hir_id).copied() {
+                        if self
+                            .params
+                            .get(param_index)
+                            .is_some_and(|p| p.is_address && p.is_privileged_name)
+                        {
+                            self.sinks.push(Sink {
+                                param_index: Some(param_index),
+                                span: expr.span,
+                            });
+                        }
+                    }
+                }
             }
 
-            if let Some(def_id) = self.cx.typeck_results().type_dependent_def_id(expr.hir_id) {
-                let iter = std::iter::once(*receiver).chain(args.iter());
-                self.record_call(def_id, iter);
-            }
-        }
+            // Find all Auth Events (when a param is required to be authenticated)
+            // We care about require_auth and require_auth_for_args operations, where the receiver is an address.
+            // We should record Auth Events that come from both a parameter and locals.
+            if (method_name == Symbol::intern("require_auth")
+                || method_name == Symbol::intern("require_auth_for_args"))
+                && receiver_ty.is_some_and(|ty| analysis::is_soroban_address(self.cx, ty))
+            {
+                if let Some(local_id) = get_expr_hir_id_stripped(receiver) {
+                    let resolved = resolve_alias(local_id, &self.aliases);
+                    let param_index = self.param_by_hir.get(&resolved).copied();
+                    let is_current_admin = self.current_admin_locals.contains(&resolved);
 
-        if let ExprKind::Call(call_expr, args) = &expr.kind {
-            if let ExprKind::Path(ref qpath) = call_expr.kind {
-                if let Some(def_id) = self.cx.qpath_res(qpath, call_expr.hir_id).opt_def_id() {
-                    self.record_call(def_id, args.iter());
+                    if param_index.is_some() || is_current_admin {
+                        self.auth_events.push(AuthEvent {
+                            param_index,
+                            span: expr.span,
+                            is_current_admin,
+                        });
+                    }
                 }
             }
         }
-
         walk_expr(self, expr);
     }
-}
-
-fn collect_param_infos<'tcx>(
-    cx: &LateContext<'tcx>,
-    params: &'tcx [Param<'tcx>],
-) -> (Vec<ParamInfo>, HashMap<HirId, usize>) {
-    let mut param_infos = Vec::new();
-    let mut param_hir_ids = HashMap::new();
-
-    for (index, param) in params.iter().enumerate() {
-        let (name, binding_hir_id) = match param.pat.kind {
-            PatKind::Binding(_, _, ident, _) => (ident.name.as_str().to_string(), param.pat.hir_id),
-            _ => (String::new(), param.pat.hir_id),
-        };
-
-        let is_address =
-            get_node_type_opt(cx, &param.hir_id).is_some_and(|ty| is_soroban_address(cx, ty));
-        let is_privileged_name = is_privileged_name(&name);
-
-        param_hir_ids.insert(binding_hir_id, index);
-        param_infos.push(ParamInfo {
-            is_address,
-            is_privileged_name,
-        });
-    }
-
-    (param_infos, param_hir_ids)
 }
 
 fn is_privileged_key(expr: &Expr<'_>) -> bool {
@@ -343,48 +439,4 @@ fn is_privileged_key(expr: &Expr<'_>) -> bool {
         }
         _ => false,
     }
-}
-
-fn is_privileged_name(name: &str) -> bool {
-    let lower = name.to_ascii_lowercase();
-    let targets = [
-        "admin",
-        "owner",
-        "new_admin",
-        "new_owner",
-        "newadmin",
-        "newowner",
-        "next_admin",
-        "next_owner",
-        "nextadmin",
-        "nextowner",
-        "pending_admin",
-        "pending_owner",
-        "pendingadmin",
-        "pendingowner",
-    ];
-    targets
-        .iter()
-        .any(|target| edit_distance(&lower, target) <= 1)
-}
-
-fn collect_reachable(
-    call_mappings: &HashMap<DefId, Vec<CallInfo>>,
-    entrypoints: &HashSet<DefId>,
-) -> HashSet<DefId> {
-    let mut reachable = HashSet::new();
-    let mut stack: Vec<DefId> = entrypoints.iter().copied().collect();
-
-    while let Some(def_id) = stack.pop() {
-        if !reachable.insert(def_id) {
-            continue;
-        }
-        if let Some(calls) = call_mappings.get(&def_id) {
-            for call in calls {
-                stack.push(call.callee);
-            }
-        }
-    }
-
-    reachable
 }
