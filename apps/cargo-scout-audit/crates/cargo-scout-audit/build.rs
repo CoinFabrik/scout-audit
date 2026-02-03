@@ -92,6 +92,7 @@ fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String>
                 .arg("add")
                 .arg(component)
                 .arg("--toolchain")
+                .arg(toolchain)
                 .status()
                 .map_err(|e| format!("Failed to execute rustup component add: {}", e))?;
 
