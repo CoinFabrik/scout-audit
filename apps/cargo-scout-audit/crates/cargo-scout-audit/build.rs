@@ -15,10 +15,10 @@ fn main() {
             std::process::exit(1);
         }
 
-        // if let Err(e) = ensure_dylint_link(toolchain) {
-        //     println!("cargo:warning={}", e);
-        //     std::process::exit(1);
-        // }
+        if let Err(e) = ensure_dylint_link(toolchain) {
+            println!("cargo:warning={}", e);
+            std::process::exit(1);
+        }
     }
 }
 
@@ -112,6 +112,7 @@ fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
     let toolchain_arg = format!("+{}", toolchain);
 
     let status = Command::new("cargo")
+        .env_remove("RUSTUP_TOOLCHAIN")
         .arg(&toolchain_arg)
         .arg("install")
         .arg("dylint-link")
