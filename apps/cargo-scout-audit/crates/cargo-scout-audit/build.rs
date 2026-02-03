@@ -109,15 +109,15 @@ fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String>
 }
 
 fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
-    let toolchain_arg = format!("+{}", toolchain);
-
-    let status = Command::new("cargo")
+    let status = Command::new("rustup")
         .env_remove("RUSTUP_TOOLCHAIN")
-        .arg(&toolchain_arg)
+        .arg("run")
+        .arg(toolchain)
+        .arg("cargo")
         .arg("install")
         .arg("dylint-link")
         .status()
-        .map_err(|e| format!("Failed to execute cargo install dylint-link: {}", e))?;
+        .map_err(|e| format!("Failed to execute rustup run cargo install dylint-link: {}", e))?;
 
     if !status.success() {
         return Err(format!(
