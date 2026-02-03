@@ -15,10 +15,10 @@ fn main() {
             std::process::exit(1);
         }
 
-        if let Err(e) = ensure_dylint_link(toolchain) {
-            println!("cargo:warning={}", e);
-            std::process::exit(1);
-        }
+        // if let Err(e) = ensure_dylint_link(toolchain) {
+        //     println!("cargo:warning={}", e);
+        //     std::process::exit(1);
+        // }
     }
 }
 
