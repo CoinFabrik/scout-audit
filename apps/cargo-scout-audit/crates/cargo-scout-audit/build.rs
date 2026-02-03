@@ -109,15 +109,16 @@ fn ensure_components(toolchain: &str, components: &[&str]) -> Result<(), String>
 }
 
 fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
-    let status = Command::new("rustup")
+    let cargo_path = toolchain_bin(toolchain, "cargo")?;
+    let rustc_path = toolchain_bin(toolchain, "rustc")?;
+
+    let status = Command::new(cargo_path)
         .env_remove("RUSTUP_TOOLCHAIN")
-        .arg("run")
-        .arg(toolchain)
-        .arg("cargo")
+        .env("RUSTC", rustc_path)
         .arg("install")
         .arg("dylint-link")
         .status()
-        .map_err(|e| format!("Failed to execute rustup run cargo install dylint-link: {}", e))?;
+        .map_err(|e| format!("Failed to execute cargo install dylint-link: {}", e))?;
 
     if !status.success() {
         return Err(format!(
@@ -127,4 +128,29 @@ fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn toolchain_bin(toolchain: &str, bin: &str) -> Result<String, String> {
+    let output = Command::new("rustup")
+        .arg("which")
+        .arg(bin)
+        .arg("--toolchain")
+        .arg(toolchain)
+        .output()
+        .map_err(|e| format!("Failed to execute rustup which {}: {}", bin, e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "rustup which {} failed: {}",
+            bin,
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if path.is_empty() {
+        return Err(format!("rustup which {} returned empty path", bin));
+    }
+
+    Ok(path)
 }
