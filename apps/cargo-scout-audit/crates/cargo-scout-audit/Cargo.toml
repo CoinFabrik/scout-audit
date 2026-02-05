@@ -9,13 +9,10 @@ authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
 description = "Scout is an extensible open-source tool intended to assist Ink! and Soroban smart contract developers and auditors detect common security issues and deviations from best practices."
 readme = "../../../../README.md"
+build = "build.rs"
 
 [lib]
 path = "src/lib.rs"
-
-[[bin]]
-name = "detector-helper"
-path = "src/bin/detector-helper.rs"
 
 [dependencies]
 ansi_term = { workspace = true }

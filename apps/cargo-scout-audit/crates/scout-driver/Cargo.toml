@@ -29,6 +29,10 @@ path = "src/lib.rs"
 name = "scout-driver"
 path = "src/main.rs"
 
+[[bin]]
+name = "detector-helper"
+path = "src/bin/detector-helper.rs"
+
 [features]
 docker_container = []
 
