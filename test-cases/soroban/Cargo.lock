@@ -1850,6 +1850,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "uncached-storage-modification-vulnerable-6"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "uncached-storage-modification-vulnerable-7"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "uncached-storage-modification-vulnerable-8"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"

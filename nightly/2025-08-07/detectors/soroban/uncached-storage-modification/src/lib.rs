@@ -12,8 +12,9 @@ use common::{
     macros::expose_lint_info,
 };
 use rustc_hir::{
-    intravisit::{walk_expr, walk_local, FnKind, Visitor},
-    Body, BorrowKind, Expr, ExprKind, FnDecl, HirId, LetStmt, Mutability, Pat, PatKind,
+    intravisit::{walk_expr, walk_local, walk_pat, FnKind, Visitor},
+    Body, BorrowKind, Expr, ExprKind, FnDecl, HirId, LetStmt, MatchSource, Mutability, Pat,
+    PatKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::Ref;
@@ -99,6 +100,39 @@ impl<'a, 'tcx> Visitor<'tcx> for StateVisitor<'a, 'tcx> {
             return;
         }
 
+        if let ExprKind::Match(match_expr, arms, source) = expr.kind {
+            if source == MatchSource::Normal {
+                self.visit_expr(match_expr);
+
+                let pre_state = self.dirty_state.clone();
+
+                let key_id = Self::find_storage_get_args(match_expr)
+                    .and_then(|args| args.first())
+                    .and_then(|key_expr| self.get_local_var_id(key_expr));
+
+                let mut merged_state = pre_state.clone();
+
+                for arm in arms {
+                    self.dirty_state = pre_state.clone();
+
+                    let (arm_pat, guard_expr) = Self::split_pat_guard(arm.pat);
+                    if let Some(key_id) = key_id {
+                        self.process_pat(arm_pat, key_id);
+                    }
+                    if let Some(guard_expr) = guard_expr {
+                        self.visit_expr(guard_expr);
+                    }
+
+                    self.visit_expr(arm.body);
+                    let state_arm = self.dirty_state.clone();
+                    merged_state = self.merge_states(merged_state, state_arm);
+                }
+
+                self.dirty_state = merged_state;
+                return;
+            }
+        }
+
         match expr.kind {
             ExprKind::MethodCall(path, receiver, args, span) => {
                 let method_name = path.ident.as_str();
@@ -149,6 +183,15 @@ impl<'a, 'tcx> Visitor<'tcx> for StateVisitor<'a, 'tcx> {
                     if self.dirty_state.contains_key(&hir_id) {
                         self.dirty_state
                             .insert(hir_id, CopyState::Modified(expr.span));
+                    }
+                }
+            }
+            ExprKind::Let(let_expr) => {
+                if let Some(args) = Self::find_storage_get_args(let_expr.init) {
+                    if let Some(key_expr) = args.first() {
+                        if let Some(key_id) = self.get_local_var_id(key_expr) {
+                            self.process_pat(let_expr.pat, key_id);
+                        }
                     }
                 }
             }
@@ -253,9 +296,35 @@ impl<'a, 'tcx> StateVisitor<'a, 'tcx> {
     }
 
     fn process_pat(&mut self, pat: &'tcx Pat<'tcx>, key_id: HirId) {
-        if let PatKind::Binding(_, hir_id, _, _) = pat.kind {
-            self.dirty_state.insert(hir_id, CopyState::Clean);
-            self.key_map.insert(hir_id, key_id);
+        struct Binder<'a> {
+            dirty_state: &'a mut HashMap<HirId, CopyState>,
+            key_map: &'a mut HashMap<HirId, HirId>,
+            key_id: HirId,
+        }
+
+        impl<'tcx> Visitor<'tcx> for Binder<'_> {
+            fn visit_pat(&mut self, pat: &'tcx Pat<'tcx>) {
+                if let PatKind::Binding(_, hir_id, _, _) = pat.kind {
+                    self.dirty_state.insert(hir_id, CopyState::Clean);
+                    self.key_map.insert(hir_id, self.key_id);
+                }
+                walk_pat(self, pat);
+            }
+        }
+
+        let mut binder = Binder {
+            dirty_state: &mut self.dirty_state,
+            key_map: &mut self.key_map,
+            key_id,
+        };
+        binder.visit_pat(pat);
+    }
+
+    fn split_pat_guard<'hir>(pat: &'hir Pat<'hir>) -> (&'hir Pat<'hir>, Option<&'hir Expr<'hir>>) {
+        if let PatKind::Guard(inner, guard) = pat.kind {
+            (inner, Some(guard))
+        } else {
+            (pat, None)
         }
     }
 
