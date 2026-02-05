@@ -1,6 +1,6 @@
 # Stage 1: Builder
 # Using the latest Rust image to set up the build environment
-FROM rust:1.84 AS builder
+FROM rust:1.92 AS builder
 SHELL ["/bin/bash", "-c"]
 
 # Copy and set permissions for the entrypoint script
@@ -25,7 +25,7 @@ RUN cargo build --release
 
 # Stage 2: Final
 # Base image with Rust slim version for the runtime environment
-FROM rust:1.84 AS final
+FROM rust:1.92 AS final
 
 # Install only necessary runtime dependencies
 RUN apt-get update && apt-get install -y libcurl4 libssl-dev pkg-config && \
