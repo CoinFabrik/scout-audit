@@ -9,19 +9,11 @@ impl UncachedStorageModificationTuple {
     pub fn tuple_test(env: Env) -> u32 {
         let key = Symbol::new(&env, "key");
 
-        let (mut val, _): (u32, u32) = env
-            .storage()
-            .persistent()
-            .get(&key)
-            .unwrap_or((0, 0));
+        let (mut val, _): (u32, u32) = env.storage().persistent().get(&key).unwrap_or((0, 0));
 
         val += 1;
 
-        let val2: (u32, u32) = env
-            .storage()
-            .persistent()
-            .get(&key)
-            .unwrap_or((0, 0));
+        let val2: (u32, u32) = env.storage().persistent().get(&key).unwrap_or((0, 0));
 
         val2.0
     }
