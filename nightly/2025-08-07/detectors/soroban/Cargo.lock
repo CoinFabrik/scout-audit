@@ -573,6 +573,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "missing-new-admin-auth"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_internal",
+ "dylint_linting",
+ "edit-distance",
+ "if_chain",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
