@@ -62,7 +62,7 @@ dylint_linting::impl_late_lint! {
 #[derive(Default)]
 struct MissingNewAdminAuth {
     checked_functions: HashMap<String, DefId>,
-    // Map functions -> parameters
+    /// Maps function DefIds to their parameter information
     params: HashMap<DefId, Vec<ParamInfo>>,
     sinks: HashMap<DefId, Vec<Sink>>,
     auth_events: HashMap<DefId, Vec<AuthEvent>>,
@@ -78,8 +78,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingNewAdminAuth {
                 return;
             }
 
-            // Collect reachable functions
-            // Build reachable set for this entrypoint (DFS/BFS)
+            // Build the set of reachable functions from this entrypoint using DFS
             let mut reachable: HashSet<DefId> = HashSet::new();
             let mut stack: Vec<DefId> = vec![*def_id];
             while let Some(current) = stack.pop() {
@@ -95,12 +94,8 @@ impl<'tcx> LateLintPass<'tcx> for MissingNewAdminAuth {
                 }
             }
 
-            // On reachable, we have the functions that SHOULD be analyzed.
-            // We can get sinks and authevents on each function, and we know its relationships
-            // through the function_call_graph.
-
-            // Now, we need to understand the safety of those sinks, composing everything we have.
-            // Using the MIR with DataAnalysis
+            // `reachable` now contains all functions to analyze.
+            // Use MIR-based data flow analysis to determine which sinks are properly authorized.
 
             let mut summaries: HashMap<DefId, FnSummary> = HashMap::new();
             for def_id in &reachable {
@@ -220,17 +215,17 @@ fn collect_param_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> V
 
 struct MissingNewAdminAuthVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
-    // Params within the current function
+    /// Parameters of the current function being analyzed
     params: Vec<ParamInfo>,
-    // Map hir_id -> param index (for quick lookup)
+    /// Maps HirId to parameter index for quick lookup
     param_by_hir: HashMap<HirId, usize>,
-    // Sinks: when a new admin/owner is set
+    /// Storage write operations where a privileged address is being set
     sinks: Vec<Sink>,
-    // Auth events: when a param is required to be authenticated
+    /// Locations where `require_auth` is called on an address
     auth_events: Vec<AuthEvent>,
-    // Aliases: when a param is assigned to another param
+    /// Tracks variable assignments to resolve data flow (e.g., `let x = param`)
     aliases: HashMap<HirId, HirId>,
-    // Current admin locals: params that hold the current admin (from storage.get)
+    /// Locals that hold the current admin address retrieved from storage
     current_admin_locals: HashSet<HirId>,
     call_sites: Vec<CallSite>,
 }
@@ -255,7 +250,7 @@ impl<'a, 'tcx> MissingNewAdminAuthVisitor<'a, 'tcx> {
     }
 }
 
-// Resolve an expr to a param HirId (after aliasing + filtering).
+/// Resolves an expression to its underlying parameter HirId, following aliases.
 fn resolve_expr_to_param<'tcx>(
     expr: &'tcx Expr<'tcx>,
     aliases: &HashMap<HirId, HirId>,
@@ -281,7 +276,7 @@ fn resolve_alias(hir_id: HirId, aliases: &HashMap<HirId, HirId>) -> HirId {
     current
 }
 
-// Detect `storage.get(...).unwrap()` (or `get` alone) with privileged key
+/// Detects storage retrieval patterns like `storage.get(&Key::Admin).unwrap()` with privileged keys.
 fn is_privileged_storage_get<'tcx>(
     cx: &LateContext<'tcx>,
     expr: &'tcx Expr<'tcx>,
@@ -320,12 +315,12 @@ impl<'a, 'tcx> Visitor<'tcx> for MissingNewAdminAuthVisitor<'a, 'tcx> {
     fn visit_local(&mut self, local: &'tcx LetStmt<'tcx>) {
         if let PatKind::Binding(_, _, _ident, _) = local.pat.kind {
             if let Some(init) = &local.init {
-                // Save current admin locals, if the init is a storage.get with privileged key
+                // Track locals initialized with the current admin from storage
                 if is_privileged_storage_get(self.cx, init).is_some() {
                     self.current_admin_locals.insert(local.pat.hir_id);
                 }
 
-                // If the init is a local, add it to aliases
+                // Track assignments from parameters or admin locals for data flow analysis
                 if let Some(local_id) = get_expr_hir_id_stripped(init) {
                     let resolved = resolve_alias(local_id, &self.aliases);
                     if self.param_by_hir.contains_key(&resolved)
@@ -369,9 +364,7 @@ impl<'a, 'tcx> Visitor<'tcx> for MissingNewAdminAuthVisitor<'a, 'tcx> {
             let method_name = path_segment.ident.name;
             let receiver_ty = get_node_type_opt(self.cx, &receiver.hir_id);
 
-            // Find all Sinks (when a new admin/owner is set)
-            // We care about storage.set operations, where the key is privileged.
-            // We should only record Sinks that come from a PARAMETER.
+            // Detect sinks: `storage.set(&Key::Admin, new_admin)` where new_admin is a parameter
             if method_name == Symbol::intern("set")
                 && receiver_ty.is_some_and(|ty| {
                     analysis::is_soroban_storage(self.cx, ty, analysis::SorobanStorageType::Any)
@@ -397,9 +390,7 @@ impl<'a, 'tcx> Visitor<'tcx> for MissingNewAdminAuthVisitor<'a, 'tcx> {
                 }
             }
 
-            // Find all Auth Events (when a param is required to be authenticated)
-            // We care about require_auth and require_auth_for_args operations, where the receiver is an address.
-            // We should record Auth Events that come from both a parameter and locals.
+            // Detect auth events: `address.require_auth()` on parameters or current admin locals
             if (method_name == Symbol::intern("require_auth")
                 || method_name == Symbol::intern("require_auth_for_args"))
                 && receiver_ty.is_some_and(|ty| analysis::is_soroban_address(self.cx, ty))

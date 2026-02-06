@@ -5,12 +5,7 @@ use rustc_lint::LateContext;
 use rustc_span::Symbol;
 use std::{collections::HashMap, hash::Hash};
 
-const STORAGE_GET_METHODS: [Symbol; 2] = [
-    sym::get,
-    // Symbol::intern("try_get"),
-    sym::get_unchecked,
-    // Symbol::intern("try_get_unchecked"),
-];
+const STORAGE_GET_METHODS: [Symbol; 2] = [sym::get, sym::get_unchecked];
 const UNWRAP_METHODS: [Symbol; 5] = [
     sym::unwrap,
     sym::expect,
