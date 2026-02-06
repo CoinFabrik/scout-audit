@@ -193,7 +193,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dos-unexpected-revert-with-vector"
+name = "dos-unexpected-revert-with-storage"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",
@@ -570,6 +570,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2d80299ef12ff69b16a84bb182e3b9df68b5a91574d3d4fa6e41b65deec4df1"
 dependencies = [
  "adler2",
+]
+
+[[package]]
+name = "missing-new-admin-auth"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_internal",
+ "dylint_linting",
+ "edit-distance",
+ "if_chain",
 ]
 
 [[package]]
@@ -977,6 +989,17 @@ name = "toml_writer"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df8b2b54733674ad286d16267dcfc7a71ed5c776e4ac7aa3c3e2561f7c637bf2"
+
+[[package]]
+name = "uncached-storage-modification"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_internal",
+ "dylint_linting",
+ "if_chain",
+]
 
 [[package]]
 name = "unicode-ident"
