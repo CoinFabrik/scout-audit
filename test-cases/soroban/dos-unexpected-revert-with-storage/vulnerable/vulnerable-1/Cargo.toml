@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "dos-unexpected-revert-with-vector-vulnerable-1"
+name = "dos-unexpected-revert-with-storage-vulnerable-1"
 version = "0.1.0"
 
 [lib]

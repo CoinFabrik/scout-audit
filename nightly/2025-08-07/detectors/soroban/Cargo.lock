@@ -193,7 +193,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dos-unexpected-revert-with-vector"
+name = "dos-unexpected-revert-with-storage"
 version = "0.1.0"
 dependencies = [
  "clippy_utils",

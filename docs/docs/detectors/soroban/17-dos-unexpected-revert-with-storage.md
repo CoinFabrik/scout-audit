@@ -1,22 +1,36 @@
-# DoS unexpected revert with vector
+# DoS unexpected revert with storage
 
-## Description 
+## Description
 
 - Category: `Authorization`
 - Severity: `Critical`
-- Detector: [`dos-unexpected-revert-with-vector`](https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dos-unexpected-revert-with-vector)
-- Test Cases: [`dos-unexpected-revert-with-vector-1`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-vector/dos-unexpected-revert-with-vector-1) [`dos-unexpected-revert-with-vector-2`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-vector/dos-unexpected-revert-with-vector-2) 
+- Detector:
+  [`dos-unexpected-revert-with-storage`](https://github.com/CoinFabrik/scout-soroban/tree/main/detectors/dos-unexpected-revert-with-storage)
+- Test Cases:
+  [`dos-unexpected-revert-with-storage-1`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-1)
+  [`dos-unexpected-revert-with-storage-2`](https://github.com/CoinFabrik/scout-soroban/tree/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-2)
 
-This issue of DoS through unexpected revert arises when a smart contract does not handle storage size errors correctly, and a user can add an excessive number of entries, leading to an unexpected revert of transactions by other users and a Denial of Service. 
+This issue of DoS through unexpected revert arises when a smart contract does
+not handle storage size errors correctly, and a user can add an excessive number
+of entries, leading to an unexpected revert of transactions by other users and a
+Denial of Service.
 
-## Why it is bad?
+## Why is this bad?
 
-In Soroban smart contracts, a Denial of Service (DoS) issue through unexpected reverts can occur if the contract does not properly manage storage limits or handle errors when the storage capacity is exceeded. If a user adds an excessive number of entries, it could trigger a revert, causing subsequent transactions by other users to fail unexpectedly, leading to a potential Denial of Service.
+In Soroban smart contracts, a Denial of Service (DoS) issue through unexpected
+reverts can occur if the contract does not properly manage storage limits or
+handle errors when the storage capacity is exceeded. If a user adds an excessive
+number of entries (to a `Vec` or `Map`), it could trigger a revert, causing
+subsequent transactions by other users to fail unexpectedly, leading to a
+potential Denial of Service.
 
+## Issue example
 
-## Issue example 
-
-The smart contract we developed for his example allows users to vote for one of different candidates. The smart contract contains a struct named `UnexpectedRevert` that stores the total number of votes, a list of candidates, their votes, and whether an account has voted. It also stores information about the most voted candidate and when the vote will end.
+The smart contract we developed for this example allows users to vote for one of
+different candidates. The smart contract contains a struct named
+`UnexpectedRevert` that stores the total number of votes, a list of candidates,
+their votes, and whether an account has voted. It also stores information about
+the most voted candidate and when the vote will end.
 
 Consider the following `Soroban` contract:
 
@@ -89,7 +103,9 @@ impl UnexpectedRevert {
         if state.already_voted.contains_key(caller.clone()) {
             Err(URError::AccountAlreadyVoted)
         } else {
+            // VULNERABLE: Vec push without authorization
             state.candidates.push_back(candidate.clone());
+            // VULNERABLE: Map set without authorization
             state.votes.set(candidate, 0);
             Ok(())
         }
@@ -174,27 +190,36 @@ impl UnexpectedRevert {
     }
 }
 ```
+
 The smart contract has several functions that allow adding a candidate, getting
 votes for a specific candidate, getting the account ID of the most voted
 candidate, getting the total votes, getting the total number of candidates,
-getting a candidate by index, checking if an account has voted, and voting for
-a candidate.
+getting a candidate by index, checking if an account has voted, and voting for a
+candidate.
 
-In this case, we see that a vector is being used to store the array of candidates for an election.
-Notice how the candidates array push operation has no access control or proper storage management in the function `add_candidate()`, which can cause a revert if the array is full.
+In this case, we see that a `Vec` is being used to store the array of
+candidates, and a `Map` is used to store votes. Notice how the `candidates`
+array `push` operation and the `votes` map `set` operation have no access
+control or proper storage management in the function `add_candidate()`. This can
+cause a revert if the storage limit is reached or the data structure becomes too
+large.
 
-The code example can be found [here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/dos-unexpected-revert-with-vector-1/vulnerable-example).
+The code example can be found
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-storage/vulnerable/vulnerable-1).
 
 ## Remediated example
 
-This issue can be addressed in different ways. 
+This issue can be addressed in different ways.
 
-On the one hand, if the amount of candidates is going to be limited, and only authorized users are going to add new candidates, then enforcing this authorization would be a sufficient fix to prevent attackers from filling the array and producing a denial of service attack.
+On the one hand, if the amount of candidates is going to be limited, and only
+authorized users are going to add new candidates, then enforcing this
+authorization would be a sufficient fix to prevent attackers from filling the
+storage and producing a denial of service attack.
 
 ```rust
 pub fn add_candidate(env: Env, candidate: Address, caller: Address) -> Result<(), URError> {
     let mut state = Self::get_state(env.clone());
-     // Require authorization from an admin set at contract initalization.
+     // Require authorization from an admin set at contract initialization.
     state.admin.require_auth(); 
     if Self::vote_ended(env.clone()) {
         return Err(URError::VoteEnded);
@@ -209,7 +234,12 @@ pub fn add_candidate(env: Env, candidate: Address, caller: Address) -> Result<()
 }
 ```
 
-Alternatively, if any user should be authorized to add new candidates, a different data structure should be used, one without the limitations of a vector. For example, a dictionary can be implemented in Soroban by defining a struct for the `Candidate`, accessible through a `DataKey` enum like the one we have here. This data structure does not have the storage limitations of vectors, and using it to handle new candidates would prevent the issue.
+Alternatively, if any user should be authorized to add new candidates, a
+different data structure should be used, one without the limitations of a
+vector. For example, a dictionary can be implemented in Soroban by defining a
+struct for the `Candidate`, accessible through a `DataKey` enum like the one we
+have here. This data structure does not have the storage limitations of vectors,
+and using it to handle new candidates would prevent the issue.
 
 ```rust
  pub fn add_candidate(env: Env, candidate: Address, caller: Address) -> Result<(), URError> {
@@ -221,7 +251,7 @@ Alternatively, if any user should be authorized to add new candidates, a differe
       if Self::account_has_voted(env.clone(), caller.clone()) {
           return Err(URError::AccountAlreadyVoted); 
       } else {
-          // Replace the Vector with a mapping like structure made with a DataKey enum.
+          // Replace the vector with a mapping like structure made with a DataKey enum.
           env.storage().instance().set(&DataKey::Candidate(candidate.clone()), &Candidate{votes: 0});
           state.total_candidates += 1; 
           env.storage().instance().set(&DataKey::State, &state);
@@ -230,11 +260,14 @@ Alternatively, if any user should be authorized to add new candidates, a differe
 }
 ```
 
-This remediated code example can be found [here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-vector/dos-unexpected-revert-with-vector-2/remediated-example).
+This remediated code example can be found
+[here](https://github.com/CoinFabrik/scout-soroban/blob/main/test-cases/dos-unexpected-revert-with-storage/remediated/remediated-2).
 
 ## How is it detected?
 
-Checks if the contract uses the vec type without using a require auth previously.
+Checks if the contract uses **Vector** (`push_back`, `push_front`) or **Map**
+(`set`) operations to increase storage size without calling `require_auth`
+previously.
 
 ## References
 
