@@ -38,6 +38,30 @@ impl BlockChain {
         }
     }
 
+    fn parse_nightly_toolchain(active_toolchain: &str) -> Option<String> {
+        let mut parts = active_toolchain.split('-');
+        if parts.next()? != "nightly" {
+            return None;
+        }
+
+        let year = parts.next()?;
+        let month = parts.next()?;
+        let day = parts.next()?;
+
+        let is_digits = |value: &str| value.chars().all(|c| c.is_ascii_digit());
+        if year.len() != 4
+            || month.len() != 2
+            || day.len() != 2
+            || !is_digits(year)
+            || !is_digits(month)
+            || !is_digits(day)
+        {
+            return None;
+        }
+
+        Some(format!("nightly-{year}-{month}-{day}"))
+    }
+
     fn get_project_toolchain(metadata: &Metadata) -> Result<Option<String>> {
         let output = Command::new("rustup")
             .current_dir(&metadata.workspace_root)
@@ -50,21 +74,19 @@ impl BlockChain {
         }
 
         let output_str = String::from_utf8_lossy(&output.stdout);
-        // The output format is like "nightly-2025-08-07-aarch64-apple-darwin (default)"
-        // We only want the nightly-YYYY-MM-DD part
+        // Example output: "nightly-2025-08-07-x86_64-unknown-linux-gnu (default)"
+        // We only want the nightly-YYYY-MM-DD part, and we ignore undated nightlies.
         let toolchain = output_str
             .split_whitespace()
             .next()
-            .and_then(|s| s.split('-').take(4).collect::<Vec<_>>().join("-").into());
+            .and_then(Self::parse_nightly_toolchain);
 
         Ok(toolchain)
     }
 
     pub fn get_toolchain(&self, metadata: &Metadata) -> Result<String> {
         // First try to get the project's active toolchain
-        if let Some(toolchain) = Self::get_project_toolchain(metadata)?
-            && toolchain.starts_with("nightly-")
-        {
+        if let Some(toolchain) = Self::get_project_toolchain(metadata)? {
             return Ok(toolchain);
         }
 
@@ -115,6 +137,36 @@ impl BlockChain {
 pub struct Cli {
     #[clap(subcommand)]
     pub subcmd: CargoSubCommand,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BlockChain;
+
+    #[test]
+    fn parses_dated_nightly_with_target_triple() {
+        let toolchain =
+            BlockChain::parse_nightly_toolchain("nightly-2025-08-07-x86_64-unknown-linux-gnu");
+        assert_eq!(toolchain.as_deref(), Some("nightly-2025-08-07"));
+    }
+
+    #[test]
+    fn parses_dated_nightly_without_target_triple() {
+        let toolchain = BlockChain::parse_nightly_toolchain("nightly-2025-08-07");
+        assert_eq!(toolchain.as_deref(), Some("nightly-2025-08-07"));
+    }
+
+    #[test]
+    fn rejects_undated_nightly() {
+        let toolchain = BlockChain::parse_nightly_toolchain("nightly-x86_64-unknown-linux-gnu");
+        assert!(toolchain.is_none());
+    }
+
+    #[test]
+    fn rejects_non_nightly() {
+        let toolchain = BlockChain::parse_nightly_toolchain("1.89-x86_64-unknown-linux-gnu");
+        assert!(toolchain.is_none());
+    }
 }
 
 #[derive(Error, Debug)]
