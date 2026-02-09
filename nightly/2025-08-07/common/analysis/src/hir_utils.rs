@@ -6,6 +6,7 @@ use rustc_hir::{def::Res, Expr, ExprKind, HirId, QPath, TyKind};
 
 pub fn get_expr_hir_id_opt(expr: &Expr<'_>) -> Option<HirId> {
     match &expr.kind {
+        ExprKind::AddrOf(_, _, expr) => get_expr_hir_id_opt(expr),
         ExprKind::Path(qpath) => match qpath {
             QPath::Resolved(_, path) => match path.res {
                 Res::Local(id) => Some(id),

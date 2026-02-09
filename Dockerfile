@@ -28,8 +28,11 @@ RUN cargo build --release
 FROM rust:1.92 AS final
 
 # Install only necessary runtime dependencies
-RUN apt-get update && apt-get install -y libcurl4 libssl-dev pkg-config && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    libcurl4 libssl-dev pkg-config \
+    protobuf-compiler \
+    clang libclang-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the .rustup directory from the builder stage
 COPY --from=builder /usr/local/rustup /usr/local/rustup
