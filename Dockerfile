@@ -13,6 +13,7 @@ COPY . /usr/src/scout-audit
 WORKDIR /usr/src/scout-audit/apps/cargo-scout-audit
 RUN cargo install --path crates/cargo-scout-audit --locked
 RUN cargo install dylint-link --locked
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2025-08-07
 
 WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/ink
 RUN cargo build --release
