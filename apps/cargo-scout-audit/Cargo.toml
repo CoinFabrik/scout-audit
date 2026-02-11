@@ -4,21 +4,21 @@ members = ["crates/cargo-scout-audit", "crates/scout-driver"]
 resolver = "2"
 
 [workspace.package]
-authors = [
-    "Agustin Aon <agustin.aon@coinfabrik.com>",
-    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
-    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
-    "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
-    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
-    "Federico Pinho <federico.pinho@coinfabrik.com>",
-    "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
-    "Víctor M. González <victor.gonzalez@coinfabrik.com>",
-]
 keywords = ["auditor", "ink", "security", "smart-contracts", "soroban"]
 license = "MIT"
 readme = "../../README.md"
 repository = "https://github.com/coinfabrik/scout-audit"
 version = "0.3.15"
+authors = [
+    "Agustin Aon <agustin.aon@coinfabrik.com>",
+    "Arturo Beccar-Varela <arturo.beccar@coinfabrik.com>",
+    "José García Crosta <jose.garcia.crosta@coinfabrik.com>",
+    "Víctor M. González <victor.gonzalez@coinfabrik.com>",
+    "Facundo Lerena <facundo.lerena@coinfabrik.com>",
+    "Agustin Losiggio <agustin.losiggio@coinfabrik.com>",
+    "Federico Pinho <federico.pinho@coinfabrik.com>",
+    "Ariel Waissbein <ariel.waissbein@coinfabrik.com>",
+]
 
 [workspace.dependencies]
 ansi_term = "0.12.1"
