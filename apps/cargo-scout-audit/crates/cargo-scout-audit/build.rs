@@ -116,6 +116,7 @@ fn ensure_dylint_link(toolchain: &str) -> Result<(), String> {
         .env_remove("RUSTUP_TOOLCHAIN")
         .env("RUSTC", rustc_path)
         .arg("install")
+        .arg("--force")
         .arg("dylint-link")
         .status()
         .map_err(|e| format!("Failed to execute cargo install dylint-link: {}", e))?;
