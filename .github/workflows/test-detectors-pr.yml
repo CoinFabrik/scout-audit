@@ -68,7 +68,7 @@ jobs:
 
       - name: Install cargo-scout-audit
         working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
-        run: cargo install --path .
+        run: cargo install --path . --locked
 
       - name: Determine build status and write to file
         run: echo "${{ job.status }}" > status-${{ matrix.os }}.txt
