@@ -379,6 +379,62 @@ dependencies = [
 ]
 
 [[package]]
+name = "delegated-spending-from-auth-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-remediated-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-remediated-3"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-remediated-4"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-vulnerable-3"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "delegated-spending-from-auth-vulnerable-4"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "dependency-contract"
 version = "0.1.0"
 dependencies = [
