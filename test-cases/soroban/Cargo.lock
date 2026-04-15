@@ -883,6 +883,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "init-instead-of-constructor-remediated-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "init-instead-of-constructor-vulnerable-1"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "insufficiently-random-values-remediated-1"
 version = "0.1.0"
 dependencies = [
