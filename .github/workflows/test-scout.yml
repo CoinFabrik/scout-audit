@@ -33,7 +33,7 @@ jobs:
 
       - name: Install local scout
         working-directory: apps/cargo-scout-audit/crates/cargo-scout-audit
-        run: cargo install --path .
+        run: cargo install --path . --locked
 
       - name: Install clippy-sarif and cargo-nextest
         run: cargo install clippy-sarif cargo-nextest --locked
