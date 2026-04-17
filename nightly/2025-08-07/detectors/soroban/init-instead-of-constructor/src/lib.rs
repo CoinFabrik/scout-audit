@@ -2,8 +2,12 @@
 
 extern crate rustc_hir;
 extern crate rustc_span;
+extern crate rustc_errors;
 
-use clippy_utils::diagnostics::span_lint;
+use clippy_utils::diagnostics::{
+    span_lint,
+    span_lint_and_sugg,
+};
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
@@ -11,6 +15,7 @@ use common::{
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 use std::vec;
+use rustc_errors::Applicability;
 
 const LINT_MESSAGE: &str = "Use the constructor pattern to initialize the contract";
 
@@ -61,11 +66,26 @@ impl<'tcx> LateLintPass<'tcx> for InitInsteadOfConstructor {
             return;
         }
 
+        let Some(name_span) = cx.tcx.def_ident_span(def_id) else {
+            span_lint(cx, INIT_INSTEAD_OF_CONSTRUCTOR, span, LINT_MESSAGE);
+            return;
+        };
+
+        span_lint_and_sugg(
+            cx,
+            INIT_INSTEAD_OF_CONSTRUCTOR,
+            name_span,
+            LINT_MESSAGE,
+            "rename this function to",
+            "__constructor".into(),
+            Applicability::MaybeIncorrect,
+        );
+
         //TODO: This can be improved by getting the span of the function name
         //      and suggesting replacing with __constructor. Unfortunately this
         //      cannot be done at this time because FnKind doesn't expose that
         //      span. We can look into this again after updating the nightly
         //      version.
-        span_lint(cx, INIT_INSTEAD_OF_CONSTRUCTOR, span, LINT_MESSAGE);
+        //span_lint(cx, INIT_INSTEAD_OF_CONSTRUCTOR, span, LINT_MESSAGE);
     }
 }
