@@ -1,21 +1,18 @@
 #![feature(rustc_private)]
 
+extern crate rustc_errors;
 extern crate rustc_hir;
 extern crate rustc_span;
-extern crate rustc_errors;
 
-use clippy_utils::diagnostics::{
-    span_lint,
-    span_lint_and_sugg,
-};
+use clippy_utils::diagnostics::{span_lint, span_lint_and_sugg};
 use common::{
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
+use rustc_errors::Applicability;
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 use std::vec;
-use rustc_errors::Applicability;
 
 const LINT_MESSAGE: &str = "Use the constructor pattern to initialize the contract";
 
