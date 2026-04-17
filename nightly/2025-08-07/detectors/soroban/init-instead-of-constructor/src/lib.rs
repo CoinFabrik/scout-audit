@@ -77,12 +77,5 @@ impl<'tcx> LateLintPass<'tcx> for InitInsteadOfConstructor {
             "__constructor".into(),
             Applicability::MaybeIncorrect,
         );
-
-        //TODO: This can be improved by getting the span of the function name
-        //      and suggesting replacing with __constructor. Unfortunately this
-        //      cannot be done at this time because FnKind doesn't expose that
-        //      span. We can look into this again after updating the nightly
-        //      version.
-        //span_lint(cx, INIT_INSTEAD_OF_CONSTRUCTOR, span, LINT_MESSAGE);
     }
 }
