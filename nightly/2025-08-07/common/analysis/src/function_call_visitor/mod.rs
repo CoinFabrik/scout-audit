@@ -4,7 +4,6 @@ extern crate rustc_span;
 
 use std::collections::{HashMap, HashSet};
 
-use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr, ExprKind,
@@ -57,21 +56,25 @@ impl<'a, 'tcx> Visitor<'tcx> for FunctionCallVisitor<'a, 'tcx> {
     /// # Parameters
     /// - `expr`: The expression being visited.
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
-        // If the expression is a function call, record it in the call graph.
-        if_chain! {
-            if let ExprKind::Call(call_expr, _) = expr.kind; // Check if the expression is a call.
-            if let ExprKind::Path(ref qpath) = call_expr.kind; // Ensure the call is a path expression.
-            if let Some(def_id) = self.cx.qpath_res(qpath, call_expr.hir_id).opt_def_id(); // Resolve the path to a DefId.
-            then {
-                // Add the called function's DefId to the current function's entry in the call graph.
-                self.call_graph
-                    .entry(self.current_fn)
-                    .or_default()
-                    .insert(def_id);
-            }
+        if let Some(def_id) = resolve_call_def_id(self.cx, expr) {
+            self.call_graph
+                .entry(self.current_fn)
+                .or_default()
+                .insert(def_id);
         }
 
         // Continue walking through the expression tree.
         walk_expr(self, expr);
+    }
+}
+
+fn resolve_call_def_id(cx: &LateContext<'_>, expr: &Expr<'_>) -> Option<DefId> {
+    match expr.kind {
+        ExprKind::Call(call_expr, _) => match call_expr.kind {
+            ExprKind::Path(ref qpath) => cx.qpath_res(qpath, call_expr.hir_id).opt_def_id(),
+            _ => None,
+        },
+        ExprKind::MethodCall(..) => cx.typeck_results().type_dependent_def_id(expr.hir_id),
+        _ => None,
     }
 }

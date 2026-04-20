@@ -177,29 +177,16 @@ fn compute_recursive_sccs(
     reachable: &HashSet<DefId>,
     graph: &HashMap<DefId, HashSet<DefId>>,
 ) -> Vec<Vec<DefId>> {
-    let mut index = 0usize;
-    let mut stack = Vec::new();
-    let mut on_stack = HashSet::new();
-    let mut indexes = HashMap::new();
-    let mut lowlinks = HashMap::new();
-    let mut components = Vec::new();
+    let mut tarjan = TarjanState::new(graph);
 
     for node in reachable {
-        if !indexes.contains_key(node) {
-            strong_connect(
-                *node,
-                graph,
-                &mut index,
-                &mut stack,
-                &mut on_stack,
-                &mut indexes,
-                &mut lowlinks,
-                &mut components,
-            );
+        if !tarjan.indexes.contains_key(node) {
+            tarjan.strong_connect(*node);
         }
     }
 
-    components
+    tarjan
+        .components
         .into_iter()
         .filter(|component| {
             if component.len() > 1 {
@@ -214,49 +201,87 @@ fn compute_recursive_sccs(
         .collect()
 }
 
-fn strong_connect(
-    node: DefId,
-    graph: &HashMap<DefId, HashSet<DefId>>,
-    index: &mut usize,
-    stack: &mut Vec<DefId>,
-    on_stack: &mut HashSet<DefId>,
-    indexes: &mut HashMap<DefId, usize>,
-    lowlinks: &mut HashMap<DefId, usize>,
-    components: &mut Vec<Vec<DefId>>,
-) {
-    indexes.insert(node, *index);
-    lowlinks.insert(node, *index);
-    *index += 1;
-    stack.push(node);
-    on_stack.insert(node);
+struct TarjanState<'a> {
+    graph: &'a HashMap<DefId, HashSet<DefId>>,
+    index: usize,
+    stack: Vec<DefId>,
+    on_stack: HashSet<DefId>,
+    indexes: HashMap<DefId, usize>,
+    lowlinks: HashMap<DefId, usize>,
+    components: Vec<Vec<DefId>>,
+}
 
-    if let Some(children) = graph.get(&node) {
-        for child in children {
-            if !indexes.contains_key(child) {
-                strong_connect(
-                    *child, graph, index, stack, on_stack, indexes, lowlinks, components,
-                );
-                let child_lowlink = *lowlinks.get(child).unwrap();
-                let node_lowlink = lowlinks.get_mut(&node).unwrap();
-                *node_lowlink = (*node_lowlink).min(child_lowlink);
-            } else if on_stack.contains(child) {
-                let child_index = *indexes.get(child).unwrap();
-                let node_lowlink = lowlinks.get_mut(&node).unwrap();
-                *node_lowlink = (*node_lowlink).min(child_index);
-            }
+impl<'a> TarjanState<'a> {
+    fn new(graph: &'a HashMap<DefId, HashSet<DefId>>) -> Self {
+        Self {
+            graph,
+            index: 0,
+            stack: Vec::new(),
+            on_stack: HashSet::new(),
+            indexes: HashMap::new(),
+            lowlinks: HashMap::new(),
+            components: Vec::new(),
         }
     }
 
-    if indexes.get(&node) == lowlinks.get(&node) {
-        let mut component = Vec::new();
-        while let Some(current) = stack.pop() {
-            on_stack.remove(&current);
-            component.push(current);
-            if current == node {
-                break;
+    fn strong_connect(&mut self, node: DefId) {
+        self.indexes.insert(node, self.index);
+        self.lowlinks.insert(node, self.index);
+        self.index += 1;
+        self.stack.push(node);
+        self.on_stack.insert(node);
+
+        if let Some(children) = self.graph.get(&node) {
+            for child in children {
+                if !self.indexes.contains_key(child) {
+                    self.strong_connect(*child);
+                    let child_lowlink = *self.lowlinks.get(child).unwrap();
+                    let node_lowlink = self.lowlinks.get_mut(&node).unwrap();
+                    *node_lowlink = (*node_lowlink).min(child_lowlink);
+                } else if self.on_stack.contains(child) {
+                    let child_index = *self.indexes.get(child).unwrap();
+                    let node_lowlink = self.lowlinks.get_mut(&node).unwrap();
+                    *node_lowlink = (*node_lowlink).min(child_index);
+                }
             }
         }
-        components.push(component);
+
+        if self.indexes.get(&node) == self.lowlinks.get(&node) {
+            let mut component = Vec::new();
+            while let Some(current) = self.stack.pop() {
+                self.on_stack.remove(&current);
+                component.push(current);
+                if current == node {
+                    break;
+                }
+            }
+            self.components.push(component);
+        }
+    }
+}
+
+impl<'a, 'tcx> Visitor<'tcx> for CallEdgeVisitor<'a, 'tcx> {
+    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+        if let Some(def_id) = resolve_call_def_id(self.cx, expr) {
+            self.edges.push(CallEdge {
+                caller: self.caller,
+                callee: def_id,
+                span: expr.span,
+            });
+        }
+
+        walk_expr(self, expr);
+    }
+}
+
+fn resolve_call_def_id(cx: &LateContext<'_>, expr: &Expr<'_>) -> Option<DefId> {
+    match expr.kind {
+        ExprKind::Call(callee_expr, _) => match callee_expr.kind {
+            ExprKind::Path(ref qpath) => resolve_qpath_def_id(cx, qpath, callee_expr.hir_id),
+            _ => None,
+        },
+        ExprKind::MethodCall(..) => cx.typeck_results().type_dependent_def_id(expr.hir_id),
+        _ => None,
     }
 }
 
@@ -264,24 +289,6 @@ struct CallEdgeVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     caller: DefId,
     edges: Vec<CallEdge>,
-}
-
-impl<'a, 'tcx> Visitor<'tcx> for CallEdgeVisitor<'a, 'tcx> {
-    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
-        if let ExprKind::Call(callee_expr, _) = expr.kind {
-            if let ExprKind::Path(ref qpath) = callee_expr.kind {
-                if let Some(def_id) = resolve_qpath_def_id(self.cx, qpath, callee_expr.hir_id) {
-                    self.edges.push(CallEdge {
-                        caller: self.caller,
-                        callee: def_id,
-                        span: expr.span,
-                    });
-                }
-            }
-        }
-
-        walk_expr(self, expr);
-    }
 }
 
 fn resolve_qpath_def_id(
