@@ -7,13 +7,13 @@ use std::collections::{HashMap, HashSet};
 
 use clippy_utils::diagnostics::span_lint_and_help;
 use common::{
-    analysis::{is_soroban_function, FunctionCallVisitor},
+    analysis::{is_soroban_function, resolve_call_def_id, FunctionCallVisitor},
     declarations::{Severity, VulnerabilityClass},
     macros::expose_lint_info,
 };
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, QPath,
+    Body, Expr, FnDecl,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{
@@ -274,27 +274,8 @@ impl<'a, 'tcx> Visitor<'tcx> for CallEdgeVisitor<'a, 'tcx> {
     }
 }
 
-fn resolve_call_def_id(cx: &LateContext<'_>, expr: &Expr<'_>) -> Option<DefId> {
-    match expr.kind {
-        ExprKind::Call(callee_expr, _) => match callee_expr.kind {
-            ExprKind::Path(ref qpath) => resolve_qpath_def_id(cx, qpath, callee_expr.hir_id),
-            _ => None,
-        },
-        ExprKind::MethodCall(..) => cx.typeck_results().type_dependent_def_id(expr.hir_id),
-        _ => None,
-    }
-}
-
 struct CallEdgeVisitor<'a, 'tcx> {
     cx: &'a LateContext<'tcx>,
     caller: DefId,
     edges: Vec<CallEdge>,
-}
-
-fn resolve_qpath_def_id(
-    cx: &LateContext<'_>,
-    qpath: &QPath<'_>,
-    hir_id: rustc_hir::HirId,
-) -> Option<DefId> {
-    cx.qpath_res(qpath, hir_id).opt_def_id()
 }

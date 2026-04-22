@@ -68,7 +68,7 @@ impl<'a, 'tcx> Visitor<'tcx> for FunctionCallVisitor<'a, 'tcx> {
     }
 }
 
-fn resolve_call_def_id(cx: &LateContext<'_>, expr: &Expr<'_>) -> Option<DefId> {
+pub fn resolve_call_def_id(cx: &LateContext<'_>, expr: &Expr<'_>) -> Option<DefId> {
     match expr.kind {
         ExprKind::Call(call_expr, _) => match call_expr.kind {
             ExprKind::Path(ref qpath) => cx.qpath_res(qpath, call_expr.hir_id).opt_def_id(),
