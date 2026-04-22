@@ -484,6 +484,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "infinite-recursion-over-storage"
+version = "0.1.0"
+dependencies = [
+ "clippy_utils",
+ "common",
+ "dylint_internal",
+ "dylint_linting",
+]
+
+[[package]]
 name = "init-instead-of-constructor"
 version = "0.1.0"
 dependencies = [
