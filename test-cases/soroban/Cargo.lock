@@ -939,77 +939,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "infinite-recursion-over-storage-remediated-1"
+name = "init-instead-of-constructor-remediated-1"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
 ]
 
 [[package]]
-name = "infinite-recursion-over-storage-remediated-2"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-remediated-3"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-remediated-4"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-1"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-2"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-3"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-4"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-5"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-6"
-version = "0.1.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "infinite-recursion-over-storage-vulnerable-7"
+name = "init-instead-of-constructor-vulnerable-1"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
