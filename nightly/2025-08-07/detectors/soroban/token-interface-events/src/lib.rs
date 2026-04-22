@@ -158,8 +158,12 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceEvents {
             FunctionCallVisitor::new(cx, def_id, &mut self.function_call_graph);
         function_call_visitor.visit_body(body);
 
-        // If the function is part of the token interface, I store its defid.
-        if verify_token_interface_function(fn_name.clone(), fn_decl.inputs, fn_decl.output) {
+        let function_name = fn_name.split("::").last().unwrap();
+
+        // SEP-41 defines mint as an event, not as part of TokenInterface.
+        if verify_token_interface_function(fn_name.clone(), fn_decl.inputs, fn_decl.output)
+            || function_name == "mint"
+        {
             self.canonical_funcs_def_id.insert(def_id);
         }
         let mut token_interface_events_visitor = TokenInterfaceEventsVisitor {
