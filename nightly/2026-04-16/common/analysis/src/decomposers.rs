@@ -8,7 +8,7 @@ extern crate rustc_type_ir;
 use rustc_ast::{BindingMode, Label, LitIntType, LitKind, UnOp};
 use rustc_hir::{
     def::{DefKind, Res},
-    Block, Expr, ExprField, ExprKind, HirId, LangItem, LetStmt, LoopSource, MatchSource, Pat,
+    Block, Expr, ExprField, ExprKind, HirId, LetStmt, LoopSource, MatchSource, Pat,
     PatField, PatKind, Path, PathSegment, QPath, StmtKind, StructTailExpr, Ty,
 };
 use rustc_middle::ty::{TyCtxt, TyKind};
@@ -164,13 +164,14 @@ pub fn expr_to_unary<'hir>(kind: &'hir ExprKind<'hir>) -> Option<(UnOp, &'hir Ex
 
 //---------------------------------------------------------------------
 
-pub fn path_to_lang_item(path: &QPath) -> Option<(LangItem, Span)> {
-    if let QPath::LangItem(a, b) = path {
-        Some((*a, *b))
-    } else {
-        None
-    }
-}
+//TODO: Delete me
+//pub fn path_to_lang_item(path: &QPath) -> Option<(LangItem, Span)> {
+//    if let QPath::LangItem(a, b) = path {
+//        Some((*a, *b))
+//    } else {
+//        None
+//    }
+//}
 
 pub fn path_to_resolved<'hir>(
     path: &'hir QPath<'hir>,
@@ -209,14 +210,13 @@ pub fn resolution_to_local(resolution: &Res) -> Option<&HirId> {
     }
 }
 
-pub fn resolution_to_self_ty_alias(resolution: &Res) -> Option<(DefId, bool, bool)> {
+pub fn resolution_to_self_ty_alias(resolution: &Res) -> Option<(DefId, bool)> {
     if let Res::SelfTyAlias {
         alias_to,
-        forbid_generic,
         is_trait_impl,
     } = resolution
     {
-        Some((*alias_to, *forbid_generic, *is_trait_impl))
+        Some((*alias_to, *is_trait_impl))
     } else {
         None
     }
@@ -236,9 +236,9 @@ pub fn lit_to_int(kind: &LitKind) -> Option<(u128, LitIntType)> {
 
 pub fn pattern_to_struct<'hir>(
     pat: &'hir PatKind<'hir>,
-) -> Option<(&'hir QPath<'hir>, &'hir [PatField<'hir>], bool)> {
+) -> Option<(&'hir QPath<'hir>, &'hir [PatField<'hir>], &'hir Option<Span>)> {
     if let PatKind::Struct(a, b, c) = pat {
-        Some((a, b, *c))
+        Some((a, b, c))
     } else {
         None
     }

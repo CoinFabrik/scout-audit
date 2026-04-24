@@ -16,7 +16,6 @@ pub fn get_expr_hir_id_opt(expr: &Expr<'_>) -> Option<HirId> {
                 TyKind::Path(_) => Some(ty.hir_id),
                 _ => None,
             },
-            QPath::LangItem(_, _) => Some(expr.hir_id),
         },
         ExprKind::Lit(lit) => match lit.node {
             LitKind::Int(_, _) => Some(expr.hir_id),

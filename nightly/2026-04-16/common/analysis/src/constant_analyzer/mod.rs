@@ -18,8 +18,8 @@ use crate::get_expr_hir_id_opt;
 /// Analyzes expressions to determine if they are constants or known at compile-time.
 pub struct ConstantAnalyzer<'a, 'tcx> {
     pub cx: &'a LateContext<'tcx>,
-    pub current_constant: Option<Constant<'tcx>>,
-    pub constants: HashMap<HirId, Option<Constant<'tcx>>>,
+    pub current_constant: Option<Constant>,
+    pub constants: HashMap<HirId, Option<Constant>>,
 }
 
 impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
@@ -39,8 +39,8 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
                     matches!(
                         def_kind,
                         DefKind::AnonConst
-                            | DefKind::AssocConst
-                            | DefKind::Const
+                            | DefKind::AssocConst{..}
+                            | DefKind::Const{..}
                             | DefKind::InlineConst
                     ) || {
                         // Allow both Some and Ok variant constructors
@@ -140,7 +140,7 @@ impl<'a, 'tcx> ConstantAnalyzer<'a, 'tcx> {
         self.is_expr_constant(expr)
     }
 
-    pub fn get_constant(&self, expr: &Expr<'tcx>) -> Option<Constant<'tcx>> {
+    pub fn get_constant(&self, expr: &Expr<'tcx>) -> Option<Constant> {
         let ctx = ConstEvalCtxt::new(self.cx);
         if let Some(constant) = ctx.eval(expr) {
             return Some(constant);

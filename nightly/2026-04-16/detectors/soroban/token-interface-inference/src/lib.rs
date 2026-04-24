@@ -57,7 +57,7 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
         if_chain! {
             if let ItemKind::Impl(impl_block) = item.kind;
             if let Some(trait_ref) = impl_block.of_trait;
-            if let Some(trait_def_id) = trait_ref.path.res.opt_def_id();
+            if let Some(trait_def_id) = trait_ref.trait_ref.path.res.opt_def_id();
             if cx.tcx.def_path_str(trait_def_id) == TOKEN_INTERFACE_PATH;
             then {
                 self.impl_token_interface_trait = true;
@@ -114,8 +114,8 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
                     | ItemKind::Enum(ident, _, _)
                     | ItemKind::Struct(ident, _, _)
                     | ItemKind::Union(ident, _, _)
-                    | ItemKind::Trait(_, _, _, ident, _, _, _)
-                    | ItemKind::TraitAlias(ident, _, _) => Some(ident.span),
+                    | ItemKind::Trait(_, _, _, _, ident, _, _, _)
+                    | ItemKind::TraitAlias(_, ident, _, _) => Some(ident.span),
                     _ => None,
                 },
                 Node::ImplItem(impl_item) => Some(impl_item.ident.span),

@@ -196,6 +196,8 @@ impl<'a, 'tcx> OptionResultChecker<'a, 'tcx> {
     }
 
     pub fn check_for_try(&mut self, expr: &Expr<'tcx>) {
+        //TODO: Fix me
+        /*
         if_chain! {
             // Check for match expressions desugared from try
             if let ExprKind::Match(expr, _, MatchSource::TryDesugar(_)) = &expr.kind;
@@ -209,5 +211,6 @@ impl<'a, 'tcx> OptionResultChecker<'a, 'tcx> {
                 self.checked_exprs.insert(hir_id);
             }
         }
+        */
     }
 }

@@ -8,6 +8,6 @@ clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "84bb31
 common = { path = "../../common" }
 common_detectors = { path = "../../common/detectors", package = "common-detectors" }
 dylint_internal = "5.0.0"
-dylint_linting = "5.0.0"
-if_chain = "=1.0.2"
-itertools = { version = "=0.13" }
+dylint_linting = { git = "https://github.com/trailofbits/dylint.git", rev = "d367947a11f17048e1c73ced41851e906e3648fa" }
+if_chain = "1.0.2"
+itertools = "0.13"

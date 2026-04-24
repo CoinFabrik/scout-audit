@@ -222,6 +222,9 @@ impl<'a, 'tcx> AuthFlowAnalysis<'a, 'tcx> {
             Operand::Copy(place) | Operand::Move(place) => {
                 self.const_bits_from_place(block, place)?
             }
+            Operand::RuntimeChecks(_) => {
+                //TODO
+            }
         };
         Some(targets.target_for_value(bits))
     }
@@ -271,7 +274,7 @@ impl<'tcx> Analysis<'tcx> for AuthFlowAnalysis<'_, 'tcx> {
     }
 
     fn apply_primary_statement_effect(
-        &mut self,
+        &self,
         state: &mut Self::Domain,
         _stmt: &mir::Statement<'tcx>,
         loc: Location,
@@ -280,7 +283,7 @@ impl<'tcx> Analysis<'tcx> for AuthFlowAnalysis<'_, 'tcx> {
     }
 
     fn apply_primary_terminator_effect<'mir>(
-        &mut self,
+        &self,
         state: &mut Self::Domain,
         term: &'mir mir::Terminator<'tcx>,
         loc: Location,
@@ -297,7 +300,7 @@ impl<'tcx> Analysis<'tcx> for AuthFlowAnalysis<'_, 'tcx> {
     }
 
     fn apply_call_return_effect(
-        &mut self,
+        &self,
         state: &mut Self::Domain,
         block: BasicBlock,
         _return_places: mir::CallReturnPlaces<'_, 'tcx>,

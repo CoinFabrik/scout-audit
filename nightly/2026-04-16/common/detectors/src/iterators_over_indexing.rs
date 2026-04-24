@@ -161,6 +161,10 @@ fn handle_expr<'a>(me: &mut ForLoopVisitor<'a, '_, '_>, expr: &'a Expr<'a>) -> O
     }
     let (func, args) = expr_to_call(&match_expr.kind)?;
     let qpath = expr_to_path(&func.kind)?;
+    Some(())
+
+    //TODO: Fix me
+    /*
     let (item, _) = path_to_lang_item(&qpath)?;
     if item != LangItem::IntoIterIntoIter {
         return Some(());
@@ -225,6 +229,7 @@ fn handle_expr<'a>(me: &mut ForLoopVisitor<'a, '_, '_>, expr: &'a Expr<'a>) -> O
     }
 
     Some(())
+    */
 }
 
 impl<'a, 'b, 'c> Visitor<'a> for ForLoopVisitor<'a, 'b, 'c> {

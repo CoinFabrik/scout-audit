@@ -8,7 +8,7 @@ extern crate rustc_type_ir;
 use rustc_ast::{Label, LitIntType, LitKind};
 use rustc_hir::{
     def::Res, BindingMode, Block, BorrowKind, HirId, LangItem, LoopSource, MatchSource, Mutability,
-    Pat, PatField, PatKind, Path, PathSegment, StmtKind, Ty,
+    Pat, PatKind, Path, PathSegment, StmtKind, Ty,
 };
 use rustc_hir::{Expr, ExprKind, LetStmt, QPath};
 use rustc_middle::ty::{TyCtxt, TyKind};
@@ -136,14 +136,6 @@ pub fn expr_to_method_call<'hir>(
 
 //---------------------------------------------------------------------
 
-pub fn path_to_lang_item(path: &QPath) -> Result<(LangItem, Span), ()> {
-    if let QPath::LangItem(a, b) = path {
-        Ok((*a, *b))
-    } else {
-        Err(())
-    }
-}
-
 pub fn path_to_resolved<'hir>(
     path: &'hir QPath<'hir>,
 ) -> Result<(&'hir Option<&'hir Ty<'hir>>, &'hir Path<'hir>), ()> {
@@ -175,16 +167,6 @@ pub fn lit_to_int(kind: &LitKind) -> Result<(u128, LitIntType), ()> {
 }
 
 //---------------------------------------------------------------------
-
-pub fn pattern_to_struct<'hir>(
-    pat: &'hir PatKind<'hir>,
-) -> Result<(&'hir QPath<'hir>, &'hir [PatField<'hir>], bool), ()> {
-    if let PatKind::Struct(a, b, c) = pat {
-        Ok((a, b, *c))
-    } else {
-        Err(())
-    }
-}
 
 pub fn pattern_to_binding<'hir>(
     pat: &'hir PatKind<'hir>,
