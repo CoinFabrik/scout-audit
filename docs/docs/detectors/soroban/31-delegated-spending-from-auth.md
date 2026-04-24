@@ -4,7 +4,7 @@
 
 - Category: `Authorization`
 - Severity: `Minor`
-- Detector: [`delegated-spending-from-auth`](https://github.com/CoinFabrik/scout-audit/tree/main/nightly/2025-08-07/detectors/soroban/delegated-spending-from-auth)
+- Detector: [`delegated-spending-from-auth`](https://github.com/CoinFabrik/scout-audit/tree/main/nightly/2026-04-16/detectors/soroban/delegated-spending-from-auth)
 - Test Cases: [`delegated-spending-from-auth`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/soroban/delegated-spending-from-auth)
 
 Delegated token operations such as `transfer_from` and `burn_from` are meant to let an approved spender act on behalf of the token owner. If those delegated flows still require `from.require_auth()`, the allowance mechanism stops being useful because both accounts must sign.

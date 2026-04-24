@@ -4,7 +4,7 @@
 
 - Category: `Best practices`
 - Severity: `Low`
-- Detector: [`init-instead-of-constructor`](https://github.com/CoinFabrik/scout-audit/tree/main/nightly/2025-08-07/detectors/soroban/init-instead-of-constructor)
+- Detector: [`init-instead-of-constructor`](https://github.com/CoinFabrik/scout-audit/tree/main/nightly/2026-04-16/detectors/soroban/init-instead-of-constructor)
 - Test Cases: [`delegated-spending-from-auth`](https://github.com/CoinFabrik/scout-audit/tree/main/test-cases/soroban/init-instead-of-constructor)
 
 Since version 22.0.0 of the Soroban CLI, constructors are supported to automatically initialize contracts the moment they're deployed. Use constructors instead of initializers.

@@ -9,11 +9,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
 
 [[package]]
+name = "aho-corasick"
+version = "1.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "analysis"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
- "dylint_linting",
+ "clippy_utils 0.1.91",
+ "dylint_linting 3.1.2",
  "if_chain",
  "paste",
 ]
@@ -34,10 +43,10 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 name = "avoid-core-mem-forget"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -45,10 +54,10 @@ dependencies = [
 name = "avoid-vec-map-input"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
 ]
 
 [[package]]
@@ -65,11 +74,11 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "camino"
-version = "1.1.9"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b96ec4966b5813e2c0507c1f86115c8c5abaadc3980879c3424042a02fd1ad3"
+checksum = "e629a66d692cb9ff1a1c664e41771b3dcaf961985a9774c0eb0bd1b51cf60a48"
 dependencies = [
- "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -82,17 +91,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-platform"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd0061da739915fae12ea00e16397555ed4371a6bb285431aab930f61b0aa4ba"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
 name = "cargo_metadata"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d886547e41f740c616ae73108f6eb70afe6d940c7bc697cb30f13daec073037"
 dependencies = [
  "camino",
- "cargo-platform",
+ "cargo-platform 0.1.8",
  "semver",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "cargo_metadata"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef987d17b0a113becdd19d3d0022d04d7ef41f9efe4f3fb63ac44ba61df3ade9"
+dependencies = [
+ "camino",
+ "cargo-platform 0.3.3",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -122,6 +155,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "clippy_utils"
+version = "0.1.97"
+source = "git+https://github.com/rust-lang/rust-clippy?rev=84bb31a36d0df59768829821b068d80da455a7b4#84bb31a36d0df59768829821b068d80da455a7b4"
+dependencies = [
+ "arrayvec",
+ "itertools 0.12.1",
+ "rustc_apfloat",
+ "serde",
+]
+
+[[package]]
 name = "common"
 version = "0.1.0"
 dependencies = [
@@ -135,9 +179,9 @@ name = "common-detectors"
 version = "0.1.0"
 dependencies = [
  "analysis",
- "clippy_utils",
- "dylint_internal",
- "dylint_linting",
+ "clippy_utils 0.1.91",
+ "dylint_internal 3.1.2",
+ "dylint_linting 3.1.2",
  "if_chain",
 ]
 
@@ -145,10 +189,10 @@ dependencies = [
 name = "contract-import-dependency"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
  "toml 0.9.8",
 ]
@@ -167,17 +211,17 @@ name = "declarations"
 version = "0.1.0"
 dependencies = [
  "serde",
- "thiserror 2.0.3",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "delegated-spending-from-auth"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
 ]
 
 [[package]]
@@ -195,10 +239,10 @@ dependencies = [
 name = "dos-unbounded-operation"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -206,10 +250,10 @@ dependencies = [
 name = "dos-unexpected-revert-with-storage"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -220,10 +264,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c0765e595bad79b47a2be4abfa4813a7ac082b2df0f6e863a0422dc9090c7c3"
 dependencies = [
  "anyhow",
- "cargo_metadata",
+ "cargo_metadata 0.18.1",
  "serde",
  "thiserror 1.0.69",
  "toml 0.8.19",
+]
+
+[[package]]
+name = "dylint_internal"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e11f358a59510be7fa5c4f412729fabbe31a3587a342e4241a6a72020a2a0c5"
+dependencies = [
+ "anyhow",
+ "cargo_metadata 0.23.1",
+ "log",
+ "regex",
+ "serde",
+ "thiserror 2.0.18",
+ "toml 0.9.8",
 ]
 
 [[package]]
@@ -232,8 +291,8 @@ version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3daa5f7dca7ae5e355cdb121f8d07edd0b914e54173461209dddb85316ecbd63"
 dependencies = [
- "cargo_metadata",
- "dylint_internal",
+ "cargo_metadata 0.18.1",
+ "dylint_internal 3.1.2",
  "paste",
  "rustversion",
  "serde",
@@ -242,13 +301,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "dylint_linting"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4588b33aafbd472a6468ad1521d74094faa2bbdb53d534c2d24320300ea94135"
+dependencies = [
+ "cargo_metadata 0.23.1",
+ "dylint_internal 5.0.0",
+ "paste",
+ "rustversion",
+ "serde",
+ "thiserror 2.0.18",
+ "toml 0.9.8",
+]
+
+[[package]]
 name = "dynamic-storage"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -293,10 +367,10 @@ dependencies = [
 name = "front-running"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -476,10 +550,10 @@ dependencies = [
 name = "ineffective-extend-ttl"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -487,20 +561,20 @@ dependencies = [
 name = "infinite-recursion-over-storage"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
 ]
 
 [[package]]
 name = "init-instead-of-constructor"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -508,10 +582,10 @@ dependencies = [
 name = "insufficiently-random-values"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -519,10 +593,10 @@ dependencies = [
 name = "integer-overflow-or-underflow"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -530,11 +604,11 @@ dependencies = [
 name = "iterators-over-indexing"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
  "common-detectors",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
 ]
 
 [[package]]
@@ -607,10 +681,10 @@ dependencies = [
 name = "missing-new-admin-auth"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "edit-distance",
  "if_chain",
 ]
@@ -650,6 +724,35 @@ checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "regex"
+version = "1.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.4.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
 name = "ring"
@@ -715,18 +818,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e819f2bc632f285be6d7cd36e25940d45b2391dd6d9b939e79de557f7014248"
 
 [[package]]
-name = "ryu"
-version = "1.0.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
-
-[[package]]
 name = "semver"
-version = "1.0.23"
+version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61697e0a1c7e512e84a621326239844a24d8207b4669b41bc18b32ea5cbf988b"
+checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
 dependencies = [
  "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -761,13 +859,15 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.120"
+version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
+checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
 dependencies = [
  "itoa",
- "ryu",
+ "memchr",
  "serde",
+ "serde_core",
+ "zmij",
 ]
 
 [[package]]
@@ -792,10 +892,10 @@ dependencies = [
 name = "set-contract-storage"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -815,10 +915,10 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "soroban-version"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "semver",
  "serde_json",
  "ureq",
@@ -840,10 +940,10 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 name = "storage-change-events"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -886,11 +986,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.3"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c006c85c7651b3cf2ada4584faa36773bd07bac24acfb39f3c431b36d7e667aa"
+checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
 dependencies = [
- "thiserror-impl 2.0.3",
+ "thiserror-impl 2.0.18",
 ]
 
 [[package]]
@@ -906,9 +1006,9 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.3"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f077553d607adc1caf65430528a576c757a71ed73944b66ebb58ef2bbd243568"
+checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -929,10 +1029,10 @@ dependencies = [
 name = "token-interface-events"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -940,10 +1040,10 @@ dependencies = [
 name = "token-interface-inference"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "edit-distance",
  "if_chain",
 ]
@@ -1025,10 +1125,10 @@ checksum = "df8b2b54733674ad286d16267dcfc7a71ed5c776e4ac7aa3c3e2561f7c637bf2"
 name = "uncached-storage-modification"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1042,10 +1142,10 @@ checksum = "e91b56cd4cadaeb79bbf1a5645f6b4f8dc5bde8834ad5894a8db35fda9efa1fe"
 name = "unnecessary-admin-parameter"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "edit-distance",
  "if_chain",
 ]
@@ -1054,10 +1154,10 @@ dependencies = [
 name = "unnecessary-lint-allow"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
  "serde",
  "serde_json",
@@ -1067,10 +1167,10 @@ dependencies = [
 name = "unprotected-mapping-operation"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1078,10 +1178,10 @@ dependencies = [
 name = "unprotected-update-current-contract-wasm"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1089,10 +1189,10 @@ dependencies = [
 name = "unrestricted-transfer-from"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1100,10 +1200,10 @@ dependencies = [
 name = "unsafe-map-get"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1117,10 +1217,10 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 name = "unused-return-enum"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
 ]
 
@@ -1169,10 +1269,10 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 name = "vec-could-be-mapping"
 version = "0.1.0"
 dependencies = [
- "clippy_utils",
+ "clippy_utils 0.1.97",
  "common",
- "dylint_internal",
- "dylint_linting",
+ "dylint_internal 5.0.0",
+ "dylint_linting 5.0.0",
  "if_chain",
  "itertools 0.13.0",
 ]
@@ -1364,3 +1464,9 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "zmij"
+version = "1.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"

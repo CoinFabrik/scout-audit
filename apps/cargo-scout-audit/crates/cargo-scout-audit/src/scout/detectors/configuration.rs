@@ -89,7 +89,7 @@ impl DetectorsConfiguration {
     }
 
     fn get_root_detector_path(base: &str, toolchain: &str) -> String {
-        // Extract just the date part from the toolchain (e.g., "2025-08-07" from "nightly-2025-08-07")
+        // Extract just the date part from the toolchain (e.g., "2026-04-16" from "nightly-2026-04-16")
         let date = toolchain.strip_prefix("nightly-").unwrap_or(toolchain);
         format!("{base}/{date}/detectors")
     }

@@ -1,6 +1,6 @@
 use std::process::Command;
 
-const TOOLCHAIN: [&str; 1] = ["nightly-2025-08-07"];
+const TOOLCHAIN: [&str; 1] = ["nightly-2026-04-16"];
 const COMPONENTS: [&str; 3] = ["rust-src", "llvm-tools", "rustc-dev"];
 
 fn main() {

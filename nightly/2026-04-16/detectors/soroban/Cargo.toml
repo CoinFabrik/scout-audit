@@ -4,10 +4,10 @@ members = ["*"]
 resolver = "2"
 
 [workspace.dependencies]
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "feb18ca1ee3c195e9127d6acf20da99159fca581", package = "clippy_utils" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "84bb31a36d0df59768829821b068d80da455a7b4", package = "clippy_utils" }
 common = { path = "../../common" }
 common_detectors = { path = "../../common/detectors", package = "common-detectors" }
-dylint_internal = "=3.1.2"
-dylint_linting = "=3.1.2"
+dylint_internal = "5.0.0"
+dylint_linting = "5.0.0"
 if_chain = "=1.0.2"
 itertools = { version = "=0.13" }

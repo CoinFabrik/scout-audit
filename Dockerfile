@@ -13,15 +13,15 @@ COPY . /usr/src/scout-audit
 WORKDIR /usr/src/scout-audit/apps/cargo-scout-audit
 RUN cargo install --path crates/cargo-scout-audit --locked
 RUN cargo install dylint-link --locked
-RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2025-08-07
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2026-04-16
 
-WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/ink
+WORKDIR /usr/src/scout-audit/nightly/2026-04-16/detectors/ink
 RUN cargo build --release
-WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/rust
+WORKDIR /usr/src/scout-audit/nightly/2026-04-16/detectors/rust
 RUN cargo build --release
-WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/soroban
+WORKDIR /usr/src/scout-audit/nightly/2026-04-16/detectors/soroban
 RUN cargo build --release
-WORKDIR /usr/src/scout-audit/nightly/2025-08-07/detectors/substrate-pallets
+WORKDIR /usr/src/scout-audit/nightly/2026-04-16/detectors/substrate-pallets
 RUN cargo build --release
 
 # Stage 2: Final

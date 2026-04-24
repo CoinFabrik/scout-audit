@@ -74,7 +74,7 @@ impl BlockChain {
         }
 
         let output_str = String::from_utf8_lossy(&output.stdout);
-        // Example output: "nightly-2025-08-07-x86_64-unknown-linux-gnu (default)"
+        // Example output: "nightly-2026-04-16-x86_64-unknown-linux-gnu (default)"
         // We only want the nightly-YYYY-MM-DD part, and we ignore undated nightlies.
         let toolchain = output_str
             .split_whitespace()
@@ -91,7 +91,7 @@ impl BlockChain {
         }
 
         // If no nightly toolchain found, use defaults based on blockchain
-        let default_toolchain = "nightly-2025-08-07";
+        let default_toolchain = "nightly-2026-04-16";
 
         Ok(default_toolchain.to_string())
     }
@@ -146,14 +146,14 @@ mod tests {
     #[test]
     fn parses_dated_nightly_with_target_triple() {
         let toolchain =
-            BlockChain::parse_nightly_toolchain("nightly-2025-08-07-x86_64-unknown-linux-gnu");
-        assert_eq!(toolchain.as_deref(), Some("nightly-2025-08-07"));
+            BlockChain::parse_nightly_toolchain("nightly-2026-04-16-x86_64-unknown-linux-gnu");
+        assert_eq!(toolchain.as_deref(), Some("nightly-2026-04-16"));
     }
 
     #[test]
     fn parses_dated_nightly_without_target_triple() {
-        let toolchain = BlockChain::parse_nightly_toolchain("nightly-2025-08-07");
-        assert_eq!(toolchain.as_deref(), Some("nightly-2025-08-07"));
+        let toolchain = BlockChain::parse_nightly_toolchain("nightly-2026-04-16");
+        assert_eq!(toolchain.as_deref(), Some("nightly-2026-04-16"));
     }
 
     #[test]
