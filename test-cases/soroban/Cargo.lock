@@ -2025,11 +2025,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "token-interface-inference-remediated-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "token-interface-inference-remediated-3"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "token-interface-inference-vulnerable-1"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
  "soroban-token-sdk",
+]
+
+[[package]]
+name = "token-interface-inference-vulnerable-2"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
 ]
 
 [[package]]

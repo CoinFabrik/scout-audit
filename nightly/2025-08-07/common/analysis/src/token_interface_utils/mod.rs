@@ -47,9 +47,6 @@ pub fn verify_token_interface_function(
     fn_return: FnRetTy,
 ) -> bool {
     let function = fn_name.split("::").last().unwrap();
-    if function.eq("mint") {
-        return true;
-    }
     let (types, expected_return): (Vec<String>, Option<String>) = match function {
         "allowance" => (
             ["Env", "Address", "Address"]

@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+name = "token-interface-inference-remediated-3"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[features]
+testutils = ["soroban-sdk/testutils"]

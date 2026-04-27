@@ -14,18 +14,25 @@ use if_chain::if_chain;
 use rustc_errors::MultiSpan;
 use rustc_hir::{intravisit::FnKind, Body, FnDecl, Item, ItemKind, Node};
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{def_id::DefId, def_id::LocalDefId, Span};
-use std::{
-    collections::HashSet,
-    ops::{Div, Mul},
-    vec,
-};
+use rustc_span::{def_id::LocalDefId, Span};
+use std::collections::HashSet;
 
 const LINT_MESSAGE: &str =
     "This contract seems like a Token, consider implementing the Token Interface trait";
-const CANONICAL_FUNCTIONS_AMOUNT: u16 = 10;
-const INCLUDED_FUNCTIONS_THRESHOLD: u16 = 60;
+const INCLUDED_FUNCTIONS_THRESHOLD: usize = 60;
 const TOKEN_INTERFACE_PATH: &str = "soroban_sdk::token::TokenInterface";
+const TOKEN_INTERFACE_FUNCTIONS: [&str; 10] = [
+    "allowance",
+    "approve",
+    "balance",
+    "transfer",
+    "transferfrom",
+    "burn",
+    "burnfrom",
+    "decimals",
+    "name",
+    "symbol",
+];
 
 #[expose_lint_info]
 pub static TOKEN_INTERFACE_INFERENCE_INFO: LintInfo = LintInfo {
@@ -46,9 +53,8 @@ dylint_linting::impl_late_lint! {
 
 #[derive(Default)]
 struct TokenInterfaceInference {
-    canonical_funcs_def_id: HashSet<DefId>,
     impl_token_interface_trait: bool,
-    detected_canonical_functions_count: u16,
+    detected_canonical_functions: HashSet<&'static str>,
     funcs_spans: Vec<Span>,
 }
 
@@ -71,11 +77,8 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
             return;
         }
 
-        if self
-            .detected_canonical_functions_count
-            .mul(100)
-            .div(CANONICAL_FUNCTIONS_AMOUNT)
-            >= INCLUDED_FUNCTIONS_THRESHOLD
+        if self.detected_canonical_functions.len() * 100
+            >= TOKEN_INTERFACE_FUNCTIONS.len() * INCLUDED_FUNCTIONS_THRESHOLD
         {
             span_lint(
                 cx,
@@ -125,39 +128,26 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceInference {
             None
         };
 
-        // If the function is part of the token interface, I store its defid.
-        if verify_token_interface_function_similarity(fn_name.clone()) {
-            self.detected_canonical_functions_count += 1;
-            self.canonical_funcs_def_id.insert(def_id);
-            if let Some(span) = fn_name_span {
-                self.funcs_spans.push(span);
+        if let Some(canonical_function) = verify_token_interface_function_similarity(&fn_name) {
+            if self.detected_canonical_functions.insert(canonical_function) {
+                if let Some(span) = fn_name_span {
+                    self.funcs_spans.push(span);
+                }
             }
         }
     }
 }
 
-fn verify_token_interface_function_similarity(fn_name: String) -> bool {
-    let canonical_functions_formatted = [
-        "allowance",
-        "approve",
-        "balance",
-        "transfer",
-        "transferfrom",
-        "burn",
-        "burnfrom",
-        "decimals",
-        "name",
-        "symbol",
-        "mint",
-    ];
-    let function_name = String::from(fn_name.split("::").last().unwrap());
+fn verify_token_interface_function_similarity(fn_name: &str) -> Option<&'static str> {
+    let function_name = fn_name.split("::").last().unwrap_or(fn_name);
     let formatted_name: String = function_name
         .to_lowercase()
-        .replace("_", "")
+        .replace('_', "")
         .split_whitespace()
         .collect();
 
-    canonical_functions_formatted
+    TOKEN_INTERFACE_FUNCTIONS
         .iter()
-        .any(|cf| edit_distance(formatted_name.as_str(), cf) <= 1)
+        .copied()
+        .find(|cf| edit_distance(formatted_name.as_str(), cf) <= 1)
 }
