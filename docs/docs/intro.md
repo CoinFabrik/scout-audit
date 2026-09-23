@@ -53,5 +53,8 @@ All reports sent to Scout are stored locally and can be viewed at:
 To disable telemetry, navigate to:
 `$HOME/.scout-audit/telemetry`, open `user_id.txt`, and replace its content with DONOTTRACK.
 
+For a fully offline run that also skips the release update check, set
+`SCOUT_OFFLINE=1` when invoking Scout.
+
 If you want to permanently delete your data from Scout's database, visit:
 `https://scout-api.coinfabrik.com/user/delete/<your-user-id>`.
