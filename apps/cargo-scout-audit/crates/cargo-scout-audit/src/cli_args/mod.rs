@@ -91,7 +91,7 @@ impl BlockChain {
         }
 
         // If no nightly toolchain found, use defaults based on blockchain
-        let default_toolchain = "nightly-2025-08-07";
+        let default_toolchain = "nightly-2025-09-18";
 
         Ok(default_toolchain.to_string())
     }
@@ -141,7 +141,7 @@ pub struct Cli {
 
 #[cfg(test)]
 mod tests {
-    use super::BlockChain;
+    use super::{BlockChain, Scout};
 
     #[test]
     fn parses_dated_nightly_with_target_triple() {
@@ -166,6 +166,36 @@ mod tests {
     fn rejects_non_nightly() {
         let toolchain = BlockChain::parse_nightly_toolchain("1.89-x86_64-unknown-linux-gnu");
         assert!(toolchain.is_none());
+    }
+
+    #[test]
+    fn soroban_uses_wasm32v1_none_without_build_std() {
+        let mut scout = Scout::default();
+
+        scout.prepare_args(BlockChain::Soroban);
+
+        assert!(scout.args.iter().any(|arg| arg == "--target=wasm32v1-none"));
+        assert!(!scout.args.iter().any(|arg| arg.starts_with("-Zbuild-std")));
+    }
+
+    #[test]
+    fn ink_keeps_wasm32_unknown_unknown_with_build_std() {
+        let mut scout = Scout::default();
+
+        scout.prepare_args(BlockChain::Ink);
+
+        assert!(
+            scout
+                .args
+                .iter()
+                .any(|arg| arg == "--target=wasm32-unknown-unknown")
+        );
+        assert!(
+            scout
+                .args
+                .iter()
+                .any(|arg| arg == "-Zbuild-std=std,core,alloc")
+        );
     }
 }
 
@@ -304,14 +334,26 @@ pub struct Scout {
 
 impl Scout {
     pub fn prepare_args(&mut self, blockchain: BlockChain) {
-        // Only add default target args if not a substrate-pallet project
+        // Only add default target args if not a substrate-pallet project.
         let is_substrate_pallet = matches!(blockchain, BlockChain::SubstratePallets);
         if !is_substrate_pallet && !self.args.iter().any(|x| x.contains("--target=")) {
+            let target = match blockchain {
+                // Soroban SDK 25+ rejects wasm32-unknown-unknown and supports
+                // only wasm32v1-none on current Rust toolchains. The target's
+                // precompiled core/alloc are sufficient, so build-std is not
+                // needed when the target is installed.
+                BlockChain::Soroban => "wasm32v1-none",
+                _ => "wasm32-unknown-unknown",
+            };
+
             self.args.extend([
-                "--target=wasm32-unknown-unknown".to_string(),
+                format!("--target={target}"),
                 "--no-default-features".to_string(),
-                "-Zbuild-std=std,core,alloc".to_string(),
             ]);
+
+            if !matches!(blockchain, BlockChain::Soroban) {
+                self.args.push("-Zbuild-std=std,core,alloc".to_string());
+            }
         }
 
         if !self.debug {

@@ -66,6 +66,15 @@ pub fn run_dylint(
 ) -> Result<(bool, NamedTempFile)> {
     print_info("Running scout...");
 
+    // Soroban SDK 28 requires build systems targeting Wasm to acknowledge
+    // spec-shaking v2 support. Scout only runs `cargo check` for static
+    // analysis and does not emit a deployable Wasm artifact, so no subsequent
+    // spec-shaking step is needed; setting the marker allows the SDK's build
+    // script to proceed during analysis.
+    if opts.args.iter().any(|arg| arg == "--target=wasm32v1-none") {
+        std::env::set_var("SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2", "1");
+    }
+
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
