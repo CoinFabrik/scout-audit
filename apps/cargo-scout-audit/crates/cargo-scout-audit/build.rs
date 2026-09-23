@@ -1,7 +1,8 @@
 use std::process::Command;
 
-const TOOLCHAIN: [&str; 1] = ["nightly-2025-08-07"];
+const TOOLCHAIN: [&str; 1] = ["nightly-2025-09-18"];
 const COMPONENTS: [&str; 3] = ["rust-src", "llvm-tools", "rustc-dev"];
+const TARGETS: [&str; 1] = ["wasm32v1-none"];
 
 fn main() {
     for toolchain in TOOLCHAIN {
@@ -15,11 +16,58 @@ fn main() {
             std::process::exit(1);
         }
 
+        if let Err(e) = ensure_targets(toolchain, &TARGETS) {
+            println!("cargo:warning={}", e);
+            std::process::exit(1);
+        }
+
         if let Err(e) = ensure_dylint_link(toolchain) {
             println!("cargo:warning={}", e);
             std::process::exit(1);
         }
     }
+}
+
+fn ensure_targets(toolchain: &str, targets: &[&str]) -> Result<(), String> {
+    let output = Command::new("rustup")
+        .arg("target")
+        .arg("list")
+        .arg("--installed")
+        .arg("--toolchain")
+        .arg(toolchain)
+        .output()
+        .map_err(|e| format!("Failed to execute rustup: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "rustup target list failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let installed = String::from_utf8_lossy(&output.stdout);
+    for target in targets {
+        if !installed.lines().any(|line| line == *target) {
+            println!("cargo:warning=Installing target '{}'...", target);
+            let status = Command::new("rustup")
+                .arg("target")
+                .arg("add")
+                .arg(target)
+                .arg("--toolchain")
+                .arg(toolchain)
+                .status()
+                .map_err(|e| format!("Failed to execute rustup target add: {}", e))?;
+
+            if !status.success() {
+                return Err(format!(
+                    "Failed to install target '{}' for toolchain '{}'.",
+                    target, toolchain
+                ));
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn ensure_toolchain(toolchain: &str) -> Result<(), String> {
