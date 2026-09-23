@@ -1,18 +1,11 @@
 use crate::util::print::print_info;
 #[cfg(not(windows))]
-use crate::util::print::print_warning;
-#[cfg(not(windows))]
 use anyhow::Context;
 use anyhow::Result;
-#[cfg(not(windows))]
-use current_platform::CURRENT_PLATFORM;
 use lazy_static::lazy_static;
 use std::{collections::HashMap, env, process::Child};
 #[cfg(not(windows))]
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{path::PathBuf, process::Command};
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
@@ -54,28 +47,29 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
 pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
     let mut ret = HashMap::new();
 
+    let rustc_output = Command::new("rustup")
+        .args(["which", "--toolchain", toolchain, "rustc"])
+        .output()
+        .with_context(|| format!("Failed to locate rustc for toolchain {toolchain}"))?;
+    if !rustc_output.status.success() {
+        anyhow::bail!(
+            "Failed to locate rustc for toolchain {toolchain}: {}",
+            String::from_utf8_lossy(&rustc_output.stderr).trim()
+        );
+    }
+
+    let rustc_path = PathBuf::from(String::from_utf8_lossy(&rustc_output.stdout).trim());
+    let toolchain_bin_path = rustc_path
+        .parent()
+        .with_context(|| format!("rustup returned an invalid rustc path: {rustc_path:?}"))?
+        .to_path_buf();
+    let toolchain_path = toolchain_bin_path
+        .parent()
+        .with_context(|| format!("rustup returned an invalid toolchain path: {rustc_path:?}"))?;
+
     let current_lib_path = env::var(LIBRARY_PATH_VAR.to_string()).unwrap_or_default();
     if !current_lib_path.contains(toolchain) {
-        let rustup_home = env::var("RUSTUP_HOME");
-
-        let rustup_home = match rustup_home {
-            Ok(x) => PathBuf::from(x),
-            Err(_) => {
-                let mut home =
-                    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "~".to_string()));
-                home.push(".rustup");
-                print_warning(&format!(
-                    "Failed to get RUSTUP_HOME, defaulting to {:?}",
-                    &home
-                ));
-                home
-            }
-        };
-
-        let nightly_lib_path = Path::new(&rustup_home)
-            .join("toolchains")
-            .join(format!("{}-{}", toolchain, CURRENT_PLATFORM))
-            .join("lib");
+        let nightly_lib_path = toolchain_path.join("lib");
 
         let nightly_lib_path = nightly_lib_path
             .to_str()
@@ -83,6 +77,28 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
             .unwrap_or_default();
 
         ret.insert(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
+    }
+
+    // Keep Cargo, rustc, rustdoc, and the target libraries on the same pinned
+    // toolchain when Scout hands control to scout-driver and Dylint. This is
+    // needed when a package-manager Rust installation appears before rustup in
+    // PATH.
+    let current_path = env::var_os("PATH").unwrap_or_default();
+    let toolchain_is_first = env::split_paths(&current_path)
+        .next()
+        .is_some_and(|path| path == toolchain_bin_path);
+
+    if !toolchain_is_first {
+        let updated_path = env::join_paths(
+            std::iter::once(toolchain_bin_path.clone())
+                .chain(env::split_paths(&current_path).filter(|path| path != &toolchain_bin_path)),
+        )
+        .with_context(|| "Failed to construct PATH for the selected Rust toolchain")?;
+
+        ret.insert(
+            "PATH".to_string(),
+            updated_path.to_string_lossy().into_owned(),
+        );
     }
     Ok(ret)
 }

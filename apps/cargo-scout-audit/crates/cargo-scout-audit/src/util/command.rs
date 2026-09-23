@@ -28,7 +28,6 @@ impl Command {
         self
     }
 
-    #[cfg(windows)]
     pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Self
     where
         I: IntoIterator<Item = (K, V)>,
