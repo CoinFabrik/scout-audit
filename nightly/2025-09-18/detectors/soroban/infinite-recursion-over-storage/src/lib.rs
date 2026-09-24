@@ -109,6 +109,11 @@ impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
             );
         }
 
+        if std::env::var_os("SCOUT_RECURSION_SKIP_EMISSION").is_some() {
+            eprintln!("SCOUT_RECURSION_DIAGNOSTICS stage=emission_skipped");
+            return;
+        }
+
         for component in recursive_sccs {
             let component_members: HashSet<DefId> = component.into_iter().collect();
             for edge in &self.call_edges_with_spans {

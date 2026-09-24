@@ -14,6 +14,11 @@ on:
         description: "Run a single detector, for example soroban/infinite-recursion-over-storage"
         required: false
         type: string
+      skip_recursion_emission:
+        description: "Diagnostic only: analyze recursion without emitting lint warnings"
+        required: false
+        default: false
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -145,6 +150,7 @@ jobs:
       - name: Run unit and integration tests
         env:
           SCOUT_RECURSION_DIAGNOSTICS: ${{ inputs.detector == 'soroban/infinite-recursion-over-storage' && '1' || '' }}
+          SCOUT_RECURSION_SKIP_EMISSION: ${{ inputs.skip_recursion_emission && '1' || '' }}
         run: |
           ulimit -s 65536
           echo "Main-thread stack limit: $(ulimit -s) KiB"
