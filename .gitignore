@@ -16,6 +16,9 @@ target/
 # Ignore Cargo.lock of library files
 /detectors/**/Cargo.lock
 /test-cases/**/Cargo.lock
+!/test-cases/soroban/overflow-check/remediated/remediated-1/Cargo.lock
+!/test-cases/soroban/overflow-check/vulnerable/vulnerable-1/Cargo.lock
+!/test-cases/soroban/soroban-version/vulnerable/vulnerable-1/Cargo.lock
 
 #ignore test generated files
 /test-cases/**/test_snapshots/*

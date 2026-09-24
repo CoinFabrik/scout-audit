@@ -11,6 +11,8 @@ crate-type = ["cdylib"]
 soroban-sdk = { version = "=21.7.6" }
 
 [dev_dependencies]
+# Keep this and Cargo.lock pinned: Soroban env 21's >=2 bound admits incompatible 3.x.
+ed25519-dalek = "=2.1.1"
 soroban-sdk = { version = "=21.7.6", features = ["testutils"] }
 
 [features]
