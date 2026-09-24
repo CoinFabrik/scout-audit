@@ -1,7 +1,7 @@
-use anyhow::{Context, Ok, Result};
+use anyhow::{Context, Result};
 use cargo_scout_audit::{cli_args::Scout, scout::finding::Finding, util::print::print_info};
 use dylint::opts::{Check, Dylint, LibrarySelection, Operation};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 use thiserror::Error;
 
@@ -66,6 +66,15 @@ pub fn run_dylint(
 ) -> Result<(bool, NamedTempFile)> {
     print_info("Running scout...");
 
+    // Soroban SDK 28 requires build systems targeting Wasm to acknowledge
+    // spec-shaking v2 support. Scout only runs `cargo check` for static
+    // analysis and does not emit a deployable Wasm artifact, so no subsequent
+    // spec-shaking step is needed; setting the marker allows the SDK's build
+    // script to proceed during analysis.
+    if opts.args.iter().any(|arg| arg == "--target=wasm32v1-none") {
+        std::env::set_var("SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2", "1");
+    }
+
     // Convert detectors paths to string
     let detectors_paths: Vec<String> = detectors_paths
         .iter()
@@ -106,7 +115,66 @@ pub fn run_dylint(
         ..Default::default()
     };
 
-    let success = dylint::run(&options).is_err();
+    let success = dylint_succeeded(dylint::run(&options), stdout_temp_file.path())?;
 
     Ok((success, stdout_temp_file))
+}
+
+fn dylint_succeeded(result: Result<()>, stdout_path: &Path) -> Result<bool> {
+    match result {
+        Ok(()) => Ok(true),
+        // Cargo emits analyzed-target compilation errors as JSON on the piped
+        // stdout. Keep that file alive so the parent process can report them.
+        Err(_) if contains_compiler_error(stdout_path) => Ok(false),
+        Err(error) => Err(ScoutError::RunDylintFailed(error).into()),
+    }
+}
+
+fn contains_compiler_error(stdout_path: &Path) -> bool {
+    let Ok(output) = std::fs::read_to_string(stdout_path) else {
+        return false;
+    };
+
+    output.lines().any(|line| {
+        serde_json::from_str(line)
+            .map(Finding::new)
+            .is_ok_and(|finding| finding.is_compiler_error())
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::dylint_succeeded;
+    use anyhow::anyhow;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn preserves_target_compilation_failures_for_reporting() {
+        let mut stdout = NamedTempFile::new().unwrap();
+        writeln!(
+            stdout,
+            r#"{{"reason":"compiler-message","message":{{"level":"error"}}}}"#
+        )
+        .unwrap();
+
+        let result = dylint_succeeded(Err(anyhow!("cargo check failed")), stdout.path());
+
+        assert!(!result.unwrap());
+    }
+
+    #[test]
+    fn propagates_dylint_failures_without_compiler_errors() {
+        let stdout = NamedTempFile::new().unwrap();
+        let result = dylint_succeeded(Err(anyhow!("synthetic dylint failure")), stdout.path());
+
+        let error = match result {
+            Ok(_) => panic!("Dylint failure was reported as success"),
+            Err(error) => error,
+        };
+        let message = format!("{error:#}");
+
+        assert!(message.contains("Failed to run dylint"));
+        assert!(message.contains("synthetic dylint failure"));
+    }
 }

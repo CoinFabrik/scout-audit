@@ -22,14 +22,27 @@ def run_tests(detector):
     print(f"\n{utils.GREEN}Performing tests in {directory}:{utils.ENDC}")
     if not os.path.exists(directory):
         print(f"{utils.RED}The specified directory does not exist.{utils.ENDC}")
+        return [directory]
+
+    if os.path.isfile(os.path.join(directory, "Cargo.toml.skip")):
+        print(f"{utils.BLUE}Skipping explicitly disabled test case.{utils.ENDC}")
         return errors
 
+    project_count = 0
     for root, _, _ in os.walk(directory):
         if is_rust_project(root):
+            project_count += 1
             if run_unit_tests(root, blockchain):
                 errors.append(root)
             if run_integration_tests(detector, root):
                 errors.append(root)
+
+    if project_count == 0:
+        print(
+            f"{utils.RED}No runnable Rust projects found in the selected test case.{utils.ENDC}"
+        )
+        errors.append(directory)
+
     return errors
 
 
@@ -63,7 +76,7 @@ def run_integration_tests(detector, root):
     returncode, stdout, stderr = run_subprocess(
         [
             "cargo",
-            "+nightly-2025-08-07",
+            "+nightly-2025-09-18",
             "scout-audit",
             "--filter",
             detector,
@@ -96,7 +109,7 @@ def run_integration_tests(detector, root):
     returncode, _, stderr = run_subprocess(
         [
             "cargo",
-            "+nightly-2025-08-07",
+            "+nightly-2025-09-18",
             "scout-audit",
             "--local-detectors",
             latest_nightly,
