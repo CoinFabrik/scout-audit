@@ -5,7 +5,11 @@ use anyhow::Result;
 use lazy_static::lazy_static;
 use std::{collections::HashMap, env, process::Child};
 #[cfg(not(windows))]
-use std::{path::PathBuf, process::Command};
+use std::{
+    ffi::{OsStr, OsString},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 lazy_static! {
     static ref LIBRARY_PATH_VAR: &'static str = match env::consts::OS {
@@ -79,21 +83,20 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
         ret.insert(LIBRARY_PATH_VAR.to_string(), nightly_lib_path);
     }
 
-    // Keep Cargo, rustc, rustdoc, and the target libraries on the same pinned
-    // toolchain when Scout hands control to scout-driver and Dylint. This is
-    // needed when a package-manager Rust installation appears before rustup in
-    // PATH.
+    // Keep Cargo behind the rustup proxy when Scout hands control to
+    // scout-driver and Dylint. Dylint deliberately removes RUSTUP_TOOLCHAIN
+    // before compiling its temporary driver and relies on its rust-toolchain
+    // file to select the compiler. Putting the real toolchain bin directory
+    // first would bypass rustup and leave the driver without a selected
+    // toolchain.
     let current_path = env::var_os("PATH").unwrap_or_default();
-    let toolchain_is_first = env::split_paths(&current_path)
+    let rustup_proxy_path = find_rustup_proxy_path(&current_path)?;
+    let rustup_is_first = env::split_paths(&current_path)
         .next()
-        .is_some_and(|path| path == toolchain_bin_path);
+        .is_some_and(|path| path == rustup_proxy_path);
 
-    if !toolchain_is_first {
-        let updated_path = env::join_paths(
-            std::iter::once(toolchain_bin_path.clone())
-                .chain(env::split_paths(&current_path).filter(|path| path != &toolchain_bin_path)),
-        )
-        .with_context(|| "Failed to construct PATH for the selected Rust toolchain")?;
+    if !rustup_is_first {
+        let updated_path = prepend_path(&current_path, &rustup_proxy_path)?;
 
         ret.insert(
             "PATH".to_string(),
@@ -101,6 +104,54 @@ pub fn set_up_environment(toolchain: &str) -> Result<HashMap<String, String>> {
         );
     }
     Ok(ret)
+}
+
+#[cfg(not(windows))]
+fn find_rustup_proxy_path(path: &OsStr) -> Result<PathBuf> {
+    for directory in env::split_paths(path) {
+        let rustup = directory.join("rustup");
+        if !is_executable(&rustup) {
+            continue;
+        }
+
+        // Homebrew exposes rustup through a symlink into its Cellar. Resolve
+        // that symlink so the sibling Cargo proxy is found in rustup's actual
+        // installation directory.
+        let Ok(rustup) = rustup.canonicalize() else {
+            continue;
+        };
+        let Some(directory) = rustup.parent() else {
+            continue;
+        };
+
+        if is_executable(&directory.join("cargo")) {
+            return Ok(directory.to_path_buf());
+        }
+    }
+
+    anyhow::bail!("Failed to locate a rustup proxy directory containing cargo in PATH")
+}
+
+#[cfg(not(windows))]
+fn prepend_path(path: &OsStr, directory: &Path) -> Result<OsString> {
+    env::join_paths(
+        std::iter::once(directory.to_path_buf())
+            .chain(env::split_paths(path).filter(|entry| entry != directory)),
+    )
+    .with_context(|| "Failed to construct PATH with the rustup proxy")
+}
+
+#[cfg(unix)]
+fn is_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    path.metadata()
+        .is_ok_and(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+}
+
+#[cfg(all(not(unix), not(windows)))]
+fn is_executable(path: &Path) -> bool {
+    path.is_file()
 }
 
 #[cfg(windows)]
@@ -133,4 +184,84 @@ pub fn run_scout_in_nightly(toolchain: &str) -> Result<Option<Child>> {
         .with_context(|| "Failed to spawn scout with nightly toolchain")?;
     print_info("Re-running scout with nightly toolchain...");
     Ok(Some(child))
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::{find_rustup_proxy_path, prepend_path};
+    use std::{
+        env,
+        fs::{self, File},
+        os::unix::fs::{PermissionsExt, symlink},
+        path::Path,
+    };
+    use tempfile::tempdir;
+
+    fn executable(path: &Path) {
+        File::create(path).unwrap();
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
+    #[test]
+    fn finds_canonical_rustup_proxy_directory() {
+        let temp = tempdir().unwrap();
+        let exposed_bin = temp.path().join("exposed-bin");
+        let installation_bin = temp.path().join("installation-bin");
+        fs::create_dir_all(&exposed_bin).unwrap();
+        fs::create_dir_all(&installation_bin).unwrap();
+        executable(&installation_bin.join("rustup"));
+        executable(&installation_bin.join("cargo"));
+        symlink(installation_bin.join("rustup"), exposed_bin.join("rustup")).unwrap();
+
+        let path = env::join_paths([&exposed_bin]).unwrap();
+
+        assert_eq!(
+            find_rustup_proxy_path(&path).unwrap(),
+            installation_bin.canonicalize().unwrap()
+        );
+    }
+
+    #[test]
+    fn ignores_rustup_installations_without_a_cargo_proxy() {
+        let temp = tempdir().unwrap();
+        let invalid_bin = temp.path().join("invalid-bin");
+        let valid_bin = temp.path().join("valid-bin");
+        fs::create_dir_all(&invalid_bin).unwrap();
+        fs::create_dir_all(&valid_bin).unwrap();
+        executable(&invalid_bin.join("rustup"));
+        executable(&valid_bin.join("rustup"));
+        executable(&valid_bin.join("cargo"));
+
+        let path = env::join_paths([&invalid_bin, &valid_bin]).unwrap();
+
+        assert_eq!(
+            find_rustup_proxy_path(&path).unwrap(),
+            valid_bin.canonicalize().unwrap()
+        );
+    }
+
+    #[test]
+    fn prepends_proxy_without_dropping_other_path_entries() {
+        let temp = tempdir().unwrap();
+        let package_manager_bin = temp.path().join("package-manager-bin");
+        let toolchain_bin = temp.path().join("toolchain-bin");
+        let rustup_bin = temp.path().join("rustup-bin");
+        let path = env::join_paths([
+            &package_manager_bin,
+            &toolchain_bin,
+            &rustup_bin,
+            &rustup_bin,
+        ])
+        .unwrap();
+
+        let updated = prepend_path(&path, &rustup_bin).unwrap();
+        let entries = env::split_paths(&updated).collect::<Vec<_>>();
+
+        assert_eq!(
+            entries,
+            vec![rustup_bin, package_manager_bin, toolchain_bin]
+        );
+    }
 }
