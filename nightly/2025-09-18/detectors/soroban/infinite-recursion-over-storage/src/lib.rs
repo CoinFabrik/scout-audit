@@ -58,6 +58,22 @@ struct CallEdge {
 
 impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
+        let diagnostics_enabled = std::env::var_os("SCOUT_RECURSION_DIAGNOSTICS").is_some();
+        if diagnostics_enabled {
+            let edge_count = self
+                .function_call_graph
+                .values()
+                .map(HashSet::len)
+                .sum::<usize>();
+            eprintln!(
+                "SCOUT_RECURSION_DIAGNOSTICS stage=collected functions={} graph_nodes={} graph_edges={} spanned_edges={}",
+                self.functions.len(),
+                self.function_call_graph.len(),
+                edge_count,
+                self.call_edges_with_spans.len(),
+            );
+        }
+
         let reachable = collect_reachable_entrypoints(
             cx,
             &self.checked_functions,
@@ -65,12 +81,33 @@ impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
             &self.function_call_graph,
         );
 
+        if diagnostics_enabled {
+            eprintln!(
+                "SCOUT_RECURSION_DIAGNOSTICS stage=reachable nodes={}",
+                reachable.len()
+            );
+        }
+
         if reachable.is_empty() {
             return;
         }
 
         let reachable_graph = build_reachable_graph(&reachable, &self.function_call_graph);
+        if diagnostics_enabled {
+            let reachable_edge_count = reachable_graph.values().map(HashSet::len).sum::<usize>();
+            eprintln!(
+                "SCOUT_RECURSION_DIAGNOSTICS stage=before_scc nodes={} edges={}",
+                reachable_graph.len(),
+                reachable_edge_count,
+            );
+        }
         let recursive_sccs = compute_recursive_sccs(&reachable, &reachable_graph);
+        if diagnostics_enabled {
+            eprintln!(
+                "SCOUT_RECURSION_DIAGNOSTICS stage=after_scc recursive_components={}",
+                recursive_sccs.len()
+            );
+        }
 
         for component in recursive_sccs {
             let component_members: HashSet<DefId> = component.into_iter().collect();
@@ -88,6 +125,10 @@ impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
                     );
                 }
             }
+        }
+
+        if diagnostics_enabled {
+            eprintln!("SCOUT_RECURSION_DIAGNOSTICS stage=after_emission");
         }
     }
 

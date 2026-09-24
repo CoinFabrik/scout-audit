@@ -143,7 +143,12 @@ jobs:
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
 
       - name: Run unit and integration tests
-        run: python scripts/run-tests.py --detector=${{ matrix.detector }}
+        env:
+          SCOUT_RECURSION_DIAGNOSTICS: ${{ inputs.detector == 'soroban/infinite-recursion-over-storage' && '1' || '' }}
+        run: |
+          ulimit -s 65536
+          echo "Main-thread stack limit: $(ulimit -s) KiB"
+          python scripts/run-tests.py --detector=${{ matrix.detector }}
 
   comment-on-pr:
     name: Comment on PR
