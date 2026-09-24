@@ -24,6 +24,11 @@ on:
         required: false
         default: false
         type: boolean
+      plain_rustc_probe:
+        description: "Diagnostic only: compile one recursive fixture without Dylint"
+        required: false
+        default: false
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -152,7 +157,17 @@ jobs:
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
 
+      - name: Compile recursive fixture with rustc only
+        if: ${{ inputs.plain_rustc_probe }}
+        run: |
+          rustup target add wasm32v1-none --toolchain nightly-2025-09-18
+          cargo +nightly-2025-09-18 check \
+            --manifest-path test-cases/soroban/infinite-recursion-over-storage/vulnerable/vulnerable-1/Cargo.toml \
+            --target wasm32v1-none \
+            --release
+
       - name: Run unit and integration tests
+        if: ${{ !inputs.plain_rustc_probe }}
         env:
           SCOUT_RECURSION_DIAGNOSTICS: ${{ inputs.detector == 'soroban/infinite-recursion-over-storage' && '1' || '' }}
           SCOUT_RECURSION_SKIP_EMISSION: ${{ inputs.skip_recursion_emission && '1' || '' }}
