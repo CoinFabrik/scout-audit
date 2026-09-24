@@ -59,6 +59,11 @@ struct CallEdge {
 impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         let diagnostics_enabled = std::env::var_os("SCOUT_RECURSION_DIAGNOSTICS").is_some();
+        if std::env::var_os("SCOUT_RECURSION_DISABLE_DETECTOR").is_some() {
+            eprintln!("SCOUT_RECURSION_DIAGNOSTICS stage=detector_disabled");
+            return;
+        }
+
         if diagnostics_enabled {
             let edge_count = self
                 .function_call_graph
@@ -146,6 +151,10 @@ impl<'tcx> LateLintPass<'tcx> for InfiniteRecursionOverStorage {
         span: Span,
         local_def_id: LocalDefId,
     ) {
+        if std::env::var_os("SCOUT_RECURSION_DISABLE_DETECTOR").is_some() {
+            return;
+        }
+
         let def_id = local_def_id.to_def_id();
         self.checked_functions.insert(cx.tcx.def_path_str(def_id));
         self.functions.insert(def_id);
