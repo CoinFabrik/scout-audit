@@ -14,29 +14,6 @@ on:
         description: "Run a single detector, for example soroban/infinite-recursion-over-storage"
         required: false
         type: string
-      skip_recursion_emission:
-        description: "Diagnostic only: analyze recursion without emitting lint warnings"
-        required: false
-        default: false
-        type: boolean
-      disable_recursion_detector:
-        description: "Diagnostic only: load the recursion detector without executing it"
-        required: false
-        default: false
-        type: boolean
-      plain_rustc_probe:
-        description: "Diagnostic only: compile one recursive fixture without Dylint"
-        required: false
-        default: false
-        type: boolean
-      runner:
-        description: "Runner used for the build and detector test"
-        required: false
-        default: ubuntu-latest
-        type: choice
-        options:
-          - ubuntu-latest
-          - ubuntu-22.04
 
 env:
   CARGO_TERM_COLOR: always
@@ -67,7 +44,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ${{ inputs.runner || 'ubuntu-latest' }}
+          - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -79,8 +56,8 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ matrix.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
-          restore-keys: ${{ matrix.os }}-tests-
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-tests-
 
       - name: Install Rust stable
         run: rustup install stable --profile minimal
@@ -135,11 +112,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ${{ inputs.runner || 'ubuntu-latest' }}
+          - ubuntu-latest
         detector: ${{fromJson(needs.prepare-detector-matrix.outputs.matrix)}}
     runs-on: ${{ matrix.os }}
-    env:
-      RUST_MIN_STACK: 33554432
     outputs:
       status: ${{ job.status }}
     steps:
@@ -157,33 +132,16 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ matrix.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
-          restore-keys: ${{ matrix.os }}-tests-
+          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-tests-
 
       - name: Disable telemetry
         run: |
           mkdir -p ~/.scout-audit/telemetry
           echo "DONOTTRACK" > ~/.scout-audit/telemetry/user_id.txt
 
-      - name: Compile recursive fixture with rustc only
-        if: ${{ inputs.plain_rustc_probe }}
-        run: |
-          rustup target add wasm32v1-none --toolchain nightly-2025-09-18
-          cargo +nightly-2025-09-18 check \
-            --manifest-path test-cases/soroban/infinite-recursion-over-storage/vulnerable/vulnerable-1/Cargo.toml \
-            --target wasm32v1-none \
-            --release
-
       - name: Run unit and integration tests
-        if: ${{ !inputs.plain_rustc_probe }}
-        env:
-          SCOUT_RECURSION_DIAGNOSTICS: ${{ inputs.detector == 'soroban/infinite-recursion-over-storage' && '1' || '' }}
-          SCOUT_RECURSION_SKIP_EMISSION: ${{ inputs.skip_recursion_emission && '1' || '' }}
-          SCOUT_RECURSION_DISABLE_DETECTOR: ${{ inputs.disable_recursion_detector && '1' || '' }}
-        run: |
-          ulimit -s 65536
-          echo "Main-thread stack limit: $(ulimit -s) KiB"
-          python scripts/run-tests.py --detector=${{ matrix.detector }}
+        run: python scripts/run-tests.py --detector=${{ matrix.detector }}
 
   comment-on-pr:
     name: Comment on PR
