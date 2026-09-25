@@ -79,8 +79,8 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-tests-
+          key: ${{ matrix.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
+          restore-keys: ${{ matrix.os }}-tests-
 
       - name: Install Rust stable
         run: rustup install stable --profile minimal
@@ -157,8 +157,8 @@ jobs:
           path: |
             ~/.cargo
             ~/.rustup
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-tests-
+          key: ${{ matrix.os }}-tests-${{ hashFiles('**/Cargo.toml', 'apps/cargo-scout-audit/src/**/*.rs', 'apps/cargo-scout-audit/crates/**/*.rs', 'scout-utils/src/**/*.rs', 'scout-utils/Cargo.lock', 'nightly/**/Cargo.lock') }}
+          restore-keys: ${{ matrix.os }}-tests-
 
       - name: Disable telemetry
         run: |
