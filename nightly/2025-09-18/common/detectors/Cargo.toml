@@ -1,0 +1,14 @@
+[package]
+edition = "2021"
+name = "common-detectors"
+version = "0.1.0"
+
+[dependencies]
+analysis = { path = "../analysis" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "6cc8f8dbaa7ee3ee9b41a23bf38fc9154951c108", package = "clippy_utils" }
+dylint_internal = "=3.1.2"
+dylint_linting = "=3.1.2"
+if_chain = "=1.0.2"
+
+[package.metadata.rust-analyzer]
+rustc_private = true

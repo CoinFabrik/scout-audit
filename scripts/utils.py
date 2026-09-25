@@ -64,11 +64,15 @@ def list_test_cases():
         if not os.path.isdir(path):
             continue
         for test_case in os.listdir(path):
-            if not os.path.isdir(f"{path}/{test_case}"):
+            test_case_path = f"{path}/{test_case}"
+            if not os.path.isdir(test_case_path):
                 continue
             if test_case == "target":
                 continue
             if test_case[0:1] == ".":
+                continue
+            # A root Cargo.toml.skip disables the complete detector test case.
+            if os.path.isfile(os.path.join(test_case_path, "Cargo.toml.skip")):
                 continue
             ret.append(f"{blockchain}/{test_case}")
     return ret

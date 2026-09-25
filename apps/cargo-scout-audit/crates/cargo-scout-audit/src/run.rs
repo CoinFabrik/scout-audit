@@ -27,7 +27,7 @@ use anyhow::{Context, Ok, Result, anyhow};
 use cargo::{GlobalContext, core::Verbosity};
 use cargo_metadata::Metadata;
 use serde_json::to_string_pretty;
-use std::{collections::HashSet, io::Write, path::PathBuf};
+use std::{collections::HashSet, env, io::Write, path::PathBuf};
 use terminal_color_builder::OutputFormatter;
 
 #[allow(clippy::large_enum_variant)]
@@ -67,17 +67,21 @@ fn prepare_scout_input(opts: &mut Scout) -> Result<EitherInfoOrScoutResult> {
         ));
     }
 
-    // Send telemetry data
-    let client_type = TelemetryClient::detect_client_type(opts);
-    let telemetry_client = TelemetryClient::new(blockchain, client_type);
-    let _ = telemetry_client.send_report();
+    let offline = env::var("SCOUT_OFFLINE")
+        .is_ok_and(|value| matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes"));
+    if !offline {
+        // Send telemetry data
+        let client_type = TelemetryClient::detect_client_type(opts);
+        let telemetry_client = TelemetryClient::new(blockchain, client_type);
+        let _ = telemetry_client.send_report();
 
-    if let Err(e) = VersionChecker::new().check_for_updates() {
-        // This is not a critical error, so we don't need to bail and we don't need a ScoutError
-        print_error(&format!(
-            "Failed to check for scout updates.\n     → Caused by: {}",
-            e
-        ));
+        if let Err(e) = VersionChecker::new().check_for_updates() {
+            // This is not a critical error, so we don't need to bail and we don't need a ScoutError
+            print_error(&format!(
+                "Failed to check for scout updates.\n     → Caused by: {}",
+                e
+            ));
+        }
     }
 
     let cargo_config = GlobalContext::default().map_err(ScoutError::CargoConfigFailed.traced())?;

@@ -30,7 +30,6 @@ mod test {
     use soroban_sdk::Env;
 
     #[test]
-    #[should_panic(expected = "attempt to multiply with overflow")]
     fn test_pow_overflow() {
         // Given
         let env = Env::default();
@@ -39,9 +38,9 @@ mod test {
 
         // When
         client.initialize(&2);
-        client.pow(&u32::MAX);
+        let result = client.try_pow(&u32::MAX);
 
         // Then
-        // Panic
+        assert!(result.is_err());
     }
 }
