@@ -29,6 +29,14 @@ on:
         required: false
         default: false
         type: boolean
+      runner:
+        description: "Runner used for the build and detector test"
+        required: false
+        default: ubuntu-latest
+        type: choice
+        options:
+          - ubuntu-latest
+          - ubuntu-22.04
 
 env:
   CARGO_TERM_COLOR: always
@@ -59,7 +67,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          - ${{ inputs.runner || 'ubuntu-latest' }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -127,7 +135,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+          - ${{ inputs.runner || 'ubuntu-latest' }}
         detector: ${{fromJson(needs.prepare-detector-matrix.outputs.matrix)}}
     runs-on: ${{ matrix.os }}
     env:
