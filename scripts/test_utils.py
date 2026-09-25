@@ -72,6 +72,7 @@ def run_integration_tests(detector, root):
 
     # Get latest nightly from the directory nightly/
     latest_nightly = os.path.join(os.getcwd(), "nightly")
+    scout_source = os.getcwd()
 
     returncode, stdout, stderr = run_subprocess(
         [
@@ -83,6 +84,8 @@ def run_integration_tests(detector, root):
             "--metadata",
             "--local-detectors",
             latest_nightly,
+            "--scout-source",
+            scout_source,
         ],
         root,
     )
@@ -113,6 +116,8 @@ def run_integration_tests(detector, root):
             "scout-audit",
             "--local-detectors",
             latest_nightly,
+            "--scout-source",
+            scout_source,
             "--output-format",
             "raw-json",
             "--output-path",

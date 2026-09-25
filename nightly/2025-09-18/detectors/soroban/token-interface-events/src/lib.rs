@@ -49,27 +49,27 @@ struct TokenInterfaceEvents {
     impl_token_interface_trait: bool,
 }
 
-/// Used to verify if, starting from a specific parent in the call graph, an event is emitted at any point of the flow.
-/// # Params:
-///     - fcg: function call graph
-///     - parent: the item from which the analysis starts.
-///     - check_against: a HashSet that is used to compare the defids. This HashSet is supposed to contain all the defids of the functions that emit events (collected by the `visit_expr` and `check_func` functions).
-fn check_events_children(
+/// Returns whether `start` or any function reachable from it is in `targets`.
+fn reaches_any(
     fcg: &HashMap<DefId, HashSet<DefId>>,
-    parent: &DefId,
-    check_against: &HashSet<DefId>,
+    start: &DefId,
+    targets: &HashSet<DefId>,
 ) -> bool {
-    if check_against.contains(parent) {
-        return true;
-    }
-    let children = fcg.get(parent);
-    if let Some(children) = children {
-        for c in children {
-            if check_against.contains(c) || check_events_children(fcg, c, check_against) {
-                return true;
-            }
+    let mut visited = HashSet::new();
+    let mut stack = vec![*start];
+
+    while let Some(current) = stack.pop() {
+        if !visited.insert(current) {
+            continue;
+        }
+        if targets.contains(&current) {
+            return true;
+        }
+        if let Some(callees) = fcg.get(&current) {
+            stack.extend(callees.iter().copied());
         }
     }
+
     false
 }
 
@@ -115,11 +115,8 @@ impl<'tcx> LateLintPass<'tcx> for TokenInterfaceEvents {
                 )
             {
                 // Verify if the function itself or the ones it calls (directly or indirectly) emit an event at any point of the flow.
-                let emits_event_in_flow = check_events_children(
-                    &self.function_call_graph,
-                    func,
-                    &self.defids_with_events,
-                );
+                let emits_event_in_flow =
+                    reaches_any(&self.function_call_graph, func, &self.defids_with_events);
 
                 // If both conditions are met, emit an warning.
                 if !emits_event_in_flow {

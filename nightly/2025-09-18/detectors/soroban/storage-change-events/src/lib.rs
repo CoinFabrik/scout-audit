@@ -47,53 +47,27 @@ struct StorageChangeEvents {
     defids_with_events: HashSet<DefId>,
 }
 
-/// Used to verify if, starting from a specific parent in the call graph, an event is emitted at any point of the flow.
-/// # Params:
-///     - fcg: function call graph
-///     - parent: the item from which the analysis starts.
-///     - check_against: a HashSet that is used to compare the defids. This HashSet is supposed to contain all the defids of the functions that emit events (collected by the `visit_expr` and `check_func` functions).
-fn check_events_children(
+/// Returns whether `start` or any function reachable from it is in `targets`.
+fn reaches_any(
     fcg: &HashMap<DefId, HashSet<DefId>>,
-    parent: &DefId,
-    check_against: &HashSet<DefId>,
+    start: &DefId,
+    targets: &HashSet<DefId>,
 ) -> bool {
-    if check_against.contains(parent) {
-        return true;
-    }
-    let children = fcg.get(parent);
-    if let Some(children) = children {
-        for c in children {
-            if check_against.contains(c) || check_events_children(fcg, c, check_against) {
-                return true;
-            }
-        }
-    }
-    false
-}
+    let mut visited = HashSet::new();
+    let mut stack = vec![*start];
 
-/// Used to verify if, starting from a specific parent in the call graph, a function that sets storage in a considered "unsafe" way is called in any part of its flow.
-/// # Params:
-///     - fcg: function call graph
-///     - func: the defid from which the analysis starts.
-///     - unsafe_set_storage: a HashSet that is used to compare the defids. This HashSet is supposed to contain all the defids of the functions that are considered "unsafe storage setters".
-fn check_storage_setters_calls(
-    fcg: &HashMap<DefId, HashSet<DefId>>,
-    func: &DefId,
-    unsafe_set_storage: &HashSet<DefId>,
-) -> bool {
-    if unsafe_set_storage.contains(func) {
-        return true;
-    }
-    let children = fcg.get(func);
-    if let Some(children) = children {
-        for c in children {
-            if unsafe_set_storage.contains(c)
-                || check_storage_setters_calls(fcg, c, unsafe_set_storage)
-            {
-                return true;
-            }
+    while let Some(current) = stack.pop() {
+        if !visited.insert(current) {
+            continue;
+        }
+        if targets.contains(&current) {
+            return true;
+        }
+        if let Some(callees) = fcg.get(&current) {
+            stack.extend(callees.iter().copied());
         }
     }
+
     false
 }
 
@@ -104,14 +78,11 @@ impl<'tcx> LateLintPass<'tcx> for StorageChangeEvents {
             // Only take into account those functions that are public and exposed in a soroban contract (entrypoints that can be called externally). We do not advise on functions that are used auxiliarily.
             if is_soroban_function(cx, &self.checked_functions, func) {
                 // Verify if the function itself or the ones it calls (directly or indirectly) emit an event at any point of the flow.
-                let emits_event_in_flow = check_events_children(
-                    &self.function_call_graph,
-                    func,
-                    &self.defids_with_events,
-                );
+                let emits_event_in_flow =
+                    reaches_any(&self.function_call_graph, func, &self.defids_with_events);
 
                 // Verify if the function itself or the ones it calls (directly or indirectly) call an unsafe storage setter at any point of the flow.
-                let calls_unsafe_storage_setter = check_storage_setters_calls(
+                let calls_unsafe_storage_setter = reaches_any(
                     &self.function_call_graph,
                     func,
                     &self.eventless_storage_changers,
