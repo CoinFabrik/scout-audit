@@ -89,7 +89,7 @@ Supported values are `html`, `json`, `raw-json`, `raw-single-json`, `unfiltered-
 
 **Example HTML report**
 
-<img src="https://raw.githubusercontent.com/CoinFabrik/scout-audit/089f4a511e35188aff4b85d1ea018beab85d9f98/img/html.png" alt="Scout HTML report showing categorized findings" width="900" />
+<img src="https://raw.githubusercontent.com/CoinFabrik/scout-audit/766af703364d0a27cf69b5040a20f6c0b01b68f5/img/html.png" alt="Scout HTML report showing categorized findings" width="900" />
 
 ## Detectors
 
@@ -113,7 +113,7 @@ The [Scout VS Code extension](https://marketplace.visualstudio.com/items?itemNam
 
 The [Scout GitHub Action](https://github.com/marketplace/actions/run-scout-action) runs the analysis in CI and can publish findings on pull requests.
 
-<img src="https://raw.githubusercontent.com/CoinFabrik/scout-audit/089f4a511e35188aff4b85d1ea018beab85d9f98/img/github-action-output.jpg" alt="Scout GitHub Action findings in a pull-request comment" width="520" />
+<img src="https://raw.githubusercontent.com/CoinFabrik/scout-audit/766af703364d0a27cf69b5040a20f6c0b01b68f5/img/github-action-output.jpg" alt="Scout GitHub Action findings in a pull-request comment" width="520" />
 
 ## Development and tests
 
